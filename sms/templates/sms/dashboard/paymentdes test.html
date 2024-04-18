@@ -1,0 +1,363 @@
+{% extends 'sms/dashboard/base.html' %}
+{% load hitcount_tags %}
+
+
+{% block title %} Course Details {% endblock %}
+
+  {% block content %}  
+<style>
+  .benefits{
+    width: 200px;
+    height: 50px;
+  
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .benefits >*{
+   flex: 1 1 auto;
+   width: 10px;
+   margin: -10px;
+  
+
+  }
+  [aria-expanded="false"] > .expanded,
+[aria-expanded="true"] > .collapsed {
+  display: none;
+}
+ .page{
+  display: flex;
+  flex-wrap: wrap;
+ }
+ .page > *{
+  flex: 1 1 auto;
+  margin: 5px;
+ }
+ .rounded{
+  width: 30px;
+  height: 150px;
+ }
+
+ .gallery {
+    display: flex;
+    overflow-x: auto;
+    height: 400px;
+    overflow-y: hidden;       
+}
+.gallery>* {
+   flex: 1 1 auto;
+   margin: 10px;
+       
+}
+
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.rounded{
+  width: 50px;
+  height: 53px;
+}
+
+.course-owner{
+  display: flex;
+  flex-wrap: wrap;
+}
+.course-owner >*{
+
+  margin: 5px;
+}
+.sta{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sta >*{
+  flex: 1 1 auto;
+  margin: 10px;
+
+}
+.name{
+  padding: 20px;
+}
+
+  /* ebooks */
+  .child-review{
+  display: flex;
+  margin-top: -25px;
+}
+
+.child-review >*{
+  margin: 10px;
+}
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card-review{
+  width: 300px;
+}
+.card-review:hover {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
+.flex-container >*{
+  margin: 10px;
+}
+
+ /* end of ebooks */
+
+  /* fixed-bottom */
+  .fixed-bottom {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      margin: 25px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .fixed-bottom.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    @media (min-width: 768px) {
+      .fixed-bottom {
+        display: none;
+      }
+    }
+
+  /* end fixed-bottom */
+
+  /* whatyouwilllearn */
+  .whatyouwilllearn{
+    display: flex;
+    flex-wrap: wrap;
+    background-color: black;
+    color: white;
+    min-height: 370px;
+  }
+  .whatyouwilllearn >*{
+    margin: 10px;
+  }
+  .card:hover {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.desc-hidden {
+      display: none;
+  }
+
+
+  
+</style>
+
+
+
+
+  <div  style="padding-left: 20px; background-color: rgb(240, 238, 235)" class="">
+    <br> <br>
+    <div class="course-owner d-flex ">
+      {% if object.course_logo.url %}
+      <img  class="rounded" src="{{ object.course_logo.url }}"  alt=""> 
+      <p>{{object.course_owner|safe}}</p>
+      {% else %}
+      <img  class="rounded" src=" /static/sms/images/newlogo3.jpg"  alt="">
+      <p  class="text-dark ">Codethinkers Academy</p>
+    {% endif %}
+    </div>
+    
+    <br>
+  <h6>{{ object.title|safe }}</h6>
+
+  {% if object.price %}
+  <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{object.status_type|safe}} |  #{{object.price|safe|floatformat:"0g"}}</p> 
+  {% else %}
+  <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{object.status_type|safe}}</p> 
+  {% endif %}
+  <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{object.categories.name|safe|title}} level</small> <br>
+  <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{object.course_type|safe}}</small>
+
+    <br> <br>
+    <p class=" pr-3">{{ object.desc|truncatechars:300|safe }}</p>
+  
+      {% if request.user.profile in course.student.all or object.status_type  == 'Free'  %}
+    <a href="{% url 'sms:topicslistview' object.id %}"> <button class="btn btn-primary">Enroll {{ object.title|safe }}</button> </a> 
+      {% else %}
+    <!-- <a style="height: 10px;" class=""  href="{% url 'sms:paymentdesc' object.id  %}"><button class="btn btn-primary">Make payment to proceed</button> </a>  -->
+      {% endif %}
+   
+  <!-- {% if object.student.status_type  == 'Premium' and object.status_type  == 'Premium'  or object.status_type  == 'Free'  %}
+  
+    <a href="{% url 'sms:topicslistview' object.id %}"> <button class="btn btn-primary">Enroll {{ object.title|safe }}</button> </a> 
+    {% else %}
+  
+    <a style="height: 10px;" class=""  href="{% url 'sms:paymentdesc' object.id %}"><button class="btn btn-primary">Make payment to proceed</button> </a> 
+  {% endif %}  -->
+<br> <br>
+<p>{{num_students|floatformat:"0g"}}  students already enrolled </p>
+  </div>
+
+<br>
+<!-- <form method="POST" action="{% url 'student:process_payment' %}">
+    {% csrf_token %}
+    <input type="text" name="ref" placeholder="Payment Reference" required>
+    <input type="number" name="amount" placeholder="Payment Amount" required>
+    <input type="text" name="status" placeholder="Payment Status" required>
+    <button type="submit">Submit</button>
+</form> -->
+
+<form id="paymenFor"  action="{% url 'student:process_payment' %}" method="POST">
+    <div class="form-group">
+      <label  for="email">Email Address</label>
+      <input name="email" value = '{{request.user}}' type="email" id="email-address" required />
+    </div>
+    <div class="form-group">
+      <label  for="amount">Amount</label>
+      <input name="amount" value="{{object.price|safe|floatformat:'0g'}}" type="tel" id="amount" required />
+    </div>
+    <div class="form-group">
+      <label for="first-name">First Name</label>
+      <input type="text" id="first-name" />
+    </div>
+    <div class="form-group">
+      <label for="last-name">Last Name</label>
+      <input type="text" id="last-name" />
+    </div>
+    <div class="form-group">
+        <label for="last-name">verified</label>
+        <input type="text" name="verified" placeholder="Payment Status" required>
+      </div>
+      <div class="form-group">
+        <label for="last-name">ref</label>
+        <input type="text" name="ref" placeholder="ref" required>
+      </div>
+    
+    <div class="form-submit">
+      <button type="submit" > Pay Now</button>
+      
+    </div>
+  </form>
+<!-- 
+  <script src="https://js.paystack.co/v1/inline.js"></script> -->
+
+<!-- <ul>
+  {% if request.user.profile in course.student.all or object.status_type  == 'Free'  %}
+<a href="{% url 'sms:topicslistview' object.id %}"> <button class="btn btn-primary">Enroll {{ object.title|safe }}</button> </a> 
+  {% else %}
+<a style="height: 10px;" class=""  href="{% url 'sms:paymentdesc' object.id %}"><button class="btn btn-primary">Make payment to proceed</button> </a> 
+  {% endif %}
+</ul> -->
+
+
+
+<div class="pl-3 pr-3">
+
+</div>
+<!-- end of related courses -->
+
+<!-- {% if object.student.status_type  == 'Premium' and object.status_type  == 'Premium'  or object.status_type  == 'Free'  %}
+  
+<a class="btn btn-secondary fixed-bottom" href="{% url 'sms:topicslistview' object.id %}">Enroll {{ object.title|safe }}</a>
+{% else %}
+<a class="btn btn-secondary fixed-bottom"  class=""  href="{% url 'sms:paymentdesc' object.id %}">Make payment to proceed </a>
+{% endif %} -->
+
+<ul>
+  {% if request.user.profile in course.student.all or object.status_type  == 'Free'  %}
+<a href="{% url 'sms:topicslistview' object.id %}"> <button class="btn btn-primary fixed-bottom">Enroll {{ object.title|safe }}</button> </a> 
+  {% else %}
+<a style="height: 10px;" class=""  href="{% url 'sms:paymentdesc' object.id %}"><button class="btn btn-primary fixed-bottom">Make payment to proceed</button> </a> 
+  {% endif %}
+</ul>
+
+
+<!-- about scroll top to see enrollment -->
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    window.addEventListener("scroll", function() {
+      var button = document.querySelector(".fixed-bottom");
+      var scrollPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+
+      if (scrollPosition > 500) {
+        button.classList.add("show");
+      } else {
+        button.classList.remove("show");
+      }
+    });
+  });
+
+// paystack payment
+
+const paymentForm = document.getElementById('paymentForm');
+paymentForm.addEventListener("submit", payWithPaystack, false);
+
+function payWithPaystack(e) {
+  e.preventDefault();
+
+  let handler = PaystackPop.setup({
+    key: '{{paystack_public_key}}', // Replace with your public key
+    email: document.getElementById("email-address").value,
+    amount: '{{amount}}',
+    ref: ''+Math.floor((Math.random() * 1000000000) + 1), // generates a pseudo-unique reference. Please replace with a reference you generated. Or remove the line entirely so our API will generate one for you
+    // label: "Optional string that replaces customer email"
+    onClose: function(){
+      alert('Window closed.');
+    },
+    // callback: function(response){
+    //   let message = 'Payment complete! Reference: ' + response.reference;
+    //   alert(message);
+    // }
+    callback: function (response) {
+              //   if transaction successful do this
+
+        //   alert('success. transaction ref is ' + response.reference);
+        var referenceid = response.reference;
+        //Make an http request to cart process
+        $.ajax({
+          type: "GET", //Send in POST Method
+          url: "/verify/" + referenceid, //Endpoint for the ajax
+          beforeSend: function () {
+            console.log("Sending request");
+            $(".alert").text("Sending request");
+          },
+          success: function (response) {
+            if (response[3].status == "success") {
+              //Once transaction completed redirect to complete page
+              $(".alert").removeClass("alert-warning");
+              $(".alert").addClass("alert-success");
+              $(".alert").text("Transaction verified");
+              
+              console.log("Transaction verified");
+              $("form").trigger("reset");
+            } else {
+              $(".alert").text("Transaction reference not found");
+            }
+          }
+        });
+      },
+   
+  });
+
+  handler.openIframe();
+}
+
+</script>
+
+
+
+<!-- about the course owner -->
+
+  {% endblock %} 
+
+
+
+

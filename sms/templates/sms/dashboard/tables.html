@@ -1,0 +1,80 @@
+{% extends 'sms/dashboard/base.html' %}
+
+{% block title %} Course Overall Scores Detail View {% endblock %}
+
+  {% block content %}  
+
+
+
+  <!-- Begin Page Content -->
+  <div class="container-fluid">
+  
+                    <!-- DataTales Example -->
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Overall Exam Scores</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered"  id="dataTable" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>Names</th>
+                                            <!-- <th>users</th> -->
+                                            <th>Course</th>
+                                            
+                                            <th>Total Marks</th>
+                                            <th>position</th>
+                                            <th>Exam Date</th>
+                                        </tr>
+                                    </thead>
+                                    
+
+                                    <tbody>
+                                        {% for t in object_list %}
+                                        <tr>
+                                            <td> {{t.student.first_name}} {{t.student.last_name}}</td>
+                                            <td>{{t.exam}}</td>
+                                            <td>{{t.marks}} / {{course.total_marks}}</td>
+                                            <td>positon {{ forloop.counter}}</td>
+                                            <td> {{t.date}}</td>
+                                       
+                                          
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- /.container-fluid -->
+
+          
+            <!-- End of Main Content -->
+
+ 
+</div>
+
+<script>
+    $(document).ready(function () {
+$('#example').DataTable({
+    pagingType: 'simple_numbers',
+    // dom: 'Qfrtip',
+    "ordering": false,
+    "bPaginate":true,
+    // scrollY:'400px',
+    scrollY:'100%',
+    scrollCollapse:true,
+    "pageLength": 10,
+    "dom": '<"top"fl<"clear">>rt<"bottom"ip<"clear">>'
+    
+});
+});
+
+
+</script>
+ 
+  {% endblock %} 
+ 

@@ -1,0 +1,46 @@
+
+<form method="post">
+    {% csrf_token %}
+    <label for="file-type">Select file type:</label>
+    <select name="file-type" id="file-type">
+        <option value="csv">CSV</option>
+        <option value="pdf">PDF</option>
+    </select>
+    <label for="course">Select subject:</label>
+    <select name="course" id="course">
+        {% for subject in subjects_taught %}
+            <option value="{{ subject.id }}">{{ subject }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Export</button>
+</form>
+
+
+<!-- <form method="post">
+    {% csrf_token %}
+    <label for="file-type">Select file type:</label>
+    <select name="file-type" id="file-type">
+        <option value="csv">CSV</option>
+        <option value="pdf">PDF</option>
+    </select>
+    
+    <label for="subject">Select subject taught:</label>
+    <select name="subject" id="subject">
+        {% for subject in subjects_taught %}
+            <option value="{{ subject.id }}">{{ subject.course_name }}</option>
+        {% endfor %}
+    </select>
+    
+    <button type="submit">Export</button>
+</form> -->
+
+
+<!-- <form method="post">
+    {% csrf_token %}
+    <label for="file-type">Select file type:</label>
+    <select name="file-type" id="file-type">
+        <option value="csv">CSV</option>
+        <option value="pdf">PDF</option>
+    </select>
+    <button type="submit">Export</button>
+</form> -->

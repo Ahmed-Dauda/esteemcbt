@@ -1,0 +1,51 @@
+{% extends 'sms/dashboard/base.html' %}
+
+{% block title %} table {% endblock %}
+
+  {% block content %} 
+
+  <style>
+
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.left-column-cat {
+    flex: 1;
+    margin: 5px;
+    background-color: #4158D0;
+    color: black;
+    background-image: linear-gradient(#ffff 100%, #ffff 46%, white 100%);
+
+}
+
+</style>
+    
+<br> <br>
+<button class="btn "><a href="https://wa.me/23409031568177"> Contact Us  </a>  </button>
+<br> <br> <br>
+<h3 class="text-center ">
+  Select course to print certificate
+</h3>
+<div class="container text-center">
+
+    {% for item in courses %}
+    <div class="left-column-cat card-body text-center category">
+        <!-- <img class="card-img" src="{{item.img_course.url}}" > -->
+        <a class="bg-white container" href="{% url 'sms:topicslistview' item.id %}">{{item.course_name}}</a> <hr>
+    </div>
+    {% empty %}
+    <small class="card-text">No Exams Available Yet. CHECK LATER</small>
+
+    {% endfor %}
+</div>
+
+
+<!-- End of Main Content -->
+
+  {% endblock %} 
+ 
+
+

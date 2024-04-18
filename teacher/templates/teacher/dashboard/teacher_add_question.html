@@ -1,0 +1,72 @@
+{% extends 'sms/dashboard/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %} table {% endblock %}
+
+  {% block content %} 
+
+    
+<br> <br>
+<h1>Add Question</h1>
+{% for subject in subjects_taught %}
+<p>Subject and school taught: {{subject}}</p>
+{% endfor %}
+<br>
+
+
+<div class="container">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div id="formset-container">
+      {{ formset|crispy }}      
+      <div id="formset-template" style="display: none;">
+        {{ formset.empty_form|crispy }}
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-primary" id="add-more">Add More</button>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+</div>
+
+
+
+
+<!-- End of Main Content -->
+<!-- Make sure jQuery library is included before this script -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+    // Get the formset container
+    var formsetContainer = $('#formset-container');
+
+    // Get the formset template
+    var formsetTemplate = $('#formset-template');
+
+    // Add more button click event
+    $('#add-more').click(function() {
+      // Clone the formset template
+      var clonedForm = formsetTemplate.clone();
+
+      // Remove the 'id' attribute from the cloned form
+      clonedForm.removeAttr('id');
+
+      // Make the cloned form visible
+      clonedForm.removeAttr('style');
+
+      // Append the cloned form to the container
+      formsetContainer.append(clonedForm);
+    });
+  });
+</script>
+
+  {% endblock %} 
+ 
+
+
+
+
+
+
+

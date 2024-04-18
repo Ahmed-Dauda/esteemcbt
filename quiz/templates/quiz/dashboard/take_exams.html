@@ -1,0 +1,46 @@
+{% extends 'sms/dashboard/base.html' %}
+
+{% block title %} table {% endblock %}
+
+  {% block content %} 
+  <style>
+    .container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .left-column-cat {
+        flex: 1;
+        margin: 5px;
+        background-color: #4158D0;
+        color: black;
+        background-image: linear-gradient(#ffff 100%, #ffff 46%, white 100%);
+    
+    }
+    
+    </style>
+       
+    <!--Products-->
+
+    <h3 class="text-center">Select a Course to Take Exam</h3>
+    <p class="text-center">Start the Quiz</p>
+    <p class="text-center">Good luck!</p>
+    <div class="container text-center">
+        
+        {% for item in courses %}
+        <div class="left-column-cat card-body text-center category">
+         
+            <a class="bg-white container" href="{% url 'sms:topicslistview' item.id %}">{{item}}</a> <hr>
+    
+        </div>
+        {% empty %}
+        <small class="card-text">No Exams Available Yet. CHECK LATER</small>
+    
+        {% endfor %}
+    </div>
+
+  {% endblock %} 
+ 
+
+

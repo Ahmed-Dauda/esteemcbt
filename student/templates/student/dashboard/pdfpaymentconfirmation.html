@@ -1,0 +1,111 @@
+
+
+{% extends 'sms/dashboard/base.html' %}
+{% load hitcount_tags %}
+
+{% block title %} Payment Success {% endblock %}
+
+  {% block content %} 
+  <style>
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      font-size: 36px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    p {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+    .link {
+      display: block;
+      text-align: center;
+      background-color: #007bff;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 5px;
+      text-decoration: none;
+      margin-top: 20px;
+    }
+  </style>
+
+
+
+<div class="container">
+  <h1>Thank You for Your Purchase!</h1>
+  <p>Order Summary:</p>
+  <ul>
+    <li><strong>PDF Title:</strong> {{ document.title }}</li>
+    <li><strong>Price:</strong> #{{ document.price }}</li>
+    {% for ref in refs %}
+      <li><strong>Transaction ID:</strong> {{ ref }}</li>
+    {% endfor %}
+  </ul>
+<!-- Add any other content you want to display for the PDF document details -->
+
+{% if related_payments %}
+<p>Thank you for choosing our service! We hope you enjoy your purchase.</p>
+
+<div  class="text-center">
+    <!-- <a class="link" href="{% url 'sms:pdf_document_detail' document.id %}?download=1">Download PDF</a> -->
+    <a class="link" href="{{ document.pdf_url }}" target="_blank">Download PDF</a>
+    <hr>
+    <a class="link" href="{% url 'sms:homepage' %}">Return to Homepage</a>
+    {% else %}
+    
+    <a class="link " href="{% url 'sms:ebooks' document.id %}">Go to Download PDF</a>
+    
+    {% endif %}
+    
+</div>
+  <p>For any questions or issues, please contact our customer support at <a class="link" href="mailto:codethinkersa@gmail.com">codethinkersa@gmail.com</a>.</p>
+</div>
+
+
+  <input type="hidden" id="paymentSuccess" value="true">
+
+
+
+  <!-- <script>
+    // Check if the payment success flag is present
+    var paymentSuccessInput = document.getElementById('paymentSuccess');
+    if (paymentSuccessInput && paymentSuccessInput.value === 'true') {
+      // Check if the payment_success session storage is set
+      var paymentSuccessStorage = sessionStorage.getItem('payment_success');
+      if (!paymentSuccessStorage || paymentSuccessStorage === 'true') {
+        // Set the payment_success session storage to false and reload the page after 1 second
+        sessionStorage.setItem('payment_success', 'false');
+        console.log('Page reloading - 1st time');
+        setTimeout(function() {
+          console.log('Page reloaded - 1st time');
+          window.location.reload();
+        }, 1000);
+      } else if (paymentSuccessStorage === 'false') {
+        // Set the payment_success session storage back to true and reload the page again after 5 seconds
+        sessionStorage.setItem('payment_success', 'true');
+        console.log('Page reloading - 2nd time');
+        setTimeout(function() {
+          console.log('Page reloaded - 2nd time');
+          window.location.reload();
+        }, 300000);
+      }
+    }
+  </script> -->
+  
+{% endblock %} 

@@ -1,0 +1,82 @@
+
+
+{% extends 'sms/dashboard/base.html' %}
+{% load hitcount_tags %}
+
+{% block title %} Payment Success {% endblock %}
+
+  {% block content %} 
+  <style>
+ 
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      font-size: 36px;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #007bff;
+    }
+    p {
+      font-size: 18px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .link {
+      display: block;
+      text-align: center;
+      background-color: #007bff;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 5px;
+      text-decoration: none;
+      margin-top: 20px;
+      width: 50%;
+      margin-left: 20%;
+      margin-right: 50%;
+    }
+    hr {
+      margin: 20px 0;
+      border: none;
+      border-top: 1px solid #ccc;
+    }
+    .payment-link {
+      text-align: center;
+      font-size: 18px;
+      color: #007bff;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 20px;
+    }
+  </style>
+
+
+<h1>{{ document.title }}</h1>
+<p>Price: &#8358;{{ document.price }}</p>
+
+
+<!-- Add any other content you want to display for the PDF document details -->
+
+{% if related_payments %}
+<p>Thank you for choosing our service! We hope you enjoy your purchase.</p>
+
+<div  class="text-center">
+    <!-- <a class="link" href="{% url 'sms:pdf_document_detail' document.id %}?download=1">Download PDF</a> -->
+    <a class="link" href="{{ document.pdf_url }}" target="_blank">Download PDF</a>
+    <hr>
+    <a class="link" href="{% url 'sms:homepage' %}">Return to Homepage</a>
+    {% else %}
+    
+    <a class="link " href="{% url 'sms:pdf_document_detail' document.id %}">Make Payment to print your pdf</a>
+    
+    {% endif %}
+    
+</div>
+
+  
+{% endblock %} 

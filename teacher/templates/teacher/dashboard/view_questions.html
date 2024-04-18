@@ -1,0 +1,81 @@
+{% extends 'sms/dashboard/base.html' %}
+
+{% block title %} Course Overall Scores Detail View {% endblock %}
+
+  {% block content %}  
+
+  
+
+  <!-- Begin Page Content -->
+  <div class="container-fluid">
+
+<!-- DataTales Example -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Exam Questions</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Question</th>
+                        <th>Marks</th>
+                        <th>Course</th>
+                        <th>Option 1</th>
+                        <th>Option 2</th>
+                        <th>Option 3</th>
+                        <th>Option 4</th>
+                       
+                        <th>Edit</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for question in questions %}
+                    <tr>
+                        <td>{{ question.question }}</td>
+                        <td>{{ question.marks }}</td>
+                        <td>{{ question.course }}</td>
+                        <td>{{ question.option1 }}</td>
+                        <td>{{ question.option2 }}</td>
+                        <td>{{ question.option3 }}</td>
+                        <td>{{ question.option4 }}</td>
+                        
+                        <td><a href="{% url 'edit_question' question.id %}" class="btn btn-primary">Edit</a></td>
+                        <td><a href="{% url 'delete_question' question.id %}" class="btn btn-danger">Delete</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<!-- End of Main Content -->
+
+
+</div>
+
+<script>
+    $(document).ready(function () {
+$('#example').DataTable({
+    pagingType: 'simple_numbers',
+    // dom: 'Qfrtip',
+    "ordering": false,
+    "bPaginate":true,
+    // scrollY:'400px',
+    scrollY:'100%',
+    scrollCollapse:true,
+    "pageLength": 10,
+    "dom": '<"top"fl<"clear">>rt<"bottom"ip<"clear">>'
+    
+});
+});
+
+
+</script>
+ 
+  {% endblock %} 
+ 

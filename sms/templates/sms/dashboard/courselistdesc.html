@@ -1,0 +1,892 @@
+{% extends 'sms/dashboard/base.html' %}
+{% load hitcount_tags %}
+
+
+{% block title %} Course Details {% endblock %}
+
+  {% block content %}  
+<style>
+  .benefits{
+    width: 200px;
+    height: 50px;
+  
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .benefits >*{
+   flex: 1 1 auto;
+   width: 10px;
+   margin: -10px;
+  
+
+  }
+  [aria-expanded="false"] > .expanded,
+[aria-expanded="true"] > .collapsed {
+  display: none;
+}
+ .page{
+  display: flex;
+  flex-wrap: wrap;
+ }
+ .page > *{
+  flex: 1 1 auto;
+  margin: 5px;
+ }
+ .rounded{
+  width: 30px;
+  height: 150px;
+ }
+
+ .gallery {
+    display: flex;
+    overflow-x: auto;
+    height: 400px;
+    overflow-y: hidden;       
+}
+.gallery>* {
+   flex: 1 1 auto;
+   margin: 10px;
+       
+}
+
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.rounded{
+  width: 50px;
+  height: 53px;
+}
+
+.course-owner{
+  display: flex;
+  flex-wrap: wrap;
+}
+.course-owner >*{
+
+  margin: 5px;
+}
+.sta{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sta >*{
+  flex: 1 1 auto;
+  margin: 10px;
+
+}
+.name{
+  padding: 20px;
+}
+
+  /* ebooks */
+  .child-review{
+  display: flex;
+  margin-top: -25px;
+}
+
+.child-review >*{
+  margin: 10px;
+}
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card-review{
+  width: 300px;
+}
+.card-review:hover {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
+.flex-container >*{
+  margin: 10px;
+}
+
+ /* end of ebooks */
+
+  /* fixed-bottom */
+  .fixed-bottom {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      margin: 25px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .fixed-bottom.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    @media (min-width: 768px) {
+      .fixed-bottom {
+        display: none;
+      }
+    }
+
+  /* end fixed-bottom */
+
+  /* whatyouwilllearn */
+  .whatyouwilllearn{
+    display: flex;
+    flex-wrap: wrap;
+    background-color: black;
+    color: white;
+    min-height: 370px;
+  }
+  .whatyouwilllearn >*{
+    margin: 10px;
+  }
+  .card:hover {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.desc-hidden {
+      display: none;
+  }
+
+  .center {
+            text-align: center;
+        }
+  
+</style>
+
+
+  <div  style="padding-left: 20px; padding-right: 20px;background-color: rgb(240, 238, 235)" class="">
+    <br> <br>
+    <div class="course-owner d-flex ">
+      {% if object.course_logo.url %}
+      <img  class="rounded" src="{{ object.course_logo.url }}"  alt=""> 
+      <p>{{object.course_owner|safe}}</p>
+      {% else %}
+      <img  class="rounded" src=" /static/sms/images/newlogo3.jpg"  alt="">
+      <p  class="text-dark ">Codethinkers Academy</p>
+    {% endif %}
+    </div>
+    
+    <br>
+  <h6>{{ object.title|safe }}</h6>
+  <!-- <p>{{enrollment_count}} + students already enrolled  </p> -->
+
+  <p>
+    {% get_hit_count for object as hit_count %}
+    {{ hit_count|add:100 }} students already enrolled
+  </p>
+  
+
+  <!-- {% get_hit_count for object %}  -->
+  {% if course_pay == True %}
+  <h4>Premium</h4>
+  {% else %}
+  {% if object.status_type == 'Premium' %}
+  <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{object.status_type|safe}} |  &#8358;{{object.price|safe|floatformat:"0g"}}</p> 
+
+  {% else %}
+  <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{object.status_type|safe}}</p> 
+  {% endif %}
+
+  {% endif %}
+  <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{object.categories.name|safe|title}} level</small> <br>
+  <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{object.course_type|safe}}</small>
+
+    <br> <br>
+    <p class=" pr-3">{{ object.desc|truncatechars:300|safe }}</p>
+ 
+
+<!-- payment logics -->
+<div style="text-align: center; padding-right: 25px;">
+
+  {% if course.status_type == 'Free' %}
+  <!-- For free courses, always display the "Enroll" button -->
+  <a href="{% url 'sms:topicslistview' course.id %}">
+    <button class="btn btn-primary">Enroll {{ course.title|safe }}</button>
+  </a>
+{% elif related_payments %}
+  <!-- If there are related payments -->
+  <a href="{% url 'sms:topicslistview' course.id %}">
+    <button class="btn btn-primary">Enroll {{ object.title }}</button>
+  </a>
+{% elif course_pay %}
+  <!-- If there are associated schools -->
+ 
+    {% if course_pay == True %}
+      <!-- Inside the loop, check if the school name matches -->
+      <a href="{% url 'sms:topicslistview' course.id %}">
+        <button class="btn btn-primary">Enroll {{ object.title }}</button>
+      </a>
+      {% else %}
+      <a style="height: 10px;" class="" href="{% url 'sms:course' course.id %}">
+        <button class="btn btn-primary">Make payment to proceed</button>
+       </a>
+    {% endif %}
+ 
+{% else %}
+  <!-- For cases other than free courses, related payments, and associated schools -->
+  <!-- Add your logic here -->
+  <a style="height: 10px;" class="" href="{% url 'sms:course' course.id %}">
+    <button class="btn btn-primary">Make payment to proceed</button>
+   </a>
+{% endif %}
+
+<!--end of payment logics -->
+
+<!-- {% if course.status_type == 'Free' %}
+
+  <a href="{% url 'sms:topicslistview' course.id %}">
+    <button class="btn btn-primary">Enroll {{ course.title|safe }}</button>
+  </a>
+
+{% endif %}
+
+{% for school in associated_schools %}
+{% if school.school_name  == school_name %}
+    <a href="{% url 'sms:topicslistview' course.id %}">
+        <button class="btn btn-primary">Enroll {{ object.title }}</button>
+    </a>
+{% endif %}
+{% endfor %}
+
+{% if related_payments %}
+    <a href="{% url 'sms:topicslistview' course.id %}">
+        <button class="btn btn-primary">Enroll {{ object.title }}</button>
+    </a>
+{% else %}
+{% if  school.school_name   %}
+   
+    {% else %}
+    <a style="height: 10px;" class="" href="{% url 'sms:course' course.id %}">
+      <button class="btn btn-primary">Make payment to proceed</button>
+  </a>
+    {% endif %}
+{% endif %} -->
+
+
+
+
+{% if related_payments.exists and not payment_success %}
+<!-- Add a hidden input field to hold the payment success flag -->
+
+<input type="hidden" id="paymentSuccess" value="true">
+
+
+{% endif %}
+
+</div>
+<!--end payment logics -->
+ 
+      
+
+<br> <br>
+<!-- <p>{{num_students|floatformat:"0g"}}  students already enrolled </p> -->
+
+  </div>
+
+
+
+
+<div class="pl-3 pr-3">
+
+  <h3>About this Course</h3>
+
+  <!-- <p class="pl-3">{% get_hit_count for object %} <i class="fas fa-eye"></i> recent views</p> -->
+
+  <p id="myLink" class=" pr-3">{{ object.desc|linebreaksbr|truncatechars:200|safe }}</p>
+  
+  <p class="collapse" id="block-id"> {{ object.desc|linebreaksbr|safe }}</p>
+
+  <p>
+    <!-- aria-expanded attribute is mandatory -->
+    <!-- bootstrap changes it to true/false on toggle -->
+   
+    <a href="#block-id" class="" data-toggle="collapse" aria-expanded="false" aria-controls="block-id">
+      <span onclick="toggleElement()" class="collapsed">
+        Show more
+      </span>
+      <span onclick="toggleElement()" class="expanded">
+        Show Less
+      </span>
+    </a>
+  </p>
+
+ 
+</div>
+
+
+<br><br><br>
+<div class="pl-3 pr-3">
+<h3>Course Prerequisites</h3>
+{% if prerequisites %}
+    <ul >
+        {% for prerequisite in prerequisites %}
+            <li >
+                <a href="{% url 'sms:courseslistdesc' prerequisite.id %}">{{ prerequisite.title }}</a>
+                
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No prerequisites for this course.</p>
+{% endif %}
+</div>
+
+
+  <!-- ebooks section endign -->
+
+  <br> <br> <br>
+  <div class="row d-flex justify-content-center">
+    <div class="col-md-10 col-xl-8 text-center">
+     
+      <p class="mb-4 pb-2 mb-md-5 pb-md-0">
+  
+      </p>
+    </div>
+  </div>
+  
+
+  <div  class=" sta">
+
+    <div class="card mb-4 py-3  border-bottom-primary pl-3">
+      <h6 style="color: black;" class="mb-4">
+        Some Benefit Associated with the Courses:
+      </h6>
+        <div class="card-body">
+          <ul>
+            <li> 100% online </li>
+            <li>   Flexible deadlines</li>
+            <li> Collaborators</li>
+            <li> Jobs opportunities</li>
+            <li> Certificate of completion</li>
+            <li>  Language: English</li>
+          </ul>
+         
+  
+        </div>
+    </div>
+
+    <div class="card mb-4 py-3  border-bottom-primary pl-3">
+      <h6 style="color: black; " class="mb-4">
+       Offered by
+      </h>
+      <div class="card-body">
+        <div class="course-owner">
+          {% if object.course_logo.url %}
+          <img  class="" src="{{ object.course_logo.url }}" width="100px" height="100px" alt=""> 
+          <p class="name">{{object.course_owner|safe}}</p>
+          {% else %}
+          <img  class="" src=" /static/sms/images/newlogo3.jpg" width="100px" height="100px"  alt="">
+          <p style="name" class="text-dark ">Codethinkers Academy </p>
+        {% endif %}
+        </div>
+        
+      </div>
+  </div>
+
+
+</div>
+
+<br> <br> <br>
+<div class="pl-3 pr-3">
+<h3>About Course Owner</h3>
+
+{% if aboutcourseowners %}
+{% for aboutcourseowner in aboutcourseowners %}
+
+<p id="myLink2" class=" pr-3">{{ aboutcourseowner.desc|linebreaksbr|truncatechars:200|safe }}</p>
+  
+<p class="collapse" id="block-id"> {{ aboutcourseowner.desc|linebreaksbr|safe }}</p>
+
+<p>
+  <!-- aria-expanded attribute is mandatory -->
+  <!-- bootstrap changes it to true/false on toggle -->
+ 
+  <a href="#block-id" class="" data-toggle="collapse" aria-expanded="false" aria-controls="block-id">
+    <span onclick="toggleElement2()" class="collapsed">
+      Show more
+    </span>
+    <span onclick="toggleElement2()" class="expanded">
+      Show Less
+    </span>
+  </a>
+</p>
+{% empty %}
+<h3 class="card text-center text-danger">No Record here</h3>
+{% endfor %}
+
+{% else %}
+<p>
+Welcome to CodeThinkers Academy, your gateway to the exciting world of coding and technology!
+Why CodeThinkers Academy?
+Unlock Endless Opportunities: In today's tech-driven world, …
+Welcome to CodeThinkers Academy, your gateway to the exciting world of coding and technology!
+Why CodeThinkers Academy?
+Unlock Endless Opportunities: In today's tech-driven world, coding skills are more valuable than ever. At CodeThinkers Academy, we empower you to unlock endless opportunities in the tech industry, from web development to app creation and beyond.
+Expert Instructors: Learn from the best! Our team of experienced and passionate instructors will guide you through every step of your coding journey. They are dedicated to your success and will ensure you grasp complex concepts with ease.
+Hands-on Learning: At CodeThinkers Academy, we believe in learning by doing. Our curriculum is designed to offer hands-on projects and real-world scenarios, giving you the confidence to tackle any coding challenge.
+Tailored for All Levels: Whether you're a complete beginner or an experienced programmer looking to upskill, we have the right courses for you. Choose from our diverse range of courses, designed to meet your unique learning needs.
+Why Choose CodeThinkers Academy?
+Flexible Learning Options: We offer both in-person and online learning options, so you can choose what suits your schedule best.
+Affordable Pricing: Quality education shouldn't come with a hefty price tag. We offer competitive pricing and various payment options to fit your budget.
+Community and Networking: Join our vibrant community of learners, share experiences, and collaborate on exciting projects. Networking opportunities abound!
+Career Support: Our commitment to your success goes beyond the classroom. Benefit from our career support services, including resume reviews and interview preparation.
+</p>
+{% endif %}
+</div
+>
+<br><br><br>
+
+<div class="container ">
+  <div  class="row">
+    <div  class="col-lg-4">
+      <div  class="card mb-4 py-3 border-bottom-primary pl-3">
+        <h6 class="mb-4">WHAT YOU WILL LEARN</h6>
+        <div class="card-body whatyouwilllearn">
+          {% for obj in whatyouwilllearn %}
+          <div class="d-flex">
+            <img src="https://th.bing.com/th/id/OIP.K2XmktPQf-TO5XMjz-l_DAHaHa?w=187&h=188&c=7&r=0&o=5&pid=1.7" width="20px" height="20px" alt="">
+            <!-- <p data-label="my-label-button" class="line-numbers copy-to-clipboard-button body-text text-left">{{ obj.desc|safe }}</p> -->
+
+            <p id="myLink3" id="myLink3" class=" pr-3">{{ obj.desc|linebreaksbr|truncatechars:150|safe }}</p>
+            <p class="collapse" id="myLink3"> {{ obj.desc|linebreaksbr|safe }}</p>
+          
+            <p>
+              <!-- aria-expanded attribute is mandatory -->
+              <!-- bootstrap changes it to true/false on toggle -->
+             
+              <a href="#block-id" class="" data-toggle="collapse" aria-expanded="false" aria-controls="block-id">
+                <span onclick="toggleElement3()" class="collapsed">
+                  Show more
+                </span>
+                <span onclick="toggleElement3()" class="expanded">
+                  Show Less
+                </span>
+              </a>
+            </p>
+
+          </div>
+          {% empty %}
+          <h1 class="card text-center text-danger">No Record here</h1>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card mb-4 py-3 border-bottom-primary pl-3">
+        <h6 class="mb-4">WHAT YOU WILL GAIN</h6>
+        <div class="card-body whatyouwilllearn">
+          {% for category in skillyouwillgain %}
+          <div class="d-flex">
+            <img src="https://th.bing.com/th/id/OIP.K2XmktPQf-TO5XMjz-l_DAHaHa?w=187&h=188&c=7&r=0&o=5&pid=1.7" width="20px" height="20px" alt="">
+            <p class="card-title">{{ category.title|safe }}</p>
+          </div>
+          {% empty %}
+          <h3 class="card text-center text-danger">No Record here</h3>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card mb-4 py-3 border-bottom-primary pl-3">
+        <h6 class="mb-4">WHAT YOU WILL BUILD</h6>
+        <div class="card-body whatyouwilllearn">
+          {% for category in whatyouwillbuild %}
+          <div class="d-flex">
+            <img src="https://th.bing.com/th/id/OIP.K2XmktPQf-TO5XMjz-l_DAHaHa?w=187&h=188&c=7&r=0&o=5&pid=1.7" width="20px" height="20px" alt="">
+            <p class="card-title">{{ category.desc|safe }}</p>
+          </div>
+          {% empty %}
+          <h3 class="card text-center text-danger">No Record here</h3>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+
+
+
+
+<br> <br> <br>
+
+<!-- FAQ -->
+<div class="container">
+  <h3 id="faqs" style="text-align:center" class="text-danger"> Frequently Asked Questions </h3>
+</div>
+
+<br>
+
+<div class="container4" style="width: 90%; margin: 0 auto;">
+  <div class="accordion" id="faqAccordion">
+    {% for faq in faqs %}
+    <div class="card">
+
+      <div class="card-header" id="faqHeading{{ faq.id }}">
+        <p class="mb-0">
+          <button style="font-size: 12px;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#faqCollapse{{ faq.id }}" aria-expanded="true" aria-controls="faqCollapse{{ faq.id }}">
+            {{ faq.title|safe }}
+            <i class="fas fa-chevron-down"></i>
+          </button>
+        </p>
+      </div>
+
+      <div id="faqCollapse{{ faq.id }}" class="collapse" aria-labelledby="faqHeading{{ faq.id }}" data-parent="#faqAccordion">
+        <div class="card-body">
+          {{ faq.desc|safe }}
+        </div>
+      </div>
+
+    </div>
+
+    {% endfor %}
+  </div>
+</div>
+
+<br>
+<!-- end FAQ -->
+
+
+
+<br> <br> <br>
+
+<!-- FAQ -->
+<div class="container">
+  <h3 id="faqs" style="text-align: center;" class="text-danger">Career Opportunities</h3>
+</div>
+
+<br>
+
+<div class="container4" style="width: 90%; margin: 0 auto;">
+  <div class="accordion" id="faqAccordion">
+    {% for obj in careeropportunities %}
+    <div class="card">
+
+      <div class="card-header" id="faqHeading{{ faq.id }}">
+        <p class="mb-0 ">
+          <button style="font-size: 12px;" class="btn btn-link " type="button" data-toggle="collapse" data-target="#faqCollapse{{ faq.id }}" aria-expanded="true" aria-controls="faqCollapse{{ faq.id }}">
+          {{ obj.courses|safe }}
+            <i class="fas fa-chevron-down"></i>
+          </button>
+        </p>
+      </div>
+
+      <div id="faqCollapse{{ faq.id }}" class="collapse" aria-labelledby="faqHeading{{ faq.id }}" data-parent="#faqAccordion">
+        <div data-label="my-label-button" class="line-numbers copy-to-clipboard-button " class="card-body">
+          {{ obj.desc|safe }}
+        </div>
+      </div>
+
+    </div>
+   
+    {% endfor %}
+  </div>
+</div>
+
+<br>
+<!-- end FAQ -->
+
+<br> <br> <br>
+
+  <!-- <img style="width:100%;" src="/static/sms/images/designcertificate2.png" class="card-img"  height="auto alt=""> -->
+  <div class="center">
+    <h3>Shareable Certificate</h3>
+    <img style="width:60%;" src="https://i.ibb.co/vDy6zfw/Copy-of-Blue-Orange-Elegant-Company-Certificate-Landscape-1.png" class="card-img" height="auto" alt="">
+    <p>You can share your Certificate with friends and family, on printed resumes, CVs, or other important documents.</p>
+  </div>
+  
+
+
+<br>
+<div class="text-center" style="margin: 0 auto;">
+  <h3 class="text-center text-danger">Start Learning Today</h3> <br>
+
+  <ul style="text-align: center; padding-right: 25px;" class="text-center">
+  <!-- payment logics -->
+
+<!-- {% if course.status_type == 'Free' %}
+
+<a href="{% url 'sms:topicslistview' course.id %}">
+  <button class="btn btn-primary">Enroll {{ course.title|safe }}</button>
+</a>
+{% else %}
+{% if not related_payments.exists %}
+ 
+  <a style="height: 10px;" class="" href="{% url 'sms:course' course.id %}">
+    <button class="btn btn-primary">Make payment to proceed</button>
+  </a>
+{% else %}
+
+  <a href="{% url 'sms:topicslistview' course.id %}">
+    <button class="btn btn-primary">Enroll {{ course.title|safe }}</button>
+  </a>
+{% endif %}
+{% endif %} -->
+
+{% if related_payments.exists and not payment_success %}
+<!-- Add a hidden input field to hold the payment success flag -->
+
+{% endif %}
+
+<!--end payment logics -->
+
+  </ul>
+  
+</div>
+
+<br>
+ 
+<!--Review-->
+<br> <br> <br>
+
+<div style="color: black; font-size: 18px; font-weight: bold;" class="card-body">
+  <h3 class="text-center">Learners' Reviews</h3>
+</div>
+
+
+<div class="flex-container">
+  {% for obj in courseLearnerReviews %}
+  <div class="card card-review">
+    <!-- <img src="{{ category.img_cat.url }}" class="card-img-top" alt="Category Image"> -->
+    <div class="card-body child-ebooks">
+      <!-- <img class="" src="{{ alert.img_ebook.url }}" width="100px" height="130px" alt="{{ obj.desc }}"> -->
+      <div class="text-center">
+        <img src=" /static/sms/images/blankavater.png" width="100px" class="rounded-circle img-fluid" /> <hr>
+       <h6>{{ obj.title }}</h6>
+       <img src="/static/sms/images/star-rating-icon-21.jpg" width="100px" alt="">
+      </div>
+      <p class=""> {{ obj.desc }}</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- <a href="#" class="btn btn-primary fixed-bottom">Click Me</a> -->
+<br> <br> <br>
+
+<!--  related courses -->
+<div style="color: black; font-size: 18px; font-weight: bold;" class="card-body">
+  <h3 class="text-center">Related Courses</h3>
+</div>
+
+
+<div class="flex-container">
+  {% for obj in related_courses %}
+  <div class="card card-review">
+
+    <a style="height: 10px;" class=""  href="{% url 'sms:courseslistdesc' obj.pk %}">
+    <div class="card-body child-ebooks">
+      <a  class=""  href="{% url 'sms:courseslistdesc' obj.pk %}">
+      <div class="">
+        {% if obj.img_course %}
+        <img class="" src="{{obj.img_course.url}}" width="100%" height="200px" alt="cetagory image">
+        
+        {% endif %}
+        <br>
+        <div class="pl-2">
+        <div class="d-flex ">
+
+        {% if obj.course_logo.url %}
+        <img  class="rounded" src="{{ obj.course_logo.url }}" width="30px"  height="33px" alt=""> <br>
+        {% else %}
+        <img  class="rounded" src=" /static/sms/images/newlogo3.jpg" width="30px"  height="33px" alt="{{obj.desc}}"> <br>
+      {% endif %}
+
+      {% if obj.course_owner %}
+      <small class="text-dark">{{obj.course_owner|safe}}</small>
+      {% else %}
+      <small class="text-dark">Codethinkers Academy</small>
+      {% endif %}
+    
+      </div>
+    </div>
+
+      <a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">{{obj}} </a>
+     
+      {% if obj.status_type == 'Premium' %}
+     
+      <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}} |  &#8358;{{obj.price|safe}}</p> 
+      {% else %}
+      <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}}</p> 
+      {% endif %}
+     
+      <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.categories.name|safe|title}}</small> <br>
+      <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.course_type|safe}}</small>
+      <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " ><a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">View Course</a></small>
+      </div>
+  
+    </div>
+    </a>
+    
+  </div>
+  {% endfor %}
+</div>
+<!-- end of related courses -->
+
+
+<ul>
+
+
+  <!-- payment logics -->
+
+  <!-- payment logics -->
+<div style="text-align: center; padding-right: 25px;">
+
+  {% if course.status_type == 'Free' %}
+  <!-- For free courses, always display the "Enroll" button -->
+  <a href="{% url 'sms:topicslistview' course.id %}">
+    <button class="btn btn-primary fixed-bottom">Enroll {{ course.title|safe }}</button>
+  </a>
+{% elif related_payments %}
+  <!-- If there are related payments -->
+  <a href="{% url 'sms:topicslistview' course.id %}">
+    <button class="btn btn-primary fixed-bottom">Enroll {{ object.title }}</button>
+  </a>
+{% elif associated_schools %}
+  <!-- If there are associated schools -->
+  {% for school in associated_schools %}
+    {% if course_pay == True %}
+      <!-- Inside the loop, check if the school name matches -->
+      <a href="{% url 'sms:topicslistview' course.id %}">
+        <button class="btn btn-primary fixed-bottom">Enroll {{ object.title }}</button>
+      </a>
+      {% else %}
+      <a style="height: 10px;" class="" href="{% url 'sms:course' course.id %}">
+        <button class="btn btn-primary fixed-bottom">Make payment to proceed</button>
+       </a>
+    {% endif %}
+  {% endfor %}
+{% else %}
+  <!-- For cases other than free courses, related payments, and associated schools -->
+  <!-- Add your logic here -->
+  <a style="height: 10px;" class="" href="{% url 'sms:course' course.id %}">
+    <button class="btn btn-primary fixed-bottom">Make payment to proceed</button>
+   </a>
+{% endif %}
+
+<!--end of payment logics -->
+
+<!-- {% if course.status_type == 'Free' %}
+<a href="{% url 'sms:topicslistview' course.id %}">
+  <button class="btn btn-primary fixed-bottom">Enroll {{ course.title|safe }}</button>
+</a>
+{% else %}
+{% if not related_payments.exists %}
+  <a style="height: 10px;" class="" href="{% url 'sms:course' course.id %}">
+    <button class="btn btn-primary fixed-bottom">Make payment to proceed</button>
+  </a>
+{% else %}
+  <a href="{% url 'sms:topicslistview' course.id %}">
+    <button class="btn btn-primary fixed-bottom">Enroll {{ course.title|safe }}</button>
+  </a>
+{% endif %}
+{% endif %} -->
+
+
+{% if related_payments.exists and not payment_success %}
+<!-- Add a hidden input field to hold the payment success flag -->
+{% endif %}
+
+<!--end payment logics -->
+
+</ul>
+
+
+<!-- about scroll top to see enrollment -->
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    window.addEventListener("scroll", function() {
+      var button = document.querySelector(".fixed-bottom");
+      var scrollPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+
+      if (scrollPosition > 500) {
+        button.classList.add("show");
+      } else {
+        button.classList.remove("show");
+      }
+    });
+  });
+</script>
+
+<!-- about course descriptions -->
+<script>
+  function toggleElement() {
+    var link = document.getElementById("myLink");
+    if (link.style.display === "none") {
+      link.style.display = "inline";
+    } else {
+      link.style.display = "none";
+    }
+  }
+
+
+  // about the course owner section
+  function toggleElement2() {
+    var links = document.getElementById("myLink2");
+    if (links.style.display === "none") {
+      links.style.display = "inline";
+    } else {
+      links.style.display = "none";
+    }
+  }
+  // end about the course owner section
+
+    // what you will learn section
+    function toggleElement3() {
+    var link3 = document.getElementById("myLink3");
+    if (link3.style.display === "none") {
+      link3.style.display = "inline";
+    } else {
+      link3.style.display = "none";
+    }
+  }
+  // end what you will learn section
+
+</script>
+
+<!-- about the course owner -->
+
+<script>
+  // Check if the payment success flag is present
+  var paymentSuccessInput = document.getElementById('paymentSuccess');
+  if (paymentSuccessInput && paymentSuccessInput.value === 'true') {
+    // Check if the payment_success session storage is set
+    var paymentSuccessStorage = sessionStorage.getItem('payment_success');
+    if (!paymentSuccessStorage || paymentSuccessStorage === 'true') {
+      // Set the payment_success session storage to false and reload the page after 1 second
+      sessionStorage.setItem('payment_success', 'false');
+      console.log('Page reloading - 1st time');
+      setTimeout(function() {
+        console.log('Page reloaded - 1st time');
+        window.location.reload();
+      }, 1000);
+    } else if (paymentSuccessStorage === 'false') {
+      // Set the payment_success session storage back to true and reload the page again after 5 seconds
+      sessionStorage.setItem('payment_success', 'true');
+      console.log('Page reloading - 2nd time');
+      setTimeout(function() {
+        console.log('Page reloaded - 2nd time');
+        window.location.reload();
+      }, 300000);
+    }
+  }
+</script>
+
+  {% endblock %} 
+
+
+
+

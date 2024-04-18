@@ -1,0 +1,18 @@
+<!-- users/templates/users/referral_signup.html -->
+{% extends 'sms/dashboard/base.html' %}
+
+{% block content %}
+
+<div class="text-center">
+    <br><br>
+  <h2>Referral Signup</h2>
+
+
+  <form method="post" action="{% url 'sms:homepage' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Sign Up</button>
+  </form>
+
+</div>
+{% endblock %}

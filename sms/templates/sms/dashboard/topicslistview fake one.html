@@ -1,0 +1,501 @@
+{% extends 'sms/dashboard/base.html' %}
+
+{% load hitcount_tags %}
+{% load cloudinary %}
+{% load embed_video_tags %}
+
+{% block title %} Course Overall Scores Detail View {% endblock %}
+
+  {% block content %} 
+    <!-- prism.css and prism.js -->
+    <link rel="stylesheet" type="text/css" href="/static/sms/prism.css">
+    <script src="/static/sms/prism.js"></script>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <style>
+
+
+img, .videoWrapper{
+width: 100%;
+}
+
+.d-flex{
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.d-flex >*{
+    flex: 1 1 auto;
+    margin: 0px;
+} 
+
+table.display {
+margin: 0 auto;
+width: 100%;
+clear: both;
+border-collapse: collapse;
+table-layout: fixed; // *****
+}
+
+
+/* video controller css  */
+
+.video-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+ 
+}
+
+.video-wrapper {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.video-wrapper iframe {
+  width: 350px;
+  height: 220px;
+}
+@media (min-width: 768px) { /* Adjust the breakpoint as per your needs */
+  .video-wrapper iframe {
+    width: 800px;
+    height: 450px;
+  }
+}
+
+/*  end video controller css  */
+
+/* transcript */
+
+
+  .dataTables_wrapper  {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* .dataTables_wrapper .bottom {
+        width: 100%;
+        text-align: center;
+    } */
+    .dataTables_filter { 
+        display: none; 
+        float: left;
+    }
+    .dataTables_length {
+        display: none;
+        float: left;
+    } 
+
+/* Add your custom styles here */
+.completed-topic {
+    color: green;
+    margin-left: 10px; /* Adjust as needed */
+}
+
+
+
+#content-container {
+  display: flex;
+  flex-direction: column;
+  
+}
+
+.flex-item {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  margin-bottom: 10px; /* Adjust as needed for spacing between items */
+}
+
+.flex-item p {
+  margin-left: 10px; 
+}
+
+/* mark as completed */
+
+.scroll-column {
+      height: 450px; 
+      overflow-y: auto; 
+      border: 1px solid #ccc; 
+      width: 200px;
+    }
+
+    .scroll-column-content {
+      padding: 10px;
+    }
+</style>
+
+               <!-- alert -->
+
+  <br>                   
+ <button class="btn "><a href="https://wa.me/23409031568177"> Contact Us For Personal Tutoring </a>  </button>
+
+ 
+<table  id="example" class="datatable-wide display "  style="width: 100%;">
+    
+    <thead class="">
+        <tr>
+            <th >
+
+                <h6 style="flex-wrap: wrap;" class="d-flex">
+                    <!-- <a href="{% url 'student:take-exam' %}">Take Exam</a> -->
+                    <p class="">{{c}} Modules </p> 
+                    <p>{{ hitcount.total_hits }}  <i class="fas fa-eye"></i></p>
+                    <a class="" href="{% url 'sms:feedbackformview' %}">
+                        <i class="fas fa-bell fa-fw"></i>
+                        <span>Feedback</span></a>
+                       
+                </h6>
+            </th>
+           
+         
+        </tr>
+
+       
+    </thead>
+    <tbody >
+      
+
+        {% for topic in topics %}
+        <tr>
+            <td class="text-center">
+                <div style="padding-left: 0px; padding-right: 0px;" class="">
+                    {% if topic.img_topic %}
+                        <img class="img-box" src="{{topic.img_topic.url}}" height="700px" width="100%" alt="topics image">
+                    {% else %}
+                    {% endif %}
+                    <!-- Add the video player -->
+                    {% if topic.video %}
+                    <div class="video-container">
+                        <div id="myVideo" class="video-wrapper">
+                            {% video topic.video|safe class="ratio ratio-16x9" %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div style="text-align: left;" class=" code-block">
+                        <h4 style="color: black;">{{topic.title|safe}}</h4>
+                        <small style="color: black;">
+                            created: {{topic.created|timesince}} <br> last updated: {{topic.updated}}
+                        </small> <br>
+                        <hr> 
+                        {% if topic.desc %}
+                     
+                            <label style="max-width: 100%; overflow-x: hidden;" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left">{{topic.desc|safe}}</label> <br>
+                            {% for t in topicsa %}
+                            {% if topic.title == t.course_name.title %}
+                                Assess Your Knowledge <a href="{% url 'quiz:start-exam' t.id %}"> {{t.course_name.title}}</a>
+                            {% endif %}
+                            {% endfor %}
+                            
+                            <div style="marin-left: 60%;">
+                                <div>
+                                    <button id="complete-button-{{ topic.id }}" onclick="markTopicCompleted({{ topic.id }})">Make Complete</button>
+                                    <span id="tick-icon-{{ topic.id }}" class="{% if topic.id in completed_topic_ids %}visible{% else %}d-none{% endif %}">
+                                      <i class="fas fa-check-circle"></i>
+                                    </span>
+                                  </div>
+                            <!--       
+                            <button id="complete-button-{{ topic.id }}" onclick="markTopicCompleted({{ topic.id }})">Make Complete</button>
+                            <span id="tick-icon-{{ topic.id }}" class="d-none"><i class="fas fa-check-circle"></i></span> -->
+                            </div>
+                            
+                            <p>Join Community: {{topic.topics_url|urlizetrunc:15}}</p><br>
+                        {% else %}
+                            <label data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left">{{topic.coursedesc|safe}}</label>
+                        {% endif %}
+                    </div>
+                    {% if forloop.last %}
+                        <h4 style="color: green;text-align:center">Congratulations! You have completed this course</h4> <br>
+                        <h3 class="card text-center text-danger"><a href="{% url 'student:take-exam' %}">Take Exam</a></h3>
+                    {% else %}
+                        <p data-label="my-label-button" class="line-numbers copy-to-clipboard-button" style="font-size: 20px;"></p>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+        {% empty %}
+            <h3 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h3>
+        {% endfor %}
+    </tbody>
+    
+ 
+</table>
+
+
+<!-- <div class="scroll-column">
+
+    <div id="content-container" class="makecompleted">
+        {% for topic in topics %}
+          <div class="flex-item">
+            <span id="tick-icon-{{ topic.id }}" class="{% if topic.id in completed_topic_ids %}visible{% else %}d-none{% endif %}">
+              <i class="fas fa-check-circle"></i>
+            </span>
+          <span>{{ topic.title }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      
+    <div class="scroll-column-content">
+      Content 1
+    </div>
+    <div class="scroll-column-content">
+      Content 2
+    </div>
+    <div class="scroll-column-content">
+        Content 1
+      </div>
+      <div class="scroll-column-content">
+        Content 2
+      </div>
+      <div class="scroll-column-content">
+        Content 1
+      </div>
+      <div class="scroll-column-content">
+        Content 2
+      </div>
+      <div class="scroll-column-content">
+        Content 1
+      </div>
+      <div class="scroll-column-content">
+        Content 2
+      </div>
+      <div class="scroll-column-content">
+        Content 1
+      </div>
+      <div class="scroll-column-content">
+        Content 2
+      </div>
+   
+  </div>  -->
+
+<!-- topicslistviewtest1.html -->
+<!-- {% for topic in topics %}
+
+  <div>
+    <p>{{ topic.title }}</p>
+    <button id="complete-button-{{ topic.id }}" onclick="markTopicCompleted({{ topic.id }})">Make Complete</button>
+    <span id="tick-icon-{{ topic.id }}" class="d-none"><i class="fas fa-check-circle"></i></span>
+  </div>
+    
+
+{% endfor %}
+<hr> -->
+
+<!-- {% for topic in topics %}
+  <div>
+    <p>{{ topic.title }}</p>
+    <button id="complete-button-{{ topic.id }}" onclick="markTopicCompleted({{ topic.id }})">Make Complete</button>
+    {% if completed_topic_ids %}
+      <span id="tick-icon-{{ topic.id }}"><i class="fas fa-check-circle"></i></span>
+    {% endif %}
+  </div>
+{% endfor %} -->
+
+<!-- 
+<div id="content-container" class="makecompleted">
+    {% for topic in topics %}
+      <div class="flex-item">
+        <span id="tick-icon-{{ topic.id }}" class="{% if topic.id in completed_topic_ids %}visible{% else %}d-none{% endif %}">
+          <i class="fas fa-check-circle"></i>
+        </span>
+      <span>{{ topic.title }}</span>
+      </div>
+    {% endfor %}
+  </div>
+  
+<hr> -->
+
+<!-- <div id="content-container">
+   
+    {% for topic in completed_topic_titles %}
+
+<p><span id="tick-icon-{{ topic.id }}"><i class="fas fa-check-circle"></i></span> {{ topic  }} </p> 
+
+{% endfor %}
+</div> -->
+
+
+<!-- make completed javascrpts -->
+<script>
+function markTopicCompleted(topicId) {
+  $.ajax({
+    type: "POST",
+    url: "/mark_topic_completed/",
+    data: {
+      'topic_id': topicId,
+      csrfmiddlewaretoken: '{{ csrf_token }}'
+    },
+    success: function(data) {
+      $('#complete-button-' + topicId).addClass('d-none');  // Hide the button
+      $('#tick-icon-' + topicId).removeClass('d-none');    // Show the tick icon
+      $('#topic-status-' + topicId).text('Completed');     // Change the status text
+    },
+    error: function(xhr, textStatus, errorThrown) {
+      console.error('Error marking topic as complete:', errorThrown);
+    }
+  });
+}
+
+  </script>
+  <!-- end make completed javascrpts -->
+
+
+
+<!-- page refresh  -->
+<script>
+function reloadContent() {
+    $.ajax({
+        url: window.location.href,  // Reload the current page
+        type: 'GET',
+        success: function(data) {
+            // Replace the content of a specific element with the reloaded content
+            $('#content-container').html($(data).find('#content-container').html());
+        },
+        error: function(error) {
+            console.error('Error reloading content:', error);
+        }
+    });
+}
+
+// Example: Reload content every 10 seconds
+setInterval(reloadContent, 5000);  // Adjust the time interval as needed
+</script>
+<!-- end of  -->
+
+<!-- datatable javascripts -->
+<script>
+
+$(document).ready(function () {
+    $('#example').DataTable({
+        pagingType: 'simple',
+        dom: 'Qfrtip',
+        ordering: false,
+        bPaginate: true,
+        scrollY: '100%',
+        scrollCollapse: true,
+        pageLength: 1,
+        stateSave: true,
+        dom: '<"top"iflp<"clear">>rt<"bottom"iflp<"clear">>'
+    });
+});
+
+</script>    
+<!-- end datatable javascripts -->
+
+<!-- iframe videos -->
+
+<script>
+    "use strict";
+    if (document.readyState !== 'loading') init();
+    else document.addEventListener('DOMContentLoaded', init);
+    
+    function init() {
+        if (window.runOnce) return;
+    
+        if (typeof YT === 'undefined') {
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
+    
+        var iframes = [];
+        
+        for (var iframe of document.querySelectorAll("iframe[src]")) {
+            var src = iframe.getAttribute("src");
+            if (src.includes("youtube.com/embed/")) {
+                if(!src.includes("enablejsapi=1"))
+                    if(src.includes("?"))
+                        iframe.setAttribute("src", src + "&enablejsapi=1");
+                    else
+                        iframe.setAttribute("src", src + "?enablejsapi=1");
+    
+                iframes.push(iframe);
+            }
+        }
+    
+        var overlayStyles = {
+            display: "none",
+            content:"",
+            position: "absolute",
+            left: 0,
+            right: 0,
+            cursor: "pointer",
+            backgroundColor: "black",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+        };
+    
+        window.onYouTubeIframeAPIReady = function() {
+            iframes.forEach(function(iframe) {
+                var overlay = document.createElement('div');
+                for (var style in overlayStyles) {
+                    overlay.style[style] = overlayStyles[style];
+                }
+                
+               // ...
+
+                var wrapper = document.createElement('div');
+                wrapper.style.display = "inline-block";
+                wrapper.style.position = "relative";
+                wrapper.style.marginLeft = "5px";
+                wrapper.style.marginRight = "5px";
+
+                // ...
+
+                iframe.parentNode.insertBefore(wrapper, iframe);
+                wrapper.appendChild(overlay);
+                wrapper.appendChild(iframe);
+                var onPlayerStateChange = function(event) {
+                    if (event.data == YT.PlayerState.ENDED) {
+                        overlay.style.backgroundImage = "url(data:image/svg+xml;utf8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgNTEwIDUxMCI+PHBhdGggZD0iTTI1NSAxMDJWMEwxMjcuNSAxMjcuNSAyNTUgMjU1VjE1M2M4NC4xNSAwIDE1MyA2OC44NSAxNTMgMTUzcy02OC44NSAxNTMtMTUzIDE1My0xNTMtNjguODUtMTUzLTE1M0g1MWMwIDExMi4yIDkxLjggMjA0IDIwNCAyMDRzMjA0LTkxLjggMjA0LTIwNC05MS44LTIwNC0yMDQtMjA0eiIgZmlsbD0iI0ZGRiIvPjwvc3ZnPg==)";
+                       
+                        overlay.style.backgroundSize = "64px 64px";
+                        // overlay.style.top = 0;
+                        // overlay.style.bottom = 0;
+                        overlay.style.top = "60px";
+                        overlay.style.bottom = "10px";
+                        overlay.style.display = "inline-block";
+
+                    } else if (event.data == YT.PlayerState.PAUSED) {
+                        overlay.style.backgroundImage = "url(data:image/svg+xml;utf8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEiIHdpZHRoPSIxNzA2LjY2NyIgaGVpZ2h0PSIxNzA2LjY2NyIgdmlld0JveD0iMCAwIDEyODAgMTI4MCI+PHBhdGggZD0iTTE1Ny42MzUgMi45ODRMMTI2MC45NzkgNjQwIDE1Ny42MzUgMTI3Ny4wMTZ6IiBmaWxsPSIjZmZmIi8+PC9zdmc+)";
+                        overlay.style.backgroundSize = "40px 40px";
+                        overlay.style.top = "40px";
+                        overlay.style.bottom = "50px";
+                        overlay.style.display = "inline-block";
+                    } else if (event.data == YT.PlayerState.PLAYING) {
+                        overlay.style.display = "none";
+                    }
+                };
+                
+                var player  = new YT.Player(iframe, {
+                        events: {
+                            'onStateChange': onPlayerStateChange
+                        }
+                    });
+            
+                wrapper.addEventListener("click", function() {
+                    var playerState = player.getPlayerState();
+                    if (playerState == YT.PlayerState.ENDED) {
+                        player.seekTo(0);
+                    } else if (playerState == YT.PlayerState.PAUSED) {
+                        player.playVideo();
+                    }
+                });
+            });
+        };
+        window.runOnce = true;
+    }
+    
+    // transcript viddo
+    </script>
+    
+
+
+    <!-- link to the solution of related videos -->
+    <!-- https://stackoverflow.com/questions/57820478/how-to-disable-related-videos-from-an-embedded-youtube-playlist -->
+  {% endblock %} 
+ 

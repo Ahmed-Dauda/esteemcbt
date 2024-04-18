@@ -1,0 +1,17 @@
+<!-- move_group.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Move Group</title>
+</head>
+<body>
+    <h1>Move Group</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Move Group</button>
+    </form>
+</body>
+</html>

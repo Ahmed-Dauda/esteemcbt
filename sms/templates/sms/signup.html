@@ -1,0 +1,169 @@
+
+    <!doctype html>
+    {% load widget_tweaks %}
+  
+    {% load static %}
+    
+    {% load sweetify %}
+    {% sweetify %}
+
+    <html lang="en">
+      <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- sweetify -->
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <!-- new animation effect -->
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<!------ Include the above in your HEAD tag ---------->
+<link href="/static/sms/cssh/styles.css" rel="stylesheet">
+<div id="banner">
+  <div id="cloud-scroll"></div>
+</div>
+<!-- end of animation effect -->
+        <title>Codethinkers sign up pag</title> 
+
+  <style>
+    body{
+      background-color: blue;
+    }
+      .login:hover{
+          background-color: white;
+            /* font-size: 15px; */
+            width: 100px;
+      }
+      input{
+        width: 100%;
+      }
+  </style>
+  </head>
+  <body>
+
+
+    <!-- new form -->
+
+    <section class="vh-100 bg-image ">
+      <!-- <img class="mx-auto rounded-circle" src="/static/sms/images/logo2.jpg" alt="logo2" style="width: 185px;" alt="logo"> -->
+      <div  class="mask d-flex align-items-center h-100 ">
+        <div class="container h-100">
+          <div class="row d-flex justify-content-center align-items-center h-100">
+            <div class="col-12 col-md-9 col-lg-7 col-xl-6">
+              <div class="card" style="border-radius: 15px;">
+                <div style="background-color: rgb(16, 2, 37);color: wheat;" class=" card-body p-5">
+                  <h2 class="text-uppercase text-center mb-5">Create an account</h2><hr>
+                 
+                  {% block content %}
+                  {% endblock  %}
+                  <form style="width: 100%;" class="container "  method="post" enctype="multipart/form-data">
+                               
+                               {% csrf_token %}
+                     
+                      <div class="container">
+   
+                      <div class="">{{form.first_name.label_tag}}</div> 
+                      <div class="">{{form.first_name}}</div> 
+                      {% for error in form.first_name.errors %}
+                      <div class="text-danger">{{error}}</div>
+                       {% endfor %}
+
+                       <div class="">{{form.last_name.label_tag}}</div> 
+                       <div class="">{{form.last_name}}</div> 
+                       {% for error in form.last_name.errors %}
+                        <div class="text-danger">{{error}}</div>
+                        {% endfor %}
+
+                      <div>{{form.country.label_tag}}</div> 
+                      <div >{{form.country}}</div> 
+                      {% for error in form.country.errors %}
+                      <div class="text-danger">{{error}}</div>
+                      {% endfor %}
+
+                      <div class="">{{form.email.label_tag}}</div> 
+                      <div class="">{{form.email}}</div> 
+                      {% for error in form.email.errors %}
+                      <script>
+                        Swal.fire({
+                        position: 'top-end',
+                        icon: 'error',
+                        title: '{{error}}',
+                        showConfirmButton: false,
+                        timer: 5500
+                              })
+                        </script>
+                      {% endfor %}
+
+                      {{form.password1.label_tag}} 
+                      <div class="">{{form.password1}}</div> 
+                      {% for error in form.password1.errors %}
+                      <script>
+                        Swal.fire({
+                        position: 'top-end',
+                        icon: 'error',
+                        title: '{{error}}',
+                        showConfirmButton: false,
+                        timer: 5500
+                              })
+                        </script>
+                      {% endfor %}
+                      
+                     <div>{{form.password2.label_tag}} </div> 
+                      <div class="">{{form.password2}}</div> 
+                      {% for error in form.password2.errors %} 
+
+                      <script>
+                        Swal.fire({
+                        position: 'top-end',
+                        icon: 'error',
+                        title: '{{error}}',
+                        showConfirmButton: false,
+                        timer: 5500
+                              })
+                        </script>
+                      {% endfor %}
+                      
+                    </div>
+                      
+                          
+                             
+                           <br>
+
+        <label class="form-check-label" for="form2Example3g">
+         I agree all statements in <a href="#!" class="text-success"><u>Terms of service</u></a><br><hr>
+        </label>
+
+        <div class=" justify-content-center">
+          <button type="submit"  class="btn btn-success">Register</button>
+       <hr>
+       <p class="text-center  mt-1 mb-0">Have already an account? <a class="text-success"  href="{% url 'sms:logout' %}" >Login here</a></p>
+        </div>
+        </div>
+
+          </form>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+        <!-- Optional JavaScript; choose one of the two! -->
+    
+        <!-- Option 1: Bootstrap Bundle with Popper -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    
+        <!-- Option 2: Separate Popper and Bootstrap JS -->
+        <!--
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+        -->
+
+        <!-- <script src="sweetalert2.min.js"></script>
+        <link rel="stylesheet" href="sweetalert2.min.css"> -->
+      </body>
+    </html>

@@ -1,0 +1,1759 @@
+{% extends 'sms/dashboard/base.html' %}
+{% load hitcount_tags %}
+{% load static %}
+
+
+{% block title %} Codethinkers  Academy  {% endblock %}
+
+
+
+  {% block content %} 
+
+<style>
+
+body {
+
+  align-items: center;
+  height: 100vh;
+ 
+
+}
+
+.container1 {
+    display: flex;
+    overflow-x: auto;
+    height: 450px;
+    overflow-y: hidden;     
+}
+/* .container1 >*{
+    margin: 5px;   
+} */
+/* end card hover effect */
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.left-column-cat {
+  width: 100%;
+  margin: 10px;
+  padding: 10px;
+  border: 1px solid blue;
+  transition: all 0.3s;
+}
+
+.left-column-cat:hover {
+  transform: scale(1.01);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.text-center.category {
+  margin-top: 0;
+}
+
+.text-left.container {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.images {
+  border-radius: 4px;
+}
+
+.card.text-center.text-danger {
+  margin-top: 20px;
+}
+
+/* end card hover effect */
+
+.beginner {
+    display: flex;
+    overflow-x: auto;
+    height: 520px;
+    width: 100%;
+    overflow-y: hidden;     
+}
+
+.container {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+}
+.left-column {
+    flex: 1;
+    margin: 2px;
+    background-color: #4158D0;
+    color: white;
+    background-image: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+
+}
+
+.left-column-cat {
+    flex: 1;
+    margin: 5px;
+    background-color: #4158D0;
+    color: black;
+    
+    background-image: linear-gradient(#ffff 100%, #ffff 46%, white 100%);
+
+}
+
+
+.container2 {
+    height: 100vh;
+    width: 100%;
+    background-position: center;
+    
+    /* background-size: cover; */
+    /* padding-right: 3%;
+    padding-left: 5%; */
+    /* box-sizing: border-box;
+    position: relative; */
+}
+
+.images {
+  max-height: 100%;
+  min-width: 100%;
+  object-fit: cover;
+  vertical-align: bottom;
+}
+
+
+#btn1 {
+    text-transform: uppercase;
+    background: linear-gradient(to bottom, #378de5 3%, #48789b 100%);
+    border-radius: 30px;
+    border: 1px solid #5e97d1;
+    cursor: pointer;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    padding: 12px 20px;
+    margin: 10px;
+    text-decoration: none;
+    box-shadow: 1px 4px 12px rgba(94,28,68,.15);
+    text-shadow: 0px 1px 0px #528ecc;
+}
+#btn2 {
+    text-transform: uppercase;
+    background: linear-gradient(to bottom, #cbcbcb 2%, #fff 100%);
+    border-radius: 30px;
+    border: 1px solid #cbcbcb;
+    cursor: pointer;
+    color: #5e97d1;
+    font-family: 'Poppins', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    padding: 12px 20px;
+    margin: 10px;
+    text-decoration: none;
+    box-shadow: 1px 4px 12px rgba(94,28,68,.15);
+    text-shadow: 0px 1px 0px #cbcbcb;
+}
+.btn:hover {
+    box-shadow: 3px 8px 22px rgba(94,28,68,.15);
+    transform: scale(1.1);
+    transition: .2s ease-in-out;
+}
+
+
+.content2 .text p {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    /* margin-top: 40px; */
+    height: 230px;
+    width: 100%;
+    margin-top: 30px;
+    
+
+ }
+.btn3 {
+    /* background: linear-gradient(to bottom, #cbcbcb 2%, #fff 100%); */
+    /* margin-top: 60px;
+    margin-left: 140px; */
+    padding: 15px 30px;
+    text-align: center;
+    transition: .5s;
+    border: none;
+    outline: none;
+    text-transform: uppercase;
+    /* color: #1b1b1b; */
+    font-size: 20px;
+    font-weight: 700;
+    border-radius: 30px;
+    box-shadow: 1px 4px 12px white;
+}
+.pepsi {
+    display: flex;
+    height: 100%;
+    position: absolute;
+    width: 600px;
+    margin-top: 80px;
+    padding-left: 440px;
+    justify-content: flex-end;
+}
+
+.content2{
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+
+
+}
+
+.content2 >{
+  flex: 0 0 auto;
+  width: 5px;
+}
+
+.flex-internal{
+  
+  display: flex;
+  flex-wrap: wrap;
+  justify-items: space-between;
+}
+.flex-internal > *{
+  flex: auto;
+  margin: 2px;
+
+}
+
+
+.sta{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sta >*{
+  flex: 1 1 auto;
+  margin: 5px;
+  width: 10px;
+}
+
+.owner{
+  display: flex;
+}
+.owner > small{
+  flex: 1 1 auto;
+  margin: 10px;
+}
+
+h3{
+  font-weight: bold;
+}
+
+/* multi items carousel-control-next */
+
+/* bootsrap carousel setting */
+
+.carousel-indicators li {
+        width: 0.5rem;
+        height: 0.5rem;
+        border: 1px solid;
+        border-radius: 50%;
+        background-color: #E0E0E0;
+}
+    
+.carousel-indicators .active {
+        background-color: #000000;
+}
+ 
+.carousel-indicators button {
+    height: 0px !important;
+    width: 10px !important;
+    margin: 0 20px !important;
+    border-radius: 100%;
+    background-color: #1963ac !important;
+   
+} 
+
+.carousel-inner .carousel-item {
+  transition: -webkit-transform 0.2s ease;
+  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, -webkit-transform 0.2s ease;
+}
+
+
+ .carousel-control-prev,
+.carousel-control-next{
+    align-items: flex-start;
+} 
+
+.carousel-control-prev-icon {
+    position: absolute;
+    bottom: 250px;
+    left: 10px;
+    color: #000000;
+}
+
+.carousel-control-next-icon {
+    position: absolute;
+    bottom: 250px;
+    right: 10px;
+    color: #000000;
+ 
+} 
+
+
+@media (max-width: 767px) {
+    .carousel-inner .carousel-item > div {
+        display: none;
+      
+    }
+
+    .carousel-inner .carousel-item > div:first-child {
+        display: block;
+       
+    }
+}
+
+.carousel-inner .carousel-item.active,
+.carousel-inner .carousel-item-next,
+.carousel-inner .carousel-item-prev {
+    display: flex;
+}
+
+/* medium and up screens */
+@media (min-width: 768px) {
+    
+    .carousel-inner .carousel-item-end.active,
+    .carousel-inner .carousel-item-next {
+      transform: translateX(25%);
+      
+    }
+    
+    .carousel-inner .carousel-item-start.active, 
+    .carousel-inner .carousel-item-prev {
+      transform: translateX(-25%);
+    }
+}
+
+.carousel-inner .carousel-item-end,
+.carousel-inner .carousel-item-start { 
+  transform: translateX(0);
+}
+
+
+/* end bootsrap carousel setting */
+
+
+.w-100 {
+  width: 100% !important;
+  height: 35vh;
+}
+
+/* partners css  */
+.partners{
+  display: flex;
+  flex-wrap: wrap;
+ justify-content: center;
+}
+
+.partners >*{
+ /* flex: 1 1 auto; */
+ margin: 30px;
+
+}
+
+/* partners css ending  */
+
+
+/* Testmony css  */
+.testimonial-card:hover {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+  }
+/* Testmony css ending  */
+
+/* 
+FREQUENTLY ASKED QUESTIONS */
+.card {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+    margin: 10px;
+  
+  }
+  
+  .card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  }
+
+/* END OF FREQUENTLY ASKED QUESTIONS  */
+
+/* articles css  */
+
+.action-news {
+  display: inline-flex;
+  margin-top: 1rem;
+  color: #ffffff;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  align-items: center;
+  gap: 0.25rem;
+  background-color: #2563EB;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.action-news span {
+  transition: .3s ease;
+}
+
+.action-news:hover span {
+  transform: translateX(9px);
+  background-color: red;
+}
+
+/* earticles css endign */
+
+ /* course categories */
+.child-ele{
+  display: flex;
+  margin-top: -25px;
+}
+
+.child-ele >*{
+  margin: 10px;
+}
+/* ebook section  */
+
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card-ebooks {
+  width: 300px;
+  margin: 10px;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.image-container img {
+  width: 250px;
+  height: 250px;
+}
+
+.text-container {
+  padding: 10px;
+}
+
+.text-container h6 {
+  margin-bottom: 5px;
+}
+
+.text-container small {
+  display: block;
+  margin-bottom: 5px;
+}
+
+ /* end of ebooks */
+
+/* latest feed */
+/* Add your custom styles here */
+/* Add your custom styles here */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.image-desktop {
+  max-width: 100%;
+  height: auto;
+  border-radius: 50%; /* Make the image rounded */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+}
+
+/* Hide the image on mobile view */
+@media (max-width: 767px) {
+  .image-desktop {
+    display: none;
+  }
+}
+
+h2 {
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+p {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.btn-front {
+  display: block; /* To make the button occupy full width */
+  width: 100%;
+  max-width: 250px; /* Increase the maximum width for the buttons */
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.2s ease;
+}
+
+.btn:hover {
+  background-color: #0056b3;
+}
+
+/* front page statistics  */
+/* Add your custom styles here */
+.statistics-section {
+  background-color: #f7f7f7;
+  padding: 40px 0;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 20px;
+}
+
+.stat-icon {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
+.stat-number {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 16px;
+  color: #777;
+}
+
+/* end of the front page statisitc */
+
+/* flip card  */
+.hover-container {
+  display: inline-block;
+  cursor: pointer;
+  position: relative; /* Make the container relative for absolute positioning inside */
+  z-index: 1;
+
+}
+
+.flip-card {
+  width: 340px; /* Adjust the width as needed */
+  height: 0px;
+  perspective: 1000px;
+  transition: transform 0.3s;
+  position: absolute; /* Position the flip card absolutely within the hover container */
+  z-index: 2; 
+  
+}
+@media (min-width: 768px) {
+  .flip-card {
+    width: 800px;
+    padding-left: 20px;
+  }
+}
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  text-align: left;
+
+  transform-style: preserve-3d;
+  transition: transform 0.6s;
+}
+
+.hover-container:hover .flip-card {
+  transform: scale(1.1); /* Adjust the scaling factor as needed */
+
+
+}
+
+.flip-card-front, .flip-card-back {
+  position: absolute;
+  width: 100%;
+  backface-visibility: hidden;
+}
+
+.flip-card-back {
+  background-color: #f9f9f9; /* Set your desired background color here */
+
+}
+.text {
+  display: block;
+  font-size: 16px; /* Adjust the font size as needed */
+  padding-left: 10px;
+
+}
+.view-latest>*{
+  margin: 5px;
+}
+</style>
+
+<!-- school campaign css -->
+<style>
+
+  .cta-button {
+      display: inline-block;
+      padding: 10px 20px;
+      font-size: 1.2em;
+      color: #fff;
+      background-color: #007bff;
+      text-decoration: none;
+      border-radius: 5px;
+  }
+
+  .cta-button:hover {
+      background-color: #0056b3;
+  }
+
+  .benefits {
+      margin-top: 30px;
+  }
+
+  .benefits h2 {
+      color: #007bff;
+  }
+
+</style>
+
+<!--end of  school campaign css -->
+
+<!-- popup  -->
+
+<style>
+  /* Add your styles here */
+  #popup-container {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px;
+      background-color: white;
+      border: 2px solid red;
+      z-index: 9999;
+      text-align: center;
+  }
+
+  .popup-image {
+      width: 100%; /* Set your preferred width */
+      height: 200px; /* Set your preferred height */
+      object-fit: cover; /* Maintain aspect ratio while filling the container */
+      display: none;
+  }
+
+  .popup-image.active {
+      display: block;
+  }
+
+  .popup-controls {
+      margin-top: 10px;
+  }
+</style>
+
+<!-- end of popup -->
+
+
+<div class="hover-container" style="padding-left: 20px;">
+  <div class="flip-card">
+    <div class="flip-card-inner">
+      <div class="flip-card-front">
+        <span style="width: 200px;" class="text bg-primary text-white">All Courses</span>
+      </div>
+      <div class="flip-card-back">
+
+        <div  class="card">
+        {% for obj in object_list %}
+        
+            <a class="text text-dark" href="{% url 'sms:courseslistdesc' obj.pk %}"> {{obj.title|safe|title}} </a> <hr>
+      
+        {% endfor %}
+      </div>
+       
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ff
+       
+        <div id="popup">
+          <p>Refer & Earn 50% commission on the certificates purchased by the referee.</p>
+          <p>
+              <a href="{% url 'users:become_referrer' %}">Become a Referrer, Click Here</a>
+             
+          </p>
+          <button onclick="closePopup()">Close</button>
+        </div>
+        
+        <div id="overlay"></div>
+ff -->
+
+<div  class="container">
+  <div class="row">
+
+    <div class="col-md-6 flex-container">
+      <div class="text-container">
+<br>
+
+<!-- Popup container -->
+<div id="popup-container">
+  <!-- Image carousel -->
+  {% for image in advertisement_images %}
+      <img class="popup-image {% if forloop.first %}active{% endif %}" src="{{ image.image.url }}" alt="Advertisement Image {{ forloop.counter }}">
+      <div class="desc">
+        <p> {{ image.desc }}</p>
+          {% if image.link %}
+              <a href="{{ image.link }}">Click Here to Start</a>
+          {% else %}
+             
+          {% endif %}
+      </div>
+  {% endfor %}
+
+  <!-- Navigation controls -->
+  <div class="popup-controls">
+      <button onclick="prevImage()">Previous</button>
+      <button onclick="nextImage()">Next</button>
+      <button onclick="closePopup()">Close</button>
+  </div>
+</div>
+
+
+
+
+        <!-- <a style="font-size: 20px;color: red;" href="{% url 'users:become_referrer' %}">Become a Referrer, Click Here</a> -->
+        <h1>Unleashing Your Coding Potential</h1>
+        <p>
+          Join us at CodeThinkers Academy to unlock your coding potential. 
+          Our diverse range of courses covers web development, app creation, data science, 
+          and more. Learn from expert instructors and stay ahead in this dynamic industry. 
+          Embrace a future of possibilities and 
+          begin your coding journey with us today. Let's code, innovate, and inspire together!
+        </p>
+        
+      </div>
+      
+      <div  class="button-container">
+        {% if not users.is_authenticated %}
+        <a href="{% url 'account_login' %}" class="btn-front btn-primary">Join us for Free</a>
+        {% endif  %}
+      </div>
+      <div class="button-container">
+        {% if not users.is_authenticated %}
+        <a href="{% url 'account_signup' %}" class="btn-front btn-primary ">Sign Up</a>
+        {% endif  %}
+      </div>
+    </div>
+  
+    <div id="flash-message-container">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-success">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    <div class="col-md-6">
+      <img src="/static/sms/images/kids.webp" alt="front-image" class="image-desktop">
+    </div>
+
+  </div>
+</div>
+
+
+<div class="container">
+  <button  class="btn text-center text-white" ><a class="btn btn-primary text-center"  href="https://wa.me/23409031568177"> Contact Us For Personal Tutoring </a>  </button>
+
+</div>
+
+
+  <!-- partners section  -->
+  
+  <div class="card-bod" style="padding-left: 20px; background-color: rgb(240, 238, 235)">
+   <h3 class="text-center ">Our Partners and Collaborators</h3>
+ 
+ 
+  <section class="partners " >
+ 
+   
+ 
+   {% for partner in partners %}
+ 
+           <!-- <img src=" /static/sms/images/girlavater.webp" width="100%" class="img-fluid" /> -->
+     <img src="{{partner.img_partner.url}}" width="80px" height="80px" class="img-fluid" />
+    
+     {% empty %}
+     <h1 class="card text-center text-danger">no partners available Yet. CHECK LATER</h1>
+ 
+     {% endfor %}
+ 
+ </section>
+ </div>
+
+ <!-- partners section endign -->
+ 
+<!-- page Statistics -->
+<div class="statistics-section">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="stat-item">
+          <div class="stat-icon">
+            <i class="fas fa-users"></i> <!-- Use font-awesome icons or other icon libraries -->
+          </div>
+          <div class="stat-number">{{students}}+</div>
+          <div class="stat-label">Students Enrolled</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-item">
+          <div class="stat-icon">
+            <i class="fas fa-list"></i>
+          </div>
+          <div class="stat-number">{{category}}+</div>
+          <div class="stat-label">Categories</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-item">
+          <div class="stat-icon">
+            <i class="fas fa-book"></i>
+          </div>
+          <div class="stat-number">{{courses}}+</div>
+          <div class="stat-label">Courses Offered</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<br> <br> <br>
+   <div class="card-body">
+    <h3 style="color: black;  font-weight: bold;" >We Offer {{category}} Course Categories to Suit Your needs</h3>  
+   </div>
+    
+  <div  class="container1">
+  
+    {% for category in coursecategory %}
+    <a style="height: 10px;" class="" href="{% url 'sms:courseslist' category.pk %}">
+    <div  class="left-column-cat border ">
+        <!-- <p class=" card rounded-4 category"> -->
+        
+            {% if category.img_cat %}
+            <img class="rounded images" src="{{category.img_cat.url}}" width="300px" height="250px" alt="cetagory image">
+            <br>
+            
+            {% endif %}
+            <br>
+            <a style="font-size: 12px;" class="pl-3" href="{% url 'sms:courseslist' category.pk %}">{{category|safe}}</a>
+            <p class="pl-3">{% get_hit_count for category %} <i class="fas fa-eye"></i> </p>
+
+            <p class="pl-3">{{category.desc}}</p>
+        
+            <div class="text-left container">{{courses_count}}</div> 
+
+     
+    </div>
+  </a>
+    {% empty %}
+      <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
+    {% endfor %}
+  </div>
+<!-- END CATEGORIES OF COURSES-->
+
+
+
+<br> <br> 
+<!-- benefits -->
+<div  class="card-body">
+<h3 style="color: black;  font-weight: bold;" >Benefit Associated with the Courses:</h3>
+<ul>
+  <li>100% online</li>
+  <li>Flexible deadlines</li>
+  <li>Collaborators</li>
+  <li>Jobs opportunities</li>
+  <li>Certificate of completion</li>
+  <li>Language: English</li>
+</ul>
+
+</div>
+<!-- end benefits -->
+
+
+
+<br> <br> <br>
+ <!--DIFFERENT  COURSES-->
+{% for obj in beginner %}
+{% if forloop.last %}
+<div class="card-body">
+  <div class="">
+<h3 style="color: black; font-weight: bold;" >{{beginner_count}} Courses for {{obj.categories.name|title}}'s  Available for You</h3>
+<a style="height: 10px; color: red;font-size: 20px;" class="" href="{% url 'sms:courseslist' obj.categories.pk %}">View All Courses</a>
+<br>
+
+
+</div>
+</div>
+{% endif %}
+{% endfor %}
+  
+
+<div  class="beginner">
+ 
+
+  {% for obj in beginner %}
+  
+ 
+
+  <a style="height: 10px;" class=""  href="{% url 'sms:courseslistdesc' obj.pk %}">
+  <div  class="left-column-cat border ">
+      <!-- <p class=" card rounded-4 category"> -->
+      
+          {% if obj.img_course %}
+          <img class="rounded images" src="{{obj.img_course.url}}" width="300px" height="300px" alt="cetagory image">
+          <br>
+          
+          {% endif %}
+          <div class="pl-2">
+          <div class="d-flex rounded owner">
+            <div class="d-flex rounded owner">
+              {% if obj.course_logo.url %}
+              <img  class="rounded" src="{{ obj.course_logo.url }}" width="30px"  height="33px" alt=""> <br>
+              {% else %}
+              <img  class="rounded" src=" /static/sms/images/newlogo3.jpg" width="30px"  height="33px" alt="{{obj.desc}}"> <br>
+            {% endif %}
+    
+            {% if obj.course_owner %}
+            <small class="text-dark">{{obj.course_owner|safe}}</small>
+            {% else %}
+            <small class="text-dark">Codethinkers Academy </small>
+            
+            {% endif %}
+            <!-- {% if customer == True %}
+            <h4>Premium</h4>
+            {% endif %} -->
+            </div>
+          </div>
+        <a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">{{obj}} </a>
+        {% if obj.status_type == 'Premium' and not customer == True %}
+        <div class="d-flex">
+        <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}} |  &#8358;{{obj.price|safe|floatformat:"0g"}}</p> 
+        <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
+      </div>
+        {% else %}
+        <div class="d-flex">
+        <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}}</p> 
+        <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
+      </div>
+        {% endif %}
+        <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.categories.name|safe|title}}  {{ obj.beginner_topic_count }} Modules</small> <br>
+        <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.course_type|safe}}</small>
+        <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " ><a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">View Course</a></small>
+      </div>
+     
+      
+   
+  </div>
+
+
+
+</a>
+
+
+  {% empty %}
+    <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
+  {% endfor %}
+
+
+
+</div>
+<!-- END BEGINNER OF COURSES-->
+
+<br> <br> <br>
+
+ <!--INTERMEDIATE DIFFERENT  COURSES-->
+
+ {% for obj in intermediate %}
+ {% if forloop.last %}
+ <div class="card-body">
+   <div class="">
+ <h3 style="color: black; font-weight: bold;" >{{intermediate_count}} Courses for {{obj.categories.name|title}}'s  Available for You</h3>
+ <a style="height: 10px;color: red class;font-size: 20px;" href="{% url 'sms:courseslist' obj.categories.pk %}">View All Courses</a>
+ </div>
+ </div>
+ {% endif %}
+{% endfor %}
+   
+ <div  class="beginner">
+ 
+  {% for obj in intermediate %}
+
+
+   <a style="height: 10px;" class="" href="{% url 'sms:courseslistdesc' obj.pk %}">
+   <div  class="left-column-cat border ">
+       <!-- <p class=" card rounded-4 category"> -->
+       
+           {% if obj.img_course %}
+           <img class="rounded images" src="{{obj.img_course.url}}" width="300px" height="300px" alt="cetagory image">
+           <br>
+           
+           {% endif %}
+           <div class="pl-2">
+           <div class="d-flex rounded owner">
+             <div class="d-flex rounded owner">
+               {% if obj.course_logo.url %}
+               <img  class="rounded" src="{{ obj.course_logo.url }}" width="30px"  height="33px" alt=""> <br>
+               {% else %}
+               <img  class="rounded" src=" /static/sms/images/newlogo3.jpg" width="30px"  height="33px" alt="{{obj.desc}}"> <br>
+             {% endif %}
+     
+             {% if obj.course_owner %}
+             <small class="text-dark">{{obj.course_owner|safe}}</small>
+             {% else %}
+             <small class="text-dark">Codethinkers Academy  </small>
+             {% endif %}
+ 
+             </div>
+           </div>
+         <a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">{{obj}} </a>
+         {% if obj.status_type == 'Premium' and not customer == True %}
+         <div class="d-flex">
+         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}} |  &#8358;{{obj.price|safe|floatformat:"0g"}}</p> 
+         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
+        </div>
+         {% else %}
+         <div class="d-flex">
+         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}}</p> 
+         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
+        </div>
+         {% endif %}
+         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.categories.name|safe|title}} {{ obj.intermediate_topic_count }} Modules</small> <br>
+         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.course_type|safe}}</small>
+         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " ><a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">View Course</a></small>
+       </div>
+           <!-- <a style="font-size: 12px;" class="pl-3" href="{% url 'sms:courseslist' obj.pk %}">{{obj|safe}}</a>-->
+           <!-- <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i>TTTTTTT </p> -->
+      
+          
+     
+    
+   </div>
+
+ </a>
+ 
+
+   {% empty %}
+     <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
+   {% endfor %}
+ </div>
+ <!-- END INTERMEDIATE OF COURSES-->
+ 
+ <br> <br> <br>
+
+ <!-- ADVANCED DIFFERENT  COURSES-->
+
+ {% for obj in advanced %}
+ {% if forloop.last %}
+
+ <div class="card-body">
+    <div class="">
+ <h3 style="color: black;  font-weight: bold;" >{{advanced_count}} Courses for {{obj.categories.name|title}}'s  Available for You</h3>
+ <a style="height: 10px;color: red; font-size: 20px;" class="" href="{% url 'sms:courseslist' obj.categories.pk %}">View All Courses</a>
+    </div>
+ </div>
+
+ {% endif %}
+ {% endfor %}
+   
+
+ <div  class="beginner ">
+ 
+  {% for obj in advanced %}
+
+
+   <a style="height: 10px;" class="" href="{% url 'sms:courseslistdesc' obj.pk %}">
+   <div  class="left-column-cat border ">
+       <!-- <p class=" card rounded-4 category"> -->
+       
+           {% if obj.img_course %}
+           <img class="rounded images" src="{{obj.img_course.url}}" width="300px" height="300px" alt="cetagory image">
+           <br>
+           
+           {% endif %}
+           <div class="pl-2">
+           <div class="d-flex rounded owner">
+             <div class="d-flex rounded owner">
+               {% if obj.course_logo.url %}
+               <img  class="rounded" src="{{ obj.course_logo.url }}" width="300px"  height="33px" alt=""> <br>
+               {% else %}
+               <img  class="rounded" src=" /static/sms/images/newlogo3.jpg" width="30px"  height="33px" alt="{{obj.desc}}"> <br>
+             {% endif %}
+     
+             {% if obj.course_owner %}
+             <small class="text-dark">{{obj.course_owner|safe}}</small>
+             {% else %}
+             <small class="text-dark">Codethinkers Academy </small>
+             {% endif %}
+ 
+             </div>
+           </div>
+         <a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">{{obj}} </a>
+         {% if obj.status_type == 'Premium' and not customer == True %}
+         <div class="d-flex">
+         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}} |  &#8358;{{obj.price|safe|floatformat:"0g"}}</p> 
+         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
+        </div>
+         {% else %}
+         <div class="d-flex">
+         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}}</p> 
+         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
+        </div>
+         {% endif %}
+         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.categories.name|safe|title}} {{ obj.advanced_topic_count }} Modules</small> <br>
+         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.course_type|safe}}</small>
+         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " ><a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">View Course</a></small>
+       </div>
+           <!-- <a style="font-size: 12px;" class="pl-3" href="{% url 'sms:courseslist' obj.pk %}">{{obj|safe}}</a>
+           <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i> </p> -->
+       
+   </div>
+ </a>
+ 
+
+   {% empty %}
+     <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
+   {% endfor %}
+ </div>
+ <!-- END ADVANCED OF COURSES-->
+ 
+
+ <br> <br> <br>
+
+ <!-- LATEST DIFFERENT  COURSES-->
+
+  <div style="margin-bottom: -50px;" class="card-body">
+    <h3 style="color: black;  font-weight: bold;" >{{latest_course_count}} Latest Courses on Codethinkers Academy </h3>
+
+    <p class="" >Explore our newest programs, focused on delivering in-demand skills.</p> 
+  </div>
+
+
+<br> 
+
+
+ <div  class="beginner ">
+ 
+   {% for obj in latest_course %}
+
+
+   <a style="height: 10px;" class=""  href="{% url 'sms:courseslistdesc' obj.pk %}">
+   <div  class="left-column-cat border ">
+       <!-- <p class=" card rounded-4 category"> -->
+       
+           {% if obj.img_course %}
+           <img class="rounded images" src="{{obj.img_course.url}}" width="300px" height="300px" alt="cetagory image">
+           <br>
+           
+           {% endif %}
+           <div class="pl-2">
+           <div class="d-flex rounded owner">
+             <div class="d-flex rounded owner">
+               {% if obj.course_logo.url %}
+               <img  class="rounded" src="{{ obj.course_logo.url }}" width="30px"  height="33px" alt=""> <br>
+               {% else %}
+               <img  class="rounded" src=" /static/sms/images/newlogo3.jpg" width="30px"  height="33px" alt="{{obj.desc}}"> <br>
+             {% endif %}
+     
+             {% if obj.course_owner %}
+             <small class="text-dark">{{obj.course_owner|safe}}</small>
+             {% else %}
+             <small class="text-dark">Codethinkers Academy </small>
+             {% endif %}
+ 
+             </div>
+           </div>
+         <a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">{{obj}} </a>
+      
+         
+         {% if obj.status_type == 'Premium' and not customer == True %}
+         <div class="d-flex">
+         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}} |  &#8358;{{obj.price|safe|floatformat:"0g"}}</p> 
+         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
+        </div>
+         {% else %}
+         <div class="d-flex">
+         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}}</p> 
+         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
+        </div>
+         {% endif %}
+         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.categories.name|safe|title}} {{ obj.latest_course_topic_count }} Modules</small> <br>
+         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.course_type|safe}}</small>
+         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " ><a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">View Course</a></small>
+       </div>
+           <!-- <a style="font-size: 12px;" class="pl-3" href="{% url 'sms:courseslist' obj.pk %}">{{obj|safe}}</a>
+           <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i> </p> -->
+       
+
+   </div>
+ </a>
+
+
+   {% empty %}
+     <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
+   {% endfor %}
+ </div>
+
+  <!--END LATEST  COURSES-->
+
+
+ <!-- POPULAR DIFFERENT  COURSES-->
+ <br> <br> <br>
+
+ <div class="card-body">
+   <div class="">
+ <h3 style="color: black; font-weight: bold;" >Popular Courses</h3>
+ </div>
+ </div>
+
+ <div  class="beginner ">
+ 
+   {% for obj in popular_course %}
+
+
+   <a style="height: 10px;" class=""  href="{% url 'sms:courseslistdesc' obj.pk %}">
+   <div  class="left-column-cat border ">
+       <!-- <p class=" card rounded-4 category"> -->
+       
+           {% if obj.img_course %}
+           <img class="rounded images" src="{{obj.img_course.url}}" width="300px" height="300px" alt="cetagory image">
+           <br>
+           
+           {% endif %}
+           <div class="pl-2">
+           <div class="d-flex rounded owner">
+             <div class="d-flex rounded owner">
+               {% if obj.course_logo.url %}
+               <img  class="rounded" src="{{ obj.course_logo.url }}" width="30px"  height="33px" alt=""> <br>
+               {% else %}
+               <img  class="rounded" src=" /static/sms/images/newlogo3.jpg" width="30px"  height="33px" alt="{{obj.desc}}"> <br>
+             {% endif %}
+     
+             {% if obj.course_owner %}
+             <small class="text-dark">{{obj.course_owner|safe}}</small>
+             {% else %}
+             <small class="text-dark">Codethinkers Academy </small>
+             {% endif %}
+ 
+             </div>
+           </div>
+         <a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">{{obj}} </a>
+         {% if obj.status_type == 'Premium' and not customer == True %}
+         <div class="d-flex">
+         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}} |  &#8358;{{obj.price|safe|floatformat:"0g"}}</p> 
+         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
+        </div>
+         {% else %}
+         <div class="d-flex">
+         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}}</p> 
+         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
+        </div>
+         {% endif %}
+         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.categories.name|safe|title}} {{ obj.popular_course_topic_count }} Modules</small> <br>
+         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.course_type|safe}}</small>
+         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " ><a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">View Course</a></small>
+       </div>
+           <!-- <a style="font-size: 12px;" class="pl-3" href="{% url 'sms:courseslist' obj.pk %}">{{obj|safe}}</a>
+           <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i> </p> -->
+       
+
+   </div>
+ </a>
+
+
+   {% empty %}
+     <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
+   {% endfor %}
+ </div>
+ <!-- END POPULAR OF COURSES-->
+
+
+ 
+  <!--FREE DIFFERENT  COURSES-->
+  <br> <br> <br>
+ 
+  <div class="card-body">
+    <div class="">
+
+  <h3 style="color: black;  font-weight: bold;" >Enjoy Our {{Free_courses_count}} Free Courses Available for You</h3>
+
+  </div>
+  </div>
+ 
+  
+  <div  class="beginner ">
+  
+    {% for obj in Free_courses %}
+
+
+    <a style="height: 10px;" class="" href="{% url 'sms:courseslistdesc' obj.pk %}">
+    <div  class="left-column-cat border ">
+        <!-- <p class=" card rounded-4 category"> -->
+        
+            {% if obj.img_course %}
+            <img class="rounded images" src="{{obj.img_course.url}}" width="300px" height="300px" alt="cetagory image">
+            <br>
+            
+            {% endif %}
+            <div class="pl-2">
+            <div class="d-flex rounded owner">
+              <div class="d-flex rounded owner">
+                {% if obj.course_logo.url %}
+                <img  class="rounded" src="{{ obj.course_logo.url }}" width="30px"  height="33px" alt=""> <br>
+                {% else %}
+                <img  class="rounded" src=" /static/sms/images/newlogo3.jpg" width="30px"  height="33px" alt="{{obj.desc}}"> <br>
+              {% endif %}
+      
+              {% if obj.course_owner %}
+              <small class="text-dark">{{obj.course_owner|safe}}</small>
+              {% else %}
+              <small class="text-dark">Codethinkers Academy </small>
+              {% endif %}
+  
+              </div>
+            </div>
+          <a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">{{obj}} </a>
+          {% if obj.status_type == 'Premium' and not customer == True %}
+          <div class="d-flex">
+          <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}} |  &#8358;{{obj.price|safe|floatformat:"0g"}}</p> 
+          <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
+        </div>
+          {% else %}
+          <div class="d-flex">
+          <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}}</p> 
+          <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
+        </div>
+          {% endif %}
+          <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.categories.name|safe|title}} {{ obj.Free_courses_topic_count }} Modules</small> <br>
+          <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.course_type|safe}}</small>
+          <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " ><a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">View Course</a></small>
+        </div>
+
+
+       
+    </div>
+  </a>
+
+       
+  
+  </a>
+
+    {% empty %}
+      <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
+    {% endfor %}
+  </div>
+
+
+  <!-- END CATEGORIES OF COURSES-->
+  
+
+  <br> <br> <br>
+  <!-- ebooks section  -->
+  <div class="card-body text-center">
+    <div class="">
+  <h3 style="color: red;  font-weight: bold;" > {{alert_count_homes}} E-books Available for You</h3>
+    </div>
+  </div>
+  <br>
+
+  
+<div class="flex-container">
+  {% for alert in alert_homes %}
+  <div class="card card-ebooks">
+    <!-- <img src="{{ category.img_cat.url }}" class="card-img-top" alt="Category Image"> -->
+    <div class="card-body child-ebooks">
+      <img class="" src="{{ alert.img_ebook.url }}" width="300px" height="250px" alt="{{ obj.desc }}">
+      <div class=""> 
+        <h6 style="color: #000000;  padding-right: 3px;" class="card-title">{{ alert.title|safe }}</h6> 
+        <small>Price: &#8358;{{ alert.price }}</small> <br>
+        <button><a href="{% url 'sms:ebooks' alert.id %}">{{ alert.title }}</a></button>
+        
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+
+
+
+  <!-- ebooks section endign -->
+
+<br> <br> <br>
+<div class="row d-flex justify-content-center">
+  <div class="col-md-10 col-xl-8 text-center">
+    <h3 style="color: black; font-weight: bold;"  class="mb-4">What People Say About Us</h3>
+    <p class="mb-4 pb-2 mb-md-5 pb-md-0">
+
+    </p>
+  </div>
+</div>
+
+<section style="" class="container ">
+
+
+  <div class="row text-center d-flex align-items-stretch">
+    <div class="col-sm mb-5 mb-md-0 d-flex align-items-stretch">
+      <div class="card testimonial-card">
+        <div class="card-up" style="background-color: #9d789b;"></div>
+        <div class="avatar mx-auto bg-white">
+
+          <img src=" /static/sms/images/girlavater.webp" width="100px" class="rounded-circle img-fluid" />
+
+        </div>
+        <div class="card-body">
+          <h6 class="mb-4">Maria Smantha</h6>
+          <img src="/static/sms/images/star-rating-icon-21.jpg" width="100px" alt="">
+          <hr />
+          <p class="dark-grey-text mt-4">
+            <i class="fas fa-quote-left pe-2"></i>
+            "Codethinkers Academy offers a top-notch programming education with knowledgeable instructors, comprehensive curriculum, and practical projects that prepare students for real-world challenges."
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm mb-5 mb-md-0 d-flex align-items-stretch">
+      <div class="card testimonial-card">
+        <div class="card-up" style="background-color: #7a81a8;"></div>
+        <div class="avatar mx-auto bg-white">
+          <img src=" /static/sms/images/avater11.png" width="100px" class="rounded-circle img-fluid" />
+        </div>
+        <div class="card-body">
+          <h6 class="mb-4">Andrew Cudrow</h6>
+          <img src="https://icon-library.com/images/star-rating-icon/star-rating-icon-21.jpg" width="100px" alt="">
+          <hr />
+          <p class="dark-grey-text mt-4">
+            <i class="fas fa-quote-left pe-2"></i>
+            "The academy creates a supportive learning environment, where instructors and mentors are readily available, fostering collaboration and individual attention."
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm mb-0 d-flex align-items-stretch">
+      <div class="card testimonial-card">
+        <div class="card-up" style="background-color: #6d5b98;"></div>
+        <div class="avatar mx-auto bg-white">
+          <img src=" /static/sms/images/avater2.webp" width="100px" class="rounded-circle img-fluid" />
+        </div>
+        <div class="card-body">
+          <h6 class="mb-4">Muhammad  Abubakar</h6>
+          <img src="https://icon-library.com/images/star-rating-icon/star-rating-icon-21.jpg" width="100px" alt="">
+          <hr />
+          <p class="dark-grey-text mt-4">
+            <i class="fas fa-quote-left pe-2"></i>
+            "With a focus on real-world projects and career preparation, Codethinkers Academy equips students with practical skills and offers valuable resources for successful entry into the programming industry."
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+ 
+
+  
+  <!--GALLERY-->
+  <br> <br> <br>
+
+  <div style="color: black; font-size: 18px; font-weight: bold;"   class="card-body">
+    <h3 >Our Gallery </h3>
+  </div>
+  
+  <div class="gallery rounded-4 text-center">
+    {% for category in gallery %}
+    <div class="left-column-cat">
+      <p class="text-center category">
+        {% if category.gallery %}
+        <img class="rounded-4 images" src="{{category.gallery.url}}" width="300px" height="300px" alt="category image">
+        {% endif %}
+        {% if category.title %}
+        <div class="text-left container">{{category.title}}</div>
+        {% endif %}
+      </p>
+    </div>
+    {% empty %}
+    <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
+    {% endfor %}
+  </div>
+<!-- END GALLERY-->
+
+  <!--DIFFERENT  COURSES-->
+  <br> <br> <br>
+
+  <div class="card-body">
+    <div class="">
+  <h3 style="color: red;  font-weight: bold;" >Latest News Feed</h3>
+  <a href="{% url 'sms:bloglistview' %}" class="btn btn-primary">read more articles....</a>
+  </div>
+  </div>
+ 
+  <div style="height: 500px;"  class="beginner ">
+  
+    {% for obj in blogs %}
+   
+    <a style="height: 10px;" class="" href="{% url 'sms:blogdetaillistview' obj.slug %}">
+    <div  class="left-column-cat border ">
+        <!-- <p class=" card rounded-4 category"> -->
+        
+            {% if obj.img_blog %}
+            <img class="rounded images" src="{{obj.img_blog.url}}" width="300px" height="280px" alt="cetagory image">
+          
+            
+            {% endif %}
+          <div class="pl-2">
+           
+            <!-- <p style="color: black;">Image source: {{obj.img_source}}</p> -->
+            <div class="d-flex view-latest">
+			      <p style="color: black;">{{obj.created|timesince}}</p>
+            <p  class="text-center" style="color: black;"> {% get_hit_count for obj %}<i class="fas fa-eye"></i> </p>
+          </div>
+            {% if obj.author %}
+           
+              <p style="color: black; font-weight: bold;" class="card-text">By {{obj.author}}</p>
+             
+        
+              {% else %}
+              <small style="color: black; font-weight: bold;" class="card-text">By {{obj.poster}}</small>
+              {% endif %}	
+              <h6  style="color: black; font-weight: bold;">{{obj.title|safe}}</h6>
+              <p  style="color: black; ">{{obj.desc|safe|striptags|truncatewords:5}}</p>
+
+              <a href="{% url 'sms:blogdetaillistview' obj.slug %}" class="action-news">
+                Find out more
+                <span aria-hidden="true">
+                  →
+                </span>
+              </a>
+
+            
+        </div>
+  
+    </div>
+  </a>
+
+    {% empty %}
+      <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
+    {% endfor %}
+  </div>
+  <!-- END CATEGORIES OF COURSES-->
+  
+
+<!-- Categories and Courses -->
+
+<br><br><br>
+<h3 class="text-center text-primary">Categories and Courses</h3>
+<br>
+
+<div class="flex-container">
+  {% for category in category_sta %}
+  <div class="card card-cat">
+    <!-- <img src="{{ category.img_cat.url }}" class="card-img-top" alt="Category Image"> -->
+    <div class="card-body child-ele">
+      <img class="" src="/static/sms/images/newlogo3.jpg" width="100px" height="50px" alt="{{ obj.desc }}">
+      <div class="">
+        <h5 style="font-weight: bold;" class="card-title">{{ category.name|title }}</h5>
+        <p class="card-text">{{ category.num_courses }} Courses</p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<!--end Categories and Courses -->
+
+<br> <br> <br>
+
+<!-- FAQ-->
+<div class="container">
+  <h3 id="faqs" style="text-align: center;" class="text-danger ">Frequently Asked Questions</h3>
+</div>
+
+<br>
+<div class="container4 bg-primary" style="width: 90%; margin: 0 auto;">
+  <div class="accordion" id="faqAccordion">
+    {% for faq in faqs %}
+    <div class="card">
+
+      <div class="card-header" id="faqHeading{{ faq.id }}">
+        <p class="mb-0">
+          <button style="font-size: 12px;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#faqCollapse{{ faq.id }}" aria-expanded="true" aria-controls="faqCollapse{{ faq.id }}">
+            {{ faq.title|safe|lower }}
+            <i class="fas fa-chevron-down"></i>
+          </button>
+        </p>
+      </div>
+
+      <div id="faqCollapse{{ faq.id }}" class="collapse" aria-labelledby="faqHeading{{ faq.id }}" data-parent="#faqAccordion">
+        <div class="card-body">
+          {{ faq.desc|safe }}
+        </div>
+      </div>
+   
+    </div>
+    
+    {% empty %}
+    <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
+    {% endfor %}
+  </div>
+</div>
+<br>
+
+<hr>
+
+<div style="padding: 0px 20px 0px 20px;" class="card-bod">
+  <h2>Empower Schools and Organizations with our New Program!</h2>
+
+
+<div class="te">
+  <h4>Unlock a World of Learning Opportunities for Your School or Organization</h4>
+  <p>Experience the next level of education with our cutting-edge courses in the New Program, tailored for schools and organizations. From in-depth content to practical skills, we have it all.</p>
+  <p>Don't miss out on this opportunity to enhance the knowledge and skills of your students or members.</p>
+
+  <a href="{% url 'users:school_signup' %}" class="cta-button">Sign Up Now</a>
+
+  <div class="benefits">
+      <h2>Benefits for Schools and Organizations</h2>
+      <ul class="">
+          <li>Customized Certificates of Completion with your School or Organization Logo</li>
+          <li>Inclusion of Head's Signature and Name on Certificates</li>
+          <li>Option to Add Portfolio Information on Certificates</li>
+          <li>Effortless Management – We Handle It All!</li>
+      </ul>
+  </div>
+</div>
+
+
+</div>
+<hr>
+
+<script>
+
+let items = document.querySelectorAll('.carousel .carousel-item')
+
+items.forEach((el) => {
+    // number of slides per carousel-item
+    const minPerSlide = 4
+    let next = el.nextElementSibling
+    for (var i=1; i<minPerSlide; i++) {
+        if (!next) {
+            // wrap carousel by using first child
+            next = items[0]
+        }
+        let cloneChild = next.cloneNode(true)
+        el.appendChild(cloneChild.children[0])
+        next = next.nextElementSibling
+    }
+})
+
+</script>
+
+
+<!-- flesh javacsripts -->
+
+<!-- your_template.html -->
+
+<script>
+  // Get the flash message container element
+  const flashContainer = document.getElementById('flash-message-container');
+
+  // Hide the flash message after 5 seconds (5000 milliseconds)
+  setTimeout(() => {
+    flashContainer.style.display = 'none';
+  }, 5000);
+</script>
+
+
+
+<!-- JavaScript to control the popup carousel -->
+<script>
+  var currentImageIndex = 0;
+
+  // Display the popup
+  function openPopup() {
+      document.getElementById('popup-container').style.display = 'block';
+      updateDescription();
+  }
+
+  // Close the popup
+  function closePopup() {
+      document.getElementById('popup-container').style.display = 'none';
+  }
+
+  // Show the previous image in the carousel
+  function prevImage() {
+      var images = document.getElementsByClassName('popup-image');
+      if (currentImageIndex > 0) {
+          currentImageIndex--;
+      } else {
+          currentImageIndex = images.length - 1;
+      }
+      updateImage();
+      updateDescription();
+  }
+
+  // Show the next image in the carousel
+  function nextImage() {
+      var images = document.getElementsByClassName('popup-image');
+      if (currentImageIndex < images.length - 1) {
+          currentImageIndex++;
+      } else {
+          currentImageIndex = 0;
+      }
+      updateImage();
+      updateDescription();
+  }
+
+  // Update the displayed image
+  function updateImage() {
+      var images = document.getElementsByClassName('popup-image');
+      for (var i = 0; i < images.length; i++) {
+          if (i === currentImageIndex) {
+              images[i].classList.add('active');
+          } else {
+              images[i].classList.remove('active');
+          }
+      }
+  }
+
+  // Update the displayed description
+  function updateDescription() {
+      var descriptions = document.getElementsByClassName('desc');
+      for (var i = 0; i < descriptions.length; i++) {
+          if (i === currentImageIndex) {
+              descriptions[i].style.display = 'block';
+          } else {
+              descriptions[i].style.display = 'none';
+          }
+      }
+  }
+
+  // Open the popup when the page loads
+  setTimeout(openPopup, 1000); // Adjust the delay as needed
+</script>
+
+
+{% endblock %} 
+ 

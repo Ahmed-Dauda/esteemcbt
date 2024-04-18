@@ -1,0 +1,146 @@
+{% extends 'sms/dashboard/base.html' %}
+
+{% load hitcount_tags %}
+
+{% block title %} Print your Certificate {% endblock %}
+
+  {% block content %} 
+
+
+<button class="btn "><a href="https://wa.me/23409031568177"> Contact Us  </a>  </button>
+
+
+<div class="table-responsive container text-center card-body">
+    <div><a href="{% url 'student:take-exam' %}">Take exam if you have not</a></div><br>
+  <h2 class="">{{ hitcount.total_hits }} Certificates printed</2> <br> <br>
+  <table class="table" id=""> 
+    {% for course in courses %}
+    {% if course == t.exam %}
+        {% if t.marks >= course.pass_mark %}
+   
+    {% else %}
+    <div><a href="{% url 'student:take-exam' %}">Take Exam</a></div><br>
+       {% endif %}
+    {% endif %}
+    {% endfor %}
+    <thead>
+      <tr>
+        <th>Names</th>
+        <th>Email</th>
+   
+        <th>Exam Name</th>
+        <th>Max Score</th>
+
+       
+      </tr>
+    </thead>
+   
+ <tbody>
+    <tr>
+      
+        {% for t in results %}
+    <tr>
+        <td>{{ t.student.first_name }} {{ t.student.last_name }}</td>
+        <td>{{ t.student.user }}</td>
+        <td>{{ t.exam }}</td>
+        <td>{{ t.marks }}</td>
+
+        {% for course in courses %}
+            {% if course == t.exam %}
+                {% if t.marks >= course.pass_mark %}
+                    <p style="color: green; font-size: 18px;">Congratulations, {{ request.user.profile.first_name }}, you've successfully passed the exam!</p>
+                    <form id="paymentForm" action="" method="POST">
+                        <div class="form-group">
+                            <input value='{{ request.user.email}}' type="hidden" id="email-address" required />
+                        </div>
+                        <div class="form-group">
+                            <input value="{{ course.course_name.cert_price|safe }}" type="hidden" id="amount" required />
+                        </div>
+                        <div class="form-submit">
+                            <!-- Your form elements go here -->
+                        </div>
+                        <!-- Other form elements or actions -->
+
+                        {% if not related_payments.exists %}
+                            {% if course.course_name.cert_price %}
+                                <button class="btn btn-primary" type="submit" id="purchasebtn" onclick="payWithPaystack()">Pay #{{ course.course_name.cert_price|safe }} Now to Print Certificate</button>
+                            {% else %}
+                                <a href="{% url 'student:pdf' course.id %}">PRINT {{ course }} CERTIFICATE</a><br>
+                            {% endif %}
+                        {% else %}
+                            {% if related_payments.exists %}
+                                <a href="{% url 'student:pdf' course.id %}">PRINT {{ course }} CERTIFICATE</a><br>
+                            {% endif %}
+                        {% endif %}
+
+                        {% if course.course_name.cert_price == 0 or course == course.course_name.title %}
+                            <a href="{% url 'student:pdf' course.id %}">PRINT {{ course }} CERTIFICATE</a><br>
+                        {% endif %}
+                    </form>
+                    <script src="https://js.paystack.co/v1/inline.js"></script>
+
+                    {% for payment in related_payments %}
+                        {% if payment.amount == course.course_name.price and course.title == course.course_name.title %}
+                            <p>{{ hitcount.total_hits }} Certificates printed on this course</p>
+                            <a href="{% url 'student:pdf' course.id %}">PRINT {{ course }} CERTIFICATE</a><br>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <h4 style="color: red">Passed mark: {{ course.pass_mark }}. You are close to getting your Certificate. Please try again</h4>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </tr>
+{% endfor %}
+
+  <hr>
+</table>
+
+
+</div>
+
+<!-- End of Main Content -->
+
+
+
+<script>
+
+  
+
+const paymentForm = document.getElementById('paymentForm');
+paymentForm.addEventListener("submit", payWithPaystack, false);
+
+function payWithPaystack(e) {
+  e.preventDefault();
+
+  let handler = PaystackPop.setup({
+    key: '{{paystack_public_key}}', // Replace with your public key
+    email: document.getElementById("email-address").value,
+    amount: document.getElementById("amount").value * 100,
+    ref: ''+Math.floor((Math.random() * 1000000000) + 1), // generates a pseudo-unique reference. Please replace with a reference you generated. Or remove the line entirely so our API will generate one for you
+    // label: "Optional string that replaces customer email"
+    onClose: function(){
+      alert('Window closed.');
+    },
+    
+         callback: function (response) {
+          // If transaction successful, do this
+          var referenceid = response.reference;
+          window.location.href = "{% url 'student:view_result' %}"
+
+        },
+        onClose: function () {
+          // Do stuff
+        }
+      });
+  
+  handler.openIframe();
+}
+
+
+
+</script>
+
+
+{% endblock %} 
+ 

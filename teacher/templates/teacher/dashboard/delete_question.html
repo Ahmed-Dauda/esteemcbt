@@ -1,0 +1,30 @@
+{% extends 'sms/dashboard/base.html' %}
+
+{% block title %} Delete Question {% endblock %}
+
+  {% block content %} 
+
+  <style>
+
+</style>
+    
+<br> <br>
+<h1>Delete Question</h1>
+    <p>Are you sure you want to delete the question "{{ question }}"?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Delete</button>
+        <a href="{% url 'view_questions' %}">Cancel</a>
+    </form>
+
+<!-- End of Main Content -->
+
+  {% endblock %} 
+ 
+
+
+
+
+
+
+

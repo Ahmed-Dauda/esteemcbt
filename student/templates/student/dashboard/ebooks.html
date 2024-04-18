@@ -1,0 +1,134 @@
+{% extends 'sms/dashboard/base.html' %}
+
+{% load hitcount_tags %}
+
+{% block title %} Print your Certificate {% endblock %}
+
+  {% block content %} 
+
+
+<button class="btn "><a href="https://wa.me/23409031568177"> Contact Us  </a>  </button>
+
+<div class="table-responsive container text-center card-body">
+
+  
+  <h2>{{ document.title }}</h2>
+  <p>{{ document.desc }}</p>
+  <p>Price: &#8358;{{ document.price }}</p>
+ 
+
+<form id="paymentForm" action="">
+  <div class="form-group">
+ 
+    <input  value = '{{request.user}}' type="hidden" id="email-address" required />
+  </div>
+  <div class="form-group">
+
+    <input  value = "{{document.price|safe}}"  type="hidden" id="amount" required />
+  </div>
+ 
+  <div class="form-submit">
+   
+  </div>
+
+  {% if not related_payments.exists %}
+    <!-- User has not made a payment for this course -->
+    <button class="btn btn-primary" type="submit"  id="purchasebtn" onclick="payWithPaystack()">Pay Now </button>
+
+  {% else %}
+
+   
+{% if related_payments %}
+
+<div  class="text-center">
+    <!-- <a class="link" href="{% url 'sms:pdf_document_detail' document.id %}?download=1">Download PDF</a> -->
+    <a class="link" href="{{ document.pdf_url }}" target="_blank">Download PDF</a>
+    <hr>
+    <a class="link" href="{% url 'sms:homepage' %}">Return to Homepage</a>
+    {% else %}
+    
+    <a class="link " href="{% url 'sms:initiatepdfpayment' document.id %}">Make Payment to print your pdf</a>
+    
+    {% endif %}
+
+  {% endif %}
+
+</form>
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+
+
+</div>
+
+<!-- End of Main Content -->
+
+
+
+<script>
+
+  // paystack payment
+  
+  
+  const paymentForm = document.getElementById('paymentForm');
+  paymentForm.addEventListener("submit", payWithPaystack, false);
+  
+  function payWithPaystack(e) {
+    e.preventDefault();
+  
+    let handler = PaystackPop.setup({
+      key: '{{paystack_public_key}}', // Replace with your public key
+      email: document.getElementById("email-address").value,
+      amount: document.getElementById("amount").value * 100,
+      ref: ''+Math.floor((Math.random() * 1000000000) + 1), // generates a pseudo-unique reference. Please replace with a reference you generated. Or remove the line entirely so our API will generate one for you
+      // label: "Optional string that replaces customer email"
+      onClose: function(){
+        alert('Window closed.');
+      },
+      
+           callback: function (response) {
+            // If transaction successful, do this
+            var referenceid = response.reference;
+           
+            window.location.href = "{% url 'sms:gotopdfconfirmpage' document.id %}"
+  
+            // Set the referenceid value to the ref hidden input field
+            $("#ref").val(referenceid);
+  
+            // Make an http request to cart process
+            // $.ajax({
+            //   type: "GET",
+            //   url: "/student/docverify/" + referenceid,
+              // beforeSend: function () {
+              //   console.log("Sending request");
+              //   $(".alert").text("Sending request");
+              // },
+              // success: function (response) {
+              //   if (response[3].status == "success") {
+              //     // Once transaction completed, redirect to complete page
+              //     $(".alert").removeClass("alert-warning");
+              //     $(".alert").addClass("alert-success");
+              //     $(".alert").text("Transaction verified");
+              //     console.log("Transaction verified");
+              //     $("form").trigger("reset");
+              //   } else {
+              //     $(".alert").text("Transaction reference not found");
+              //   }
+              // }
+            // });
+          },
+          onClose: function () {
+            // Do stuff
+          }
+        });
+    
+    handler.openIframe();
+  }
+  
+  
+  
+  </script>
+  
+  
+  
+
+{% endblock %} 
+ 

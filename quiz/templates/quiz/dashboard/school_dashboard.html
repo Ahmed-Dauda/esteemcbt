@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Your HTML head content -->
+</head>
+<body>
+    <!-- Your HTML body content -->
+    
+    {% if student_info %}
+    <p>Name: {{ student.name}}</p>
+    <p>Name: {{ course }}</p>
+        <p>School Name: {{ student_info.school_name }}</p>
+        <img src="{{ student_info.logo_url }}" alt="School Logo" width="100px" height="100px"> <br>
+        <img src="{{ student_info.signature_url }}" alt="Principal Signature" width="100px" height="100px">
+        <!-- Add more fields as needed -->
+    {% endif %}
+    
+    <!-- Rest of your template -->
+</body>
+</html>

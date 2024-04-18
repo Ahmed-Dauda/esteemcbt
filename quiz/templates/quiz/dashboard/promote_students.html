@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Promote Students</title>
+</head>
+<body>
+    <h1>Promote Students</h1>
+    <p>From Grade: {{ from_grade }}</p>
+    <p>To Grade: {{ to_grade }}</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Promote</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>start exams view</title>
+    <!-- prism.css and prism.js -->
+    <link rel="stylesheet" type="text/css" href="/static/sms/prism.css">
+    <script src="/static/sms/prism.js"> </script>
+    
+    
+       <!-- bootsrap back arrow-->
+       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">    
+      <!-- bootstrap link -->
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+      
+  
+
+<style>
+  
+.quiz {
+  width: 100%;
+  display: flex;
+  cursor: pointer;
+  border: 1px solid #ccc; /* Add border to the .quiz container */
+ 
+}
+
+.quiz>* {
+  margin: 10px;
+  
+  overflow-x: hidden;
+}
+
+.quiz input[type="radio"] {
+    transform: scale(1.5); /* Increase the size by adjusting the scale value */
+    margin-right: 10px; /* Add some spacing between the radio input and label */
+    /* margin-top: -10px; */
+   
+}
+
+.back-button {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #f9f9f9; /* Background color for the button */
+  border: 1px solid #ccc; /* Border for the button */
+  border-radius: 5px; /* Rounded corners for the button */
+  text-decoration: none;
+  color: #333; /* Text color */
+  font-size: 16px; /* Font size */
+}
+
+.back-button:hover {
+  background-color: #e0e0e0; /* Background color on hover */
+}
+
+</style>
+      
+</head>
+<body> 
+
+  <a class="back-button" href="{% url 'sms:topicslistview' course.course_name.courses.id %}" style="font-size: 24px;">
+    <span class="bi bi-arrow-left"></span>
+  </a>
+  
+  <!-- <a class="back-button bg-danger text-white" href="{% url 'sms:topicslistview' course.course_name.courses.id %}">Back to Course</a> -->
+
+
+  <!-- <button style="background-color: red; color: white;"  onclick="goBack()" class="btn btn-secondary">Back to Topics</button> -->
+
+  <script>
+  function goBack() {
+    window.history.back();
+  }
+ 
+  </script>
+  
+  <div class="card">
+    <div class="card-header">
+      <!-- <h1>tttttttttt{{ course.pass_mark }}</h1>  -->         
+        <h2>Quiz Results</h2>    
+        {% for t in results %}
+
+        <div class="card-body">
+          <span>Score: {{ t.marks }} / {{ q_count }}</span>
+          {% if t.marks >= course.pass_mark  %}
+            <p style="color: green;">Congratulations! You have passed the assessment benchmark <span class="bi bi-emoji-smile"></span></p>
+            <a class="" href="{% url 'sms:topicslistview' course.course_name.courses.id %}" style="font-size: 24px;">
+              <span class="bi bi-arrow-left"></span>
+            </a>
+          {% else %}
+            <p style="color: red;">Unfortunately, you did not pass this assessment. Don't be discouraged!.Keep practicing and try again! <span class="bi bi-emoji-sad"></span></p>
+          {% endif %}
+        </div>
+        
+      {% endfor %}
+<hr>
+
+<form action="/quiz/calculate_marks" onsubmit="return saveAns()" enctype="multipart/form-data"  method="POST">
+  {% csrf_token %}
+  <input type="hidden" name="csrfmiddlewaretoken" value="C24rUotmdHawVQJL3KrqiWxvti8UffOFYUc8TRbZtLt36AVLdP3jbkzUVe3beRAa">
+    <h4>{{course.course_name}} Quiz</h4>
+    <h5>Number of Questions in the Quiz: {{q_count}}</h5>
+    <!-- <hr>
+    <p>pages {{page_obj}}</p> -->
+    
+    <hr>
+  {% for q in  page_obj %}
+
+
+
+{% if q.img_quiz.url %}
+<div  class="text-center" ><img src="{{q.img_quiz.url}}" width="100%" height="300px" alt=""> </div><br>
+{% endif %}
+
+<label style="font-size: 18px;" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left">
+  {{ q.question|safe }}
+</label>
+
+
+<h6 style="text-align: right;">[marks {{q.marks}}]</h6>
+
+{% if q.option1 %}
+
+<div class="quiz">
+  <input  type="radio" name="{{forloop.counter}}" id="{{q.option1}}" name="choose"  value="Option1" required>
+  <label style="width: 100%;" for="option1" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left"> {{q.option1|safe}}</label><br>
+</div> 
+{% endif %}  
+
+   
+  
+  {% if q.option2 %}
+<div class="quiz">
+  <input  type="radio" name="{{forloop.counter}}" id="{{q.option2}}" name="choose" value="Option2" required>
+  <label style="width: 100%;" for="option2" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left">{{q.option2|safe}}</label>
+</div>
+
+  {% endif %}
+
+
+{% if q.option3 %}
+<div class="quiz" >
+  <input  type="radio" name="{{forloop.counter}}" id="{{q.option3}}" name="choose" value="Option3" required>
+  <label style="width: 100%;" for="option3" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left">{{q.option3|safe}}</label>
+</div>
+{% endif %}
+
+{% if q.option4 %}
+<div class="quiz" >
+  <input  type="radio" name="{{forloop.counter}}" id="{{q.option4}}" name="choose" value="Option4" required>
+  <label style="width: 100%;"  for="option4" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left">{{q.option4|safe}}</label><br>
+</div>
+{% endif %}
+<br><br>
+{% empty %}
+<h1 class="card text-center text-danger">No Exam Available Yet. CHECK LATER</h1>
+  {% endfor %}
+
+  <div style="display: flex; justify-content: space-between;">
+    <button onclick="disp()" class="btn btn-primary" type="submit"> Submit </button>
+    <!-- <button style="background-color: red; color: white;"  onclick="goBack()" class="btn btn-secondary">Back to Topics</button>
+   -->
+  </div>
+
+   
+
+</div>
+
+</form> 
+
+    </div>
+</div>
+
+<!-- pagination area -->
+
+
+
+<!-- end of pagination -->
+
+  <script> 
+
+      function saveAns(){  
+  
+          var ele = document.getElementsByTagName('input'); 
+          for(i = 0; i < ele.length; i++) { 
+              if(ele[i].type="radio") { 
+                  if(ele[i].checked){        
+                    setCookie(ele[i].name,ele[i].value,3)
+                  }
+              } 
+          } 
+            
+      }
+      
+    function setCookie(cname, cvalue, exdays) {
+    var d = new Date();
+    d.setTime(d.getTime() + (exdays*24*60*60*1000));
+    var expires = "expires="+ d.toUTCString();
+    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+  }
+</script>
+
+<script>
+    function disp(){
+    alert('Note: You must answer all question before you will be able to submit')
+    } 
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+  const quizButtons = document.querySelectorAll(".quiz");
+  quizButtons.forEach(button => {
+    button.addEventListener("click", function() {
+      const radioInput = this.querySelector("input[type='radio']");
+      if (radioInput) {
+        radioInput.checked = true;
+      }
+    });
+  });
+});
+
+</script>
+
+</body>
+</html>
+
+
+<br><br><br><br><br><br>

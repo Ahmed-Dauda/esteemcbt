@@ -1,0 +1,69 @@
+{% extends 'sms/dashboard/base.html' %}
+
+{% block title %} subject_view_result {% endblock %}
+
+  {% block content %} 
+
+  <style>
+
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.left-column-cat {
+    flex: 1;
+    margin: 5px;
+    background-color: #4158D0;
+    color: black;
+    background-image: linear-gradient(#ffff 100%, #ffff 46%, white 100%);
+
+}
+
+</style>
+
+
+<br> <br> <br> <br> <br><br> 
+
+<div class="container text-center">
+
+  <h3>Quiz submitted successfully. Thank you! You can take a walk.</h3>
+  <!-- {% for item in courses  %}
+    <div class="left-column-cat card-body text-center category">
+        <a class="bg-white container" href="{% url 'sms:certificates' item.id %}">{{ item.course_name }}</a> <hr>
+    </div>
+{% empty %}
+    <small class="card-text">No Exams Available Yet. CHECK LATER</small>
+{% endfor %} -->
+
+</div>
+
+<br> <br> <br><br> <br> <br><br>
+<!-- End of Main Content -->
+
+  {% endblock %} 
+ 
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Marks</title>
+ 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+<body>
+
+<h1 class="card-header text-center text-white bg-primary">Select course score and get certificate</h1><br>
+  {% for t in courses %}
+<div class="container text-center">
+ <div ><a class="" href="{% url 'sms:certificates' t.id %}">{{t.course_name}}</a></div><hr>
+</div>
+{% endfor %}
+</body>
+</html> -->

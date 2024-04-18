@@ -1,0 +1,35 @@
+{% extends 'sms/dashboard/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %} Edit Question {% endblock %}
+
+  {% block content %} 
+
+  <style>
+
+</style>
+    
+<br> <br>
+<h1>Edit Question</h1>
+<div class="container">
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit">Save Changes</button>
+        <a href="{% url 'view_questions' %}">Cancel</a>
+    </form>
+
+</div>
+
+<!-- End of Main Content -->
+
+  {% endblock %} 
+ 
+
+
+
+
+
+
+

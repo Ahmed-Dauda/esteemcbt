@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{% block head_title %}{% endblock %}</title>
+    {% block extra_head %}
+    {% endblock %}
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   
+    <!--font awesome-->
+  <script src="https://use.fontawesome.com/894e6d2186.js"></script>
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="/static/sms/cssh/styles.css" rel="stylesheet">
+    <!-- bootstrap link -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  </head>
+<style>
+.cre{
+  margin-left: 40%;
+}
+
+</style>
+  <body>
+
+    <div class="container text-center">
+    {% block body %}
+
+    {% if messages %}
+    <div>
+      <strong>Messages:</strong>
+      <ul >
+        {% for message in messages %}
+        <li>{{message}}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div >
+      <!-- <strong>Menu:</strong> -->
+      <div class="card-header text-white text-center bg-primary">
+      <ul style="list-style: none;">
+        {% if user.is_authenticated %}
+        <li><a href="{% url 'account_email' %}">Change E-mail</a></li>
+        <li><a href="{% url 'account_logout' %}">Sign Out</a></li>
+        {% else %}
+        
+        <div><img class="rounded-circle" src="/static/sms/images/newlogo3.jpg" width="200px" height="200px" alt="topics image"></div><br><hr> 
+        <!-- <div class="container cre card-text">
+        <li><a class="text-white" href="{% url 'account_login' %}">Sign In</a></li>
+        <li><a class="text-white" href="{% url 'account_signup' %}">Sign Up</a></li>
+      </div> -->
+        {% endif %}
+        
+      </ul>
+    </div>
+    </div>
+    <div class="card-body" style="border: 1px solid black;">
+    {% block content %}
+    {% endblock %}
+  </div>
+    {% endblock %}
+    {% block extra_body %}
+    {% endblock %}
+
+  </div>
+  </body>
+</html>

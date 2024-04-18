@@ -1,0 +1,44 @@
+{% extends 'sms/dashboard/base.html' %}
+
+{% block title %} Course Overall Scores {% endblock %}
+
+  {% block content %} 
+  <style>
+    .container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .left-column-cat {
+        flex: 1;
+        margin: 5px;
+        background-color: #4158D0;
+        color: black;
+        background-image: linear-gradient(#ffff 100%, #ffff 46%, white 100%);
+    
+    }
+    
+    </style>
+
+    <h3 class="text-center">Course Overall Scores</h3>
+    <div class="container text-center">
+
+        {% for item in object_list %}
+        <div class="left-column-cat card-body text-center category">
+            <!-- <img class="card-img" src="{{item.img_course.url}}" > -->
+            <a class="bg-white container" href="{% url 'sms:admin_result_detail_view' item.id %}">{{item}}</a> <hr>
+        </div>
+        {% empty %}
+        <small class="card-text">No Exams Available Yet. CHECK LATER</small>
+    
+        {% endfor %}
+    </div>
+
+    <!--Products-->
+
+  {% endblock %} 
+ 
+
+
+

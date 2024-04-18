@@ -1,0 +1,18 @@
+<!-- users/templates/users/referral_signup.html -->
+{% extends 'sms/dashboard/base.html' %}
+
+{% block content %}
+
+<div class="text-center">
+    <br><br>
+  <h2>School Student Registration Form</h2>
+
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Submit</button>
+    </form>
+
+  
+</div>
+{% endblock %}

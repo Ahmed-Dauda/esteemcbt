@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pagination project</title>
+    <!-- bootstrap link -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  
+</head>
+<body>
+   
+ 
+    <h2>Blog Posts</h2>
+    <!-- {% for kw in page_obj %}<pre>{{kw}}</pre>{% endfor %} -->
+    <div id="keywords"></div>
+ 
+    <!-- {% for kw in page_obj %}<pre >
+        {{kw.title}}
+        {{kw.desc}}
+    </pre>
+    {% endfor %}
+     -->
+  
+    <p>
+        Current Page: <b id="current"></b>
+    </p>
+    
+    <nav>
+        <a href="#" id="prev">
+            Previous Page
+        </a>
+        <a href="#" id="next">
+            Next Page
+        </a>
+    </nav>
+
+    <!-- <ul id="blog-post-list">
+       
+    <p style="color:green;">Current Page: {{page_obj.number}}</p>
+    
+        {% for blog_post in page_obj %}
+            <h1>{{ blog_post.title }}</h1>
+            
+            <p>{{ blog_post.desc }}</p>
+        {% endfor %}
+    </ul> -->
+
+    
+  <!-- <hr>
+    
+    {% if page_obj.has_previous %}
+    <a href="{% url 'sms:terms-by-page' 1 %}">
+        First Page
+    </a>
+{% endif%}
+{% if page_obj.has_next %}
+    <a href="{% url 'sms:terms-by-page' page_obj.paginator.num_pages %}">
+        Last Page
+    </a>
+{% endif%} -->
+
+
+    <!-- {% if page_obj.has_previous %}
+    <a href="{% url 'sms:terms-by-page' page_obj.previous_page_number %}">
+        Previous Page
+    </a>
+{% endif%}
+{% if page_obj.has_next %}
+    <a href="{% url 'sms:terms-by-page' page_obj.next_page_number %}">
+        Next Page
+    </a>
+{% endif%} -->
+
+    <hr>
+
+<!-- pagination codes star -->
+<!-- 	
+{% if page_obj.has_other_pages %}
+<div class="container" id = ''>
+<nav class="d-flex" aria-label="Page navigation example">
+
+  <ul class="pagination  pagination-sm flex-wrap justify-content-center">
+    {% if page_obj.has_previous %}
+      <li class=" page-item"><a  class="continue page-link badge bg-primary rounded-pill" href="?page={{ page_obj.previous_page_number }}">previous &laquo;</a></li>
+    {% else %}
+      <li class="page-item disabled"><span>&laquo;</span></li>
+    {% endif %}
+    {% for i in page_obj.paginator.page_range %}
+      {% if page_obj.number == i %}
+        <li class="page-item active" aria-current="page"><span><a class="page-link" href="">{{ i }}</a></span></li>
+      {% else %}
+        <li class="page-item"><a class="continue page-link" href="?page={{ i }}">{{ i }}</a></li>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <li class="page-item"><a class="page-link badge bg-primary rounded-pill" href="?page={{ page_obj.next_page_number }}"> next &raquo;</a></li>
+    {% else %}
+      <li class="page-item disabled"><span>last &raquo; </span></li>
+    {% endif %}
+  </ul>
+</nav>
+</div> 
+{% endif %} -->
+
+
+    <script>
+        async function getData(url, page, paginateBy) {
+            const urlWithParams = url + "?" + new URLSearchParams({
+                page: page,
+                per_page: paginateBy
+            })
+            const response = await fetch(urlWithParams);
+            return response.json();
+        }
+    
+        class FauxPaginator {
+            constructor(perPage) {
+                this.perPage = perPage
+                this.pageIndex = 1
+                this.container = document.querySelector("#keywords")
+               
+                this.elements = document.querySelectorAll("pre")
+                this.label = document.querySelector("#current")
+                this.prev = document.querySelector("#prev")
+                this.next = document.querySelector("#next")
+                this.prev.addEventListener("click", this.onPrevClick.bind(this))
+                this.next.addEventListener("click", this.onNextClick.bind(this))
+                this.goToPage()
+            }
+    
+            onPrevClick(event) {
+                event.preventDefault()
+                this.pageIndex--
+                this.goToPage()
+            }
+    
+            onNextClick(event) {
+                event.preventDefault()
+                this.pageIndex++
+                this.goToPage()
+            }
+    
+            addElement(keyword) {
+                const pre = document.createElement("p")
+                pre.append(keyword)
+                this.container.append(pre)
+
+            }
+        
+            goToPage() {
+                getData("{% url 'sms:terms-api' %}", this.pageIndex, this.perPage)
+                    .then(response => {
+                        this.container.innerHTML = '';
+                        response.data.forEach((el) => {
+                        
+                            
+                            this.addElement(el.title)
+                            this.addElement(el.desc)
+                            this.addElement(el.course_desc)
+                            this.addElement(el.created)
+                            this.addElement(el.updated)
+                           
+                            
+                        });
+                     
+                        this.label.innerText = this.pageIndex
+                        const firstPage = this.pageIndex === 1
+                        const lastPage = !response.page.has_next
+                        this.prev.style.display = firstPage ? "none" : "inline-block"
+                        this.next.style.display = lastPage ? "none" : "inline-block"
+                    });
+            }
+        }
+    
+        new FauxPaginator(1);
+    </script>
+    
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" crossorigin="anonymous">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+</body>
+</html>

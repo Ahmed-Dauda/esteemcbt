@@ -1,0 +1,97 @@
+{% extends 'sms/dashboard/base.html' %}
+
+{% block title %} table {% endblock %}
+
+  {% block content %} 
+  <style>
+ 
+    </style>
+       
+    <!--Products-->
+
+    <h3 class="text-center">Select a Course to Take Exam</h3>
+    <p class="text-center">Start the Quiz</p>
+    <p class="text-center">Good luck!</p>
+<!-- <p>{{sub_grade}}dd</p> 
+<h5>{{subjects}}fff</h5>
+
+{% for sub in subjects %}
+
+{% if sub %}
+<h2>Yes {{sub}}</h2>
+{% else %}
+<h2>No</h2>
+{% endif %}
+
+{% endfor %} -->
+
+<!-- codethinkers academy courses  -->
+{% if course_pay %}
+   <div style="display: flex; flex-wrap: wrap; justify-content: center; padding: 0 10px 0px 10px;">
+    {% for course_name in course_names %}
+    <div style="width: 100%; max-width: 400px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; display: flex;">
+    
+     <div style="background-color: #f0f0f0; color: #333; font-size: 24px; font-weight: bold; padding: 20px; border-right: 1px solid #ccc;">
+        {{course_name|make_list|first }}
+    </div>
+
+    <div style="flex-grow: 1;">
+    <div style="padding: 20px;">
+      <a style="color: #333; text-decoration: none; font-size:12px;" href="{% url 'student:start-exam' course_name.id %}">{{ course_name }}</a>
+   </div>
+   </div>
+
+</div>
+    {% endfor %}
+</div>
+
+{% else %}
+
+
+<!-- schools exams sections  -->
+<div style="display: flex; flex-wrap: wrap; justify-content: center; padding: 0 10px 0px 10px;">
+    {% for item in courses %}
+        {% for subj in subjects %}
+            <!-- Check if the item (course) is associated with the subject -->
+            {% if item|lower == subj|lower %}
+                {% if sub_grade|lower == student_class|lower and item.schools.school_name|lower == school_name|lower %}
+                    <div style="width: 100%; max-width: 400px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; display: flex;">
+                        <div style="background-color: #f0f0f0; color: #333; font-size: 24px; font-weight: bold; padding: 20px; border-right: 1px solid #ccc;">
+                            {{ item|make_list|first }}
+                        </div>
+                        <div style="flex-grow: 1;">
+                            <div style="padding: 20px;">
+                                <!-- Ensure item.id is the correct way to get the course ID -->
+                                <a style="color: #333; text-decoration: none; font-size:12px;" href="{% url 'student:start-exam' item.id %}">{{ item }}</a>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div style="padding: 20px;">
+                        <!-- Ensure subj represents the correct subject name -->
+                        <a style="color: #333; text-decoration: none; font-size:12px;" href="{% url 'student:start-exam' item.id %}">{{ subj }}</a>
+                    </div>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        {% empty %}
+        <div style="width: 100%; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden;">
+            <div style="padding: 20px;">
+                <small>No Exams Available Yet. CHECK LATER</small>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+<!-- end schools exams sections  -->
+
+
+{% endif %}
+<!-- end codethinkers academy courses  -->
+    
+    
+   
+
+  {% endblock %} 
+ 
+
+
