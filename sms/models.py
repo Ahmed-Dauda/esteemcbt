@@ -11,7 +11,41 @@ from embed_video.fields import EmbedVideoField
 from django.conf import settings
 from hitcount.models import HitCount, HitCountMixin
 from django.db import models
+from django.utils.text import slugify
+from tinymce.models import HTMLField
 
+# models.py
+
+
+class AboutUs(models.Model):
+
+    title = models.CharField(max_length=100, blank=True, null= True)
+    img_about_us = CloudinaryField('about_us', blank=True, null= True)
+    content = HTMLField(null=True)
+    created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    updated = models.DateTimeField(auto_now=True, blank=True, null=True) 
+
+    def __str__(self):
+        return self.title
+
+class FrontPageVideo(models.Model):
+
+    title = models.CharField(max_length=500, blank=True, null=True)
+    video = EmbedVideoField(blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    updated = models.DateTimeField(auto_now=True, blank=True, null=True) 
+    id = models.BigAutoField(primary_key=True)
+    hit_count_generic = GenericRelation(HitCount, object_id_field='object_pk', related_query_name='hit_count_generic_relation')
+
+    def __str__(self):
+        return f'{self.title}'
+
+class CarouselImage(models.Model):
+    image_carousel = CloudinaryField('carousel_images/', blank=True, null= True)
+    caption = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return self.caption
 
 
 class Categories(models.Model, HitCountMixin):
@@ -172,10 +206,6 @@ class AboutCourseOwner(models.Model):
         return f'{self.courses.title}' 
     
 
-from django.utils.text import slugify
-
-
-from tinymce.models import HTMLField
 
 # models.py
 

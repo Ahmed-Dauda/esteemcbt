@@ -72,10 +72,11 @@ from sms.models import (Categories, Courses, Topics,
                           CourseLearnerReviews, 
                           Whatyouwilllearn,
                           CareerOpportunities, Whatyouwillbuild,
-                          AboutCourseOwner,
+                          AboutCourseOwner
                          
                         )
 
+from student.models import Clubs
 
 class Categorieslistview(LoginRequiredMixin, ListView):
     model = Categories
@@ -187,8 +188,34 @@ class PaymentSucess(LoginRequiredMixin, HitCountDetailView, DetailView):
 
         return context
 
-    
+# views.py
+from django.views.generic import ListView
+from .models import AboutUs
+
+class AboutUsView(ListView):
+    model = AboutUs
+    template_name = 'sms/dashboard/about_us.html'
+    context_object_name = 'about_us_list'
+   
 from student.models import AdvertisementImage
+from .models import Courses, CarouselImage, FrontPageVideo
+
+class DigitalForm(ListView):
+    models = PDFDocument
+    template_name = 'sms/dashboard/digital_form.html'
+    success_message = 'TestModel successfully updated!'
+    count_hit = True
+   
+    def get_queryset(self):
+       
+        # return  Courses.objects.all().select_related('categories').distinct()
+         return PDFDocument.objects.all() 
+    
+    def get_context_data(self, **kwargs): 
+        context = super(DigitalForm, self).get_context_data(**kwargs)
+        context['alert_homes']  = PDFDocument.objects.order_by('-created')
+        
+        return context
 
 class Homepage1(ListView):
     models = Courses
@@ -203,7 +230,11 @@ class Homepage1(ListView):
     
     def get_context_data(self, **kwargs): 
         context = super(Homepage1, self).get_context_data(**kwargs)
-        
+
+        # Add CarouselImage queryset to the context
+        context['carousel_images'] = CarouselImage.objects.all()
+        context['front_page_videos'] = FrontPageVideo.objects.all()
+
         context['students'] = NewUser.objects.all().count() + 1000
         context['category'] = Categories.objects.count()
         context['coursecategory'] = Categories.objects.all()
@@ -242,7 +273,6 @@ class Homepage1(ListView):
             course.advanced_topic_count = Topics.objects.filter(courses=course).count()
         context['advanced'] = advanced_courses[:4]
 
-
         context['Free_courses'] = Courses.objects.filter(status_type = 'Free')
         context['Free_courses_count'] = Courses.objects.filter(status_type = 'Free').count()
         Free_courses_courses = Courses.objects.filter(status_type = 'Free')
@@ -266,7 +296,7 @@ class Homepage1(ListView):
         context['popular_course'] = popular_course_courses
     
    
-        context['alert_homes']  = PDFDocument.objects.order_by('-created')[:4] 
+        # context['alert_homes']  = PDFDocument.objects.order_by('-created')[:4] 
         context['alerts']  = PDFDocument.objects.order_by('-created')
         context['alert_count_homes'] = PDFDocument.objects.order_by('-created')[:4].count() 
         context['alert_count'] = PDFDocument.objects.all().count()
@@ -724,6 +754,45 @@ class PDFDocumentDetailView(LoginRequiredMixin, DetailView):
 
 
 
+class ClubsListView(ListView):
+    model = Clubs
+    template_name = 'student/dashboard/clubs_list.html'
+    success_message = 'TestModel successfully updated!'
+    count_hit = True
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['documents'] = self.get_queryset()  # Use self.get_queryset() instead of Clubs.objects.all()
+        return context
+
+
+class Clubs(HitCountDetailView,LoginRequiredMixin,DetailView):
+    models =  Clubs
+    template_name = 'student/dashboard/clubs.html'
+    success_message = 'TestModel successfully updated!'
+    count_hit = True
+     
+    def get_queryset(self):
+        return Clubs.objects.all()
+
+    def get_context_data(self,*args , **kwargs ):
+        context = super().get_context_data(**kwargs)
+        document = get_object_or_404(Clubs, pk=self.kwargs['pk'])
+        
+        course = Clubs.objects.get(pk=self.kwargs["pk"])
+        context['document'] = document
+      
+        user = self.request.user
+        related_payments = EbooksPayment.objects.filter(email=user, content_type=course, amount=course.price)
+        # related_payments = Payment.objects.filter(email=user, courses__title=object.title, amount=object.price)
+        context['related_payments'] = related_payments
+        context['paystack_public_key']  = settings.PAYSTACK_PUBLIC_KEY
+
+        
+        return context
+
+
 class Ebooks(HitCountDetailView,LoginRequiredMixin,DetailView):
     models = PDFDocument
     template_name = 'student/dashboard/ebooks.html'
@@ -732,6 +801,7 @@ class Ebooks(HitCountDetailView,LoginRequiredMixin,DetailView):
      
     def get_queryset(self):
         return PDFDocument.objects.all()
+
 
     def get_context_data(self,*args , **kwargs ):
         context = super().get_context_data(**kwargs)

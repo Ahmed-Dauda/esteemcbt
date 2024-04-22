@@ -39,23 +39,29 @@ from sms.views import(
       Paymentdesc,
       PaymentSucess,
       Ebooks,
+      Clubs,
+      ClubsListView,
       gotopdfconfirmpage,
       pdfpaymentconfirmation,
       PDFDocumentDetailView,
-      MarkTopicCompleteView
+      MarkTopicCompleteView,
+      DigitalForm
    
       
 ) 
 
-
+from .views import AboutUsView
 app_name = 'sms'
 
 urlpatterns = [
     
 
     # path('', Categorieslistview.as_view(), name='categorieslist'),
-
+    path('digital-form/', DigitalForm.as_view(), name='digital_form'),
+    path('about-us/', AboutUsView.as_view(), name='about_us'),
     path('ebooks/<int:pk>/', Ebooks.as_view(), name='ebooks'),
+    path('clubs/', ClubsListView.as_view(), name='clubs'),
+    path('clubs-list/<int:pk>/', Clubs.as_view(), name='clubs_list'),
     # path('pdf_document_detail/<str:pk>/', pdf_document_detail.as_view(), name='pdf_document_detail'),
     path('pdfpaymentconfirmation/<str:pk>/', pdfpaymentconfirmation.as_view(), name='pdfpaymentconfirmation'),
     path('pdf_document_detail/<int:pk>/', PDFDocumentDetailView.as_view(), name='pdf_document_detail'),

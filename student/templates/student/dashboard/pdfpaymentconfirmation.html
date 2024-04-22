@@ -1,5 +1,4 @@
 
-
 {% extends 'sms/dashboard/base.html' %}
 {% load hitcount_tags %}
 
@@ -58,7 +57,7 @@
     {% endfor %}
   </ul>
 <!-- Add any other content you want to display for the PDF document details -->
-
+<a class="link" href="{{ document.pdf_url }}" target="_blank">Download PDFe</a>
 {% if related_payments %}
 <p>Thank you for choosing our service! We hope you enjoy your purchase.</p>
 

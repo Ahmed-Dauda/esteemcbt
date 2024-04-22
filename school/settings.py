@@ -161,15 +161,29 @@ SOCIALACCOUNT_PROVIDERS = {
 # secure = True
 CLOUDINARY_URL = 'CLOUDINARY_URL=cloudinary://671667183251344:P5WKA1qweMmd1i4TkU2W_ZY9ZuA@ds5l3gqr6'
 
-
+# Configure Cloudinary
 import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
-cloudinary.config( 
-  cloud_name = "ds5l3gqr6", 
-  api_key ="671667183251344", 
-  api_secret = "P5WKA1qweMmd1i4TkU2W_ZY9ZuA",
-  secure = True
+# Configure Cloudinary
+cloudinary.config(
+    cloud_name='dcomiviua',
+    api_key='365524854341134',
+    api_secret='_a3awGtK3hznGaSpvLff2RFTt_I',
+      secure = True
 )
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# import cloudinary
+
+# cloudinary.config( 
+#   cloud_name = "ds5l3gqr6", 
+#   api_key ="671667183251344", 
+#   api_secret = "P5WKA1qweMmd1i4TkU2W_ZY9ZuA",
+#   secure = True
+# )
 # email settings
 
 # EMAIL_BACKED = 'django.core.mail.backends.smtp.EmailBackend'
@@ -400,12 +414,12 @@ TINYMCE_COMPRESSOR = False
 # PAYSTACK_PUBLIC_KEY = os.environ.get('pk_test_72337ad2f9419ff6eb3204519bb884067c075ed8')
 
 # test api
-# PAYSTACK_SECRET_KEY = 'sk_test_75e53acfea9e04b0c52c3c3c6c46281c844a706a'
-# PAYSTACK_PUBLIC_KEY = 'pk_test_72337ad2f9419ff6eb3204519bb884067c075ed8'
+PAYSTACK_SECRET_KEY = 'sk_test_75e53acfea9e04b0c52c3c3c6c46281c844a706a'
+PAYSTACK_PUBLIC_KEY = 'pk_test_72337ad2f9419ff6eb3204519bb884067c075ed8'
 
 # live api
-PAYSTACK_SECRET_KEY = 'sk_live_ecb915cd648ffcea0578361a08ac369122f02754'
-PAYSTACK_PUBLIC_KEY = 'pk_live_010265c77983e11a700678d34d476b1ce1c48fb1'
+# PAYSTACK_SECRET_KEY = 'sk_live_ecb915cd648ffcea0578361a08ac369122f02754'
+# PAYSTACK_PUBLIC_KEY = 'pk_live_010265c77983e11a700678d34d476b1ce1c48fb1'
 
 
 

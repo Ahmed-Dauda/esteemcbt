@@ -1,0 +1,73 @@
+{% extends 'sms/dashboard/homebase.html' %}
+
+{% load hitcount_tags %}
+
+{% block title %} Clubs Activities {% endblock %}
+
+  {% block content %} 
+<style>
+    img:hover {
+    transform: scale(1.1); /* Zoom in on hover */
+}
+
+h1 {
+    color: #333;
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+h2 {
+    color: #333;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+p {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+h4 a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+h4 a:hover {
+    text-decoration: underline;
+}
+
+</style>
+
+<br><br>
+  <h1 style="text-align: center;">List of Clubs</h1>
+  <ul style="list-style-type: none; padding-left: 0;">
+      {% for club in object_list %}
+          <li style="margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px; padding: 20px;">
+              <div style="display: flex; align-items: center;">
+                  <div style="flex: 1;">
+                      <h2>{{ club.title }}</h2>
+                      <p>{{ club.desc }}</p>
+                      {% if club.img_ebook %}
+                          <img src="{{ club.img_ebook.url }}" alt="{{ club.title }} Image" style="width: 100%; max-height: 300px; transition: transform 0.3s;">
+                      {% endif %}
+                  </div>
+                  <div style="flex: 1; text-align: center;">
+                      {% if club.pdf_url %}
+                          <h4><a href="{{ club.pdf_url }}">View Activities</a></h4>
+                      {% endif %}
+                  </div>
+              </div>
+          </li>
+      {% empty %}
+          <li>No clubs available.</li>
+      {% endfor %}
+  </ul>
+  
+
+<!-- End of Main Content -->
+
+{% endblock %} 
+ 

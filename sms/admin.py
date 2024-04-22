@@ -36,6 +36,35 @@ admin.site.register(AboutCourseOwner)
 #         model = Gallery
         # fields = ('title',)
 
+# admin.py
+
+# admin.py
+from django.contrib import admin
+from .models import AboutUs
+
+@admin.register(AboutUs)
+class AboutUsAdmin(admin.ModelAdmin):
+    list_display = ('title', 'content_preview')
+
+    def content_preview(self, obj):
+        return obj.content[:50] + '...' if len(obj.content) > 50 else obj.content
+
+    content_preview.short_description = 'Content Preview'
+
+
+from .models import CarouselImage, FrontPageVideo
+
+class FrontPageVideoAdmin(admin.ModelAdmin):
+    list_display = ('title', 'video', 'created', 'updated')
+
+
+admin.site.register(FrontPageVideo, FrontPageVideoAdmin)
+
+
+class CarouselImageAdmin(admin.ModelAdmin):
+    list_display = ['image_carousel', 'caption']
+
+admin.site.register(CarouselImage, CarouselImageAdmin)
 
 
 class ArticleAdminResource(resources.ModelResource):

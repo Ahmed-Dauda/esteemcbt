@@ -1,0 +1,33 @@
+{% extends 'sms/dashboard/homebase.html' %}
+{% load hitcount_tags %}
+{% load static %}
+
+
+{% block title %} About Us  {% endblock %}
+
+
+  {% block content %} 
+
+<br><br>
+  <div style="text-align: center;">
+    <h1 style="font-size: 32px; font-weight: bold; margin-bottom: 20px; color: #333; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);">Welcome to Our School</h1>
+    <ul style="list-style: none; padding: 0;">
+        {% for about_us in about_us_list %}
+            <li style="margin-bottom: 40px;">
+                <h3 style="font-size: 24px; margin-bottom: 10px;">{{ about_us.title }}</h3>
+                {% if about_us.img_about_us %}
+                    <div style="margin-bottom: 10px;">
+                        <img src="{{ about_us.img_about_us.url }}" alt="{{ about_us.title }}" style="width: 80%; height: 450px; border-radius: 10px;">
+                    </div>
+                {% endif %}
+                <div style="font-size: 18px;">{{ about_us.content | safe }}</div> <!-- Use | safe to render HTML content -->
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+  
+
+
+{% endblock %} 
+ 
