@@ -20,7 +20,7 @@ from quiz.models import (
 # admin.site.register(List_Subjects)
 # admin.site.register(Subjects)
 # admin.site.register(School)
-admin.site.register(TopicsAssessment)
+# admin.site.register(TopicsAssessment)
 # admin.site.register(QuestionAssessment)
 
 class SchoolAdmin(admin.ModelAdmin):
@@ -176,51 +176,51 @@ admin.site.register(CourseGrade, CourseGradeAdmin)
 
 # QuestionAssessment
 
-class QuestionAssessmentResource(resources.ModelResource):
+# class QuestionAssessmentResource(resources.ModelResource):
     
-    course = fields.Field(
-        column_name= 'course',
-        attribute='course',
-        widget=ForeignKeyWidget(Course, field='course_name__title'))
+#     course = fields.Field(
+#         column_name= 'course',
+#         attribute='course',
+#         widget=ForeignKeyWidget(Course, field='course_name__title'))
     
-    class Meta:
-        model = QuestionAssessment
-        # fields = ('title',)
+#     class Meta:
+#         model = QuestionAssessment
+#         # fields = ('title',)
                
-class QuestionAssessmentAdmin(ImportExportModelAdmin):
-    list_display = ['id','course','marks' ,'question']
-    # prepopulated_fields = {"slug": ("title",)}
-    list_filter =  ['course','marks' ,'question']
-    search_fields= ['id','course__course_name__title','marks' ,'question']
-    ordering = ['id']
+# class QuestionAssessmentAdmin(ImportExportModelAdmin):
+#     list_display = ['id','course','marks' ,'question']
+#     # prepopulated_fields = {"slug": ("title",)}
+#     list_filter =  ['course','marks' ,'question']
+#     search_fields= ['id','course__course_name__title','marks' ,'question']
+#     ordering = ['id']
     
-    resource_class = QuestionAssessmentResource
+#     resource_class = QuestionAssessmentResource
 
-admin.site.register(QuestionAssessment, QuestionAssessmentAdmin)
+# admin.site.register(QuestionAssessment, QuestionAssessmentAdmin)
 
 # ENDQUESTIONASSESSMENT
 
 # ResultAssessment
 
-class ResultAssessmentResource(resources.ModelResource):
+# class ResultAssessmentResource(resources.ModelResource):
     
-    courses = fields.Field(
-        column_name= 'student',
-        attribute='student',
-        widget=ForeignKeyWidget(Profile,'username') )
+#     courses = fields.Field(
+#         column_name= 'student',
+#         attribute='student',
+#         widget=ForeignKeyWidget(Profile,'username') )
     
-    class Meta:
-        model = Result
-        # fields = ('title',)
+#     class Meta:
+#         model = Result
+#         # fields = ('title',)
   
-class ResultAssessmentAdmin(ImportExportModelAdmin):
-    list_display = ['id', 'student', 'exam', 'marks', 'created']
-    list_filter = ['id', 'student', 'exam', 'marks']
-    search_fields = ['id', 'student__first_name', 'student__last_name', 'exam__course_name__title', 'marks', 'created']
-    ordering = ['id']
-    resource_class = ResultAssessmentResource
+# class ResultAssessmentAdmin(ImportExportModelAdmin):
+#     list_display = ['id', 'student', 'exam', 'marks', 'created']
+#     list_filter = ['id', 'student', 'exam', 'marks']
+#     search_fields = ['id', 'student__first_name', 'student__last_name', 'exam__course_name__title', 'marks', 'created']
+#     ordering = ['id']
+#     resource_class = ResultAssessmentResource
 
-admin.site.register(ResultAssessment, ResultAssessmentAdmin)
+# admin.site.register(ResultAssessment, ResultAssessmentAdmin)
 
 # end of ResultAssessment
 
@@ -302,27 +302,27 @@ admin.site.register(Result, ResultAdmin)
 # end of ResultResource
  
 
-class CertificateResource(resources.ModelResource):
+# class CertificateResource(resources.ModelResource):
     
-    # course = fields.Field(
-    #     column_name= 'course',
-    #     attribute='course',
-    #     widget=ForeignKeyWidget(Course,'course_name') )
+#     # course = fields.Field(
+#     #     column_name= 'course',
+#     #     attribute='course',
+#     #     widget=ForeignKeyWidget(Course,'course_name') )
     
-    class Meta:
-        model = Certificate_note
-        # fields = ('title',)
+#     class Meta:
+#         model = Certificate_note
+#         # fields = ('title',)
                
-class CertificateAdmin(ImportExportModelAdmin):
-    list_display = ['id','note']
+# class CertificateAdmin(ImportExportModelAdmin):
+#     list_display = ['id','note']
     
-    list_filter =  ['note']
-    search_fields= ['note']
-    ordering = ['id']
+#     list_filter =  ['note']
+#     search_fields= ['note']
+#     ordering = ['id']
     
-    resource_class = CertificateResource
+#     resource_class = CertificateResource
 
-admin.site.register(Certificate_note, CertificateAdmin)
+# admin.site.register(Certificate_note, CertificateAdmin)
 
 
 class QuestionResource(resources.ModelResource):
