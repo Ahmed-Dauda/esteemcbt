@@ -297,7 +297,7 @@
 }
 
 /* drop down menu  */
-/* Adjust logo size for smaller screens */
+
 .logo {
     width: 30px;
     height: 30px;
@@ -470,8 +470,8 @@
                         </div>
                     </div>
                     <!-- Copyright Text -->
-                    <div class="col-md-4">
-                        <div class="copyright text-center text-white mt-3">
+                    <div class="">
+                        <div class="copyright text-center text-white ">
                             <span>&copy; <span id="current-year"></span> Esteem Learning Centre, Abuja</span>
                         </div>
                     </div>
@@ -560,6 +560,18 @@
             });
         });
     </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuToggle = document.querySelector('.menu-toggle');
+        const navLinks = document.querySelector('.nav-links');
+
+        menuToggle.addEventListener('click', function() {
+            navLinks.classList.toggle('show');
+        });
+    });
+</script>
+
     
 </body>
 </html>
