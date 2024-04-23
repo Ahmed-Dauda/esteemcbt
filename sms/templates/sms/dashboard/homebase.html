@@ -186,7 +186,7 @@
 
     .menu-toggle span {
         display: block;
-        width: 25px;
+        width: 25%;
         height: 3px;
         background-color: #fff;
         margin: 5px;
@@ -289,6 +289,7 @@
 }
 
 .brand-logo img {
+    margin-left: 30px;
     max-width: 150px; /* Adjust the maximum width as needed */
     height: auto;
     border-radius: 50%; /* Makes the image round */
@@ -296,30 +297,91 @@
 }
 
 /* drop down menu  */
-.dropdown {
-  position: relative;
+/* Adjust logo size for smaller screens */
+.logo {
+    width: 30px;
+    height: 30px;
 }
 
-.dropdown .dropdown-menu {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+/* Adjust menu toggle size for smaller screens */
+.menu-toggle {
+    display: none; /* Hide menu toggle by default */
+    width: 30px; /* Set width of menu toggle */
+    height: 30px; /* Set height of menu toggle */
+    cursor: pointer; /* Add cursor pointer */
+    position: absolute; /* Position menu toggle */
+    top: 50%; /* Position menu toggle vertically */
+    right: 40px; /* Position menu toggle to the right */
+    transform: translateY(-50%); /* Center menu toggle vertically */
 }
 
-.dropdown:hover .dropdown-menu {
-  display: block;
+/* Menu toggle icon styling */
+.menu-toggle span {
+    display: block; /* Display span as block element */
+    height: 3px; /* Set height of menu toggle bars */
+    background-color: white; /* Set color of menu toggle bars */
+    margin-bottom: 5px; /* Add space between menu toggle bars */
+}
+
+/* Media query for small screens */
+@media only screen and (max-width: 768px) {
+    /* Adjust logo size for small screens */
+    .logo {
+        width: 20px;
+        height: 20px;
+        
+    }
+    
+    /* Show menu toggle for small screens */
+    .menu-toggle {
+        display: block;
+    }
+    
+    /* Hide regular menu for small screens */
+    .nav-links {
+        display: none;
+    }
 }
 
 
 </style>
 
 
-<body >
+
+<body>
 
     <nav class="navbar">
+        <div class="containernav">
+            <a href="{% url 'sms:homepage' %}" class="brand-logo" style="">
+                <img src="/static/sms/images/esteemlogo.jpg" class="logo" alt="School Logo">   
+            </a>
+            <div class="menu-toggle" id="menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            
+            <ul class="nav-links" id="nav-links">
+                <li><a href="{% url 'sms:homepage' %}">Home</a></li>
+                <li><a href="{% url 'sms:about_us' %}">About Us</a></li>
+               
+                <li><a href="{% url 'sms:digital_form' %}">Application Form</a></li>
+                <li><a href="{% url 'sms:clubs' %}">Clubs</a></li>
+                <li><a href="#contact-section">Contact Us</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" id="dropdownMenuLink">Success story</a>
+                    <ul class="dropdown-menu bg-primary" aria-labelledby="dropdownMenuLink">
+                        <li><a class="dropdown-item" href="#">Awards</a></li>
+                        <li><a class="dropdown-item" href="#">Old students</a></li>
+                        <!-- Add more dropdown options as needed -->
+                    </ul>
+                </li>
+                
+            </ul>
+        </div>
+    </nav>
+    
+    <!-- <nav class="navbar">
         <div class="containernav">
             <a href="{% url 'sms:homepage' %}" class="brand-logo" style="">
                 <img src="/static/sms/images/esteemlogo.jpg" width="30" height="30" style="margin-right: 5px;" alt="School Logo">   
@@ -333,7 +395,7 @@
         <ul class="nav-links" id="nav-links">
   <li><a href="{% url 'sms:homepage' %}">Home</a></li>
   <li><a href="{% url 'sms:about_us' %}">About Us</a></li>
-  <!-- <li><a href="#program">Programs</a></li> -->
+
   <li><a href="{% url 'sms:digital_form' %}">Application Form</a></li>
   <li><a href="{% url 'sms:clubs' %}">Clubs</a></li>
   <li><a href="#contact-section">Contact Us</a></li>
@@ -342,24 +404,19 @@
     <ul style="background-color: black;text-align: center;" class="dropdown-menu">
       <li><a href="#">Awards</a></li>
       <li><a href="#">Old students</a></li>
-      <!-- Add more dropdown options as needed -->
+    
     </ul>
   </li>
 </ul>
-
-        </div>
-      </nav>
-      
-  
-                {% block content %} 
+    </div>
+</nav>
+       -->
+            {% block content %} 
 
 
-                {% endblock %} 
+            {% endblock %} 
   
                     
-              
-                  
-           
             <!-- End of Main Content -->
 
 
@@ -372,7 +429,7 @@
                     <!-- School Information: Our School -->
                     <div class="col-md-4 mb-4">
                         <h4 class="text-white">Our School</h4>
-                        <p class="text-white">Esteem Nursery and Primary School Wuse, was the first school to be established under the Esteem banner. It is located in the heart of Abuja, the Federal Capital Territory, Nigeria. Esteem also has a new site at Lokogoma, which comprises of Pre-Nursery, Nursery and Primary School and Boy’s College situated in Abuja.</p>
+                        <p class="text-white">Esteem Nursery and Primary School Wuse was the first school established under the Esteem banner. Located in the heart of Abuja, the Federal Capital Territory, Nigeria, Esteem also has a new site at Lokogoma, which comprises Pre-Nursery, Nursery, Primary School, and Boy’s College.</p>
                     </div>
                     <!-- School Information: Esteem School, Lokogoma -->
                     <div class="col-md-4 mb-4">
@@ -399,9 +456,9 @@
                     <!-- Working Hours -->
                     <div class="col-md-4 mb-4">
                         <h5 class="text-white">Working Hours</h5>
-                        <p class="text-white">Our support Hotline is available 24 Hours a day.</p>
+                        <p class="text-white">Our support hotline is available 24 hours a day.</p>
                         <p class="text-white">Enquiries: <a href="mailto:esteemboyscollegeabuja@gmail.com" class="text-white">esteemboyscollegeabuja@gmail.com</a></p>
-                        <p class="text-white">Monday-Friday: 7:30am to 4:00pm</p>
+                        <p class="text-white">Monday-Friday: 7:30 am to 4:00 pm</p>
                     </div>
                     <!-- Social Media Icons -->
                     <div class="col-md-4 mb-4">
@@ -413,7 +470,7 @@
                         </div>
                     </div>
                     <!-- Copyright Text -->
-                    <div class="">
+                    <div class="col-md-4">
                         <div class="copyright text-center text-white mt-3">
                             <span>&copy; <span id="current-year"></span> Esteem Learning Centre, Abuja</span>
                         </div>
@@ -421,6 +478,7 @@
                 </div>
             </div>
         </footer>
+        
         
         
         
@@ -493,17 +551,15 @@
 
     
       <script src="/static/sms/prism.js"></script>
-
       <script>
-        document.addEventListener('DOMContentLoaded', function () {
-          const menuToggle = document.getElementById('menu-toggle');
-          const navLinks = document.getElementById('nav-links');
-      
-          menuToggle.addEventListener('click', function () {
-              navLinks.classList.toggle('show');
-          });
-      });
-      
-      </script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var dropdownMenuLink = document.getElementById('dropdownMenuLink');
+            dropdownMenuLink.addEventListener('click', function() {
+                var dropdownMenu = this.nextElementSibling;
+                dropdownMenu.classList.toggle('show');
+            });
+        });
+    </script>
+    
 </body>
 </html>
