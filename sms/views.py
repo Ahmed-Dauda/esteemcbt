@@ -190,7 +190,12 @@ class PaymentSucess(LoginRequiredMixin, HitCountDetailView, DetailView):
 
 # views.py
 from django.views.generic import ListView
-from .models import AboutUs
+from .models import AboutUs, Awards
+
+class AwardView(ListView):
+    model = Awards
+    template_name = 'sms/dashboard/awards.html'
+    context_object_name = 'awards_list'
 
 class AboutUsView(ListView):
     model = AboutUs

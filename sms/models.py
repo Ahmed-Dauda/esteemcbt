@@ -16,6 +16,16 @@ from tinymce.models import HTMLField
 
 # models.py
 
+class Awards(models.Model):
+
+    title = models.CharField(max_length=100, blank=True, null= True)
+    img_about_us = CloudinaryField('about_us', blank=True, null= True)
+    content = HTMLField(null=True)
+    created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    updated = models.DateTimeField(auto_now=True, blank=True, null=True) 
+
+    def __str__(self):
+        return self.title
 
 class AboutUs(models.Model):
 

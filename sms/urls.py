@@ -50,7 +50,8 @@ from sms.views import(
       
 ) 
 
-from .views import AboutUsView
+from .views import AboutUsView,AwardView
+
 app_name = 'sms'
 
 urlpatterns = [
@@ -59,6 +60,7 @@ urlpatterns = [
     # path('', Categorieslistview.as_view(), name='categorieslist'),
     path('digital-form/', DigitalForm.as_view(), name='digital_form'),
     path('about-us/', AboutUsView.as_view(), name='about_us'),
+    path('awards/', AwardView.as_view(), name='awards'),
     path('ebooks/<int:pk>/', Ebooks.as_view(), name='ebooks'),
     path('clubs/', ClubsListView.as_view(), name='clubs'),
     path('clubs-list/<int:pk>/', Clubs.as_view(), name='clubs_list'),

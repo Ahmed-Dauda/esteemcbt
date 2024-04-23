@@ -40,7 +40,18 @@ admin.site.register(FrequentlyAskQuestions)
 
 # admin.py
 from django.contrib import admin
-from .models import AboutUs
+from .models import AboutUs, Awards
+
+
+@admin.register(Awards)
+class AwardAdmin(admin.ModelAdmin):
+    list_display = ('title', 'content_preview')
+
+    def content_preview(self, obj):
+        return obj.content[:50] + '...' if len(obj.content) > 50 else obj.content
+
+    content_preview.short_description = 'Content Preview'
+
 
 @admin.register(AboutUs)
 class AboutUsAdmin(admin.ModelAdmin):
