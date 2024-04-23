@@ -1659,7 +1659,7 @@ p {
     {% for faq in faqs %}
     <div class="card">
 
-      <div class="card-header" id="faqHeading{{ faq.id }}">
+      <div style="margin: 0 auto;" class="" id="faqHeading{{ faq.id }}">
         <p class="mb-0">
           <button style="font-size: 12px;" class="btn btn-link" type="button" data-toggle="collapse" data-target="#faqCollapse{{ faq.id }}" aria-expanded="true" aria-controls="faqCollapse{{ faq.id }}">
             {{ faq.title|safe|lower }}
