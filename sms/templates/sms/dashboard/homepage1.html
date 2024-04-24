@@ -267,6 +267,12 @@ body {
   transition: transform 0.2s ease, -webkit-transform 0.2s ease;
 }
 
+.carousel-innerp .carousel-itemp {
+  transition: -webkit-transform 0.2s ease;
+  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, -webkit-transform 0.2s ease;
+}
+
 
  .carousel-control-prev,
 .carousel-control-next{
@@ -376,6 +382,8 @@ body {
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
     transform: translateY(-2px);
   }
+
+  
 /* Testmony css ending  */
 
 /* 
@@ -563,7 +571,7 @@ p {
   margin: 5px;
 }
 
-/* testimonial sectiion */
+
 </style>
 
 <!-- school campaign css -->
@@ -598,23 +606,20 @@ p {
 
   .testimonial-card {
     opacity: 0.5;
-    animation: slideIn 15s infinite linear; /* Adjust the duration as needed */
+    animation: slideIn 60s infinite linear; /* Adjust the duration as needed */
   }
 
   @keyframes slideIn {
     0% {
       opacity: 0.8;
-      transform: translateX(100%);
+      transform: translateX(250%);
     }
     100% {
       opacity: 1;
-      transform: translateX(-100%);
+      transform: translateX(-320%);
     }
   }
 </style>
-
-
-<!-- testimonial section -->
 
 
 <style>
@@ -839,17 +844,17 @@ p {
       
       <div  class="button-container">
         {% if not users.is_authenticated %}
-        <a href="{% url 'account_login' %}" class="btn-front btn-primary">Join us for Free</a>
+        <!-- <a href="{% url 'account_login' %}" class="btn-front btn-primary">Join us for Free</a> -->
         {% endif  %}
       </div>
       <div class="button-container">
         {% if not users.is_authenticated %}
-        <a href="{% url 'account_signup' %}" class="btn-front btn-primary ">Sign Up</a>
+        <!-- <a href="{% url 'account_signup' %}" class="btn-front btn-primary ">Sign Up</a> -->
         {% endif  %}
       </div>
     </div>
   
-    <div id="flash-message-container">
+    <!-- <div id="flash-message-container">
       {% if messages %}
         {% for message in messages %}
           <div class="alert alert-success">
@@ -857,7 +862,7 @@ p {
           </div>
         {% endfor %}
       {% endif %}
-    </div>
+    </div> -->
 
   </div>
 </div>
@@ -1484,8 +1489,8 @@ p {
     <h3 class="mb-4">What Parents Say About Us</h3>
   </div> -->
   <br>
-<section class="container testimonial-carousel">
-  <div class="row text-center d-flex align-items-stretch">
+ <section class="container testimonial-carousel">
+  <div style="flex-wrap: nowrap;" class="row text-center d-flex align-items-stretch">
     <div class="col-sm mb-5 mb-md-0 d-flex align-items-stretch">
       <div class="card testimonial-card">
         <div class="card-up" style="background-color: #9d789b;"></div>
@@ -1495,7 +1500,6 @@ p {
         <div class="card-body">
           <h6 class="mb-4">Hauwa Adamu</h6>
           <img src="/static/sms/images/star-rating-icon-21.jpg" width="100px" alt="">
-     
           <p class="dark-grey-text mt-4">
             <i class="fas fa-quote-left pe-2"></i>
             "Esteem Learning Centre has been a game-changer for our family. The personalized attention and nurturing environment have truly helped our child excel academically."
@@ -1512,8 +1516,7 @@ p {
         </div> -->
         <div class="card-body">
           <h6 class="mb-4">Musa Usman</h6>
-          <img src="https://icon-library.com/images/star-rating-icon/star-rating-icon-21.jpg" width="100px" alt="">
-       
+          <img src="/static/sms/images/star-rating-icon-21.jpg" width="100px" alt="">
           <p class="dark-grey-text mt-4">
             <i class="fas fa-quote-left pe-2"></i>
             "I can't thank Esteem Learning Centre enough for their dedicated teachers and comprehensive curriculum. My child's confidence has soared since joining the school."
@@ -1530,8 +1533,7 @@ p {
         </div> -->
         <div class="card-body">
           <h6 class="mb-4">Muhammad Abubakar</h6>
-          <img src="https://icon-library.com/images/star-rating-icon/star-rating-icon-21.jpg" width="100px" alt="">
-    
+          <img src="/static/sms/images/star-rating-icon-21.jpg" width="100px" alt="">
           <p class="dark-grey-text mt-4">
             <i class="fas fa-quote-left pe-2"></i>
             "The team at Esteem Learning Centre goes above and beyond to ensure each student reaches their full potential. It's more than a school; it's a community where every child is valued."
