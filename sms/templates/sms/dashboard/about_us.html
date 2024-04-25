@@ -3,18 +3,21 @@
 {% load static %}
 
 
-{% block title %} About Us  {% endblock %}
+{% block title %} About Us - Esteem Learning Centre {% endblock %}
 
 
   {% block content %} 
 
 <br><br>
-  <div style="text-align: center;">
+
+  <div style="text-align: center;" class="container">
     <h1 style="font-size: 32px; font-weight: bold; margin-bottom: 20px; color: #333; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);">Welcome to Our School</h1>
+    <br>
     <ul style="list-style: none; padding: 0;">
         {% for about_us in about_us_list %}
             <li style="margin-bottom: 40px;">
-                <h3 style="font-size: 24px; margin-bottom: 10px;">{{ about_us.title }}</h3>
+                <h3 style="font-size: 24px; margin-bottom: 10px;font-weight: bold;">{{ about_us.title }}</h3>
+                <br>
                 {% if about_us.img_about_us %}
                     <div style="margin-bottom: 10px;">
                         <img src="{{ about_us.img_about_us.url }}" alt="{{ about_us.title }}" style="width: 80%; height: 450px; border-radius: 10px;">
