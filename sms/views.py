@@ -213,11 +213,11 @@ class ManagementView(ListView):
    
     def get_queryset(self):
         # return  Courses.objects.all().select_related('categories').distinct()
-         return Management.objects.all() 
+         return Management.objects.all().order_by('id') 
     
     def get_context_data(self, **kwargs): 
         context = super(ManagementView, self).get_context_data(**kwargs)
-        context['alert_homes']  = Management.objects.order_by('id')
+        context['alert_homes'] = self.get_queryset()
         
         return context
     
@@ -229,11 +229,11 @@ class DirectorsView(ListView):
    
     def get_queryset(self):
         # return  Courses.objects.all().select_related('categories').distinct()
-         return Directors.objects.all() 
+         return Directors.objects.all().order_by('id') 
     
     def get_context_data(self, **kwargs): 
         context = super(DirectorsView, self).get_context_data(**kwargs)
-        context['alert_homes']  = Directors.objects.order_by('id')
+        context['alert_homes']  = self.get_queryset()
         
         return context
     
