@@ -825,7 +825,7 @@ p {
       <div class="desc">
         <p> {{ image.desc }}</p>
           {% if image.link %}
-              <!-- <a href="{{ image.link }}">Click Here to Start</a> -->
+              <a href="{{ image.link }}">Click Me</a>
           {% else %}
              
           {% endif %}
@@ -844,7 +844,7 @@ p {
       
       <div  class="button-container">
         {% if not users.is_authenticated %}
-        <!-- <a href="{% url 'account_login' %}" class="btn-front btn-primary">Join us for Free</a> -->
+        <a href="{% url 'account_login' %}" class="btn-front btn-primary">Join us for Free</a>
         {% endif  %}
       </div>
       <div class="button-container">
