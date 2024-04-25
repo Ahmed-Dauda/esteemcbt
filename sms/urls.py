@@ -39,13 +39,15 @@ from sms.views import(
       Paymentdesc,
       PaymentSucess,
       Ebooks,
+      GalleryDetailView,
+      DirectorsView,
       Clubs,
       ClubsListView,
       gotopdfconfirmpage,
       pdfpaymentconfirmation,
       PDFDocumentDetailView,
       MarkTopicCompleteView,
-      DigitalForm
+      DigitalForm, PDFGalleryView, ManagementView,
    
       
 ) 
@@ -58,10 +60,14 @@ urlpatterns = [
     
 
     # path('', Categorieslistview.as_view(), name='categorieslist'),
+    path('pdf-gallery/', PDFGalleryView.as_view(), name='pdf_gallery'),
+    path('directors/', DirectorsView.as_view(), name='directors'),
+    path('managements/', ManagementView.as_view(), name='managements'),
     path('digital-form/', DigitalForm.as_view(), name='digital_form'),
     path('about-us/', AboutUsView.as_view(), name='about_us'),
     path('awards/', AwardView.as_view(), name='awards'),
     path('ebooks/<int:pk>/', Ebooks.as_view(), name='ebooks'),
+    path('gallery-detail/<int:pk>/', GalleryDetailView.as_view(), name='gallery_detail'),
     path('clubs/', ClubsListView.as_view(), name='clubs'),
     path('clubs-list/<int:pk>/', Clubs.as_view(), name='clubs_list'),
     # path('pdf_document_detail/<str:pk>/', pdf_document_detail.as_view(), name='pdf_document_detail'),

@@ -364,10 +364,8 @@
             <ul class="nav-links" id="nav-links">
                 <li><a href="{% url 'sms:homepage' %}">Home</a></li>
                 <li><a href="{% url 'sms:about_us' %}">About Us</a></li>
-               
                 <li><a href="{% url 'sms:digital_form' %}">Application Form</a></li>
-                <li><a href="{% url 'sms:clubs' %}">Clubs</a></li>
-                <li><a href="#contact-section">Contact Us</a></li>
+                <li><a href="{% url 'sms:pdf_gallery' %}">Gallery</a></li>
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" id="dropdownMenuLink">Success story</a>
                     <ul class="dropdown-menu bg-primary" aria-labelledby="dropdownMenuLink">
@@ -376,7 +374,18 @@
                         <!-- Add more dropdown options as needed -->
                     </ul>
                 </li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" id="dropdownMenuLink2">Staff</a>
+                    <ul class="dropdown-menu bg-primary" aria-labelledby="dropdownMenuLink">
+                        <li><a class="dropdown-item" href="{% url 'sms:directors' %}">Board of Directors</a></li>
+                        <li><a class="dropdown-item" href="{% url 'sms:managements' %}">Managements Team</a></li>
+                        <!-- Add more dropdown options as needed -->
+                    </ul>
+                </li> 
                 
+                <li><a href="{% url 'sms:clubs' %}">Clubs</a></li>
+               
+                <li><a href="#contact-section">Contact Us</a></li>
             </ul>
         </div>
     </nav>
@@ -551,6 +560,7 @@
 
     
       <script src="/static/sms/prism.js"></script>
+
       <script>
         document.addEventListener("DOMContentLoaded", function() {
             var dropdownMenuLink = document.getElementById('dropdownMenuLink');
@@ -559,7 +569,18 @@
                 dropdownMenu.classList.toggle('show');
             });
         });
+
+        // seconde drop down menu
+        document.addEventListener("DOMContentLoaded", function() {
+        var dropdownMenuLink = document.getElementById('dropdownMenuLink2');
+        dropdownMenuLink.addEventListener('click', function() {
+            var dropdownMenu = this.nextElementSibling;
+            dropdownMenu.classList.toggle('show');
+        });
+    });
     </script>
+
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

@@ -1,0 +1,169 @@
+{% extends 'sms/dashboard/homebase.html' %}
+{% load hitcount_tags %}
+{% load static %}
+
+
+{% block title %} Board of Directors - Esteem Learning Centre, Abuja  {% endblock %}
+
+
+  {% block content %} 
+<style>
+    
+/* ebook section  */
+
+.flex-containers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card-ebooks {
+  width: 300px;
+  margin: 10px;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.image-container img {
+  width: 250px;
+  height: 250px;
+}
+
+.text-container {
+  padding: 10px;
+}
+
+.text-container h6 {
+  margin-bottom: 5px;
+}
+
+.text-container small {
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* Add animation to the image */
+.animated-image {
+  animation-name: zoomIn;
+  animation-duration: 0.5s;
+  animation-timing-function: ease-in-out;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0.2;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+/* Add animation to the image */
+.animated-image {
+  transition: transform 0.3s ease-in-out; /* Add transition for smooth animation */
+}
+
+/* Apply zoom effect on hover */
+.animated-image:hover {
+  transform: scale(1.1); /* Increase scale on hover */
+}
+/* Style the download button */
+.download-button {
+  background-color: #007bff; /* Set background color */
+  color: #fff; /* Set text color */
+  padding: 10px 20px; /* Add padding */
+  border: none; /* Remove border */
+  border-radius: 5px; /* Add border radius */
+  cursor: pointer; /* Add cursor pointer */
+  transition: background-color 0.3s ease; /* Add transition for smooth hover effect */
+}
+
+/* Change button color on hover */
+.download-button:hover {
+  background-color: #0056b3; /* Change background color on hover */
+}
+
+ /* end of ebooks */
+/* CSS styles for enhanced appearance */
+.flex-containers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card.card-ebooks {
+  margin: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card.card-ebooks .card-body.child-ebooks {
+  padding: 20px;
+}
+
+.card.card-ebooks img.animated-image {
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.card.card-ebooks .card-body.child-ebooks h6.card-title {
+  margin-top: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.card.card-ebooks .card-body.child-ebooks p {
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .card.card-ebooks {
+    width: calc(50% - 20px);
+  }
+}
+
+@media (max-width: 576px) {
+  .card.card-ebooks {
+    width: calc(100% - 20px);
+  }
+}
+</style>
+
+
+  <br> <br> <br> 
+  
+  <!-- digital form section  -->
+  <div style="text-align: center; margin-bottom: 20px;">
+    <h5 style="color: #333; font-size: 2rem; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);">Board of Directors</h5>
+  </div>
+
+  <br>
+
+  <div class="flex-containers">
+    {% for alert in object_list %}
+    <div class="card card-ebooks">
+      <div class="card-body child-ebooks">
+        <img class="animated-image" src="{{ alert.img_ebook.url }}" width="300px" height="250px" alt="{{ obj.desc }}">
+        <div class="">  
+          <h6 style="color: #000000;  padding-right: 3px;" class="card-title">{{ alert.title|safe }}</h6> 
+          <p>{{ alert.desc|safe }}</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div
+  
+  <!-- digital form section endign -->
+
+  
+
+
+{% endblock %} 
+ 

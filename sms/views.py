@@ -40,7 +40,7 @@ from django.utils.http import urlsafe_base64_encode
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
 from django.contrib import messages #import messages
-from student.models import PDFDocument
+from student.models import PDFDocument, PDFGallery, Directors, Management
 # end password reset import.
 # from sms.forms import signupform
 from django.urls import reverse
@@ -201,9 +201,59 @@ class AboutUsView(ListView):
     model = AboutUs
     template_name = 'sms/dashboard/about_us.html'
     context_object_name = 'about_us_list'
-   
+
 from student.models import AdvertisementImage
 from .models import Courses, CarouselImage, FrontPageVideo
+
+class ManagementView(ListView):
+    models = Management
+    template_name = 'sms/dashboard/managements.html'
+    success_message = 'TestModel successfully updated!'
+    count_hit = True
+   
+    def get_queryset(self):
+        # return  Courses.objects.all().select_related('categories').distinct()
+         return Management.objects.all() 
+    
+    def get_context_data(self, **kwargs): 
+        context = super(ManagementView, self).get_context_data(**kwargs)
+        context['alert_homes']  = Management.objects.order_by('-created')
+        
+        return context
+    
+class DirectorsView(ListView):
+    models = Directors
+    template_name = 'sms/dashboard/directors.html'
+    success_message = 'TestModel successfully updated!'
+    count_hit = True
+   
+    def get_queryset(self):
+        # return  Courses.objects.all().select_related('categories').distinct()
+         return Directors.objects.all() 
+    
+    def get_context_data(self, **kwargs): 
+        context = super(DirectorsView, self).get_context_data(**kwargs)
+        context['alert_homes']  = Directors.objects.order_by('-created')
+        
+        return context
+    
+
+class PDFGalleryView(ListView):
+    models = PDFGallery
+    template_name = 'sms/dashboard/pdf_gallery.html'
+    success_message = 'TestModel successfully updated!'
+    count_hit = True
+   
+    def get_queryset(self):
+        # return  Courses.objects.all().select_related('categories').distinct()
+         return PDFGallery.objects.all() 
+    
+    def get_context_data(self, **kwargs): 
+        context = super(PDFGalleryView, self).get_context_data(**kwargs)
+        context['alert_homes']  = PDFGallery.objects.order_by('-created')
+        
+        return context
+
 
 class DigitalForm(ListView):
     models = PDFDocument
@@ -212,7 +262,6 @@ class DigitalForm(ListView):
     count_hit = True
    
     def get_queryset(self):
-       
         # return  Courses.objects.all().select_related('categories').distinct()
          return PDFDocument.objects.all() 
     
@@ -221,6 +270,7 @@ class DigitalForm(ListView):
         context['alert_homes']  = PDFDocument.objects.order_by('-created')
         
         return context
+
 
 class Homepage1(ListView):
     models = Courses
@@ -730,7 +780,6 @@ class gotopdfconfirmpage(HitCountDetailView,LoginRequiredMixin, DetailView):
 class PDFDocumentDetailView(LoginRequiredMixin, DetailView):
     model = Courses
     template_name = 'student/dashboard/pdf_document_detail1.html'  # Update with your actual template name
-
     def get(self, request, *args, **kwargs):
         document = self.get_object()
         
@@ -797,6 +846,30 @@ class Clubs(HitCountDetailView,LoginRequiredMixin,DetailView):
         
         return context
 
+class GalleryDetailView(HitCountDetailView,LoginRequiredMixin,DetailView):
+    models = PDFGallery
+    template_name = 'student/dashboard/gallerydetails.html'
+    success_message = 'TestModel successfully updated!'
+    count_hit = True
+     
+    def get_queryset(self):
+        return PDFGallery.objects.all()
+
+
+    def get_context_data(self,*args , **kwargs ):
+        context = super().get_context_data(**kwargs)
+        document = get_object_or_404(PDFGallery, pk=self.kwargs['pk'])
+        
+        course = PDFGallery.objects.get(pk=self.kwargs["pk"])
+        context['document'] = document
+      
+        user = self.request.user
+        # related_payments = EbooksPayment.objects.filter(email=user, content_type=course, amount=course.price)
+        # # related_payments = Payment.objects.filter(email=user, courses__title=object.title, amount=object.price)
+        # context['related_payments'] = related_payments
+        # context['paystack_public_key']  = settings.PAYSTACK_PUBLIC_KEY
+
+        return context
 
 class Ebooks(HitCountDetailView,LoginRequiredMixin,DetailView):
     models = PDFDocument

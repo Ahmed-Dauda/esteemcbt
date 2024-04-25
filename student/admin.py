@@ -2,6 +2,7 @@ import imp
 from django.contrib import admin
 from student.models import (Logo, Signature, Designcert, 
                             PartLogo, Payment,PDFDocument,Clubs,
+                            PDFGallery,Directors, Management,
                             DocPayment, CertificatePayment, 
                             EbooksPayment, ReferrerMentor
                             )
@@ -20,6 +21,9 @@ from django.utils.html import format_html
 from .models import AdvertisementImage
 
 admin.site.register(PDFDocument)
+admin.site.register(PDFGallery)
+admin.site.register(Directors)
+admin.site.register(Management)
 admin.site.register(Clubs)
 # admin.site.register(WithdrawalRequest)
 

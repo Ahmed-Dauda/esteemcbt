@@ -36,6 +36,7 @@ urlpatterns = [
     # selling pdf segment
     # path('upload_pdf/', views.upload_pdf_document, name='upload_pdf_document'),
     path('pdf_document_list/', views.pdf_document_list, name='pdf_document_list'),
+    path('pdf-gallery/', views.pdf_document_list, name='pdf_gallery'),
     # path('pdf_document_detail/<str:pk>/', views.pdf_document_detail, name='pdf_document_detail'),
     # end
 
