@@ -217,7 +217,7 @@ class ManagementView(ListView):
     
     def get_context_data(self, **kwargs): 
         context = super(ManagementView, self).get_context_data(**kwargs)
-        context['alert_homes']  = Management.objects.order_by('-created')
+        context['alert_homes']  = Management.objects.order_by('id')
         
         return context
     
@@ -233,7 +233,7 @@ class DirectorsView(ListView):
     
     def get_context_data(self, **kwargs): 
         context = super(DirectorsView, self).get_context_data(**kwargs)
-        context['alert_homes']  = Directors.objects.order_by('-created')
+        context['alert_homes']  = Directors.objects.order_by('id')
         
         return context
     
