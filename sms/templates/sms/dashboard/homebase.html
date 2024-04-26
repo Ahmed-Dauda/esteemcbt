@@ -47,10 +47,7 @@
     </head>
     
 <style>
-     .navbar{
-    min-height: 50px;
-    margin-bottom: 20px;
-  }
+
  .navbar-fixed-top {
     position: fixed;
     top:0;
@@ -103,12 +100,11 @@
 }
 
 /* Navbar Styles */
-.navbar{
-    min-height: 50px;
-    margin-bottom: 20px;
-  }
+
 
 .navbar {
+    min-height: 50px;
+    margin-bottom: 20px;
     background-color: #333;
     color: #fff;
     padding: 5px 0;
@@ -141,15 +137,17 @@
 .nav-links {
     list-style: none;
     display: flex;
+   
 }
 
 .nav-links li {
     margin-right: 20px;
+
 }
 
 .nav-links a {
     text-decoration: none;
-    color: #fff;
+    color: #333;
     transition: color 0.3s ease;
 }
 
@@ -197,13 +195,9 @@
 
 /* Navbar Styles */
 
-.navbar{
-   
-    margin-bottom: 20px;
-  }
 
 .navbar {
-    background-color: rgb(22, 22, 190);
+    background-color: rgb(230, 230, 233);
     color: #fff;
     padding: 20px 0;
     position: fixed;
@@ -242,7 +236,7 @@
 
 .nav-links a {
     text-decoration: none;
-    color: #fff;
+    color: #0f0e0e;
     transition: color 0.3s ease;
    
 }
@@ -305,6 +299,7 @@
 
 /* Adjust menu toggle size for smaller screens */
 .menu-toggle {
+  
     display: none; /* Hide menu toggle by default */
     width: 30px; /* Set width of menu toggle */
     height: 30px; /* Set height of menu toggle */
@@ -350,18 +345,18 @@
 
 <body>
 
-    <nav class="navbar">
-        <div class="containernav">
+    <nav class="navbar" >
+        <div class="containernav" >
             <a href="{% url 'sms:homepage' %}" class="brand-logo" style="">
                 <img src="/static/sms/images/esteemlogo.jpg" class="logo" alt="School Logo">   
             </a>
-            <div class="menu-toggle" id="menu-toggle">
+            <div class="menu-toggle" id="menu-toggle" >
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
             
-            <ul class="nav-links" id="nav-links">
+            <ul style="background-color: white" class="nav-links" id="nav-links">
                 <li><a href="{% url 'sms:homepage' %}">Home</a></li>
                 <li><a href="{% url 'sms:about_us' %}">About Us</a></li>
                 <li><a href="{% url 'sms:digital_form' %}">Application Form</a></li>
