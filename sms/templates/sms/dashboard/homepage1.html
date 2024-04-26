@@ -714,6 +714,7 @@ p {
 
 /* video on mobile view */
 
+
 /* Media query for small screens */
 @media only screen and (max-width: 768px) {
   .carousel-inner .carousel-item {
@@ -736,6 +737,21 @@ p {
   .carousel-control-next {
     right: 0;
   }
+}
+
+@media only screen and (max-width: 768px) {
+    .embed-responsive {
+        width: 90%;
+        height: 250px;
+    }
+}
+
+/* Media query for desktop */
+@media (min-width: 768px) {
+    .embed-responsive {
+        width: 70%; /* Set width to 70% on desktop */
+    }
+
 }
 
 
@@ -877,7 +893,7 @@ p {
       
       <div  class="button-container">
         {% if not users.is_authenticated %}
-        <a href="{% url 'account_login' %}" class="btn-front btn-primary">Join us for Free</a>
+        <!-- <a href="{% url 'account_login' %}" class="btn-front btn-primary">Join us for Free</a> -->
         {% endif  %}
       </div>
       <div class="button-container">
@@ -901,7 +917,7 @@ p {
 </div>
 
 <div class="container">
-  <button  class="btn text-center text-white" ><a class="btn btn-primary text-center"  href="https://wa.me/23409031568177"> Chat Us</a></button>
+  <button  class="btn text-center text-white" ><a class="btn btn-primary text-center"  href=""> Chat Us</a></button>
 </div>
 
 <br><br><br>
@@ -982,45 +998,50 @@ p {
 <!-- advert video -->
 <!-- Front Page Video Carousel -->
 <br><br><br>
-<div class="row d-flex justify-content-center">
-  <h3 style="background: linear-gradient(to right, #29100a, rgb(22, 22, 190)); color: white; font-weight: bold; text-align: center; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); padding: 10px 20px; border-radius: 10px; background-size: 50%; width: 70%; margin: 0 auto;" class="mb-4">Exceptional Video Presentations</h3>
+<div id="digital-form-heading" class="text-center">
+  <h3 style="font-family: Arial, sans-serif; color: #333; font-weight: bold;">Exceptional Video Presentations</h3>
 </div>
+<!-- <div class="row d-flex justify-content-center">
+  <h3 class = 'video-heading' style="background: linear-gradient(to right, #29100a, rgb(22, 22, 190)); color: white; font-weight: bold; text-align: center; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); padding: 10px 20px; border-radius: 10px; background-size: 50%; width: 90%; margin: 0 auto;" class="mb-4">Exceptional Video Presentations</h3>
+</div> -->
 
 <br>
 <div id="frontPageVideoCarousel" class="carousel slide">
   <div class="carousel-inner">
     {% for video in front_page_videos %}
-      {% if forloop.first %}
-        <div class="carousel-item active d-flex align-items-center justify-content-center">
-      {% else %}
-        <div class="carousel-item  align-items-center justify-content-center">
-      {% endif %}
-      <div class="embed-responsive embed-responsive-16by9" style="height: 500px; width: 70%;"> <!-- Adjust the width here -->
-        <iframe
-        src="{{ video.video }}"
-        frameborder="0"
-        modestbranding="1"
-        rel="0"
-        showinfo="0"
-        controls="0"
-        disablekb="1"
-        >
-      </iframe> <!-- Embed the video using the EmbedVideoField -->
-      </div>
-      <div class="carousel-caption">
-        <h5>{{ video.title }}</h5> <!-- Display the title of the video -->
-      </div>
-      </div>
+        {% if forloop.first %}
+            <div class="carousel-item active d-flex align-items-center justify-content-center">
+        {% else %}
+            <div class="carousel-item align-items-center justify-content-center">
+        {% endif %}
+        <div class="embed-responsive embed-responsive-16by9" style=""> <!-- Adjust the width here for mobile -->
+            <iframe
+            src="{{ video.video }}"
+            frameborder="0"
+            modestbranding="1"
+            rel="0"
+            showinfo="0"
+            controls="0"
+            disablekb="1"
+            class="frontvideo"
+            >
+            </iframe> <!-- Embed the video using the EmbedVideoField -->
+        </div>
+        <div class="carousel-caption">
+            <h5>{{ video.title }}</h5> <!-- Display the title of the video -->
+        </div>
+        </div>
     {% endfor %}
-  </div>
-  <a class="carousel-control-prev" href="#frontPageVideoCarousel" role="button" data-slide="prev" style="left: calc((100% - 80%) / 2);">
-    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-    <span class="sr-only">Previous</span>
-  </a>
-  <a class="carousel-control-next" href="#frontPageVideoCarousel" role="button" data-slide="next" style="right: calc((100% - 80%) / 2);">
-    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-    <span class="sr-only">Next</span>
-  </a>
+</div>
+
+<a class="carousel-control-prev" href="#frontPageVideoCarousel" role="button" data-slide="prev" style="left: calc((100% - 80%) / 2); padding: 140px;">
+  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+  <span class="sr-only">Previous</span>
+</a>
+<a class="carousel-control-next" href="#frontPageVideoCarousel" role="button" data-slide="next" style="right: calc((100% - 80%) / 2);padding: 140px">
+  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+  <span class="sr-only">Next</span>
+</a>
 </div>
 
 
@@ -1515,12 +1536,12 @@ p {
 <br> <br> <br> <br> <br>
 
   <!-- what parent say about us -->
-  <div class="row d-flex justify-content-center">
+  <!-- <div class="row d-flex justify-content-center">
     <h3 style="background: linear-gradient(to right, #29100a, rgb(22, 22, 190)); color: white; font-weight: bold; text-align: center; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); padding: 10px 20px; border-radius: 10px; background-size: 50%; width: 70%; margin: 0 auto;" class="mb-4">What Parents Say About Us</h3>
-  </div>
-  <!-- <div style="background: linear-gradient(to right, #ff7e5f, #feb47b); color: white; font-weight: bold;width: 40% ;text-align: center; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); padding: 10px 20px; border-radius: 10px; background-size: 50%;"  class="row d-flex justify-content-center">
-    <h3 class="mb-4">What Parents Say About Us</h3>
   </div> -->
+  <div id="digital-form-heading" class="text-center">
+    <h3 style="font-family: Arial, sans-serif; color: #333; font-weight: bold;">What Parents Say About Us</h3>
+  </div>
   <br>
  <section class="container testimonial-carousel">
   <div style="flex-wrap: nowrap;" class="row text-center d-flex align-items-stretch">
