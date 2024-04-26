@@ -846,7 +846,7 @@ class Clubs(HitCountDetailView,LoginRequiredMixin,DetailView):
         
         return context
 
-class GalleryDetailView(HitCountDetailView,LoginRequiredMixin,DetailView):
+class GalleryDetailView(HitCountDetailView,DetailView):
     models = PDFGallery
     template_name = 'student/dashboard/gallerydetails.html'
     success_message = 'TestModel successfully updated!'
@@ -871,7 +871,7 @@ class GalleryDetailView(HitCountDetailView,LoginRequiredMixin,DetailView):
 
         return context
 
-class Ebooks(HitCountDetailView,LoginRequiredMixin,DetailView):
+class Ebooks(HitCountDetailView,DetailView):
     models = PDFDocument
     template_name = 'student/dashboard/ebooks.html'
     success_message = 'TestModel successfully updated!'
