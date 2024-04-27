@@ -42,28 +42,31 @@ h4 a:hover {
 </style>
 
 <br><br>
-  <h1 style="text-align: center;">List of Clubs</h1>
-  <ul style="list-style-type: none; padding-left: 0;">
-      {% for club in object_list %}
-          <li style="margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px; padding: 20px;">
-              <div style="display: flex; align-items: center;">
-                  <div style="flex: 1;">
-                      <h2>{{ club.title }}</h2>
-                      <p>{{ club.desc }}</p>
-                      {% if club.img_ebook %}
-                          <img src="{{ club.img_ebook.url }}" alt="{{ club.title }} Image" style="width: 100%; max-height: 300px; transition: transform 0.3s;">
-                      {% endif %}
-                  </div>
-                  <div style="flex: 1; text-align: center;">
-                      {% if club.pdf_url %}
-                          <h4><a href="{{ club.pdf_url }}">View Activities</a></h4>
-                      {% endif %}
-                  </div>
-              </div>
-          </li>
-      {% empty %}
-          <li>No clubs available.</li>
-      {% endfor %}
+<h2 class="text-center"><i class="fas fa-users" style="margin-right: 10px;"></i>Club Activities</h2> <!-- Updated heading with Font Awesome icon -->
+  
+<ul class="" style="list-style-type: none; padding-left: 0; width: 70%; margin: 0 auto;">
+    {% for club in object_list %}
+      <li style="margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px; padding: 20px;">
+        <div style="display: flex; align-items: center; text-align: center;">
+          <div style="flex: 1;">
+            <h2 style="background-color: #463b2b; color: white; padding: 10px; border-radius: 5px;"> {{ club.title }}</h2> <!-- Updated heading with background color -->
+            {% if club.img_ebook %}
+              <img src="{{ club.img_ebook.url }}" alt="{{ club.title }} Image" style="width: 100%; max-height: 300px; transition: transform 0.3s;">
+            {% endif %}
+            <br>
+            <p>{{ club.desc }}</p>
+            <hr>
+          </div>
+        </div>
+        <div style="text-align: center;">
+          {% if club.pdf_url %}
+            <h4><a href="{{ club.pdf_url }}">View Activities</a></h4>
+          {% endif %}
+        </div>
+      </li>
+    {% empty %}
+      <li>No clubs available.</li>
+    {% endfor %}
   </ul>
   
 
