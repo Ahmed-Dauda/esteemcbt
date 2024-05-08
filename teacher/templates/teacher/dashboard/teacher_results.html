@@ -1,4 +1,4 @@
-{% extends 'sms/dashboard/base.html' %}
+{% extends 'sms/dashboard/teacherbase.html' %}
 
 {% block title %} Course Overall Scores Detail View {% endblock %}
 
@@ -6,39 +6,42 @@
 
 
   <!-- Begin Page Content -->
-  <div class="container-fluid">
-    <form action="{% url 'export_results_csv' %}" method="get">
-        <button type="submit" class="btn btn-primary">Export to CSV</button>
+<div class="container-fluid">
+    <!-- Export Button -->
+    <form action="{% url 'teacher:export_results_csv' %}" method="get">
+        <button type="submit" class="btn btn-primary mb-4">
+            <i class="fas fa-file-csv"></i> Export to CSV
+        </button>
     </form>
     
-<!-- DataTales Example -->
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Overall Exam Scores</h6>
-    </div>
-    <p>Welcome, {{ teacher.first_name }} {{ teacher.last_name }}!</p>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th>Student Name</th>
-                        <th>Exam Score</th>
-                        <th>Exam Subject</th>
-                      
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for result in results %}
-                    <tr>
-                        <td>{{ result.student.first_name }} {{ result.student.last_name }}</td>
-                        <td>{{ result.marks }}</td>
-                        <td>{{ result.exam }}</td>
-
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <!-- Card -->
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Overall Exam Scores</h6>
+        </div>
+        <div class="card-body">
+            <!-- Welcome Message -->
+            <p class="mb-4">Welcome, {{ teacher.first_name }} {{ teacher.last_name }}!</p>
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Exam Score</th>
+                            <th>Exam Subject</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                        <tr>
+                            <td>{{ result.student.first_name }} {{ result.student.last_name }}</td>
+                            <td>{{ result.marks }}</td>
+                            <td>{{ result.exam }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

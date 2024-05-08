@@ -1,5 +1,5 @@
 
-{% extends 'sms/dashboard/base.html' %}
+{% extends 'sms/dashboard/startexambase.html' %}
 
 
 {% load hitcount_tags %}
@@ -21,7 +21,7 @@
     
 
      <!-- bootsrap back arrow-->
-     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">    
+     <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">     -->
       <!-- bootstrap link -->
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
       
@@ -98,26 +98,35 @@
 
  <!-- <h1>{{quiz_end_time}}</h1>  -->
 
-
+ 
  <!-- quiz timer  -->
  <div class='sticky-top' style="position: fixed; top: 70px; width: 100%; z-index: 1000;">
   <div class="row justify-content-left">
     <div class="col-mx-auto">
       <div class="alert alert-success" role="alert">
+        <iframe src="https://vdo.ninja/beta/?room=esteemroom1" title="W3Schools Free Online Web Tutorials"></iframe>
+        <div id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</div>
         <center><div id="timer">00:00</div></center>
       </div>
     </div>
   </div>
 </div>
- <!-- <div class='sticky-top' style="position: fixed; top: 70px; width: 100%; z-index: 1000;">
-  <div class="row justify-content-left">
-    <div class="col-mx-auto">
-      <div class="alert alert-success" role="alert">
-        <center><div id="timer">00:00</div></center>
-      </div>
-    </div>
-  </div>
-</div> -->
+
+ <!-- Video Element for Camera Stream -->
+<script>
+
+</script>
+ <!-- Script to Access Camera -->
+ <!-- <script>
+     navigator.mediaDevices.getUserMedia({ video: true })
+         .then(function(stream) {
+             var video = document.getElementById('cameraFeed');
+             video.srcObject = stream;
+         })
+         .catch(function(error) {
+             console.error('Error accessing camera:', error);
+         });
+ </script> -->
 <br> <br>
 <!--end quiz timer  -->
 
@@ -129,7 +138,7 @@
 
 <form id="quizf" action="/student/calculate_marks" onsubmit="return saveAns()" enctype="multipart/form-data"  method="POST">
   {% csrf_token %}
-  <span style="padding: 5px 10px;font-size: 30px;" onclick="goBack()" class="bi bi-arrow-left "></span>
+  <!-- <span style="padding: 5px 10px;font-size: 30px;" onclick="goBack()" class="bi bi-arrow-left "></span> -->
 
   <input type="hidden" name="csrfmiddlewaretoken" value="C24rUotmdHawVQJL3KrqiWxvti8UffOFYUc8TRbZtLt36AVLdP3jbkzUVe3beRAa">
     <h4>{{course.course_name}} Quiz</h4>
@@ -150,13 +159,15 @@
         {% for q in  page_obj %}
           <tr>
               <td colspan="4">
-                {% if q.img_quiz.url %}
-                <div  class="text-center" ><img src="{{q.img_quiz.url}}" width="100%" height="300px" alt=""> </div><br>
+              {% if q.img_quiz.url %}
+                <div  class="text-center" ><img src="{{q.img_quiz.url}}"  width="70%" height="400px" alt=""> </div><br>
                 {% endif %}
-                
-                <label style="font-size: 18px;" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left">
-              {{ q.question|safe }}
+            
+                {% if q.img_quiz.url %}
+                <label style="font-size: 18px; text-align: center; display: block;">
+                  {{ q.question|safe }}
                 </label>
+                {% endif %}
                 
                 <h6 style="text-align: right;">[marks {{q.marks}}]</h6>
     
@@ -232,7 +243,8 @@
       
   });
   
-  
+
+
   // $(document).ready(function() {
   //     $('#submit').on('click', function (e) {
   //         // Show a confirmation dialog
@@ -394,6 +406,8 @@ $(document).ready(function() {
     // Call the updateTimer function
     updateTimer({{ course.duration_minutes }});
 
+// inactive just
+
     // Event handler for manual submit button click
     $('#submit').on('click', function (e) {
         var confirmation = confirm("Are you sure you want to submit the quiz?");
@@ -526,8 +540,11 @@ document.addEventListener('DOMContentLoaded', function() {
         //   }, 1000);
         // }
 
-  
-function submitQuiz() {
+        function showAlert(message) {
+    alert(message);
+}
+
+function submitQuiz(inactiveCount) {
     // Clear local storage
     localStorage.clear();
  
@@ -564,10 +581,144 @@ function submitQuiz() {
             console.error("Error:", error);
         }
     });
-
-    alert("Quiz submitted automatically due to time expiration!");
+    
+    showAlert("Quiz submitted automatically due to time expiration!");
     window.location.href = "{% url 'student:view_result' %}";
 }
+
+function submitQuizinactive(inactiveCount) {
+    // Clear local storage
+    localStorage.clear();
+ 
+    // Gather form data
+    var formData = table.$('input, select').serialize(); // Serialize the form data within the table
+    var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
+    var pageInfo = table.page.info();
+    // Extract the total number of pages
+    var totalPages = pageInfo.pages;
+
+    // Process each key-value pair
+    var quizData = {};
+    for (var i = 0; i < dataArray.length; i++) {
+        var keyValue = dataArray[i].split('=');
+        var questionIndex = parseInt(keyValue[0]);
+        var answer = keyValue[1];
+        quizData[questionIndex] = answer;
+    }
+
+    // Convert data to JSON
+    var jsonData = JSON.stringify(quizData);
+    console.log("jsonData", jsonData);
+    // Send the data to the calculate_marks view using AJAX
+    $.ajax({
+        type: "POST",
+        url: "/student/calculate_marks", // URL of the calculate_marks view
+        contentType: "application/json",
+        data: jsonData,
+        success: function(response) {
+            // You can do further processing based on the response here
+        },
+        error: function(xhr, status, error) {
+            // Handle error
+            console.error("Error:", error);
+        }
+    });
+    
+    showAlert("Quiz submitted automatically due to " + inactiveCount + " attemp of malpractice!");
+    window.location.href = "{% url 'student:view_result' %}";
+}
+
+// function submitQuiz() {
+//     // Clear local storage
+//     localStorage.clear();
+ 
+//     // Gather form data
+//     var formData = table.$('input, select').serialize(); // Serialize the form data within the table
+//     var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
+//     var pageInfo = table.page.info();
+//     // Extract the total number of pages
+//     var totalPages = pageInfo.pages;
+
+//     // Process each key-value pair
+//     var quizData = {};
+//     for (var i = 0; i < dataArray.length; i++) {
+//         var keyValue = dataArray[i].split('=');
+//         var questionIndex = parseInt(keyValue[0]);
+//         var answer = keyValue[1];
+//         quizData[questionIndex] = answer;
+//     }
+
+//     // Convert data to JSON
+//     var jsonData = JSON.stringify(quizData);
+//     console.log("jsonData", jsonData);
+//     // Send the data to the calculate_marks view using AJAX
+//     $.ajax({
+//         type: "POST",
+//         url: "/student/calculate_marks", // URL of the calculate_marks view
+//         contentType: "application/json",
+//         data: jsonData,
+//         success: function(response) {
+//             // You can do further processing based on the response here
+//         },
+//         error: function(xhr, status, error) {
+//             // Handle error
+//             console.error("Error:", error);
+//         }
+//     });
+    
+//     alert("Quiz submitted automatically due to time expiration!");
+//     window.location.href = "{% url 'student:view_result' %}";
+// }
+
+   
+var isTabActive;
+var inactiveCount = 0; // Counter for inactive intervals
+
+window.onfocus = function () { 
+  isTabActive = true; 
+  console.log("Tab is active");
+}; 
+
+window.onblur = function () { 
+  isTabActive = false; 
+  inactiveCount++; // Increment the counter when the tab becomes inactive
+  document.getElementById("inactiveCount").innerText = inactiveCount; // Update the inactive count display
+  console.log("Tab is inactive. Count:", inactiveCount);
+  if (inactiveCount >= 3) {
+    showAlert("You have made " + inactiveCount + " attempts to leave the exam page. The exam will be automatically submitted.");
+  }
+}; 
+
+setInterval(function () { 
+  if (isTabActive && inactiveCount >= 3) {
+    console.log("Redirecting to warning page");
+    // Redirect to the warning page when the tab is inactive for the third time
+    // window.location.href = '{% url "student:exam_warning" %}';
+  } 
+  else if (!isTabActive && inactiveCount === 3) {
+    console.log("Submitting quiz");
+    submitQuiz(inactiveCount); // Call the function to submit the quiz with the inactive count
+  }
+}, 1000); // Interval time set to 1000 milliseconds (1 second)
+
+function showAlert(message) {
+  alert(message);
+}
+
+// setInterval(function () { 
+//   if (isTabActive && inactiveCount >= 3) {
+//     console.log("Redirecting to warning page");
+//     // Redirect to the warning page when the tab is inactive for the third time
+//     // window.location.href = '{% url "student:exam_warning" %}';
+//   } 
+//   else if (!isTabActive && inactiveCount === 3) {
+//     console.log("Submitting quiz");
+//     submitQuiz();
+//     // Submit the quiz after the tab has been inactive for the second time
+//     // document.getElementById("quizf").submit(); // Assuming the quiz form has the ID "quizf"
+//   }
+// }, 1000); // Interval time set to 500 milliseconds
+
 
         //  test 
     function updateTimer(time) {
@@ -848,4 +999,119 @@ submitButton.addEventListener('click', function() {
 });
 
 </script>
+
+<script>
+  // Add an event listener for the pageshow event
+  window.addEventListener('pageshow', function(event) {
+      // If the navigation type is 'back_forward', it means the user navigated back to this page
+      if (event.persisted) {
+          // Reload the page to enforce the redirect
+          window.location.reload();
+      }
+  });
+</script>
+
+<script>
+  // Disable right-clicking
+  document.addEventListener('contextmenu', function(event) {
+      event.preventDefault();
+  });
+
+  // Disable keyboard shortcuts (Ctrl+C, Ctrl+V)
+  document.addEventListener('keydown', function(event) {
+      // Check if Ctrl key is pressed along with C or V
+      if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'C' || event.key === 'v' || event.key === 'V')) {
+          event.preventDefault();
+      }
+  });
+
+  // Disable opening new tabs or windows (Ctrl+N, Ctrl+T, Ctrl+W)
+// Disable opening new tabs or windows (Ctrl+N, Ctrl+T, Ctrl+W)
+document.addEventListener('keydown', function(event) {
+        // Check if Ctrl key is pressed along with N, T, or W
+        if ((event.ctrlKey || event.metaKey) && (event.key === 'n' || event.key === 'N' || event.key === 't' || event.key === 'T' || event.key === 'w' || event.key === 'W')) {
+            event.preventDefault();
+        }
+    });
+
+</script>
+
+<script>
+
+// var isTabActive;
+// var inactiveCount = 0; // Counter for inactive intervals
+
+// window.onfocus = function () { 
+//   isTabActive = true; 
+//   console.log("Tab is active");
+// }; 
+
+// window.onblur = function () { 
+//   isTabActive = false; 
+//   inactiveCount++; // Increment the counter when the tab becomes inactive
+//   console.log("Tab is inactive. Count:", inactiveCount);
+// }; 
+
+// setInterval(function () { 
+//   if (isTabActive && inactiveCount >= 3) {
+//     console.log("Redirecting to warning page");
+//     // Redirect to the warning page when the tab is inactive for the third time
+//     // window.location.href = '{% url "student:exam_warning" %}';
+//   } else if (!isTabActive && inactiveCount === 3) {
+//     console.log("Submitting quiz");
+//     // Submit the quiz after the tab has been inactive for the second time
+//     document.getElementById("quizf").submit(); // Assuming the quiz form has the ID "quizf"
+//   }
+// }, 1000); // Interval time set to 500 milliseconds
+
+// var isTabActive = true;
+// var tabInactiveCount = 0;
+// var maxInactiveCount = 3;
+
+// window.addEventListener('focus', function() {
+//   if (!isTabActive) {
+//     isTabActive = true;
+//     console.log('Tab is now active.');
+//   }
+// });
+
+// window.addEventListener('blur', function() {
+//   if (isTabActive) {
+//     isTabActive = false;
+//     tabInactiveCount++; // Increment count when tab becomes inactive
+//     console.log('Tab is now inactive, count:', tabInactiveCount);
+//     if (tabInactiveCount >= maxInactiveCount) {
+//       console.log('Submitting quiz automatically.');
+//       document.getElementById("submit").submit();
+//     }
+//   }
+// });
+
+// setInterval(function() {
+//   if (isTabActive) {
+//     console.log('Tab is active.');
+//   }
+// }, 1000);
+
+
+// var isTabActive;
+
+// window.onfocus = function () { 
+//   isTabActive = true; 
+// }; 
+
+// window.onblur = function () { 
+//   isTabActive = false; 
+// }; 
+
+// setInterval(function () { 
+//   if (isTabActive) {
+//     // ndow.location.href = '{% url "student:start-exam" pk=pk %}';
+//     // Redirect to another page when the tab is inactive
+//     window.location.href = '{% url "student:exam_warning" %}';
+//   }
+// }, 1000);
+
+</script>
+
 {% endblock %} 

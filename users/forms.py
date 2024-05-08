@@ -4,20 +4,15 @@ from django import forms
 from django.db import models 
 from django.forms import ModelForm
 
-
 from student.models import ReferrerMentor
 from django.contrib.auth import get_user_model
-
-
 from sms.models import Comment
 from allauth.account.forms import SignupForm
-
 from .models import *
 from users.models import NewUser
 
 # models.py
 
-from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from teacher.models import Teacher
 from quiz.models import Course, CourseGrade,School

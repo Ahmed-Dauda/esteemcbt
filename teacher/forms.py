@@ -42,21 +42,19 @@ class QuestionForm(forms.ModelForm):
 from django import forms
 from .models import NewUser, Teacher, Course, School, CourseGrade
 
+
 class TeacherSignupForm(UserCreationForm):
     first_name = forms.CharField(max_length=200, label='First Name')
     last_name = forms.CharField(max_length=200, label='Last Name')
     email = forms.EmailField(max_length=254, label='Email')
+    username = forms.CharField(max_length=35, label='Username')
     school = forms.ModelChoiceField(queryset=School.objects.all(), label='School', required=False)
+    subjects_taught = forms.ModelMultipleChoiceField(queryset=Course.objects.all(), label='Subjects Taught', required=False)
+    classes_taught = forms.ModelMultipleChoiceField(queryset=CourseGrade.objects.all(), label='Classes Taught', required=False)
 
     class Meta:
         model = NewUser
-        fields = ['first_name', 'last_name', 'email', 'username', 'password1', 'password2']
-
-    def __init__(self, *args, **kwargs):
-        subjects_taught = kwargs.pop('subjects_taught', None)
-        super().__init__(*args, **kwargs)
-        if subjects_taught:
-            self.fields['subjects_taught'].queryset = subjects_taught
+        fields = ['first_name', 'last_name', 'email', 'username', 'password1', 'password2', 'school', 'subjects_taught', 'classes_taught']
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -72,6 +70,7 @@ class TeacherSignupForm(UserCreationForm):
         username = user.username
         school = self.cleaned_data.get('school', None)
         subjects_taught = self.cleaned_data.get('subjects_taught', [])
+        classes_taught = self.cleaned_data.get('classes_taught', [])
 
         teacher = Teacher.objects.create(
             user=user,
@@ -82,7 +81,52 @@ class TeacherSignupForm(UserCreationForm):
             school=school,
         )
         teacher.subjects_taught.add(*subjects_taught)
+        teacher.classes_taught.add(*classes_taught)
         return teacher
+    
+    
+# class TeacherSignupForm(UserCreationForm):
+#     first_name = forms.CharField(max_length=200, label='First Name')
+#     last_name = forms.CharField(max_length=200, label='Last Name')
+#     email = forms.EmailField(max_length=254, label='Email')
+#     school = forms.ModelChoiceField(queryset=School.objects.all(), label='School', required=False)
+
+#     class Meta:
+#         model = NewUser
+#         fields = ['first_name', 'last_name', 'email', 'username', 'password1', 'password2']
+
+#     def __init__(self, *args, **kwargs):
+#         subjects_taught = kwargs.pop('subjects_taught', None)
+#         super().__init__(*args, **kwargs)
+#         if subjects_taught:
+#             self.fields['subjects_taught'].queryset = subjects_taught
+
+#     def save(self, commit=True):
+#         user = super().save(commit=False)
+#         user.email = self.cleaned_data['email']
+#         if commit:
+#             user.save()
+#         return user
+
+#     def save_teacher(self, user):
+#         first_name = self.cleaned_data['first_name']
+#         last_name = self.cleaned_data['last_name']
+#         email = user.email
+#         username = user.username
+#         school = self.cleaned_data.get('school', None)
+#         subjects_taught = self.cleaned_data.get('subjects_taught', [])
+
+#         teacher = Teacher.objects.create(
+#             user=user,
+#             first_name=first_name,
+#             last_name=last_name,
+#             email=email,
+#             username=username,
+#             school=school,
+#         )
+#         teacher.subjects_taught.add(*subjects_taught)
+#         return teacher
+
 
 # class TeacherSignupForm(UserCreationForm):
 #     first_name = forms.CharField(max_length=200, label='First Name')

@@ -14,8 +14,8 @@ from users.models import NewUser
 #     # def get_instance(self):
 #     #     return self
 #     def __str__(self):
-
 #         return f'{self.salary}'
+
 
 class Teacher(models.Model):
     user = models.OneToOneField(NewUser, on_delete=models.CASCADE, blank=True, null=True)

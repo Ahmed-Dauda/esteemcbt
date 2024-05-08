@@ -8,72 +8,65 @@
 
 {% block content %}
 {% load socialaccount %}
+
 <style>
   /* CSS Style for Success Notification */
-.notification-success {
-  background-color: #4CAF50; /* Green */
-  color: #fff; /* White text */
-  padding: 10px;
-}
+  .notification-success {
+    background-color: #171c17; /* Green */
+    color: #fff; /* White text */
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px; /* Add margin to create space between notification and login options */
+  }
 
+  .notification-success i {
+    font-size: 24px;
+    margin-right: 10px;
+  }
+
+  .card-custom {
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  }
 </style>
-<div class="notification notification-success">
-  <p>
-    <strong>Important:</strong> If you have previously signed up for our app, please take a moment to re-register before logging in. We have introduced some exciting updates to enhance your experience. Thank you!
-  </p>
+
+<!-- Success Notification -->
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="notification notification-success text-center d-flex align-items-center">
+      <i class="fas fa-check-circle"></i> <!-- Success icon -->
+      <p class="mb-0 mx-2">
+        <strong class="align-middle">Important:</strong> Login as Teacher or Student. Thank you!
+      </p>
+    </div>
+  </div>
 </div>
 
 
+
+<!-- Card Body -->
 <div class="card-body">
+  {% get_providers as socialaccount_providers %}
 
-
-<a href="{{ signup_url }}">Register Here</a><br> Or 
-<h5>{% trans "Sign In" %}</h5>
-
-{% get_providers as socialaccount_providers %}
-
-{% if socialaccount_providers %}
-
-<!-- <p>{% blocktrans with site.name as site_name %}Please sign in with one
-of your existing third party accounts. Or, 
-
-<a href="{{ signup_url }}">.</a><br>
-
-<a href = "mailto: codethinkersa@gmail.com">Send Us Email</a>
-
-for a {{ site_name }} account and sign in below:{% endblocktrans %}</p> -->
-
-
-
-<a href = "mailto: codethinkersa@gmail.com">Send Us Email</a>
-
-<div class="socialaccount_ballot">
-
-  <ul style="list-style: none;" class="socialaccount_providers">
-    {% include "socialaccount/snippets/provider_list.html" with process="login" %}
-  </ul>
-
-  <div class="login-or">{% trans 'Or' %}</div>
-
-</div>
-
-{% include "socialaccount/snippets/login_extra.html" %}
-
-{% else %}
-<p>{% blocktrans %}If you have not created an account yet, then please
-<a href="{{ signup_url }}">sign up</a> first.{% endblocktrans %}</p>
-{% endif %}
-
-<form class="login" method="POST" action="{% url 'account_login' %}">
-  {% csrf_token %}
-  {{ form.as_p }}
-  {% if redirect_field_value %} <br>
-  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
-  {% endif %}
-  <a class="button secondaryAction" href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a>
-  <button  class="btn btn-primary" type="submit">{% trans "Sign In" %}</button>
-</form>
-
+  <div class="card card-custom"> <!-- Custom card -->
+    <div class="card-body">
+      <h1>Login as Teacher</h1>
+      <a href="{% url 'teacher:teacher_login' %}" class="btn btn-primary">Login</a> <!-- Button with Bootstrap styling -->
+      <hr>
+      <h1>Login as Student</h1>
+      <form class="login" method="POST" action="{% url 'account_login' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        {% if redirect_field_value %} <br>
+        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+        {% endif %}
+        <!-- <a class="button secondaryAction" href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a> -->
+        <button class="btn btn-primary" type="submit">{% trans "Sign In" %}</button>
+      </form>
+    </div>
+  </div>
 </div>
 
 {% endblock %}

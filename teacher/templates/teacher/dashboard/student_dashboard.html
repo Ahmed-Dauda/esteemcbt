@@ -1,0 +1,74 @@
+{% extends 'sms/dashboard/studentbase.html' %}
+
+{% block title %} student dashboard {% endblock %}
+
+  {% block content %} 
+
+  <style>
+
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.left-column-cat {
+    flex: 1;
+    margin: 5px;
+    background-color: #4158D0;
+    color: black;
+    background-image: linear-gradient(#ffff 100%, #ffff 46%, white 100%);
+
+}
+
+</style>
+    
+
+<br> <br>
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card bg-c-green order-card">
+        <div class="card-body">
+          <h4 class="card-title text-center">Examination Rules and Regulations</h4>
+          <hr>
+          <div class="card-text">
+            <p>Welcome to the examination platform. Before you begin the exam, please take a moment to review the following rules and regulations:</p>
+            <ul>
+              <li><strong>Authentication:</strong> You are required to authenticate yourself using your username and password before accessing the exam. Any attempt to impersonate another user or use unauthorized credentials will result in immediate disqualification.</li>
+              <li><strong>Exam Duration:</strong> Each exam has a fixed duration indicated at the beginning. Ensure that you manage your time effectively to complete all questions within the allotted time.</li>
+              <li><strong>No Cheating:</strong> Cheating in any form is strictly prohibited. Do not use unauthorized materials, devices, or external assistance during the exam. Any attempt to cheat will result in disqualification and disciplinary action.</li>
+              <li><strong>No Disturbance:</strong>
+                <ul>
+                  <li>Find a quiet and distraction-free environment to take the exam.</li>
+                  <li>Silence your mobile phone and avoid any disruptions during the exam.</li>
+                </ul>
+              </li>
+              <li><strong>No Unauthorized Devices:</strong> Prohibit the use of any unauthorized electronic devices, including mobile phones, tablets, or calculators, during the exam.</li>
+              <li><strong>No Unauthorized Assistance:</strong> Do not seek or provide assistance from/to others during the exam. Communicating with other candidates or accessing external resources is strictly prohibited.</li>
+              <li><strong>No Tampering:</strong> Do not attempt to tamper with the examination platform or modify exam content in any way. Any unauthorized access or tampering will result in immediate disqualification.</li>
+              <li><strong>Submission Deadline:</strong> Ensure that you submit your exam answers before the deadline expires. The system will automatically submit your exam if the deadline is reached, so plan your time accordingly.</li>
+            </ul>
+          </div>
+          <div class="text-center">
+            <button class="btn btn-primary"><a href="{% url 'student:take-exam' %}" class="text-white">Accept and Start</a></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- End of Main Content -->
+
+  {% endblock %} 
+ 
+
+
+
+
+
+
+

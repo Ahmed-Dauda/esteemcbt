@@ -37,25 +37,26 @@
     </div>
     {% endif %}
 
-    <div >
-      <!-- <strong>Menu:</strong> -->
-      <div class="card-header text-white text-center bg-primary">
-      <ul style="list-style: none;">
+    <!-- <div >
+
+      <div class="card-header text-white text-center bg-primary"> -->
+      <!-- <ul style="list-style: none;">
         {% if user.is_authenticated %}
         <li><a href="{% url 'account_email' %}">Change E-mail</a></li>
         <li><a href="{% url 'account_logout' %}">Sign Out</a></li>
         {% else %}
         
-        <div><img class="rounded-circle" src="/static/sms/images/newlogo3.jpg" width="200px" height="200px" alt="topics image"></div><br><hr> 
-        <!-- <div class="container cre card-text">
+       
+       <div class="container cre card-text">
         <li><a class="text-white" href="{% url 'account_login' %}">Sign In</a></li>
         <li><a class="text-white" href="{% url 'account_signup' %}">Sign Up</a></li>
-      </div> -->
-        {% endif %}
+      </div>
+        {% endif %} 
         
-      </ul>
-    </div>
-    </div>
+      </ul>-->
+    <!-- </div>
+    </div> -->
+    <br> <br>
     <div class="card-body" style="border: 1px solid black;">
     {% block content %}
     {% endblock %}

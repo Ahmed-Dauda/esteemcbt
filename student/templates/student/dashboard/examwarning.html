@@ -8,10 +8,20 @@
 
 <br> <br> <br>
 <div class="text-center">
-  <i class="fas fa-check-circle" style="font-size: 48px; color: #28a745;"></i>
-  <p class="mb-0" style="font-size: 18px; color: #333;">Congratulations! You have successfully submitted your exam.</p>
-  <p style="font-size: 16px; color: #555;">Please feel free to leave the examination area.</p>
+  <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ffc107;"></i> <!-- Warning icon -->
+  <p class="mb-0" style="font-size: 18px; color: #333333;">You are about to compromise on the exam.</p> <!-- Updated English text -->
+  <p style="font-size: 16px; color: #555;">If this happens again, your examination will be terminated.</p> <!-- Updated English text -->
+  <button class="btn btn-secondary" onclick="goBack()">Back</button> <!-- Back button -->
 </div>
+
+<script>
+  function goBack() {
+    window.history.back(); // Go back to the previous page
+  }
+</script>
+
+
+
 
 
 

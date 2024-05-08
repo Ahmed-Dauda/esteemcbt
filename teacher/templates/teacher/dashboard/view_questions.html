@@ -1,4 +1,4 @@
-{% extends 'sms/dashboard/base.html' %}
+{% extends 'sms/dashboard/teacherbase.html' %}
 
 {% block title %} Course Overall Scores Detail View {% endblock %}
 
@@ -42,8 +42,8 @@
                         <td>{{ question.option3 }}</td>
                         <td>{{ question.option4 }}</td>
                         
-                        <td><a href="{% url 'edit_question' question.id %}" class="btn btn-primary">Edit</a></td>
-                        <td><a href="{% url 'delete_question' question.id %}" class="btn btn-danger">Delete</a></td>
+                        <td><a href="{% url 'teacher:edit_question' question.id %}" class="btn btn-primary">Edit</a></td>
+                        <td><a href="{% url 'teacher:delete_question' question.id %}" class="btn btn-danger">Delete</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>

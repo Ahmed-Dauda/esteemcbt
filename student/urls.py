@@ -1,11 +1,9 @@
 from django.urls import path
-
 from sms.views import update_referrer_mentor
 
 from . import views
 
 
-        
 app_name = 'student'
 
 urlpatterns = [
@@ -31,7 +29,8 @@ urlpatterns = [
     path('calculate_marks', views.calculate_marks_view,name='calculate_marks'),
     path('subject_calculate_marks', views.subject_calculate_marks,name='subject_calculate_marks'),
     path('view_result', views.view_result_view,name='view_result'),
-    path('subject_view_result', views.subject_view_result,name='subject_view_result'),
+    path('exam_warning', views.exam_warning_view,name='exam_warning'),
+    # path('subject_view_result', views.subject_view_result,name='subject_view_result'),
 
     # selling pdf segment
     # path('upload_pdf/', views.upload_pdf_document, name='upload_pdf_document'),

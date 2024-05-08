@@ -1,6 +1,6 @@
-{% extends 'sms/dashboard/base.html' %}
+{% extends 'sms/dashboard/teacherbase.html' %}
 
-{% block title %} table {% endblock %}
+{% block title %} Teacher Dashboard {% endblock %}
 
   {% block content %} 
 
@@ -23,41 +23,47 @@
 
 </style>
     
-<br> <br>
-<div class="container">
-  <div class="row">
-    
-      <div class="col-md-4 col-xl-4">
-          <div class="card bg-c-green order-card">
-            <div class="card-block">
-              <h6 class="m-b-20">Total Student </h6>
-              <h2 class="text-right"><i class="fas fa-user-graduate f-left"></i><span>{{total_student}}</span></h2>
-              
-            </div>
-          </div>
-        </div>
 
-    <div class="col-md-4 col-xl-4">
-      <div class="card bg-c-yellow order-card">
-        <div class="card-block">
-          <h6 class="m-b-20">Total Exams</h6>
-         <h2 class="text-right"><i class="fas fa-book f-left"></i><span>{{total_course}}</span></h2>
-          
-        </div>
+<br> <br>
+<!-- Assuming you want to iterate over the subjects -->
+<div class="container">
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Classes Taught</h5>
+      </div>
+      <div class="card-body">
+        <h5 class="card-title">Welcome, {{ username }}</h5>
+        <ul class="list-group list-group-flush">
+          {% for teacher_cla in teacher_class %}
+            <li class="list-group-item">{{teacher_cla.name}}</li>
+          {% endfor %}
+        </ul>
       </div>
     </div>
-
-    <div class="col-md-4 col-xl-4">
-      <div class="card bg-c-pink order-card">
-        <div class="card-block">
-          <h6 class="m-b-20">Total Questions</h6>
-          <h2 class="text-right"><i class="fas fa-question-circle f-left"></i><span>{{total_question}}</span></h2>
-          
-        </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-success text-white">
+        <h5 class="mb-0">Subjects Taught</h5>
+      </div>
+      <div class="card-body">
+        <!-- <h5 class="card-title">Welcome, {{ username }}</h5> -->
+        <ul class="list-group list-group-flush">
+          {% for subject in teacher_subjects %}
+            <li class="list-group-item">{{ subject }}</li>
+          {% endfor %}
+        </ul>
       </div>
     </div>
   </div>
 </div>
+
+</div>
+
+
 
 
 <!-- End of Main Content -->

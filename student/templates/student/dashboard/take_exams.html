@@ -1,4 +1,4 @@
-{% extends 'sms/dashboard/base.html' %}
+{% extends 'sms/dashboard/startexambase.html' %}
 
 {% block title %} table {% endblock %}
 
@@ -9,23 +9,13 @@
        
     <!--Products-->
 
-    <h3 class="text-center">Select a Course to Take Exam</h3>
-    <p class="text-center">Start the Quiz</p>
-    <p class="text-center">Good luck!</p>
-<!-- <p>{{sub_grade}}dd</p> 
-<h5>{{subjects}}fff</h5>
+    <div class="text-center">
+        <h3><i class="fas fa-book"></i> Select a Subject to Take Exam</h3>
+        <p><i class="fas fa-play-circle"></i> Start the Quiz</p>
+        <p><i class="fas fa-thumbs-up"></i> Good luck!</p>
+    </div>
+    
 
-{% for sub in subjects %}
-
-{% if sub %}
-<h2>Yes {{sub}}</h2>
-{% else %}
-<h2>No</h2>
-{% endif %}
-
-{% endfor %} -->
-
-<!-- codethinkers academy courses  -->
 {% if course_pay %}
    <div style="display: flex; flex-wrap: wrap; justify-content: center; padding: 0 10px 0px 10px;">
     {% for course_name in course_names %}
@@ -82,6 +72,7 @@
         </div>
     {% endfor %}
 </div>
+
 <!-- end schools exams sections  -->
 
 

@@ -345,7 +345,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 
-LOGIN_REDIRECT_URL = 'sms:homepage'
+LOGIN_REDIRECT_URL = 'teacher:student-dashboard'
 LOGIN_URL = 'account_login'
 LOGOUT_REDIRECT_URL = 'account_login'
 ACCOUNT_SIGNUP_REDIRECT_URL= 'account_login'

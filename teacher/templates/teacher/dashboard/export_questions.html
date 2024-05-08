@@ -1,3 +1,42 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %} import Questions {% endblock %}
+
+  {% block content %}  
+
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-body">
+            <!-- <h4 class="text-center mb-4">Select Subject to Export</h4> -->
+            <form method="post">
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="courses">Select Subject:</label>
+                <select class="form-control" name="courses" id="courses" multiple>
+                  {% for course in courses %}
+                  <option value="{{ course.id }}">{{ course }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="text-center">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-download"></i> Export Questions
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  {% endblock %} 
+ 
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,16 +44,6 @@
     <title>Select Courses to Export</title>
 </head>
 <body>
-    <h1>Select Courses to Export</h1>
-    <form method="post">
-        {% csrf_token %}
-        <label for="courses">Select Courses:</label><br>
-        <select name="courses" id="courses" multiple>
-            {% for course in courses %}
-            <option value="{{ course.id }}">{{ course }}</option>
-            {% endfor %}
-        </select><br><br>
-        <button type="submit">Export Questions</button>
-    </form>
+    
 </body>
 </html>

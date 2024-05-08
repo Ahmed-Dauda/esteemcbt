@@ -29,7 +29,6 @@ from urllib.parse import unquote
 from string import ascii_uppercase  # Import uppercase letters
 
 
-
 from django.contrib.sessions.models import Session
 from django.shortcuts import get_object_or_404, redirect
 from django.http import HttpResponse
@@ -253,6 +252,7 @@ from django.shortcuts import render, redirect
 
 def success_page(request):
     return render(request, 'quiz/dashboard/success_page.html')
+
 
 @login_required
 def start_exams_view(request, pk):

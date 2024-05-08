@@ -10,7 +10,8 @@ from sms.views import(
     # dashboard url
        Category,
        Table,
-       Homepage1,
+       Homepage,
+    #    Homepage1,
        Homepage2,
       #  Homepage,
      
@@ -81,8 +82,8 @@ urlpatterns = [
     # re_path(r'^paymentdesc/(?P<course_name>[-\w]+)/$', Paymentdesc.as_view(), name='paymentdesc'),
     path('paymentsucess/<str:pk>/',  PaymentSucess.as_view(), name='paymentsucess'),
     path('table', Table.as_view(), name='table'),
-    path('', Homepage1.as_view(), name='homepage'),
-    path('homepage2', Homepage2.as_view(), name='homepage2'),
+    path('', Homepage.as_view(), name='homepage'),
+    # path('homepage1', Homepage1.as_view(), name='homepage1'),
     # path('homepage', Homepage.as_view(), name='homepage'),
     
     path('alert', AlertView.as_view(), name='alert'),
@@ -109,12 +110,8 @@ urlpatterns = [
     path('feedbackformview', Feedbackformview.as_view(), name ='feedbackformview'),
     path('commentlistview', Commentlistview.as_view(), name ='commentlistview'),
     path('commentlistviewsuccess', Commentlistviewsuccess.as_view(), name ='commentlistviewsuccess'),
-    
     # path('topic', views.Topic_list, name="topic"),
-
-   
     path('userprofileupdateform/<pk>/', UserProfileUpdateForm.as_view(), name ='userprofileupdateform'),
-    
     path('baseview/<pk>/',  Baseblogview.as_view(), name='baseview'),
     path('blog/<slug:slug>/blogcommentform/', BlogcommentCreateView.as_view(), name ='blogcommentform'),
     

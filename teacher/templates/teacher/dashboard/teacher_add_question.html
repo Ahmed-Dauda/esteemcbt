@@ -1,20 +1,21 @@
-{% extends 'sms/dashboard/base.html' %}
+{% extends 'sms/dashboard/teacherbase.html' %}
 {% load crispy_forms_tags %}
 
-{% block title %} table {% endblock %}
+{% block title %} Teacher Add Questions {% endblock %}
 
   {% block content %} 
 
     
 <br> <br>
-<h1>Add Question</h1>
+
+
+
+<div class="container">
+  <h1>Add Question</h1>
 {% for subject in subjects_taught %}
 <p>Subject and school taught: {{subject}}</p>
 {% endfor %}
 <br>
-
-
-<div class="container">
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <div id="formset-container">

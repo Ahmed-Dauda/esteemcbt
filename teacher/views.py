@@ -19,46 +19,181 @@ from .forms import TeacherSignupForm
 from .models import Teacher
 from .forms import TeacherLoginForm
 
+from .forms import TeacherSignupForm  # Import your form
+
+# def teacher_signup_view(request):
+#     user = request.user
+
+#     # Get the teacher instance associated with the user
+#     try:
+#         teacher = Teacher.objects.get(user=user)
+#     except Teacher.DoesNotExist:
+#         # Redirect to some error page or handle the case where the user is not a teacher
+#         return redirect('teacher_login')
+
+#     # Get the subjects taught by the teacher
+#     subjects_taught = teacher.subjects_taught.all()
+#     subjects_taught_titles = [course.course_name.title for course in subjects_taught]
+#     print("subjects_taughty", subjects_taught_titles)
+
+
+#     if request.method == 'POST':
+#         form = TeacherSignupForm(request.POST, subjects_taught=subjects_taught_titles)
+
+#         if form.is_valid():
+#             user = form.save()
+#             form.save_teacher(user)
+#             return redirect('teacher_login')  # Redirect to teacher login page
+#     else:
+#         form = TeacherSignupForm(subjects_taught=subjects_taught_titles)
+
+#     return render(request, 'teacher/dashboard/teacher_signup.html', {'form': form})
+
+# def login_section_view(request):
+
+#     context = {
+#         'text':"testing"
+#     }
+  
+
+#     return render(request, 'teacher/dashboard/login_section.html',context = context)
+
+
 def teacher_signup_view(request):
     if request.method == 'POST':
         form = TeacherSignupForm(request.POST)
+
+        # form = TeacherSignupForm(request.POST)
         if form.is_valid():
             user = form.save()
             form.save_teacher(user)
-            return redirect('teacher_login')  # Redirect to teacher login page
+            return redirect('teacher:teacher_login')  # Redirect to teacher login page
     else:
-        form = TeacherSignupForm()
+        form = TeacherSignupForm(request.POST)
+
     return render(request, 'teacher/dashboard/teacher_signup.html', {'form': form})
 
 
+# def teacher_login_view(request):
+#     if request.method == 'POST':
+#         form = TeacherLoginForm(request, request.POST)
+#         if form.is_valid():
+#             username = form.cleaned_data['username']
+#             password = form.cleaned_data['password']
+#             # Retrieve all teachers
+#             teachers = Teacher.objects.all()
+#             # Print all teachers' email addresses
+#             print("Teachers' emails:",teachers)
+#             # for teacher in teachers:
+#             #     print(teacher.username)
+#             # Check if any teacher's email matches the entered email
+#             for teacher in teachers:
+#                 print(teacher.username)
+#                 # If the entered email matches a teacher's email, proceed with authentication
+#                 if teacher.username.lower():
+#                     user = authenticate(request, username=teacher.username, password=password)
+#                     if user is not None:
+#                         login(request, user)
+#                         # Redirect to a success page or dashboard
+#                         return redirect('teacher:teacher-dashboard')
+#                 else:
+#                     # If authentication fails, render the login form with an error message
+#                     return render(request, 'teacher/teacher_login.html', {'form': form, 'error_message': 'Invalid username or password'})
+#             else:
+#                 # If no teacher with the entered email exists, render the login form with an error message
+#                 return render(request, 'teacher/dashboard/teacher_login.html', {'form': form, 'error_message': 'Invalid username or password'})
+#     else:
+#         form = TeacherLoginForm()
+#     return render(request, 'teacher/dashboard/teacher_login.html', {'form': form})
+
+
+def teacher_logout_view(request):
+
+    return render(request, 'teacher/dashboard/teacher_logout.html')
+
+
 def teacher_login_view(request):
+    teachers = Teacher.objects.all()
+    print('teachers:',teachers)
     if request.method == 'POST':
+       
         form = TeacherLoginForm(request, request.POST)
         if form.is_valid():
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
+            # print('username:',username)
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
                 # Redirect to a success page or dashboard
-                return redirect('teacher-dashboard')
+                return redirect('teacher:teacher-dashboard')
             else:
                 # Handle invalid login credentials
                 # For example, you can render a message to the user indicating that the login credentials are incorrect
                 return render(request, 'teacher_login.html', {'form': form, 'error_message': 'Invalid username or password'})
     else:
         form = TeacherLoginForm()
-    return render(request, 'teacher/teacher_login.html', {'form': form})
+    return render(request, 'teacher/dashboard/teacher_login.html', {'form': form, 'teachers': teachers})
 
-@login_required(login_url='teacherlogin')
+from teacher.models import School
+
+# @login_required(login_url='teacher:teacher_login')
+# def teacher_dashboard_view(request):
+    
+#     username = request.user.username
+#     print("useridd:", username)
+#     teacher = Teacher.objects.get(username=username)
+#     print("teacher:",  teacher)
+#     teacher_subjects = teacher.subjects_taught.all()
+
+# # Now you can iterate over the subjects or perform further operations as needed
+#     for subject in teacher_subjects:
+#         print('sub',subject)
+    
+#     dict={
+#     'total_course':'testing',
+#     }
+#     return render(request,'teacher/dashboard/teacher_dashboard.html',context=dict)
+
+
+@login_required(login_url='teacher:teacher_login')
 def teacher_dashboard_view(request):
+
+    username = request.user.username
+    print('user',username)
+    try:
+        teacher = Teacher.objects.get(username=username)
+        teacher_subjects = teacher.subjects_taught.all()
+        teacher_class = teacher.classes_taught.all()
+        print('teacher',teacher)
+        print('teacher_subjects',teacher_subjects)
+        # Your further logic here
+        dict = {
+            'username': username,
+            'teacher_class': teacher_class,
+             'teacher_subjects': teacher_subjects,
+
+            }
+        return render(request, 'teacher/dashboard/teacher_dashboard.html', context=dict)
+    except Teacher.DoesNotExist:
+        # Handle case where Teacher instance does not exist
+        return redirect('account_login')
+        # return render(request, 'teacher/dashboard/teacher_login.html')
+
+
+@login_required(login_url='account_login')
+def student_dashboard_view(request):
+
+    user = request.user
+    print("useridd:", user)
+
     dict={
     
     'total_course':QMODEL.Course.objects.all().count(),
     'total_question':QMODEL.Question.objects.all().count(),
     
     }
-    return render(request,'teacher/dashboard/teacher_dashboard.html',context=dict)
+    return render(request,'teacher/dashboard/student_dashboard.html',context=dict)
 
 
 from sms.models import Courses
@@ -84,7 +219,6 @@ from .forms import QuestionForm
 def add_question_view(request):
     # Retrieve the currently logged-in user
     user = request.user
-
     # Get the teacher instance associated with the user
     try:
         teacher = Teacher.objects.get(user=user)
@@ -94,7 +228,7 @@ def add_question_view(request):
 
     # Get the subjects taught by the teacher
     subjects_taught = teacher.subjects_taught.all()
-    
+
     subjects_taught_titles = [course.course_name.title for course in subjects_taught]
     print("subjects_taughty", subjects_taught_titles)
     courses = Courses.objects.filter(title__in=subjects_taught_titles)
@@ -456,7 +590,7 @@ def view_questions(request):
         teacher = Teacher.objects.get(user=user)
     except Teacher.DoesNotExist:
         # Handle the case where the user is not a teacher (e.g., redirect to login)
-        return redirect('teacher_login')
+        return redirect('teacher:teacher_login')
 
     # Filter questions based on the subjects taught by the teacher
     questions = Question.objects.filter(course__in=teacher.subjects_taught.all())

@@ -18,7 +18,7 @@ from sms.models import (
     )
 
 
-# admin.site.register(Gallery)
+# admin.site.register(Courses)
 admin.site.register(FrequentlyAskQuestions)
 # admin.site.register(Partners)
 # admin.site.register(CourseFrequentlyAskQuestions)
@@ -132,32 +132,32 @@ admin.site.register(CarouselImage, CarouselImageAdmin)
 # admin.site.register(Categories, CategoriesAdmin)
 
 
-# class CategoriesResource(resources.ModelResource):
+class CategoriesResource(resources.ModelResource):
     
-#     courses = fields.Field(
-#         column_name= 'categories',
-#         attribute='categories',
-#         widget=ForeignKeyWidget(Categories,'name') )
+    courses = fields.Field(
+        column_name= 'categories',
+        attribute='categories',
+        widget=ForeignKeyWidget(Categories,'name') )
     
-#     class Meta:
-#         model = Courses
-#         prepopulated_fields = {"slug": ("course_name",)}
-#         # fields = ('title',)
+    class Meta:
+        model = Courses
+        prepopulated_fields = {"slug": ("course_name",)}
+        # fields = ('title',)
                
-# class CoursesAdmin(ImportExportModelAdmin):
+class CoursesAdmin(ImportExportModelAdmin):
 
-#     list_display = ['id', 'categories','title','display_subjects_school', 'desc', 'created']
-#     list_filter =  ['categories','title']
-#     search_fields = ['categories__name','title']
-#     ordering = ['id']
+    list_display = ['id', 'categories','title','display_subjects_school', 'desc', 'created']
+    list_filter =  ['categories','title']
+    search_fields = ['categories__name','title']
+    ordering = ['id']
     
-#     resource_class = CategoriesResource
-#     def display_subjects_school(self, obj):
-#         return ", ".join([str(course) for course in obj.schools.all()])
+    resource_class = CategoriesResource
+    def display_subjects_school(self, obj):
+        return ", ".join([str(course) for course in obj.schools.all()])
 
-#     display_subjects_school.short_description = 'School'
+    display_subjects_school.short_description = 'School'
 
-# admin.site.register(Courses, CoursesAdmin)
+admin.site.register(Courses, CoursesAdmin)
 
 
 

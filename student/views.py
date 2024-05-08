@@ -442,19 +442,18 @@ def take_exams_view(request):
     print('current user', current_user)
 
     user_newuser = get_object_or_404(NewUser, email=request.user)
-    if user_newuser:
+    if user_newuser is not None:
         school_name = user_newuser.school.school_name
         student_class = user_newuser.student_class
         school_name = school_name
         # Fetch the courses associated with the user's school
         school = user_newuser.school
         course_pay = user_newuser.school.course_pay
-        print("cpya",course_pay)
-       
-            
         course_names = Course.objects.filter(course_pay=course_pay)
-        
         print("course_names:", course_names)
+    else:
+        school_name = "Default School Name"
+        student_class = "Default Class"    
         print("school_name:", school_name )
         print("student_class", student_class)
 
@@ -621,9 +620,23 @@ def subject_start_exams(request, pk):
 
 import random
 
+from django.core.exceptions import PermissionDenied
+from django.shortcuts import redirect
 
+def permission_denied_view(request, exception):
+    # Redirect the user to the desired page
+    return redirect("student:view_result")
+
+@login_required
 def start_exams_view(request, pk):
     course = Course.objects.get(id=pk)
+    student = request.user.profile
+
+    # Check if the student has already taken this exam
+    if Result.objects.filter(student=student, exam=course).exists():
+        # If the student has already taken the exam, raise PermissionDenied
+        return redirect("student:view_result")
+
     # Get the number of questions to display for the course
     show_questions = course.show_questions
     # Retrieve all questions for the course
@@ -667,6 +680,7 @@ def start_exams_view(request, pk):
         'questions': questions,
         'q_count': q_count,
         'page_obj': page_obj,
+        'pk': pk,
         'remaining_seconds': remaining_seconds,  # Pass remaining time to template
     }
 
@@ -677,6 +691,63 @@ def start_exams_view(request, pk):
     response = render(request, 'student/dashboard/start_exams.html', context=context)
     response.set_cookie('course_id', course.id)
     return response
+
+
+# def start_exams_view(request, pk):
+#     course = Course.objects.get(id=pk)
+#     # Get the number of questions to display for the course
+#     show_questions = course.show_questions
+#     # Retrieve all questions for the course
+#     all_questions = QMODEL.Question.objects.filter(course=course)
+#     # Count the total number of questions
+#     total_questions = all_questions.count()
+    
+#     # If there are enough questions, select a random subset
+#     if total_questions >= show_questions:
+#         # Randomly select indices for the questions
+#         random_indices = random.sample(range(total_questions), show_questions)
+#         # Filter questions based on the random indices
+#         questions = [all_questions[index] for index in random_indices]
+#     else:
+#         # If there are not enough questions, display all questions
+#         questions = all_questions
+
+#     # Shuffle the list of selected questions
+#     # random.shuffle(questions)
+
+#     q_count = len(questions)  # Calculate the count of questions
+
+#     paginator = Paginator(questions, 200)  # Show 100 questions per page.
+#     page_number = request.GET.get('page')
+#     page_obj = paginator.get_page(page_number)
+    
+#     # Calculate quiz end time
+#     quiz_duration = course.duration_minutes
+#     quiz_start_time = timezone.now()
+#     quiz_end_time = quiz_start_time + timedelta(minutes=quiz_duration)
+    
+#     # Store the quiz end time in cache
+#     cache.set(f'quiz_end_time_{course.id}', quiz_end_time, timeout=None)
+
+#     # Calculate remaining time until the end of the quiz
+#     remaining_time = quiz_end_time - timezone.now()
+#     remaining_seconds = max(int(remaining_time.total_seconds()), 0)
+
+#     context = {
+#         'course': course,
+#         'questions': questions,
+#         'q_count': q_count,
+#         'page_obj': page_obj,
+#         'remaining_seconds': remaining_seconds,  # Pass remaining time to template
+#     }
+
+#     if request.method == 'POST':
+#         # Handle form submission
+#         pass
+
+#     response = render(request, 'student/dashboard/start_exams.html', context=context)
+#     response.set_cookie('course_id', course.id)
+#     return response
 
 
 # @login_required
@@ -852,17 +923,28 @@ def calculate_marks_view(request):
 # subject_view_result.html
 
 
+# @login_required
+# def subject_view_result(request):
+#     qcourses = QMODEL.Subjects.objects.order_by('id')
+
+    
+#     context = {
+#         'courses':qcourses
+#         }
+
+#     return render(request,'student/dashboard/subject_view_result.html', context = context)
+
+
 @login_required
-def subject_view_result(request):
-    qcourses = QMODEL.Subjects.objects.order_by('id')
+def exam_warning_view(request):
+    qcourses = Course.objects.order_by('id')
 
     
     context = {
         'courses':qcourses
         }
 
-    return render(request,'student/dashboard/subject_view_result.html', context = context)
-
+    return render(request,'student/dashboard/examwarning.html', context = context)
 
 @login_required
 def view_result_view(request):

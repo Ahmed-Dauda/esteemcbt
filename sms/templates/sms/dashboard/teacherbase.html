@@ -5,9 +5,9 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <meta name="description" content="Esteem Learning Centre School offers students/pupils high quality education combining it with Islamic perspectives!">
-        <meta name="author" content="Esteem Learning Centre, Abuja">
-        <link rel="icon" type="image/x-icon" href="/static/sms/images/esteemlogo.jpg">
+        <meta name="description" content="Our diverse range of courses covers web development, app creation, data science, and more. Learn from expert instructors and stay ahead in this dynamic industry. Embrace a future of possibilities and begin your coding journey with us today. Let's code, innovate, and inspire together!">
+        <meta name="author" content="CodeThinkers Academy">
+        <link rel="icon" type="image/x-icon" href="/static/sms/images/newlogo3.jpg">
     
 
         <!-- Font Awesome -->
@@ -51,6 +51,7 @@
     min-height: 50px;
     margin-bottom: 20px;
   }
+
  .navbar-fixed-top {
     position: fixed;
     top:0;
@@ -108,177 +109,73 @@
     <!-- Page Wrapper -->
     <div id="wrapper" class="bg-white">
         <!-- Sidebar -->
-        <ul  class="navbar-nav bg-primary sidebar sidebar-dark accordion toggled" id="accordionSidebar">
 
-            <!-- Sidebar - Brand -->
-            <!-- <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{% url 'sms:homepage' %}">
-                <div class="sidebar-brand-icon rotate-n-0">
-                    <i class="fas fa-home fa-fw "></i>
-                </div>
-                <div class="sidebar-brand-text mx-3">Codethinkers' Academy <sup></sup></div>
-            </a> -->
-
-            <!-- Divider -->
-            <!-- <hr class="sidebar-divider my-0"> -->
-
-            <!-- Nav Item - Dashboard -->
-          
-            
-
-            <!-- Heading -->
-            
-
+        
+        <ul style="background-color: rgb(25, 26, 26); margin-bottom: 0;" class="navbar-nav sidebar sidebar-dark accordion toggled" id="accordionSidebar">
             <!-- Nav Item - Pages Collapse Menu -->
-         
-
-            <!-- Nav Item - Utilities Collapse Menu -->
-            <!-- <li class="nav-item">
-                
-                <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Custom Utilities:</h6>
-                        <a class="collapse-item" href="dashboard/utilities-animation.html">Animations</a>
-
-                    </div>
-                </div>
-            </li> -->
-
-            <!-- Divider -->
-            <hr class="sidebar-divider">
-
-            <!-- Nav Item - Pages Collapse Menu -->
-            <!-- {% if object_list %}
-
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages" aria-expanded="true" aria-controls="collapsePages">
-                    <i class="fas fa-fw fa-folder"></i>
-                    <span>All Available Courses</span>
-                </a>
-                <div id="collapsePages" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Select Your Courses Below:</h6>
-                        <h3 class="text-center">{{courses_count}}</h3>
-                        {% for course in coursess %}
-                         <a class="collapse-item" href="{% url 'sms:courseslistdesc' course.pk %}"> {{course.title|safe}}</a>
-                          {% endfor %}
-                        <div class="collapse-divider"></div>      
-                    </div>
-                </div>
-                
-            </li>
-            {% endif %} -->
-
-            <!-- Nav Item - Tables -->
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:view_questions' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>view questions</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:import_data' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Import questions</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:export_data' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Export Questions</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:export_results_csv' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Export Result</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:teacher_results' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Teacher Result</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:add_question' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Add Questions</span></a>
-            </li>
-         
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'quiz:move_group' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>promote students</span></a>
-
-                </li> <li class="nav-item">
-                    <a class="nav-link" href="{% url 'teacher:teacher_signup' %}">
-                        <i class="fas fa-fw fa-book"></i>
-                        <span> teacher signup</span></a>
-                </li>
-            </li> <li class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:teacher_login' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>teacher login</span></a>
-            </li>
-        </li> <li class="nav-item">
-            <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
-                <i class="fas fa-fw fa-book"></i>
-                <span>teacher dashboard</span></a>
-        </li>
-            
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'users:schoolstudentview' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Registration students</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'student:take-exam' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Take Exam</span></a>
-            </li>
-            <!-- <li class="nav-item">
-                <a class="nav-link" href="{% url 'student:view_result' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>View Certificate (s)</span></a>
-            </li> -->
-            <!-- <li class="nav-item">
-                <a class="nav-link" href="{% url 'sms:admin_result' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Overall Exams Score</span></a>
-            </li> -->
-            <!-- <li class="nav-item">
-                <a class="nav-link" href="{% url 'sms:table' %}">
-                    <i class="fas fa-fw fa-table"></i>
-                    <span>Tables</span></a>
-            </li> -->
-            <!-- Nav Item - Feedback -->
-            <!-- <li class="nav-item">
-                <a class="nav-link" href="{% url 'sms:feedbackformview' %}">
-                    <i class="fas fa-bell fa-fw"></i>
-                    <span>Feedback</span></a>
-            </li> -->
-
-            <!-- Nav Item - Article Page -->
-            <!-- <li class="nav-item">
-                <a class="nav-link" href="{% url 'sms:bloglistview' %}">
-                    <i class="fas fa-book fa-lg "></i>
-                    <span>Article Page</span></a>
-            </li> -->
-            <!-- Nav Item - FAQS Page -->
-            <!-- <li class="nav-item">
-                <a class="nav-link" href="#faqs">
-                    <i class="fa fa-question-circle fa-lg" aria-hidden="true"></i>
-            
-                    <span>FAQS</span>
-                </a>
-            </li> -->
-            <!-- Divider -->
-            <hr class="sidebar-divider d-none d-md-block">
-
-            <!-- Sidebar Toggler (Sidebar) -->
-            <div class="text-center d-none d-md-inline">
+<br>
+             <!-- Sidebar Toggler (Sidebar) -->
+             <div class="text-center d-none d-md-inline">
                 <button class="rounded-circle border-0" id="sidebarToggle"></button>
             </div>
-
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+        
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
+                    <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
+                    <span>Teacher Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:view_questions' %}">
+                    <i class="fas fa-fw fa-eye"></i> <!-- Icon for view questions -->
+                    <span>View Questions</span>
+                </a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:import_data' %}">
+                    <i class="fas fa-fw fa-file-import"></i> <!-- Icon for import data -->
+                    <span>Import Questions</span>
+                </a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:export_data' %}">
+                    <i class="fas fa-fw fa-file-export"></i> <!-- Icon for export data -->
+                    <span>Export Questions</span>
+                </a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:export_results_csv' %}">
+                    <i class="fas fa-fw fa-file-csv"></i> <!-- Icon for export results as CSV -->
+                    <span>Export Result</span>
+                </a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:teacher_results' %}">
+                    <i class="fas fa-fw fa-poll"></i> <!-- Icon for teacher results -->
+                    <span>Teacher Result</span>
+                </a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:add_question' %}">
+                    <i class="fas fa-fw fa-plus"></i> <!-- Icon for add question -->
+                    <span>Add Questions</span>
+                </a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:teacher_login' %}">
+                    <i class="fas fa-fw fa-sign-in-alt"></i> <!-- Icon for teacher login -->
+                    <span>Teacher Login</span>
+                </a>
+            </li>
+        
+           
+        <br> <br> <br> <br> <br>
             <!-- Sidebar Message -->
-            
-
         </ul>
+        
+        
 
         <!-- End of Sidebar -->
 
@@ -343,19 +240,14 @@
 
                         <!-- Nav Item - Alerts -->
                         <!-- <li class="nav-item dropdown no-arrow mx-1"><h4><a class="nav-link dropdown-toggle" href="{% url 'account_login' %}">Log In</a></h4></li> -->
-                        <li style="" class=" nav-item dropdown no-arrow mx-2">
+                        <!-- <li style="" class=" nav-item dropdown no-arrow mx-2">
                            
                             <a class=" d-flex nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <p style="font-weight: bold;color: blue; font-size: 18px; margin: 5px;">Shop</p>
                            
-                            <i class="fas fa-cart-shopping fa-fw " style="color:black;font-size: 18px;"></i>
-                                <!-- <i class="fa-solid fa-cart-shopping  " style="color:black"></i> -->
-                                
-                                <!-- Counter - Alerts -->
+                            <i class="fas fa-cart-shopping fa-fw " style="color:black;font-size: 18px;"></i>   
                                 <span class="badge badge-danger badge-counter">{{alert_count}}+</span>
-                          
                             </a>
-                            <!-- Dropdown - Alerts -->
 
                             <div style="overflow-y: scroll; height:400px;" class="dropdown-list dropdown-menu dropdown-menu-right card-bod shadow animated--grow-in" aria-labelledby="alertsDropdown">
                                 <h6 class="dropdown-header">
@@ -380,7 +272,7 @@
                              
                                 <a class="dropdown-item text-center small text-gray-500" href="#">Show All Alerts</a>
                             </div>
-                        </li>
+                        </li> -->
 
 
                         <!-- Nav Item - User Information -->
@@ -391,10 +283,11 @@
                             </a>
                             <!-- Dropdown - User Information -->
                             <div  class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
-                                <a class="dropdown-item" href="{% url 'sms:myprofile' %}">
+                               <a class="dropdown-item" href="">
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Profile
-                                </a><hr>
+                                </a> 
+                                <hr>
                                 <a class="dropdown-item" href="{% url 'account_change_password' %}">
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Change Password
@@ -402,12 +295,13 @@
                                 <a class="dropdown-item" href="{% url 'account_reset_password' %}">
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Password Reset
-                                </a><hr>
+                                </a>
+                                <hr>
 
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
+                                <a class="dropdown-item" href="{% url 'teacher:teacher_logout' %}" >
                                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Logout
+                                    Logout 
                                 </a>
                             </div>
                         </li>
@@ -419,67 +313,20 @@
 
                 <!-- Begin Page Content -->
               <div class="bg-body">
+                <br>
+                <h1 class="text-center">Teacher view</h1>
+                
                 {% block content %} 
+                
 
 
                 {% endblock %} 
             </div>
                     
-              
-                  
-           
-            <!-- End of Main Content -->
 
-
-            <!-- Footer -->
            <br><br><br><br>
         
-            <footer class="sticky-footer bg-dark "> 
-            <div style="margin: 0 auto;" class=" text-center col-lg-4 my-3 my-lg-0">
-                    
-                <a class="text-center bg-white btn btn-white btn-social mx-2" href="https://youtube.com/@esteemlearningcentreabuja9514?si=Yxu1-4CSmlEKokrN" role="button"><i class="fab fa-youtube"></i></a>        
-                <a class="text-center bg-white btn btn-white btn-social mx-2" href="https://www.facebook.com/eis.abuja?mibextid=ZbWKwL"><i class="fab fa-facebook"></i></a>
-            </div>
-            <br>
-                <div class="container my-auto">
-                    <div class="copyright text-center text-white my-auto">
-                        <span>Copyright © Esteem Learning Centre, Abuja 2024</span>
-                    </div>
-                </div>
-                <br>   <br>   <br>   <br>   
-            </footer>
-            <!-- End of Footer -->
-
-        </div>
-        <!-- End of Content Wrapper -->
-
-    </div>
-    <!-- End of Page Wrapper -->
-
-    <!-- Scroll to Top Button-->
-    <a class="scroll-to-top rounded" href="#page-top" style="display: none;">
-        <i class="fas fa-angle-up"></i>
-    </a>
-
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="{% url 'account_logout' %}">Logout</a>
-                  
-                </div>
-            </div>
-        </div>
-    </div>
+           
 
     <!-- Bootstrap core JavaScript-->
     <script src="/static/sms/dashboard/vendor/jquery/jquery.min.js"></script>
