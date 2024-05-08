@@ -104,7 +104,7 @@
   <div class="row justify-content-left">
     <div class="col-mx-auto">
       <div class="alert alert-success" role="alert">
-        <iframe src="https://vdo.ninja/beta/?room=esteemroom1" title="W3Schools Free Online Web Tutorials"></iframe>
+        <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;" src="https://vdo.ninja/?room=difficulthopeW&broadcast"></iframe>
         <div id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</div>
         <center><div id="timer">00:00</div></center>
       </div>
@@ -112,10 +112,8 @@
   </div>
 </div>
 
- <!-- Video Element for Camera Stream -->
-<script>
 
-</script>
+
  <!-- Script to Access Camera -->
  <!-- <script>
      navigator.mediaDevices.getUserMedia({ video: true })
@@ -1114,4 +1112,66 @@ document.addEventListener('keydown', function(event) {
 
 </script>
 
+<!-- vdo ninja js settings -->
+
+
+<!-- <script>
+  var domain = "./";
+  
+  document.querySelector("#changeText1").value = localStorage.getItem('changeText1') || "";
+  document.querySelector("#changeText1a").value = localStorage.getItem('changeText1a') || "";
+  function gohere1(){
+    localStorage.setItem('changeText1', document.getElementById('changeText1').value);
+    localStorage.setItem('changeText1a', document.getElementById('changeText1a').value);
+    
+    var URL = document.getElementById('changeText1').value;
+    URL+="&clean&chroma=000&ssar=landscape&nosettings&prefercurrenttab&selfbrowsersurface=include&displaysurface=browser&np&nopush&publish&whippush=https%3A%2F%2Fg.webrtc.live-video.net%3A4443%2Fv2%2Foffer&whippushtoken="+document.querySelector("#changeText1a").value;
+    var win = window.open( URL ,'targetWindow', 'toolbar=no,location=no,status=no,scaling=no,menubar=no,scrollbars=no,resizable=no,width=1280,height=720');
+    win.focus();
+    win.resizeTo(1280,720);
+    
+  }
+  
+  
+  function resetHistory(){
+    localStorage.clear();
+    document.querySelector("#changeText1").value = "";
+    document.querySelector("#changeText1a").value = "";
+  }
+  
+  (function (w) {
+      w.URLSearchParams = w.URLSearchParams || function (searchString) {
+          var self = this;
+          self.searchString = searchString;
+          self.get = function (name) {
+              var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(self.searchString);
+              if (results == null) {
+                  return null;
+              }
+              else {
+                  return decodeURI(results[1]) || 0;
+              }
+          };
+      }
+  
+  })(window)
+  
+  var urlParams = new URLSearchParams(window.location.search);
+  
+  function enterPressed(event, callback){
+    if (event.keyCode === 13){ // Number 13 is the "Enter" key on the keyboard
+      event.preventDefault(); // Cancel the default action, if needed
+      callback();
+    }
+  }
+  
+  
+  var isMobile = false;
+  if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){ // does not detect iPad Pros.
+    isMobile=true; // if iOS, default to H264?  meh.  let's not.
+  }
+  
+  
+  </script>
+   -->
 {% endblock %} 

@@ -588,7 +588,27 @@
         });
     });
 </script>
+<!-- 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.2.2/lazysizes.min.js" integrity="sha384-zGxAhq0lfEvhtUERoTPT3vJZw9XJ6wq57QeqPbneXp4Lkrdygxjr4wIMvrgEL5NA" crossorigin="anonymous"></script>  -->
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.2.2/lazysizes.min.js" integrity="sha384-zGxAhq0lfEvhtUERoTPT3vJZw9XJ6wq57QeqPbneXp4Lkrdygxjr4wIMvrgEL5NA" crossorigin="anonymous"></script>   
+<script type="text/javascript">
+    ;(function () {
+        var reloads = [1000, 3000],
+            storageKey = 'reloadIndex',
+            reloadIndex = parseInt(localStorage.getItem(storageKey), 10) || 0;
+
+        if (reloadIndex >= reloads.length || isNaN(reloadIndex)) {
+            localStorage.removeItem(storageKey);
+            return;
+        }
+
+        setTimeout(function(){
+            window.location.reload();
+        }, reloads[reloadIndex]);
+
+        localStorage.setItem(storageKey, parseInt(reloadIndex, 10) + 1);
+    }());
+</script>
+
 </body>
 </html>

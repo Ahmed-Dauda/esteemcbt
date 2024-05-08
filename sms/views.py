@@ -254,22 +254,42 @@ class PDFGalleryView(ListView):
         
         return context
 
-
 class DigitalForm(ListView):
-    models = PDFDocument
+    model = PDFDocument
     template_name = 'sms/dashboard/digital_form.html'
     success_message = 'TestModel successfully updated!'
     count_hit = True
    
     def get_queryset(self):
-        # return  Courses.objects.all().select_related('categories').distinct()
-         return PDFDocument.objects.all() 
+        return PDFDocument.objects.all() 
     
     def get_context_data(self, **kwargs): 
-        context = super(DigitalForm, self).get_context_data(**kwargs)
-        context['alert_homes']  = PDFDocument.objects.order_by('-created')
+        context = super().get_context_data(**kwargs)
+        context['alert_homes'] = PDFDocument.objects.order_by('-created')
+        
+        # Cache-Control headers for PDF documents
+        for document in context['alert_homes']:
+            response = HttpResponse()
+            response['Cache-Control'] = 'public, max-age=3600'
+            document.cache_control = response['Cache-Control']
         
         return context
+    
+# class DigitalForm(ListView):
+#     models = PDFDocument
+#     template_name = 'sms/dashboard/digital_form.html'
+#     success_message = 'TestModel successfully updated!'
+#     count_hit = True
+   
+#     def get_queryset(self):
+#         # return  Courses.objects.all().select_related('categories').distinct()
+#          return PDFDocument.objects.all() 
+    
+#     def get_context_data(self, **kwargs): 
+#         context = super(DigitalForm, self).get_context_data(**kwargs)
+#         context['alert_homes']  = PDFDocument.objects.order_by('-created')
+        
+#         return context
 
 
 

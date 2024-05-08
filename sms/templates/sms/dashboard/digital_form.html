@@ -108,7 +108,7 @@
     <div class="card card-ebooks">
       <div class="card-body child-ebooks">
         <!-- Add loading="lazy" attribute to enable lazy loading -->
-        <img class="animated-image lazyload" src="{{ alert.img_ebook.url }}" width="300px" height="250px" alt="{{ obj.desc }}" loading="lazy">
+        <img class="animated-image" src="{{ alert.img_ebook.url }}" width="300px" height="250px" alt="{{ obj.desc }}" >
         <div class=""> 
           <p class="pl-3">{% get_hit_count for alert %} <i class="fas fa-eye"></i> </p>
           <h6 style="color: #000000; padding-right: 3px;" class="card-title">{{ alert.title|safe }}</h6> 
@@ -119,7 +119,10 @@
     </div>
     {% endfor %}
   </div>
-  
+  <!-- Browser Preloading -->
+{% for alert in object_list %}
+<link rel="preload" href="{{ alert.img_ebook.url }}" as="image">
+{% endfor %}
   <!-- <div class="flex-containers">
     {% for alert in object_list %}
     <div class="card card-ebooks">
@@ -141,7 +144,6 @@
   <!-- digital form section endign -->
 
   
-
 
 {% endblock %} 
  
