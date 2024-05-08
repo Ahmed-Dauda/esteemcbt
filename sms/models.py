@@ -97,7 +97,7 @@ class Courses(models.Model):
      # Add a ForeignKey field to represent the course a student is enrolled in.
     schools = models.ManyToManyField("quiz.School" , related_name='courses', blank=True)
     prerequisites = models.ManyToManyField('self', blank=True, symmetrical=False)
-    categories = models.ForeignKey(Categories, blank=False, default=1, on_delete=models.SET_NULL, related_name='categories', null=True)
+    categories = models.ForeignKey(Categories, blank=True, null=True ,default=1, on_delete=models.SET_NULL, related_name='categories')
     title = models.CharField(max_length=225, blank=True, null=True)
     course_logo = CloudinaryField('course_logo', blank=True, null=True)
     course_owner = models.CharField(max_length=225, blank=True, null=True)
