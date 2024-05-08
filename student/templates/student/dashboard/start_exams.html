@@ -133,7 +133,7 @@
   <div class="card-header">
    
 <hr>
-
+<br> <br><br> <br>
 <form id="quizf" action="/student/calculate_marks" onsubmit="return saveAns()" enctype="multipart/form-data"  method="POST">
   {% csrf_token %}
   <!-- <span style="padding: 5px 10px;font-size: 30px;" onclick="goBack()" class="bi bi-arrow-left "></span> -->
@@ -165,6 +165,9 @@
                 <label style="font-size: 18px; text-align: center; display: block;">
                   {{ q.question|safe }}
                 </label>
+                {% else %}
+                <label style="font-size: 18px;">
+
                 {% endif %}
                 
                 <h6 style="text-align: right;">[marks {{q.marks}}]</h6>
