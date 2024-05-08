@@ -757,6 +757,9 @@ p {
 
 </style>
 
+
+
+
 <!-- courasel image -->
 <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
   <ol class="carousel-indicators">
@@ -775,13 +778,19 @@ p {
       {% else %}
         <div class="carousel-item">
       {% endif %}
-      <img class="mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 520px;"> <!-- Default height -->
+      <img class="mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 520px;"> 
       <div class="carousel-caption d-none d-md-block">
         <h5>{{ obj.caption }}</h5>
       </div>
       </div>
     {% endfor %}
   </div>
+
+  <!-- Browser Preloading -->
+  {% for obj in carousel_images %}
+    <link rel="preload" href="{{ obj.image_carousel.url }}" as="image">
+  {% endfor %}
+  
   <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
     <span class="sr-only">Previous</span>
@@ -1879,6 +1888,7 @@ p {
   // Open the popup when the page loads
   setTimeout(openPopup, 1000); // Adjust the delay as needed
 </script>
+
 
 
 {% endblock %} 

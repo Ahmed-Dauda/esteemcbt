@@ -83,6 +83,7 @@ urlpatterns = [
     path('paymentsucess/<str:pk>/',  PaymentSucess.as_view(), name='paymentsucess'),
     path('table', Table.as_view(), name='table'),
     path('', Homepage.as_view(), name='homepage'),
+   
     # path('homepage1', Homepage1.as_view(), name='homepage1'),
     # path('homepage', Homepage.as_view(), name='homepage'),
     

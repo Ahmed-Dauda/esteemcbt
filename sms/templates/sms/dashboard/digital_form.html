@@ -103,11 +103,27 @@
 
 
   <br>
-
   <div class="flex-containers">
     {% for alert in object_list %}
     <div class="card card-ebooks">
-      <!-- <img src="{{ category.img_cat.url }}" class="card-img-top" alt="Category Image"> -->
+      <div class="card-body child-ebooks">
+        <!-- Add loading="lazy" attribute to enable lazy loading -->
+        <img class="animated-image lazyload" src="{{ alert.img_ebook.url }}" width="300px" height="250px" alt="{{ obj.desc }}" loading="lazy">
+        <div class=""> 
+          <p class="pl-3">{% get_hit_count for alert %} <i class="fas fa-eye"></i> </p>
+          <h6 style="color: #000000; padding-right: 3px;" class="card-title">{{ alert.title|safe }}</h6> 
+          <small>Price: &#8358;{{ alert.price }}</small> <hr>
+          <button class="download-button"><a href="{% url 'sms:ebooks' alert.id %}" style="color: white; text-decoration: none;">Download Now</a></button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  
+  <!-- <div class="flex-containers">
+    {% for alert in object_list %}
+    <div class="card card-ebooks">
+      
       <div class="card-body child-ebooks">
         <img class="animated-image" src="{{ alert.img_ebook.url }}" width="300px" height="250px" alt="{{ obj.desc }}">
         <div class=""> 
@@ -116,14 +132,11 @@
           <small>Price: &#8358;{{ alert.price }}</small> <hr>
           <button class="download-button"><a href="{% url 'sms:ebooks' alert.id %}" style="color: white; text-decoration: none;">Download Now</a></button>
 
-          <!-- <button><a href="{% url 'sms:ebooks' alert.id %}">Download Now</a></button> -->
-          <!-- <button><a href="{% url 'sms:ebooks' alert.id %}">{{ alert.title }}</a></button> -->
-          
         </div>
       </div>
     </div>
     {% endfor %}
-  </div>
+  </div> -->
   
   <!-- digital form section endign -->
 
