@@ -631,9 +631,10 @@ def permission_denied_view(request, exception):
 def start_exams_view(request, pk):
     course = Course.objects.get(id=pk)
     student = request.user.profile
-
+    # Check if the result exists
+    result_exists = Result.objects.filter(student=student, exam=course).exists()
     # Check if the student has already taken this exam
-    if Result.objects.filter(student=student, exam=course).exists():
+    if result_exists:
         # If the student has already taken the exam, raise PermissionDenied
         return redirect("student:view_result")
 
@@ -681,6 +682,7 @@ def start_exams_view(request, pk):
         'q_count': q_count,
         'page_obj': page_obj,
         'pk': pk,
+        'result_exists':result_exists,
         'remaining_seconds': remaining_seconds,  # Pass remaining time to template
     }
 
