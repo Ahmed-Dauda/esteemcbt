@@ -630,6 +630,7 @@ def permission_denied_view(request, exception):
 @login_required
 def start_exams_view(request, pk):
     course = Course.objects.get(id=pk)
+    print("rome", course.room_name)
     student = request.user.profile
     # Check if the result exists
     result_exists = Result.objects.filter(student=student, exam=course).exists()

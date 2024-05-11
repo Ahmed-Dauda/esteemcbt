@@ -84,9 +84,25 @@
       /* background-color: #00ff00; */
       background-color: rgb(211, 247, 211);
   }
+
+  /* .alert-success{
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .alert-success > *{
+     flex: auto;
+     margin: 5px;
+  } */
   </style>   
 
-
+<style>
+  /* @media (max-width: 767px) {
+    .sticky-top {
+      position: static; 
+      top: auto;
+    }
+  } */
+</style>
 
  
   <script>
@@ -98,19 +114,6 @@
 
  <!-- <h1>{{quiz_end_time}}</h1>  -->
 
- 
- <!-- quiz timer  -->
- <div class='sticky-top' style="position: fixed; top: 70px; width: 100%; z-index: 1000;">
-  <div class="row justify-content-left">
-    <div class="col-mx-auto">
-      <div class="alert alert-success" role="alert">
-        <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;" src="https://vdo.ninja/?room=difficulthopeW&broadcast"></iframe>
-        <div id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</div>
-        <center><div id="timer">00:00</div></center>
-      </div>
-    </div>
-  </div>
-</div>
 
 
 
@@ -125,26 +128,49 @@
              console.error('Error accessing camera:', error);
          });
  </script> -->
-<br> <br>
+
 <!--end quiz timer  -->
 
 
   <div class="card">
   <div class="card-header">
    
-<hr>
-<br> <br><br> <br>
 <form id="quizf" action="/student/calculate_marks" onsubmit="return saveAns()" enctype="multipart/form-data"  method="POST">
   {% csrf_token %}
   <!-- <span style="padding: 5px 10px;font-size: 30px;" onclick="goBack()" class="bi bi-arrow-left "></span> -->
 
   <input type="hidden" name="csrfmiddlewaretoken" value="C24rUotmdHawVQJL3KrqiWxvti8UffOFYUc8TRbZtLt36AVLdP3jbkzUVe3beRAa">
-    <h4>{{course.course_name}} Quiz</h4>
-    <h5>Number of Questions in the Quiz: {{q_count}}</h5>
-    <!-- <hr>
-    <p>pages {{page_obj}}</p> -->
-    
-    <hr>
+   <!-- quiz timer  -->
+   <div class='sticky-top' style="position: fixed; top: 0px; width: 100%; z-index: 1000;">
+    <div class="row justify-content-left">
+        <div class="col-mx-auto">
+            <div class="alert alert-success" role="alert" style="padding-bottom: 1px; display: flex; flex-wrap: wrap;">
+                <div style="width: 33.33%; padding: 10px;">
+        <!-- <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;"
+        src="{{ course.room_name }}" width="350px">
+        </iframe> -->
+        <div style="position: relative;">
+          <p style="position: absolute;background-color: black; top: -7px; left: 0; z-index: 0.5;">Focus on camera</p>
+          <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;" src="{{ course.room_name }}" width="350px"></iframe>
+      </div>
+      
+                </div>
+                <div style="width: 33.33%; padding: 10px;">
+                    <h6 id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</h6>
+                    <center><div id="timer">00:00</div></center>
+                </div>
+                <div style="width: 33.33%; padding: 10px;">
+                    <h6>{{course.course_name}} Quiz</h6>
+                    <p>Number of Questions: {{q_count}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<br><br>
+
+
     <table id="example" class="display question-table" style="width:100%">
 
       <thead>
@@ -158,7 +184,7 @@
           <tr>
               <td colspan="4">
               {% if q.img_quiz.url %}
-                <div  class="text-center" ><img src="{{q.img_quiz.url}}"  width="70%" height="400px" alt=""> </div><br>
+                <div  class="text-center" ><img src="{{q.img_quiz.url}}"  width="40%" height="250px" alt=""> </div><br>
                 {% endif %}
             
                 {% if q.img_quiz.url %}
@@ -177,30 +203,32 @@
                 {% if q.option1 %}
                 <div class="quiz"> 
                   <input  class="radio-button"  type="radio" name="{{forloop.counter}}" id="option1"  value="Option1"  required>
-                  <label style="width: 100%;" for="option1" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left"> {{q.option1|safe}}</label><br>
+                  <label style="width: 100%;" data-original-text="{{ q.option1|safe|striptags }}" for="option1" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left"> {{q.option1|safe}}</label>
                 </div> 
                 {% endif %}
               {% if q.option2 %}
                 <div class="quiz">
                   <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option2"  value="Option2"  required>
-                  <label style="width: 100%;" for="option2" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left">{{q.option2|safe}}</label>
+                  <label style="width: 100%;" data-original-text="{{ q.option2|safe|striptags }}" for="option2" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button  text-left">{{q.option2|safe}}</label>
                 </div>
                 
                 {% endif %}
             {% if q.option3 %}
                 <div class="quiz" >
                   <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option3"  value="Option3"  required>
-                  <label style="width: 100%;" for="option3" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left">{{q.option3|safe}}</label>
+                  <label style="width: 100%;" data-original-text="{{ q.option3|safe|striptags }}" for="option3" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button  text-left">{{q.option3|safe}}</label>
                 </div>
                 {% endif %}
             {% if q.option4 %}
                 <div class="quiz" >
                   <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option4"  value="Option4"  required>
-                  <label style="width: 100%;"  for="option4" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left">{{q.option4|safe}}</label><br>
+                  
+                  <label style="width: 100%;" data-original-text="{{ q.option4|safe|striptags }}"  for="option4" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button text-left">{{q.option4|safe}}</label><br>
                 </div>
                 {% endif %}
               
               </td>
+
           </tr>
           {% endfor %}
         
@@ -230,10 +258,13 @@
 <script> 
 
   $.fn.dataTable.ext.errMode = 'none';
+
   var table = $('#example').DataTable({
       pageLength: 1,
       order: [[3, 'desc']],
       lengthChange: false, 
+      sDom: 'lrtip',
+      "ordering": false,
      
       dom: '<"top"fi>rt<"bottom"lp><"clear">',
       columnDefs: [
@@ -245,8 +276,6 @@
   
       
   });
-  
-
 
   // $(document).ready(function() {
   //     $('#submit').on('click', function (e) {
@@ -550,6 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function submitQuiz(inactiveCount) {
     // Clear local storage
     localStorage.clear();
+    window.location.reload();
  
     // Gather form data
     var formData = table.$('input, select').serialize(); // Serialize the form data within the table
@@ -592,7 +622,7 @@ function submitQuiz(inactiveCount) {
 function submitQuizinactive(inactiveCount) {
     // Clear local storage
     localStorage.clear();
- 
+    window.location.reload();
     // Gather form data
     var formData = table.$('input, select').serialize(); // Serialize the form data within the table
     var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
@@ -675,7 +705,7 @@ function submitQuizinactive(inactiveCount) {
 
    
 var isTabActive;
-var inactiveCount = 0; // Counter for inactive intervals
+var inactiveCount = 1-0; // Counter for inactive intervals
 
 window.onfocus = function () { 
   isTabActive = true; 
@@ -687,20 +717,22 @@ window.onblur = function () {
   inactiveCount++; // Increment the counter when the tab becomes inactive
   document.getElementById("inactiveCount").innerText = inactiveCount; // Update the inactive count display
   console.log("Tab is inactive. Count:", inactiveCount);
-  if (inactiveCount >= 3) {
+  if (inactiveCount >= 4) {
     showAlert("You have made " + inactiveCount + " attempts to leave the exam page. The exam will be automatically submitted.");
   }
 }; 
 
 setInterval(function () { 
-  if (isTabActive && inactiveCount >= 3) {
-    console.log("Redirecting to warning page");
+  if (isTabActive && inactiveCount >= 4) {
+    // console.log("Redirecting to warning page");
     // Redirect to the warning page when the tab is inactive for the third time
     // window.location.href = '{% url "student:exam_warning" %}';
   } 
-  else if (!isTabActive && inactiveCount === 3) {
-    console.log("Submitting quiz");
+  else if (!isTabActive && inactiveCount === 4) {
+    // console.log("Submitting quiz");
     submitQuiz(inactiveCount); // Call the function to submit the quiz with the inactive count
+    localStorage.clear();
+    window.location.reload();
   }
 }, 1000); // Interval time set to 1000 milliseconds (1 second)
 
@@ -893,37 +925,36 @@ function showAlert(message) {
             $('.progress-bar').css('width', progress + '%').attr('aria-valuenow', progress).text(progress + '% Complete');  
             
             // test 
-            for (var j = 0; j < dataArray.length; j++) {
-            var keyValue = dataArray[j].split('=');
+          for (var j = 0; j < dataArray.length; j++) {
+          var keyValue = dataArray[j].split('=');
 
-            if (parseInt(keyValue[0]) === i) {      
-                matchFound = true;
-                // console.log("id and name", keyValue[0], keyValue[1]);
-                var radioButtons = document.querySelectorAll('input[name="' + i + '"]');
-                radioButtons.forEach(function(radioButton) {
-                    if (radioButton.value === keyValue[1]) {
-                      //  radioButton.checked = true;
-                        radioButton.nextElementSibling.textContent = 'selected';
-                        radioButton.style.color = 'red';
-                    } else {
-                        radioButton.nextElementSibling.textContent = '';
-                        radioButton.style.color = '';
+          if (parseInt(keyValue[0]) === i) {      
+              matchFound = true;
+              //2222 console.log("id and name", keyValue[0], keyValue[1]);
+              var radioButtons = document.querySelectorAll('input[name="' + i + '"]');
+               radioButtons.forEach(function(radioButton) {
+                // Store the original label text
+                radioButton.dataset.originalText = "";
+                radioButton.addEventListener('change', function() {
+                    if (radioButton.checked) {
+                      radioButtons.forEach(function(rb) {
+                        // Restore original label text for all radio buttons
+                        radioButton.labels[0].textContent  = rb.dataset.originalText;
+                
+                    });
+                  
+                        
                     }
-                    
                 });
+            });
 
                 paginationBox.addClass('clicked');
-
-                // Store the value of checked in local storage
-                // localStorage.setItem('checked', keyValue[1]);
-
                 break; // exit the loop after finding a match
             }
         }
 
 // Retrieve the stored value from local storage
 var storedCheckedValue = localStorage.getItem('checked');
-
 // Event listener to update local storage when radio button is clicked or changed
 document.addEventListener('change', function(event) {
     var target = event.target;
@@ -935,8 +966,9 @@ document.addEventListener('change', function(event) {
     }
 });
 
-// Retrieve the stored value from local storage for each question
+//3333 Retrieve the stored value from local storage for each question
 var allRadioButtons = document.querySelectorAll('.radio-button');
+
 allRadioButtons.forEach(function(radioButton) {
     var questionName = radioButton.getAttribute('name');
     var storedCheckedValue = localStorage.getItem('checked_' + questionName);
@@ -944,17 +976,21 @@ allRadioButtons.forEach(function(radioButton) {
     if (storedCheckedValue !== null) {
         if (radioButton.value === storedCheckedValue) {
             radioButton.checked = true;
-            radioButton.nextElementSibling.textContent = 'Selected';
+            radioButton.nextElementSibling.textContent = radioButton.nextElementSibling.dataset.originalText;
             radioButton.style.color = 'red';
+        } else {
+            radioButton.nextElementSibling.textContent = radioButton.nextElementSibling.dataset.originalText;
         }
     }
 });
 
-      // Event listener to clear local storage when submit button is clicked
+// Event listener to clear local storage when submit button is clicked
 var submitButton = document.getElementById('submit');
 submitButton.addEventListener('click', function() {
     localStorage.clear();
+    window.location.reload();
 });
+
           // test
 
             // Set the content of the pagination box
@@ -986,24 +1022,8 @@ submitButton.addEventListener('click', function() {
 
 <br><br><br><br><br><br>
 
-<script>
-  tinymce.init({
-  selector: 'textarea',  // Use the appropriate selector for your TinyMCE instance
-  toolbar: 'math',
-  setup: function(editor) {
-    editor.ui.registry.addButton('math', {
-      text: 'Insert Math',
-      onAction: function() {
-        // Open dialog or popover for LaTeX input
-        // Example: showModalDialog()
-      }
-    });
-  }
-});
 
-</script>
-
-<script>
+<!-- <script>
   // Add an event listener for the pageshow event
   window.addEventListener('pageshow', function(event) {
       // If the navigation type is 'back_forward', it means the user navigated back to this page
@@ -1012,7 +1032,7 @@ submitButton.addEventListener('click', function() {
           window.location.reload();
       }
   });
-</script>
+</script> -->
 
 <script>
   // Disable right-clicking
@@ -1027,15 +1047,6 @@ submitButton.addEventListener('click', function() {
           event.preventDefault();
       }
   });
-
-  // Disable opening new tabs or windows (Ctrl+N, Ctrl+T, Ctrl+W)
-// Disable opening new tabs or windows (Ctrl+N, Ctrl+T, Ctrl+W)
-document.addEventListener('keydown', function(event) {
-        // Check if Ctrl key is pressed along with N, T, or W
-        if ((event.ctrlKey || event.metaKey) && (event.key === 'n' || event.key === 'N' || event.key === 't' || event.key === 'T' || event.key === 'w' || event.key === 'W')) {
-            event.preventDefault();
-        }
-    });
 
 </script>
 
@@ -1184,4 +1195,10 @@ document.addEventListener('keydown', function(event) {
   
   </script>
    -->
+
+<script>
+
+
+
+</script>
 {% endblock %} 

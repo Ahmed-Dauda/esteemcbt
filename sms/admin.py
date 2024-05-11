@@ -17,7 +17,8 @@ from sms.models import (
     CompletedTopics
     )
 
-
+admin.site.site_header = 'Esteem super admin dashboard'
+admin.site.site_title = 'Esteem super admin dashboard'
 # admin.site.register(Courses)
 admin.site.register(FrequentlyAskQuestions)
 # admin.site.register(Partners)
