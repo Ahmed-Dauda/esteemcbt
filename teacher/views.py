@@ -499,6 +499,7 @@ from tablib import Dataset
 import codecs
 from django.contrib import messages
 
+
 def import_data(request):
     if request.method == 'POST':
         dataset = Dataset()
@@ -526,6 +527,157 @@ def import_data(request):
             resource.import_data(imported_data, dry_run=False)
 
     return render(request, 'teacher/dashboard/import.html')
+
+# def import_data(request):
+#     if request.method == 'POST':
+#         dataset = Dataset()
+#         new_questions = request.FILES['myfile']
+
+#         # Check if the uploaded file format is supported
+#         allowed_formats = ['xlsx', 'xls', 'csv']
+#         file_extension = new_questions.name.split('.')[-1]
+#         if file_extension not in allowed_formats:
+#             return HttpResponse('File format not supported. Supported formats: XLSX, XLS, CSV')
+
+#         # Load and import data based on the file format
+#         if file_extension == 'csv':
+#             # Open the file in text mode and decode bytes into a string
+#             data = codecs.iterdecode(new_questions, 'utf-8')
+#             imported_data = dataset.load(data, format=file_extension)
+#             messages.success(request, "Questions imported successfully.")
+#         else:
+#             messages.error(request, f"An error occurred")
+#             imported_data = dataset.load(new_questions.read(), format=file_extension)
+
+#         resource = QuestionResource()
+#         result = resource.import_data(imported_data, dry_run=True)  # Dry run first
+#         if not result.has_errors():
+#             resource.import_data(imported_data, dry_run=False)
+
+#     return render(request, 'teacher/dashboard/import.html')
+
+# views.py
+
+from django.shortcuts import render
+from .forms import JSONForm
+import json
+
+# utils.py
+
+import csv
+import csv
+import json
+
+def write_to_csv(data, filename):
+    with open(filename, 'w', newline='') as csvfile:
+        fieldnames = ['course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        
+        for response in data:
+            row = {
+                'course': response.get('course', ''),
+                'marks': response.get('marks', ''),
+                'question': response.get('question', ''),
+                'img_quiz': response.get('img_quiz', ''),
+                'option1': response.get('option1', '').strip('"'),
+                'option2': response.get('option2', '').strip('"'),
+                'option3': response.get('option3', '').strip('"'),
+                'option4': response.get('option4', '').strip('"'),
+                'answer': response.get('answer', '')
+            }
+            
+            correct_option = row['answer'].upper()
+            if correct_option == "A":
+                row['answer'] = "Option1"
+            elif correct_option == "B":
+                row['answer'] = "Option2"
+            elif correct_option == "C":
+                row['answer'] = "Option3"
+            elif correct_option == "D":
+                row['answer'] = "Option4"
+            
+            writer.writerow(row)
+
+# Example usage:
+json_data = '''
+[
+    {
+        "course": "MATH JSS2",
+        "marks": "1",
+        "question": "Which of the following factors should developers consider when selecting an IDE?",
+        "img_quiz": "",
+        "option1": "Coffee quality in the office",
+        "option2": "Number of likes on IDE's Facebook page",
+        "option3": "Language support, feature set, customization options, and performance",
+        "option4": "The color of the IDE's logo",
+        "answer": "C"
+    },
+    {
+        "course": "MATH JSS2",
+        "marks": "1",
+        "question": "What is one of the benefits of using IDEs?",
+        "img_quiz": "",
+        "option1": "Access to free snacks in the break room",
+        "option2": "Increased productivity due to streamlined development workflows",
+        "option3": "Chance to win a vacation package",
+        "option4": "Ability to pet the office dog",
+        "answer": "B"
+    }
+]
+'''
+
+# Parse JSON string into a list of dictionaries
+questions_data = json.loads(json_data)
+
+# Write generated data to CSV file
+write_to_csv(questions_data, 'generated_questions8.csv')
+
+
+
+write_to_csv(questions_data, 'generated_questions8.csv')
+
+from .models import SampleCodes
+
+def generate_csv(request):
+
+    sample_codes = SampleCodes.objects.all()
+    # print('sample',sample_codes)
+
+    if request.method == 'POST':
+        form = JSONForm(request.POST)
+        if form.is_valid():
+            # Parse JSON data
+            json_data = form.cleaned_data['json_data']
+            try:
+                data = json.loads(json_data)
+            except json.JSONDecodeError:
+                return render(request, 'teacher/dashboard/error.html', {'message': 'Invalid JSON data'})
+
+            # Generate CSV
+            try:
+                write_to_csv(data, 'generated_questions.csv')
+            except Exception as e:
+                return render(request, 'teacher/dashboard/error.html', {'message': str(e)})
+
+            return render(request, 'teacher/dashboard/success.html')
+    else:
+        form = JSONForm()
+        
+
+    return render(request, 'teacher/dashboard/generate_csv.html', {'form': form, 'sample_codes':sample_codes})
+
+
+def download_csv(request):
+    # Assuming the CSV file is generated and saved as 'generated_questions.csv'
+    filename = 'generated_questions.csv'
+
+    # Open the CSV file and read its contents
+    with open(filename, 'rb') as csv_file:
+        response = HttpResponse(csv_file.read(), content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=' + filename
+        return response
+    
 
 
 from quiz.models import Course
@@ -580,18 +732,23 @@ def export_data(request):
 #         print('cor',courses)
 #         return render(request, 'teacher/dashboard/export_questions.html', {'courses': courses})
 
-
+from django.contrib.auth.models import AnonymousUser
 
 def view_questions(request):
-    # Get the currently logged-in user
-    user = request.user
-    # Get the teacher instance associated with the user
-    try:
-        teacher = Teacher.objects.get(user=user)
-    except Teacher.DoesNotExist:
-        # Handle the case where the user is not a teacher (e.g., redirect to login)
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        # Redirect to login page or handle authentication
         return redirect('teacher:teacher_login')
-
+    
+    # Check if user is a teacher
+    if not isinstance(request.user, AnonymousUser):
+        # Get the teacher instance associated with the user
+        try:
+            teacher = Teacher.objects.get(user=request.user)
+        except Teacher.DoesNotExist:
+            # Handle the case where the user is not a teacher
+            return redirect('teacher:teacher_login')  # or any other appropriate action
+    
     # Filter questions based on the subjects taught by the teacher
     questions = Question.objects.filter(course__in=teacher.subjects_taught.all())
     print('q',questions)
@@ -610,7 +767,7 @@ def edit_question(request, question_id):
         form = QuestionForm(request.POST, instance=question)
         if form.is_valid():
             form.save()
-            return redirect('view_questions')  # Redirect to the view questions page
+            return redirect('teacher:view_questions')  # Redirect to the view questions page
     else:
         form = QuestionForm(instance=question)
     return render(request, 'teacher/dashboard/edit_questions.html', {'form': form})
@@ -621,7 +778,7 @@ def delete_question_view(request, question_id):
     if request.method == 'POST':
         # Handle form submission for deleting the question
         question.delete()
-        return redirect('view_questions')  # Redirect to the teacher dashboard after deleting
+        return redirect('teacher:view_questions')  # Redirect to the teacher dashboard after deleting
     else:
         # Render a confirmation page before deleting the question
         return render(request, 'teacher/dashboard/delete_question.html', {'question': question})

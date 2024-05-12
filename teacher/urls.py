@@ -5,7 +5,8 @@ from django.contrib.auth.views import LoginView
 app_name = 'teacher'
 
 urlpatterns = [
-
+    path('download-csv/', views.download_csv, name='download_csv'),
+    path('generate-csv/', views.generate_csv, name='generate_csv'),
     path('teacher-signup/', views.teacher_signup_view, name='teacher_signup'),
     path('teacher_login/', views.teacher_login_view, name='teacher_login'),
     path('teacher_logout/', views.teacher_logout_view, name='teacher_logout'),\

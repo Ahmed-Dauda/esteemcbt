@@ -15,6 +15,11 @@ from allauth.account.forms import SignupForm
 from quiz.models import School, Course, CourseGrade, Question
 from django.contrib.auth.forms import AuthenticationForm
 
+
+class JSONForm(forms.Form):
+    json_data = forms.CharField(widget=forms.Textarea)
+   
+
 class UploadCSVForm(forms.Form):
     csv_file = forms.FileField(label='Upload CSV')
 
@@ -83,7 +88,8 @@ class TeacherSignupForm(UserCreationForm):
         teacher.subjects_taught.add(*subjects_taught)
         teacher.classes_taught.add(*classes_taught)
         return teacher
-    
+
+
     
 # class TeacherSignupForm(UserCreationForm):
 #     first_name = forms.CharField(max_length=200, label='First Name')

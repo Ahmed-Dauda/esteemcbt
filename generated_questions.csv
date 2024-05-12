@@ -1,0 +1,4 @@
+course,marks,question,img_quiz,option1,option2,option3,option4,answer
+Mathematics,1,Which of the following is a quadratic equation?,,3x + 2 = 0,x^2 - 4x + 4 = 0,2x - 1 = 0,5x^3 + 2x - 7 = 0,Option2
+Mathematics,1,What is the discriminant of the quadratic equation ax^2 + bx + c = 0?,,b^2 - 4ac,b^2 + 4ac,2ab,c^2 - 4ab,Option1
+Mathematics,1,Which of the following sets represents the union of sets A and B?,,{x | x is an element of A and B},{x | x is an element of A or B},{x | x is an element of A but not B},{x | x is an element of A and not an element of B},Option2

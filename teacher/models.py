@@ -16,6 +16,14 @@ from users.models import NewUser
 #     def __str__(self):
 #         return f'{self.salary}'
 
+from django.db import models
+
+class SampleCodes(models.Model):
+    code = models.TextField()
+
+    def __str__(self):
+        return f"{self.code}"
+
 
 class Teacher(models.Model):
     user = models.OneToOneField(NewUser, on_delete=models.CASCADE, blank=True, null=True)

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate CSV from JSON</title>
+    <style>
+        /* Center everything vertically and horizontally */
+   
+        .sample{
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .sample >*{
+            flex: 1 1 auto;
+            margin: 10px;
+        }
+
+        /* Container for form and sample prompt */
+    
+
+        /* CSS styling for code blocks */
+        pre {
+            background-color: #f4f4f4;
+            border: 1px solid #ddd;
+            border-left: 3px solid #007bff; /* Blue border on the left */
+            color: #333;
+            font-family: 'Courier New', Courier, monospace; /* Monospace font */
+            font-size: 14px;
+            line-height: 1.5;
+          /* Center the text horizontally */
+            padding: 10px;
+            white-space: pre-wrap; /* Wrap long lines */
+            width: 90%; /* Make the text box wider */
+            height: 370px;
+        }
+
+        /* CSS styling for "Copy" button */
+        .copy-btn {
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+           
+      
+           
+        }
+        .copy-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Center the headings */
+        h1, h3 {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="sample">
+        <div>
+            <h2>Sample of Prompt</h2>
+            <h3>Instructions</h3>
+            <div class="instructions">
+                <p>Copy the sample codes below and replace the objectives with your desired topics for generating multiple-choice questions. Adjust the number "3" to match the desired number of MCQs. Paste the result in the box below and click "Generate CSV".</p>
+            {% for sample in sample_codes %}
+                <div style="width: 90%; margin: 0 auto;font-size: 20px;">
+                    <pre id="sample{{ forloop.counter }}">
+                        <code>{{ sample.code|safe }}</code> 
+                    </pre>
+                    <div style="margin: 0 auto;display: block;">
+                        <button  class="copy-btn" onclick="copyToClipboard('sample{{ forloop.counter }}')">Copy</button>
+                    </div>
+
+                </div>
+            {% endfor %}
+        </div>
+
+        <div style=" text-align: center; width: 90%;">
+            <h1>Generate CSV from JSON</h1>
+            <form method="post">
+                {% csrf_token %}
+                <textarea name="json_data" rows="20" cols="80"></textarea><br> <!-- Increased rows and cols -->
+                <button type="submit">Generate CSV</button>
+            </form>
+        </div>
+    </div>
+
+<br><br><br><br><br><br><br><br><br>
+
+    <script>
+        function copyToClipboard(elementId) {
+            var copyText = document.getElementById(elementId);
+            var range = document.createRange();
+            range.selectNode(copyText);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand("copy");
+            window.getSelection().removeAllRanges();
+            alert("Copied to clipboard!");
+        }
+    </script>
+</body>
+</html>

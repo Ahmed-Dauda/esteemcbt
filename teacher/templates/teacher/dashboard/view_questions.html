@@ -26,6 +26,7 @@
                         <th>Option 2</th>
                         <th>Option 3</th>
                         <th>Option 4</th>
+                        <th>Answers</th>
                        
                         <th>Edit</th>
                         <th>Delete</th>
@@ -41,6 +42,7 @@
                         <td>{{ question.option2 }}</td>
                         <td>{{ question.option3 }}</td>
                         <td>{{ question.option4 }}</td>
+                        <td>{{ question.answer }}</td>
                         
                         <td><a href="{% url 'teacher:edit_question' question.id %}" class="btn btn-primary">Edit</a></td>
                         <td><a href="{% url 'teacher:delete_question' question.id %}" class="btn btn-danger">Delete</a></td>
