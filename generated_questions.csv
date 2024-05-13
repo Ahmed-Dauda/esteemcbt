@@ -1,4 +1,11 @@
 course,marks,question,img_quiz,option1,option2,option3,option4,answer
-Mathematics,1,Which of the following is a quadratic equation?,,3x + 2 = 0,x^2 - 4x + 4 = 0,2x - 1 = 0,5x^3 + 2x - 7 = 0,Option2
-Mathematics,1,What is the discriminant of the quadratic equation ax^2 + bx + c = 0?,,b^2 - 4ac,b^2 + 4ac,2ab,c^2 - 4ab,Option1
-Mathematics,1,Which of the following sets represents the union of sets A and B?,,{x | x is an element of A and B},{x | x is an element of A or B},{x | x is an element of A but not B},{x | x is an element of A and not an element of B},Option2
+Computer Science,1,What is the process involved in electrolysis?,,Sublimation of a solid,Passage of electricity through an electrolyte to cause a chemical change,Formation of a covalent bond,Neutralization reaction,Option2
+Computer Science,1,Which of the following is an essential component for electrolysis to occur?,,Heat,Light,Electric current,Mechanical energy,Option3
+Computer Science,1,What is the purpose of using electrodes in electrolysis?,,To provide color to the solution,To increase the temperature of the solution,To conduct electricity into and out of the electrolyte,To filter impurities from the solution,Option3
+Computer Science,1,Which substance is typically used as an electrolyte in electrolysis?,,Water,Oil,Salt solution,Sugar solution,Option3
+Computer Science,1,What is the chemical reaction that occurs during electrolysis called?,,Combustion reaction,Redox reaction,Hydrolysis reaction,Electrochemical reaction,Option4
+Computer Science,1,What is the process of deposition of a metal during electrolysis called?,,Reduction,Oxidation,Electroplating,Evaporation,Option3
+Computer Science,1,Which of the following is not a product of electrolysis of water?,,Oxygen gas,Hydrogen gas,Sodium hydroxide,Chlorine gas,Option4
+Computer Science,1,What is the purpose of using a power source in electrolysis?,,To generate heat,To provide light,To supply electrical energy,To mix the solution,Option3
+Computer Science,1,Which of the following statements about electrolysis is true?,,It can only occur in solid electrolytes,It involves the transfer of protons,It is used in photosynthesis,It is the process of breaking down substances using electricity,Option4
+Computer Science,1,What is the function of ions in electrolysis?,,To neutralize the solution,To conduct electricity,To evaporate the solution,To add color to the solution,Option2

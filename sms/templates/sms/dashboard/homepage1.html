@@ -775,18 +775,37 @@ p {
       {% else %}
         <div class="carousel-item">
       {% endif %}
-      <img class=" mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 520px;" > 
+      <img class="mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 520px;" onerror="handleImageError(this);">
       <div class="carousel-caption d-none d-md-block">
         <h5>{{ obj.caption }}</h5>
       </div>
       </div>
     {% endfor %}
   </div>
+  
+  <script>
+  function handleImageError(image) {
+    // Replace the broken image with a placeholder or alternative content
+    image.src = '/static/sms/images/library.jpg'; // Replace with the path to your placeholder image
+    image.alt = 'library image'; // Optional: Set alternative text
+  }
+  </script>
+  
+  <!-- <div class="carousel-inner">
+    {% for obj in carousel_images %}
+      {% if forloop.first %}
+        <div class="carousel-item active">
+      {% else %}
+        <div class="carousel-item">
+      {% endif %}
+      <img class=" mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 520px;" > 
+      <div class="carousel-caption d-none d-md-block">
+        <h5>{{ obj.caption }}</h5>
+      </div>
+      </div>
+    {% endfor %}
+  </div> -->
 
-  <!-- Browser Preloading -->
-  <!-- {% for obj in carousel_images %}
-    <link rel="preload" href="{{ obj.image_carousel.url }}" as="image">
-  {% endfor %} -->
   
   <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
