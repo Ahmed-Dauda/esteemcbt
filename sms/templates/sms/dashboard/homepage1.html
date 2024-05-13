@@ -375,10 +375,6 @@ body {
 
 /* Testmony css  */
 
-.testimonial-card:hover {
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-    transform: translateY(-2px);
-  }
 
   
 /* Testmony css ending  */
@@ -597,13 +593,46 @@ p {
   }
 
 /* testimonial sections */
+
+.testimonial-card {
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .card-up {
+      height: 6px;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    .testimonial-card h6 {
+      color: #333;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .testimonial-card p {
+      color: #666;
+      font-size: 1rem;
+    }
+
+/* Testimonial card colors */
+.card-hauwa .card-up { background-color: #9d789b; }
+.card-musa .card-up { background-color: #7a81a8; }
+.card-muhammad .card-up { background-color: #6d5b98; }
+
 .testimonial-carousel {
     overflow: hidden;
   }
 
   .testimonial-card {
     opacity: 0.5;
-    animation: slideIn 60s infinite linear; /* Adjust the duration as needed */
+    animation: slideIn 50s infinite linear; /* Adjust the duration as needed */
   }
 
   @keyframes slideIn {
@@ -775,7 +804,7 @@ p {
       {% else %}
         <div class="carousel-item">
       {% endif %}
-      <img class="mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 520px;" onerror="handleImageError(this);">
+      <img class="mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 520px;" onerror="handleImageErrorcarousel(this);">
       <div class="carousel-caption d-none d-md-block">
         <h5>{{ obj.caption }}</h5>
       </div>
@@ -783,14 +812,7 @@ p {
     {% endfor %}
   </div>
   
-  <script>
-  function handleImageError(image) {
-    // Replace the broken image with a placeholder or alternative content
-    image.src = '/static/sms/images/library.jpg'; // Replace with the path to your placeholder image
-    image.alt = 'library image'; // Optional: Set alternative text
-  }
-  </script>
-  
+
   <!-- <div class="carousel-inner">
     {% for obj in carousel_images %}
       {% if forloop.first %}
@@ -895,7 +917,7 @@ p {
 <div id="popup-container">
 
   {% for image in advertisement_images %}
-      <img class="popup-image {% if forloop.first %}active{% endif %}" src="{{ image.image.url }}" alt="Advertisement Image {{ forloop.counter }}">
+      <img class="popup-image {% if forloop.first %}active{% endif %}" src="{{ image.image.url }}" alt="Advertisement Image {{ forloop.counter }}" onerror="handleImageError(this);">
       <div class="desc">
         <p> {{ image.desc }}</p>
           {% if image.link %}
@@ -1565,63 +1587,42 @@ p {
     <h3 style="background: linear-gradient(to right, #29100a, rgb(22, 22, 190)); color: white; font-weight: bold; text-align: center; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); padding: 10px 20px; border-radius: 10px; background-size: 50%; width: 70%; margin: 0 auto;" class="mb-4">What Parents Say About Us</h3>
   </div> -->
   <div id="digital-form-heading" class="text-center">
-    <h3 style="font-family: Arial, sans-serif; color: #333; font-weight: bold;">What Parents Say About Us</h3>
+    <h4 style="font-family: Arial, sans-serif; color: #333;">What Parents Say About Us</h4>
   </div>
   <br>
- <section class="container testimonial-carousel">
-  <div style="flex-wrap: nowrap;" class="row text-center d-flex align-items-stretch">
-    <div class="col-sm mb-5 mb-md-0 d-flex align-items-stretch">
-      <div class="card testimonial-card">
-        <div class="card-up" style="background-color: #9d789b;"></div>
-        <!-- <div class="avatar mx-auto bg-white">
-          <img src="/static/sms/images/girlavater.webp" width="100px" class="rounded-circle img-fluid" alt="">
-        </div> -->
-        <div class="card-body">
-          <h6 class="mb-4">Hauwa Adamu</h6>
-          <img src="/static/sms/images/star-rating-icon-21.jpg" width="100px" alt="">
-          <p class="dark-grey-text mt-4">
-            <i class="fas fa-quote-left pe-2"></i>
-            "Esteem Learning Centre has been a game-changer for our family. The personalized attention and nurturing environment have truly helped our child excel academically."
-          </p>
+  <section class="container testimonial-carousel">
+    <div class="row text-center">
+      <div class="col-sm mb-5 mb-md-0">
+        <div class="card testimonial-card card-hauwa">
+          <div class="card-up"></div>
+          <div class="card-body">
+            <h6 class="mb-4">Hauwa Adamu</h6>
+            <p class="dark-grey-text mt-4">"Esteem Learning Centre has been a game-changer for our family. The personalized attention and nurturing environment have truly helped our child excel academically."</p> <br>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="col-sm mb-5 mb-md-0 d-flex align-items-stretch">
-      <div class="card testimonial-card">
-        <div class="card-up" style="background-color: #7a81a8;"></div>
-        <!-- <div class="avatar mx-auto bg-white">
-          <img src="/static/sms/images/avater11.png" width="100px" class="rounded-circle img-fluid" alt="">
-        </div> -->
-        <div class="card-body">
-          <h6 class="mb-4">Musa Usman</h6>
-          <img src="/static/sms/images/star-rating-icon-21.jpg" width="100px" alt="">
-          <p class="dark-grey-text mt-4">
-            <i class="fas fa-quote-left pe-2"></i>
-            "I can't thank Esteem Learning Centre enough for their dedicated teachers and comprehensive curriculum. My child's confidence has soared since joining the school."
-          </p>
+      <div class="col-sm mb-5 mb-md-0">
+        <div class="card testimonial-card card-musa">
+          <div class="card-up"></div>
+          <div class="card-body">
+            <h6 class="mb-4">Musa Usman</h6>
+            <p class="dark-grey-text mt-4">"I can't thank Esteem Learning Centre enough for their dedicated teachers and comprehensive curriculum. My child's confidence has soared since joining the school."</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-sm mb-0">
+        <div class="card testimonial-card card-muhammad">
+          <div class="card-up"></div>
+          <div class="card-body">
+            <h6 class="mb-4">Muhammad Abubakar</h6>
+            <p class="dark-grey-text mt-4">"The team at Esteem Learning Centre goes above and beyond to ensure each student reaches their full potential. It's more than a school; it's a community where every child is valued."</p>
+          </div>
         </div>
       </div>
     </div>
-    
-    <div class="col-sm mb-0 d-flex align-items-stretch">
-      <div class="card testimonial-card">
-        <div class="card-up" style="background-color: #6d5b98;"></div>
-        <!-- <div class="avatar mx-auto bg-white">
-          <img src="/static/sms/images/avater2.webp" width="100px" class="rounded-circle img-fluid" alt="">
-        </div> -->
-        <div class="card-body">
-          <h6 class="mb-4">Muhammad Abubakar</h6>
-          <img src="/static/sms/images/star-rating-icon-21.jpg" width="100px" alt="">
-          <p class="dark-grey-text mt-4">
-            <i class="fas fa-quote-left pe-2"></i>
-            "The team at Esteem Learning Centre goes above and beyond to ensure each student reaches their full potential. It's more than a school; it's a community where every child is valued."
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+  </section>
 
 <script>
   // JavaScript to handle carousel animation
@@ -1751,8 +1752,8 @@ p {
   <a href="{% url 'sms:digital_form' %}" style="text-decoration: none;">
     <button style="background-color: #29100a; color: white; font-weight: bold; border: none; padding: 10px 20px; border-radius: 5px; margin-bottom: 10px; font-size: 18px; text-transform: uppercase; cursor: pointer;">Enroll</button>
   </a>
-  <p style="color: #29100a; font-weight: bold; margin-bottom: 5px; font-size: 20px;">A Well Rounded Education for Young Minds</p>
-  <p style="color: #29100a; font-weight: bold; font-size: 20px;">Where Hope and Dreams are Achieved</p>
+  <p style="color: #29100a; margin-bottom: 5px; font-size: 20px;">A Well Rounded Education for Young Minds</p>
+  <p style="color: #29100a; font-size: 20px;">Where Hope and Dreams are Achieved</p>
 </div>
 
 
@@ -1904,8 +1905,22 @@ p {
   // Open the popup when the page loads
   setTimeout(openPopup, 1000); // Adjust the delay as needed
 </script>
+<!-- 
+error image loading -->
+<script>
+  function handleImageError(image) {
+    // Replace the broken image with a placeholder or alternative content
+    image.src = '/static/sms/images/library.jpg'; // Replace with the path to your placeholder image
+    image.alt = 'library image'; // Optional: Set alternative text
+  }
 
-
+  function handleImageErrorcarousel(image) {
+    // Replace the broken image with a placeholder or alternative content
+    image.src = '/static/sms/images/schoolviewmin.jpg.jpg'; // Replace with the path to your placeholder image
+    image.alt = 'library image'; // Optional: Set alternative text
+  }
+  </script>
+  
 
 {% endblock %} 
  
