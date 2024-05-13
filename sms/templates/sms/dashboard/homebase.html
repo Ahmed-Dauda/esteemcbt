@@ -126,7 +126,7 @@
     font-size: 1.5rem;
     text-decoration: none;
     color: #fff;
-    margin-right: 400px;
+    margin-right: 200px;
 }
 
 .menu-toggle {
@@ -378,6 +378,14 @@
                         <!-- Add more dropdown options as needed -->
                     </ul>
                 </li> 
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" id="dropdownMenuLinkschoolportal">Portal</a>
+                    <ul class="dropdown-menu bg-primary" aria-labelledby="dropdownMenuLink">
+                        <li><a class="dropdown-item" href="{% url 'teacher:student-dashboard' %}">Student Login</a></li>
+                        <li><a class="dropdown-item" href="{% url 'teacher:teacher-dashboard' %}">Staff Login</a></li>
+                        <!-- Add more dropdown options as needed -->
+                    </ul>
+                </li> 
                 
                 <li><a href="{% url 'sms:clubs' %}">Clubs</a></li>
                
@@ -569,6 +577,14 @@
         // seconde drop down menu
         document.addEventListener("DOMContentLoaded", function() {
         var dropdownMenuLink = document.getElementById('dropdownMenuLink2');
+        dropdownMenuLink.addEventListener('click', function() {
+            var dropdownMenu = this.nextElementSibling;
+            dropdownMenu.classList.toggle('show');
+        });
+    });
+     // school portal drop down menu
+     document.addEventListener("DOMContentLoaded", function() {
+        var dropdownMenuLink = document.getElementById('dropdownMenuLinkschoolportal');
         dropdownMenuLink.addEventListener('click', function() {
             var dropdownMenu = this.nextElementSibling;
             dropdownMenu.classList.toggle('show');
