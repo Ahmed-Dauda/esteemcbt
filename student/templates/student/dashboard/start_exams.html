@@ -18,13 +18,13 @@
     <!-- prism.css and prism.js -->
     <link rel="stylesheet" type="text/css" href="/static/sms/prism.css">
     <script src="/static/sms/prism.js"> </script>
-    
-
-     <!-- bootsrap back arrow-->
-     <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">     -->
-      <!-- bootstrap link -->
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
       
+      <!-- mathjax -->
+      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      <script id="MathJax-script" async
+              src="https://cdn.jsdelivr.net/npm/mathjax@3.0.1/es5/tex-mml-chtml.js">
+      </script>
   
 
 <style>
@@ -202,8 +202,9 @@
     
                 {% if q.option1 %}
                 <div class="quiz"> 
+                 
                   <input  class="radio-button"  type="radio" name="{{forloop.counter}}" id="option1"  value="Option1"  required>
-                  <label style="width: 100%;" data-original-text="{{ q.option1|safe|striptags }}" for="option1" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left"> {{q.option1|safe}}</label>
+                  <label style="width: 100%;" data-original-text="{{ q.option1|safe|striptags }}" for="option1" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left"> {{q.option1|safe}} </label>
                 </div> 
                 {% endif %}
               {% if q.option2 %}
@@ -221,8 +222,7 @@
                 {% endif %}
             {% if q.option4 %}
                 <div class="quiz" >
-                  <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option4"  value="Option4"  required>
-                  
+                  <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option4"  value="Option4"  required>  
                   <label style="width: 100%;" data-original-text="{{ q.option4|safe|striptags }}"  for="option4" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button text-left">{{q.option4|safe}}</label><br>
                 </div>
                 {% endif %}

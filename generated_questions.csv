@@ -1,11 +1,6 @@
 course,marks,question,img_quiz,option1,option2,option3,option4,answer
-Computer Science,1,What is the process involved in electrolysis?,,Sublimation of a solid,Passage of electricity through an electrolyte to cause a chemical change,Formation of a covalent bond,Neutralization reaction,Option2
-Computer Science,1,Which of the following is an essential component for electrolysis to occur?,,Heat,Light,Electric current,Mechanical energy,Option3
-Computer Science,1,What is the purpose of using electrodes in electrolysis?,,To provide color to the solution,To increase the temperature of the solution,To conduct electricity into and out of the electrolyte,To filter impurities from the solution,Option3
-Computer Science,1,Which substance is typically used as an electrolyte in electrolysis?,,Water,Oil,Salt solution,Sugar solution,Option3
-Computer Science,1,What is the chemical reaction that occurs during electrolysis called?,,Combustion reaction,Redox reaction,Hydrolysis reaction,Electrochemical reaction,Option4
-Computer Science,1,What is the process of deposition of a metal during electrolysis called?,,Reduction,Oxidation,Electroplating,Evaporation,Option3
-Computer Science,1,Which of the following is not a product of electrolysis of water?,,Oxygen gas,Hydrogen gas,Sodium hydroxide,Chlorine gas,Option4
-Computer Science,1,What is the purpose of using a power source in electrolysis?,,To generate heat,To provide light,To supply electrical energy,To mix the solution,Option3
-Computer Science,1,Which of the following statements about electrolysis is true?,,It can only occur in solid electrolytes,It involves the transfer of protons,It is used in photosynthesis,It is the process of breaking down substances using electricity,Option4
-Computer Science,1,What is the function of ions in electrolysis?,,To neutralize the solution,To conduct electricity,To evaporate the solution,To add color to the solution,Option2
+MATH JSS2,1,What is the quadratic formula used to solve?,,Linear equations,Quadratic equations,Exponential equations,Trigonometric equations,Option2
+MATH JSS2,1,What does the term 'b' represent in the quadratic formula (b^2 - 4ac) / (2a)?,,Coefficient of (x^2 / 2),Coefficient of (x / 2),Constant term,Discriminant,Option2
+MATH JSS2,1,What is the discriminant of a quadratic equation?,, (b^2 / 2), (4ac / 2), (b^2 - 4ac / 2), (b^2 + 4ac / 2),Option3
+MATH JSS2,1,What does the discriminant tell us about a quadratic equation?,,The number of real solutions,The sum of the solutions,The product of the solutions,The nature of the solutions,Option1
+MATH JSS2,1,What does it mean if the discriminant is negative?,,The equation has two real and equal roots,The equation has two distinct real roots,The equation has no real roots,The equation has one real root,Option3

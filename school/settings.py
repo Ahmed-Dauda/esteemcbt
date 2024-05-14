@@ -391,17 +391,29 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # for TinyMCE 
 
-
 TINYMCE_DEFAULT_CONFIG = {
+
     'height': 360,
     'width': 700,
     'cleanup_on_startup': True,
     'custom_undo_redo_levels': 20,
     'selector': 'textarea',
-    'plugins': 'link image preview codesample contextmenu table code',
-    'toolbar': 'undo redo | styleselect | bold italic | link image | codesample | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table | code',
+    'plugins': 'math link image preview codesample contextmenu table code math',  # Include MathType plugin
+    'toolbar': 'math undo redo | styleselect | bold italic | link image | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table | codesample | math',  # Add MathType button to the toolbar
     'theme': 'silver',
+    
 }
+
+# TINYMCE_DEFAULT_CONFIG = {
+#     'height': 360,
+#     'width': 700,
+#     'cleanup_on_startup': True,
+#     'custom_undo_redo_levels': 20,
+#     'selector': 'textarea',
+#     'plugins': 'link image preview codesample contextmenu table code',
+#     'toolbar': 'undo redo | styleselect | bold italic | link image | codesample | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table | code | math',
+#     'theme': 'silver',
+# }
 
 # TINYMCE_JS_URL = 'https://cdn.tiny.cloud/1/r5ebxl5femg5gy8yvid6alg59ohekm45qlmxptc20qeu5jgw/tinymce/5/tinymce.min.js'
 
