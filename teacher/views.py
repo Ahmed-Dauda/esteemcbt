@@ -244,7 +244,7 @@ def add_question_view(request):
         if formset.is_valid():
             for form in formset:
                 form.save()
-            return redirect('teacher-dashboard')  # Redirect to teacher dashboard after successfully adding questions
+            return redirect('teacher:teacher-dashboard')  # Redirect to teacher dashboard after successfully adding questions
     else:
         # Pass the courses queryset to each form in the formset
         formset = QuestionFormSet(form_kwargs={'courses': courses})
@@ -497,36 +497,123 @@ from django.http import HttpResponse
 from quiz.admin import QuestionResource
 from tablib import Dataset
 import codecs
-from django.contrib import messages
 
+from docx import Document
+import io
+import csv
+import logging
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
+from django.contrib import messages
+from tablib import Dataset
+from docx import Document
+import latex2mathml.converter
+
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+def tex_to_mathml(tex_input):
+    try:
+        # Log the input being converted
+        logger.debug(f"Converting TeX input: {tex_input}")
+        # Attempt to convert only if input likely contains TeX
+        if '$' in tex_input or '\\' in tex_input:
+            mathml_output = latex2mathml.converter.convert(tex_input)
+            logger.debug(f"Converted MathML output: {mathml_output}")
+            return mathml_output
+        return tex_input
+    except Exception as e:
+        logger.error(f"Error converting TeX to MathML: {e}, Input: {tex_input}")
+        return tex_input  # If conversion fails, return the original TeX input
 
 def import_data(request):
     if request.method == 'POST':
         dataset = Dataset()
-        new_questions = request.FILES['myfile']
+        new_file = request.FILES['myfile']
 
         # Check if the uploaded file format is supported
-        allowed_formats = ['xlsx', 'xls', 'csv']
-        file_extension = new_questions.name.split('.')[-1]
+        allowed_formats = ['xlsx', 'xls', 'csv', 'docx']
+        file_extension = new_file.name.split('.')[-1]
         if file_extension not in allowed_formats:
-            return HttpResponse('File format not supported. Supported formats: XLSX, XLS, CSV')
+            return HttpResponse('File format not supported. Supported formats: XLSX, XLS, CSV, DOCX')
 
-        # Load and import data based on the file format
-        if file_extension == 'csv':
-            # Open the file in text mode and decode bytes into a string
-            data = codecs.iterdecode(new_questions, 'utf-8')
-            imported_data = dataset.load(data, format=file_extension)
-            messages.success(request, "Questions imported successfully.")
-        else:
-            messages.error(request, f"An error occurred")
-            imported_data = dataset.load(new_questions.read(), format=file_extension)
+        imported_data = None
 
-        resource = QuestionResource()
-        result = resource.import_data(imported_data, dry_run=True)  # Dry run first
-        if not result.has_errors():
-            resource.import_data(imported_data, dry_run=False)
+        try:
+            if file_extension == 'csv':
+                # Handle CSV
+                data = io.TextIOWrapper(new_file, encoding='utf-8')
+                imported_data = dataset.load(data, format=file_extension)
+                # Convert TeX to MathML for CSV data
+                for row in imported_data.dict:
+                    for key in ['question', 'option1', 'option2', 'option3', 'option4', 'answer']:
+                        if key in row:
+                            original_value = row[key]
+                            row[key] = tex_to_mathml(row[key])
+                            logger.debug(f"Converted {key} from {original_value} to {row[key]}")
+                messages.success(request, "Data imported successfully.")
+            elif file_extension in ['xlsx', 'xls']:
+                # Handle Excel files
+                imported_data = dataset.load(new_file.read(), format=file_extension)
+                # Convert TeX to MathML for Excel data
+                for row in imported_data.dict:
+                    for key in ['question', 'option1', 'option2', 'option3', 'option4', 'answer']:
+                        if key in row:
+                            original_value = row[key]
+                            row[key] = tex_to_mathml(row[key])
+                            logger.debug(f"Converted {key} from {original_value} to {row[key]}")
+                messages.success(request, "Data imported successfully.")
+            elif file_extension == 'docx':
+                # Handle Word documents
+                document = Document(new_file)
+                rows = []
+                for table in document.tables:
+                    for row in table.rows:
+                        row_data = [tex_to_mathml(cell.text) for cell in row.cells]  # Convert TeX to MathML
+                        rows.append(row_data)
+                # Convert to CSV-like format
+                csv_data = io.StringIO()
+                writer = csv.writer(csv_data)
+                writer.writerows(rows)
+                csv_data.seek(0)
+                imported_data = dataset.load(csv_data, format='csv')
+                messages.success(request, "Data imported successfully.")
+            else:
+                messages.error(request, f"An error occurred while importing {file_extension} file.")
+                return render(request, 'teacher/dashboard/import.html')
+
+            # Import data using the resource
+            resource = QuestionResource()
+            result = resource.import_data(imported_data, dry_run=True)  # Dry run first
+
+            if result.has_errors():
+                messages.error(request, "Errors occurred during import: {}".format(result.errors))
+                logger.error("Errors occurred during import: {}".format(result.errors))
+            else:
+                # Perform the actual import
+                result = resource.import_data(imported_data, dry_run=False)
+                if result.has_errors():
+                    messages.error(request, "Errors occurred during saving: {}".format(result.errors))
+                    logger.error("Errors occurred during saving: {}".format(result.errors))
+                else:
+                    messages.success(request, "Data saved successfully.")
+                    logger.info("Data saved successfully.")
+
+            # Redirect back to the import page after processing
+            return HttpResponseRedirect(request.path_info)
+
+        except Exception as e:
+            messages.error(request, f"An error occurred: {e}")
+            logger.error(f"An error occurred while processing the file: {e}")
+            return render(request, 'teacher/dashboard/import.html')
 
     return render(request, 'teacher/dashboard/import.html')
+
+# views.py
+
+
 
 # def import_data(request):
 #     if request.method == 'POST':
@@ -556,11 +643,85 @@ def import_data(request):
 
 #     return render(request, 'teacher/dashboard/import.html')
 
-# views.py
 
+
+from docx import Document
+from django.http import HttpResponse
 from django.shortcuts import render
-from .forms import JSONForm
-import json
+from django.contrib import messages
+import csv
+def import_word(request):
+    if request.method == 'POST':
+        # Check if the uploaded file format is supported
+        allowed_formats = ['docx']
+        uploaded_file = request.FILES.get('myfile')
+        if not uploaded_file:
+            return HttpResponse('No file uploaded.')
+
+        file_extension = uploaded_file.name.split('.')[-1]
+        if file_extension not in allowed_formats:
+            return HttpResponse('File format not supported. Supported format: DOCX')
+
+        # Handle Word document file
+        document = Document(uploaded_file)
+        questions = []
+
+        for table_idx, table in enumerate(document.tables):
+            for row_idx, row in enumerate(table.rows):
+                question = [cell.text.strip() for cell in row.cells]
+                if len(question) == 9:  # Assuming answer is included
+                    questions.append(question)
+                else:
+                    messages.warning(request, f"Ignored invalid line in table {table_idx + 1}, row {row_idx + 1}: {', '.join(question)}")
+
+        if questions:
+            # Create CSV content
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename="imported_questions.csv"'
+
+            writer = csv.writer(response)
+            # writer.writerow(['course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer'])
+
+            for question in questions:
+                writer.writerow(question)
+
+            messages.success(request, "Data imported successfully.")
+            
+            return response
+        else:
+            messages.warning(request, "No valid data found in the document.")
+
+    return render(request, 'teacher/dashboard/importdocs.html')
+
+
+# def import_data(request):
+#     if request.method == 'POST':
+#         dataset = Dataset()
+#         new_questions = request.FILES['myfile']
+
+#         # Check if the uploaded file format is supported
+#         allowed_formats = ['xlsx', 'xls', 'csv']
+#         file_extension = new_questions.name.split('.')[-1]
+#         if file_extension not in allowed_formats:
+#             return HttpResponse('File format not supported. Supported formats: XLSX, XLS, CSV')
+
+#         # Load and import data based on the file format
+#         if file_extension == 'csv':
+#             # Open the file in text mode and decode bytes into a string
+#             data = codecs.iterdecode(new_questions, 'utf-8')
+#             imported_data = dataset.load(data, format=file_extension)
+#             messages.success(request, "Questions imported successfully.")
+#         else:
+#             messages.error(request, f"An error occurred")
+#             imported_data = dataset.load(new_questions.read(), format=file_extension)
+
+#         resource = QuestionResource()
+#         result = resource.import_data(imported_data, dry_run=True)  # Dry run first
+#         if not result.has_errors():
+#             resource.import_data(imported_data, dry_run=False)
+
+#     return render(request, 'teacher/dashboard/import.html')
+
 
 # utils.py
 
@@ -638,6 +799,7 @@ write_to_csv(questions_data, 'generated_questions8.csv')
 write_to_csv(questions_data, 'generated_questions8.csv')
 
 from .models import SampleCodes
+from .forms import JSONForm
 
 def generate_csv(request):
 

@@ -1,17 +1,18 @@
-<!-- move_group.html -->
+<!-- users/templates/users/referral_signup.html -->
+{% extends 'sms/dashboard/teacherbase.html' %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Move Group</title>
-</head>
-<body>
+{% block content %}
+
+<div class="text-center">
+    <br><br>
+
     <h1>Move Group</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Move Group</button>
     </form>
-</body>
-</html>
+
+</div>
+{% endblock %}
+

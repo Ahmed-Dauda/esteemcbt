@@ -120,13 +120,36 @@
             </div>
             <!-- Divider -->
             <hr class="sidebar-divider">
-        
+            {% if request.user.is_superuser %}
             <li class="nav-item" style="margin-bottom: -10px;">
                 <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
                     <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
                     <span>Teacher Dashboard</span>
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'quiz:move_group' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>promote students</span></a>
+
+            </li> 
+            <li class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher:teacher_signup' %}">
+                        <i class="fas fa-fw fa-book"></i>
+                        <span> teacher signup</span></a>
+            </li>
+            <li class="nav-item">
+                    <a class="nav-link" href="{% url 'users:schoolstudentview' %}">
+                        <i class="fas fa-fw fa-book"></i>
+                        <span>Registration students</span>
+                    </a>
+            </li>
+
+            
+
+            {% else %}
+
+            
             
             <li class="nav-item" style="margin-bottom: -10px;">
                 <a class="nav-link" href="{% url 'teacher:generate_csv' %}">
@@ -176,6 +199,8 @@
                     <span>Teacher Login</span>
                 </a>
             </li>
+        
+            {% endif %}
         
            
         <br> <br> <br> <br> <br>

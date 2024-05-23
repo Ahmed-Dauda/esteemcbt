@@ -4,18 +4,72 @@
 {% block title %} Teacher Add Questions {% endblock %}
 
   {% block content %} 
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+            extensions: ["tex2jax.js", "MathML/content-mathml.js"],
+            jax: ["input/TeX", "output/HTML-CSS", "output/Content-MathML"],
+            tex2jax: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            "HTML-CSS": { availableFonts: ["TeX"] }
+        });
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        textarea {
+            width: 80%;
+            padding: 10px;
+            font-size: 16px;
+            height: 50px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        pre {
+            padding: 10px;
+            background-color: #f4f4f4;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            height: 150px;
+        }
+        #rendered {
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+        }
+    </style>
     
 <br> <br>
 
 
 
 <div class="container">
+  <h1>Math Equation Editor</h1>
+    <textarea id="input" rows="10" placeholder="Enter LaTeX code here...">E=mc^2</textarea>
+    <br>
+    <button onclick="renderEquation()">Render Equation</button>
+    <h2>Rendered Equation:</h2>
+    <div id="rendered"></div>
+    <h2>MathML Output:</h2>
+    <pre id="output"></pre>
+     <button onclick="copyMathML()">Copy MathML</button>
+
   <h1>Add Question</h1>
 {% for subject in subjects_taught %}
 <p>Subject and school taught: {{subject}}</p>
 {% endfor %}
 <br>
+
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <div id="formset-container">
@@ -28,7 +82,44 @@
     <button type="button" class="btn btn-primary" id="add-more">Add More</button>
     <button type="submit" class="btn btn-primary">Submit</button>
   </form>
+
 </div>
+
+
+
+
+    <script>
+        function renderEquation() {
+            var input = document.getElementById('input').value;
+            var outputElement = document.getElementById('output');
+            var renderedElement = document.getElementById('rendered');
+
+            // Create a container for the MathJax processing
+            var container = document.createElement('div');
+            container.innerHTML = '$$' + input + '$$';  // Use display math delimiters
+            renderedElement.innerHTML = '';  // Clear previous rendered content
+            renderedElement.appendChild(container);  // Move the container to the renderedElement
+
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, container, function() {
+                var math = MathJax.Hub.getAllJax(container)[0];
+                if (math) {
+                    // Get MathML output
+                    var mml = math.root.toMathML("");
+                    outputElement.textContent = mml;
+                } else {
+                    outputElement.textContent = "No valid MathJax found.";
+                }
+            }]);
+        }
+        function copyMathML() {
+            var mathml = document.getElementById('output').textContent;
+            navigator.clipboard.writeText(mathml).then(function() {
+                alert("MathML copied to clipboard!");
+            }, function(err) {
+                console.error('Failed to copy MathML: ', err);
+            });
+        }
+    </script>
 
 
 

@@ -66,23 +66,25 @@ class ResultAssessment(models.Model):
 
 class Course(models.Model):
 
-#    course_name = models.CharField(max_length=50, unique= True)
+
    room_name = models.CharField(max_length=100,blank=True, null= True)
    schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='course', blank=True, null=True)
    course_name = models.ForeignKey(Courses,on_delete=models.CASCADE, blank=True, null= True)
 #    school = models.ForeignKey(School, on_delete=models.SET_NULL, blank=True, null=True)
 #    schools = models.ManyToManyField("quiz.School" , related_name='course', blank=True)
-   partdesc1 = models.CharField(max_length=300, blank=True, null= True)
-   img_partdesc1 = CloudinaryField('image', blank=True, null= True)
-   partdesc2 = models.CharField(max_length=225, blank=True, null= True)
-   img_partdesc2 = CloudinaryField('image', blank=True, null= True)
-   partdesc3 = models.CharField(max_length=225, blank=True, null= True)
-   signature = CloudinaryField('signature', blank=True, null= True)
-   signby = models.CharField(max_length=229, blank=True, null= True)
-   signby_portfolio = models.CharField(max_length=229 ,blank=True, null= True)
+#    partdesc1 = models.CharField(max_length=300, blank=True, null= True)
+#    img_partdesc1 = CloudinaryField('image', blank=True, null= True)
+#    partdesc2 = models.CharField(max_length=225, blank=True, null= True)
+#    img_partdesc2 = CloudinaryField('image', blank=True, null= True)
+#    partdesc3 = models.CharField(max_length=225, blank=True, null= True)
+#    signature = CloudinaryField('signature', blank=True, null= True)
+#    signby = models.CharField(max_length=229, blank=True, null= True)
+#    signby_portfolio = models.CharField(max_length=229 ,blank=True, null= True)
+
    question_number = models.PositiveIntegerField()
    course_pay = models.BooleanField(default=False)
    total_marks = models.PositiveIntegerField()
+   num_attemps = models.PositiveIntegerField(default=4)
    pass_mark = models.PositiveIntegerField(null=True)
    show_questions = models.PositiveIntegerField(default=10)
    duration_minutes = models.PositiveIntegerField(default=10)  # Add this field for quiz duration

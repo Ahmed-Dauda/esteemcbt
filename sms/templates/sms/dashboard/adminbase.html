@@ -5,10 +5,11 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <meta name="description" content="">
-        <meta name="author" content="">
-        <link rel="icon" type="image/png" href="/static/sms/images/newlogo3.jpg">
+        <meta name="description" content="{% block description %} Esteem Learning Centre School provides high-quality education integrated with Islamic perspectives. Esteem Q offers a unique program where students memorize the Holy Qur'an within a year. Our dedicated instructors and specialized curriculum ensure that students achieve this remarkable feat while fostering spiritual growth and a deep connection to the Holy Scriptures. Our research-based curriculum fosters capable students who can excel globally in any academic environment. We cultivate a positive learning atmosphere, ensuring happiness, stability, safety, and security, while nurturing students' social and emotional well-being. Our approach promotes the development of self-discipline, responsibility, and respect for diverse cultural values. We offer students opportunities for holistic growth, encompassing intellectual, cultural, physical, social, and creative dimensions. {% endblock %}">
+        <meta name="author" content="Esteem Learning Centre, Abuja">
+        <link rel="icon" type="image/x-icon" href="/static/sms/images/esteemlogo.jpg">
     
+
         <!-- Font Awesome -->
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
@@ -20,6 +21,9 @@
     
         <!-- Prism JS -->
         <script src="/static/sms/prism.js"></script>
+
+        <script src="https://cdn.jsdelivr.net/npm/@tinydrive/mathjax@5/index.min.js"></script>
+
     
         <!-- MDB -->
         <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.2.0/mdb.min.css" rel="stylesheet"/>
@@ -47,6 +51,7 @@
     min-height: 50px;
     margin-bottom: 20px;
   }
+
  .navbar-fixed-top {
     position: fixed;
     top:0;
@@ -65,171 +70,139 @@
     font-size: 30px;
  }
 
-/* CSS */
-/* CSS */
-
-.toggledwidth{
-    width: 20px;
-}
-/* mark as completed */
-
-.scroll-column {
-      height: 450px; 
-      overflow-y: auto; 
-      border: 1px solid #ccc; 
-      width: 20px;
-    }
-
-    .scroll-column-content {
-      padding: 10px;
-    }
-</style>
+ /* flip cards  */
  
-<body id="page-top" class="sidebar-toggled " >
+/* our partners  */
+.flip-card {
+  perspective: 1000px;
+  width: 200px; /* Adjust the width as needed */
+  height: 200px; /* Adjust the height as needed */
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.flip-card:hover .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front, .flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+
+</style>
+<body id="page-top" class="sidebar-toggled ">
     
-  
     <!-- Page Wrapper -->
-    <div id="wrapper" class="bg-white" >
-
+    <div id="wrapper" class="bg-white">
         <!-- Sidebar -->
-        <ul  class="navbar-nav bg-primary sidebar sidebar-dark accordion toggledwidth toggledg" id="accordionSidebar">
 
-            <!-- Sidebar - Brand -->
-            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{% url 'sms:homepage' %}">
-                <div class="sidebar-brand-icon rotate-n-0">
-                    <i class="fas fa-home fa-fw "></i>
-                </div>
-                <!-- <div class="sidebar-brand-text mx-3">Codethinkers' Academy <sup></sup></div> -->
-            </a>
-
-            <!-- Divider -->
-            <hr class="sidebar-divider my-0">
-
-            <!-- Nav Item - Dashboard -->
-          
-            
-
-            <!-- Heading -->
-            
-
+        
+        <ul style="background-color: rgb(25, 26, 26); margin-bottom: 0;" class="navbar-nav sidebar sidebar-dark accordion toggled" id="accordionSidebar">
             <!-- Nav Item - Pages Collapse Menu -->
-         
-
-            <!-- Nav Item - Utilities Collapse Menu -->
-            <li class="nav-item">
-                
-                <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Custom Utilities:</h6>
-                        <a class="collapse-item" href="dashboard/utilities-animation.html">Animations</a>
-
-                    </div>
-                </div>
-            </li>
-
+<br>
+             <!-- Sidebar Toggler (Sidebar) -->
+             <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
             <!-- Divider -->
             <hr class="sidebar-divider">
 
-            <!-- Heading -->
-            <!-- HTML -->
-            {% if completed_topic_ids %}
-            <li class="nav-item">
-                <div class="scroll-column">
-                    <div id="content-container" class="makecompleted ">
-                        {% for topic in topics %}
-                            <div class="flex-item bg-white">
-                                <span id="tick-icon-{{ topic.id }}" class="{% if topic.id in completed_topic_ids %}visible{% else %}d-none{% endif %}">
-                                    <i class="fas fa-check-circle"></i>
-                                </span>
-                                <hr style="color: brown;">
-                                <span class="">{{ topic.title }}</span> <!-- Apply the border class here -->
-                            </div>
-                        {% endfor %}
-                    </div>
-                    <!-- Add more content here -->
-                </div>
-            </li>
-            {% endif %}
             
-            <!-- Nav Item - Pages Collapse Menu -->
             <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages" aria-expanded="true" aria-controls="collapsePages">
-                    <i class="fas fa-fw fa-folder"></i>
-                    <span>Exams</span>
-                </a>
-                <div id="collapsePages" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Exams Screens:</h6>
-                        
-                        <a class="collapse-item" href="{% url 'student:take-exam' %}">Take Exam</a>
-                        <a class="collapse-item" href="{% url 'student:view_result' %}">View Certificate (s)</a>
-                        <a class="collapse-item" href="{% url 'sms:admin_result' %}">Overall Exams Score</a>
-                        {% if  completed_topic_ids %}
-                        <p class="collapse-item bg-primary">other Information</p>
-                    
-                        <a class="collapse-item" href="{% url 'sms:table' %}">Table</a>
-                        <a class="collapse-item" href="{% url 'sms:feedbackformview' %}">Feedback</a>
-                        <a class="collapse-item" href="{% url 'sms:bloglistview' %}">Announcement</a>
-                        <a class="collapse-item" href="#faqs">Frequently Asked Questions</a>
-                        {% endif %}
-                        <div class="collapse-divider"></div>      
-                    </div>
-                </div>
-                
+                <a class="nav-link" href="{% url 'quiz:move_group' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>promote students</span></a>
+
+            </li> 
+            <li class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher:teacher_signup' %}">
+                        <i class="fas fa-fw fa-book"></i>
+                        <span> teacher signup</span></a>
+            </li>
+            <li class="nav-item">
+                    <a class="nav-link" href="{% url 'users:schoolstudentview' %}">
+                        <i class="fas fa-fw fa-book"></i>
+                        <span>Registration students</span>
+                    </a>
             </li>
 
-            <!-- Nav Item - Tables -->
-            <li class="nav-item">
-                {% if not completed_topic_ids %}
-                <a class="nav-link" href="{% url 'sms:table' %}">
-                    <i class="fas fa-fw fa-table"></i>
-                    <span>Tables</span>
+        
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
+                    <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
+                    <span>Teacher Dashboard</span>
                 </a>
-                {% endif %}
             </li>
-
-
-           <!-- Nav Item - Feedback -->
-            <li class="nav-item">
-                {% if not completed_topic_ids %}
-                <a class="nav-link" href="{% url 'sms:feedbackformview' %}">
-                    <i class="fas fa-bell fa-fw"></i>
-                    <span>Feedback</span>
-                </a>
-                {% endif %}
-            </li>
-
-            <!-- Nav Item - Article Page -->
-            <li class="nav-item">
-                {% if not completed_topic_ids %}
-                <a class="nav-link" href="{% url 'sms:bloglistview' %}">
-                    <i class="fas fa-book fa-lg "></i>
-                    <span>Article Page</span>
-                </a>
-                {% endif %}
-            </li>
-            <!-- Nav Item - FAQS Page -->
-            <li class="nav-item">
-                <a class="nav-link" href="#faqs">
-                    {% if not completed_topic_ids %}
-                    <i class="fa fa-question-circle fa-lg" aria-hidden="true"></i>
             
-                    <span>FAQS</span>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:generate_csv' %}">
+                    <i class="fas fa-fw fa-eye"></i> <!-- Icon for view questions -->
+                    <span>Generate Questions with AI</span>
                 </a>
-                {% endif %}
             </li>
-            <!-- Divider -->
-            <hr class="sidebar-divider d-none d-md-block">
-
-            <!-- Sidebar Toggler (Sidebar) -->
-            <div class="text-center d-none d-md-inline">
-                <button class="rounded-circle border-0" id="sidebarToggle"></button>
-            </div>
-
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:view_questions' %}">
+                    <i class="fas fa-fw fa-eye"></i> <!-- Icon for view questions -->
+                    <span>View Questions</span>
+                </a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:import_data' %}">
+                    <i class="fas fa-fw fa-file-import"></i> <!-- Icon for import data -->
+                    <span>Import Questions</span>
+                </a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:export_data' %}">
+                    <i class="fas fa-fw fa-file-export"></i> <!-- Icon for export data -->
+                    <span>Export Questions</span>
+                </a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:export_results_csv' %}">
+                    <i class="fas fa-fw fa-file-csv"></i> <!-- Icon for export results as CSV -->
+                    <span>Export Result</span>
+                </a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:teacher_results' %}">
+                    <i class="fas fa-fw fa-poll"></i> <!-- Icon for teacher results -->
+                    <span>Teacher Result</span>
+                </a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:add_question' %}">
+                    <i class="fas fa-fw fa-plus"></i> <!-- Icon for add question -->
+                    <span>Add Questions</span>
+                </a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:teacher_login' %}">
+                    <i class="fas fa-fw fa-sign-in-alt"></i> <!-- Icon for teacher login -->
+                    <span>Teacher Login</span>
+                </a>
+            </li>
+        
+           
+        <br> <br> <br> <br> <br>
             <!-- Sidebar Message -->
-            
-
         </ul>
+        
+        
 
         <!-- End of Sidebar -->
 
@@ -250,6 +223,7 @@
                     <!-- Topbar Search -->
                     <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
                         <div class="input-group">
+                            
                             <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Search" aria-describedby="basic-addon2">
                             <div class="input-group-append">
                                 <button class="btn btn-primary" type="button">
@@ -258,6 +232,15 @@
                             </div>
                         </div>
                     </form>
+                    
+
+                    <!-- <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages" aria-expanded="true" aria-controls="collapsePages">
+                        <i class="fas fa-fw fa-folder"></i>
+                        
+                        <span style="font-size: 12; padding-right: 20px;">All Courses</span>
+
+                    </a>
+                     -->
 
                     <!-- Topbar Navbar -->
                     <ul class="navbar-nav ml-auto" >
@@ -284,19 +267,14 @@
 
                         <!-- Nav Item - Alerts -->
                         <!-- <li class="nav-item dropdown no-arrow mx-1"><h4><a class="nav-link dropdown-toggle" href="{% url 'account_login' %}">Log In</a></h4></li> -->
-                        <li style="" class=" nav-item dropdown no-arrow mx-2">
+                        <!-- <li style="" class=" nav-item dropdown no-arrow mx-2">
                            
                             <a class=" d-flex nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <p style="font-weight: bold;color: blue; font-size: 18px; margin: 5px;">Shop</p>
                            
-                            <i class="fas fa-cart-shopping fa-fw " style="color:black;font-size: 18px;"></i>
-                                <!-- <i class="fa-solid fa-cart-shopping  " style="color:black"></i> -->
-                                
-                                <!-- Counter - Alerts -->
+                            <i class="fas fa-cart-shopping fa-fw " style="color:black;font-size: 18px;"></i>   
                                 <span class="badge badge-danger badge-counter">{{alert_count}}+</span>
-                          
                             </a>
-                            <!-- Dropdown - Alerts -->
 
                             <div style="overflow-y: scroll; height:400px;" class="dropdown-list dropdown-menu dropdown-menu-right card-bod shadow animated--grow-in" aria-labelledby="alertsDropdown">
                                 <h6 class="dropdown-header">
@@ -321,7 +299,7 @@
                              
                                 <a class="dropdown-item text-center small text-gray-500" href="#">Show All Alerts</a>
                             </div>
-                        </li>
+                        </li> -->
 
 
                         <!-- Nav Item - User Information -->
@@ -332,10 +310,11 @@
                             </a>
                             <!-- Dropdown - User Information -->
                             <div  class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
-                                <a class="dropdown-item" href="{% url 'sms:myprofile' %}">
+                               <a class="dropdown-item" href="">
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Profile
-                                </a><hr>
+                                </a> 
+                                <hr>
                                 <a class="dropdown-item" href="{% url 'account_change_password' %}">
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Change Password
@@ -343,12 +322,13 @@
                                 <a class="dropdown-item" href="{% url 'account_reset_password' %}">
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Password Reset
-                                </a><hr>
+                                </a>
+                                <hr>
 
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
+                                <a class="dropdown-item" href="{% url 'teacher:teacher_logout' %}" >
                                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Logout
+                                    Logout 
                                 </a>
                             </div>
                         </li>
@@ -360,67 +340,20 @@
 
                 <!-- Begin Page Content -->
               <div class="bg-body">
+                <br>
+                <h1 class="text-center">Teacher view</h1>
+                
                 {% block content %} 
+                
 
 
                 {% endblock %} 
             </div>
                     
-              
-                  
-           
-            <!-- End of Main Content -->
 
-
-            <!-- Footer -->
            <br><br><br><br>
         
-            <footer class="sticky-footer bg-dark "> 
-            <div style="margin: 0 auto;" class=" text-center col-lg-4 my-3 my-lg-0">
-                    
-                <a class="text-center bg-white btn btn-white btn-social mx-2" href="https://youtube.com/channel/UCZLdq1lpQOZAO7fDc6n8GtQ" role="button"><i class="fab fa-youtube"></i></a>        
-                <a class="text-center bg-white btn btn-white btn-social mx-2" href="https://web.facebook.com/addatainsight"><i class="fab fa-facebook"></i></a>
-            </div>
-            <br>
-                <div class="container my-auto">
-                    <div class="copyright text-center text-white my-auto">
-                        <span>Copyright © Codethinkers' Academy 2023</span>
-                    </div>
-                </div>
-                <br>   <br>   <br>   <br>   
-            </footer>
-            <!-- End of Footer -->
-
-        </div>
-        <!-- End of Content Wrapper -->
-
-    </div>
-    <!-- End of Page Wrapper -->
-
-    <!-- Scroll to Top Button-->
-    <a class="scroll-to-top rounded" href="#page-top" style="display: none;">
-        <i class="fas fa-angle-up"></i>
-    </a>
-
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="{% url 'account_logout' %}">Logout</a>
-                  
-                </div>
-            </div>
-        </div>
-    </div>
+           
 
     <!-- Bootstrap core JavaScript-->
     <script src="/static/sms/dashboard/vendor/jquery/jquery.min.js"></script>
@@ -439,12 +372,14 @@
     <script src="/static/sms/dashboard/js/demo/chart-area-demo.js"></script>
     <script src="/static/sms/dashboard/js/demo/chart-pie-demo.js"></script>
 
+ 
     <!-- Page level plugins -->
     <script src="/static/sms/dashboard/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="/static/sms/dashboard/vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
     <!-- Page level custom scripts -->
     <script src="/static/sms/dashboard/js/demo/datatables-demo.js"></script>
+
     
       <script src="/static/sms/prism.js"></script>
             

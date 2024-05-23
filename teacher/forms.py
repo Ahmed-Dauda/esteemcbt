@@ -16,6 +16,7 @@ from quiz.models import School, Course, CourseGrade, Question
 from django.contrib.auth.forms import AuthenticationForm
 
 
+# forms.py
 class JSONForm(forms.Form):
     json_data = forms.CharField(widget=forms.Textarea)
    

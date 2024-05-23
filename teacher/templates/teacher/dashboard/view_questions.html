@@ -19,9 +19,10 @@
             <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                 <thead>
                     <tr>
+                        <th>Course</th>
                         <th>Question</th>
                         <th>Marks</th>
-                        <th>Course</th>
+                        
                         <th>Option 1</th>
                         <th>Option 2</th>
                         <th>Option 3</th>
@@ -35,9 +36,10 @@
                 <tbody>
                     {% for question in questions %}
                     <tr>
+                        <td>{{ question.course }}</td>
                         <td>{{ question.question }}</td>
                         <td>{{ question.marks }}</td>
-                        <td>{{ question.course }}</td>
+                        
                         <td>{{ question.option1 }}</td>
                         <td>{{ question.option2 }}</td>
                         <td>{{ question.option3 }}</td>

@@ -4,12 +4,15 @@
 
 {% load hitcount_tags %}
 {% load cloudinary %}
+
 {% load embed_video_tags %}
 {% block title %} Courses list view page {% endblock %}
 
 
-{% block content %}    
-    
+{% block content %}   
+
+  <!-- Configuration of math jax -->
+
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.1/css/dataTables.dataTables.css">
     <!-- Include necessary libraries (jQuery and DataTables) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -21,11 +24,27 @@
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
       
       <!-- mathjax -->
-      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-      <script id="MathJax-script" async
-              src="https://cdn.jsdelivr.net/npm/mathjax@3.0.1/es5/tex-mml-chtml.js">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+      <script type="text/x-mathjax-config">
+          MathJax.Hub.Config({
+              tex2jax: {
+                  inlineMath: [['$', '$'], ['\\(', '\\)']],
+                  displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                  processEscapes: true
+              }
+          });
       </script>
-  
+      <style>
+          body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+          }
+          #rendered {
+              padding: 10px;
+              border: 1px solid #ddd;
+              margin-top: 10px;
+          }
+      </style>
 
 <style>
   
@@ -45,7 +64,7 @@
 
 .quiz input[type="radio"] {
     transform: scale(1.5); /* Increase the size by adjusting the scale value */
-    margin-right: 10px; /* Add some spacing between the radio input and label */
+    margin-right: 5px; /* Add some spacing between the radio input and label */
     /* margin-top: -2px; */
    
 }
@@ -85,24 +104,19 @@
       background-color: rgb(211, 247, 211);
   }
 
-  /* .alert-success{
+  .radio-container {
     display: flex;
-    flex-wrap: wrap;
-  }
-  .alert-success > *{
-     flex: auto;
-     margin: 5px;
-  } */
-  </style>   
+    align-items: center;
+    cursor: pointer;
+}
 
-<style>
-  /* @media (max-width: 767px) {
-    .sticky-top {
-      position: static; 
-      top: auto;
-    }
-  } */
-</style>
+.radio-label {
+    flex: 1;
+    margin-left: 2px; /* Adjust as needed */
+}
+
+
+  </style>   
 
  
   <script>
@@ -130,6 +144,8 @@
  </script> -->
 
 <!--end quiz timer  -->
+<!-- In the body of your HTML template -->
+
 
 
   <div class="card">
@@ -189,43 +205,63 @@
             
                 {% if q.img_quiz.url %}
                 <label style="font-size: 18px; text-align: center; display: block;">
-                  {{ q.question|safe }}
-                </label>
+                {{ q.question|safe }}
+              </label>
+              
                 {% else %}
                 <label style="font-size: 18px;">
                   {{ q.question|safe }}
                 </label>
-
+                <!-- <p class="d-flex" style="overflow-x: auto; white-space: pre-wrap; font-size: 20px;font-family: sans-serif;" >
+                  {{ q.question }}</p> -->
+                 
                 {% endif %}
                 
                 <h6 style="text-align: right;">[marks {{q.marks}}]</h6>
     
                 {% if q.option1 %}
-                <div class="quiz"> 
-                 
-                  <input  class="radio-button"  type="radio" name="{{forloop.counter}}" id="option1"  value="Option1"  required>
-                  <label style="width: 100%;" data-original-text="{{ q.option1|safe|striptags }}" for="option1" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button body-text text-left"> {{q.option1|safe}} </label>
-                </div> 
-                {% endif %}
-              {% if q.option2 %}
                 <div class="quiz">
-                  <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option2"  value="Option2"  required>
-                  <label style="width: 100%;" data-original-text="{{ q.option2|safe|striptags }}" for="option2" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button  text-left">{{q.option2|safe}}</label>
+                    <div class="radio-container">
+                        <input class="radio-button" type="radio"  name="{{forloop.counter}}" id="option1" value="Option1" required>
+                        <label id="label-option1" data-original-text="{{ q.option1|safe|striptags }}" for="option1" data-label="my-label-button" class="radio-label"> </label>
+                    </div>
+                    <label>{{q.option1|safe}}</label>
                 </div>
+                {% endif %}
                 
-                {% endif %}
-            {% if q.option3 %}
-                <div class="quiz" >
-                  <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option3"  value="Option3"  required>
-                  <label style="width: 100%;" data-original-text="{{ q.option3|safe|striptags }}" for="option3" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button  text-left">{{q.option3|safe}}</label>
+                {% if q.option2 %}
+                <div class="quiz">
+                    <div class="radio-container">
+                        <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option2" value="Option2" required>
+                        <label id="label-option2" data-original-text="{{ q.option2|safe|striptags }}" for="option2" data-label="my-label-button" class="radio-label"> {{q.otion2|safe|striptags}} </label>
+                    </div>
+                    <label>{{q.option2|safe}}</label>
                 </div>
                 {% endif %}
-            {% if q.option4 %}
-                <div class="quiz" >
-                  <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option4"  value="Option4"  required>  
-                  <label style="width: 100%;" data-original-text="{{ q.option4|safe|striptags }}"  for="option4" data-label="my-label-button" class="language-markup line-numbers copy-to-clipboard-button text-left">{{q.option4|safe}}</label><br>
+                
+                {% if q.option3 %}
+                <div class="quiz">
+                    <div class="radio-container">
+                   
+                        <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option3" value="Option3" required>
+                        <label id="label-option3" data-original-text="{{ q.option3|safe|striptags }}" for="option3" data-label="my-label-button" class="radio-label"> {{q.opton3|safe|striptags}} </label>
+                    </div>
+                    <label>{{q.option3|safe}}</label>
                 </div>
                 {% endif %}
+                
+                {% if q.option4 %}
+                <div class="quiz">
+                    <div class="radio-container">
+                    
+                        <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option4" value="Option4" required>
+                        <label id="label-option4" data-original-text="{{ q.option4|safe|striptags }}" for="option4" data-label="my-label-button" class="radio-label"> {{q.optin4|safe|striptags}} </label>
+                    </div>
+                    <label>{{q.option4|safe}}</label>
+                </div>
+                {% endif %}
+                
+                
               
               </td>
 
@@ -619,6 +655,7 @@ function submitQuiz(inactiveCount) {
     window.location.href = "{% url 'student:view_result' %}";
 }
 
+
 function submitQuizinactive(inactiveCount) {
     // Clear local storage
     localStorage.clear();
@@ -657,9 +694,11 @@ function submitQuizinactive(inactiveCount) {
         }
     });
     
-    showAlert("Quiz submitted automatically due to " + inactiveCount + " attemp of malpractice!");
+    // showAlert("Quiz submitted automatically due to " + inactiveCount + " attemp of malpractice!");
     window.location.href = "{% url 'student:view_result' %}";
 }
+
+
 
 // function submitQuiz() {
 //     // Clear local storage
@@ -703,42 +742,81 @@ function submitQuizinactive(inactiveCount) {
 //     window.location.href = "{% url 'student:view_result' %}";
 // }
 
-   
 var isTabActive;
-var inactiveCount = 1-0; // Counter for inactive intervals
+var inactiveCount = parseInt(localStorage.getItem("inactiveCount")) || 0; // Retrieve count from localStorage or set to -1 if not present
 
 window.onfocus = function () { 
   isTabActive = true; 
-  console.log("Tab is active");
 }; 
 
 window.onblur = function () { 
   isTabActive = false; 
-  inactiveCount++; // Increment the counter when the tab becomes inactive
-  document.getElementById("inactiveCount").innerText = inactiveCount; // Update the inactive count display
-  console.log("Tab is inactive. Count:", inactiveCount);
-  if (inactiveCount >= 4) {
-    showAlert("You have made " + inactiveCount + " attempts to leave the exam page. The exam will be automatically submitted.");
+  inactiveCount++; 
+  localStorage.setItem("inactiveCount", inactiveCount); // Store the updated count in localStorage
+  document.getElementById("inactiveCount").innerText = inactiveCount; 
+  if (inactiveCount >= {{num_attemps}}) {
+    // Perform action when count exceeds the threshold
+    submitQuizinactive(inactiveCount);
+    localStorage.clear
+    window.location.reload();
   }
+  
 }; 
 
 setInterval(function () { 
-  if (isTabActive && inactiveCount >= 4) {
-    // console.log("Redirecting to warning page");
-    // Redirect to the warning page when the tab is inactive for the third time
-    // window.location.href = '{% url "student:exam_warning" %}';
-  } 
-  else if (!isTabActive && inactiveCount === 4) {
-    // console.log("Submitting quiz");
-    submitQuiz(inactiveCount); // Call the function to submit the quiz with the inactive count
-    localStorage.clear();
-    window.location.reload();
-  }
-}, 1000); // Interval time set to 1000 milliseconds (1 second)
 
-function showAlert(message) {
-  alert(message);
-}
+  if (isTabActive && inactiveCount >= {{num_attemps}}) {
+    submitQuizinactive(inactiveCount); 
+    localStorage.clear
+    window.location.reload();
+  } 
+}, 
+
+
+500);
+
+
+// real inactive codes
+// var isTabActive;
+// var inactiveCount = -1; // Counter for inactive intervals
+
+// window.onfocus = function () { 
+//   isTabActive = true; 
+//   // console.log("Tab is active");
+// }; 
+
+// window.onblur = function () { 
+//   isTabActive = false; 
+//   inactiveCount++; // Increment the counter when the tab becomes inactive
+//   document.getElementById("inactiveCount").innerText = inactiveCount; // Update the inactive count display
+//   // console.log("Tab is inactive. Count:", inactiveCount);
+//   if (inactiveCount >= {{num_attemps}}) {
+//     // alert("You have made " + inactiveCount + " attempts to leave the exam page. The exam will be automatically submitted.");
+//   }
+// }; 
+
+// setInterval(function () { 
+//   if (isTabActive && inactiveCount >= {{num_attemps}}) {
+//     submitQuizinactive(inactiveCount); // Call the function to submit the quiz with the inactive count
+//     localStorage.clear();
+//     window.location.reload();
+//     // alert("hddklkdllddkl")
+//     // console.log("Redirecting to warning page");
+//     // Redirect to the warning page when the tab is inactive for the third time
+//     // window.location.href = '{% url "student:exam_warning" %}';
+//   } 
+//   // else if (!isTabActive && inactiveCount === 4) {
+//   //   // console.log("Submitting quiz");
+//   //   submitQuizinactive(inactiveCount); // Call the function to submit the quiz with the inactive count
+//   //   localStorage.clear();
+//   //   window.location.reload();
+//   // }
+// }, 500); // Interval time set to 1000 milliseconds (1 second)
+
+
+// function showAlert(message) {
+//   alert("You have made " + inactiveCount + " attempts to leave the exam page. The exam will be automatically submitted.");
+// }
 
 // setInterval(function () { 
 //   if (isTabActive && inactiveCount >= 3) {
@@ -940,6 +1018,7 @@ function showAlert(message) {
                       radioButtons.forEach(function(rb) {
                         // Restore original label text for all radio buttons
                         radioButton.labels[0].textContent  = rb.dataset.originalText;
+                        
                 
                     });
                   
@@ -953,9 +1032,40 @@ function showAlert(message) {
             }
         }
 
-// Retrieve the stored value from local storage
-var storedCheckedValue = localStorage.getItem('checked');
-// Event listener to update local storage when radio button is clicked or changed
+
+//3333 Retrieve the stored value from local storage for each question
+var allRadioButtons = document.querySelectorAll('.radio-button');
+
+allRadioButtons.forEach(function (radioButton) {
+    var questionName = radioButton.getAttribute('name');
+    var storedCheckedValue = localStorage.getItem('checked_' + questionName);
+
+    if (storedCheckedValue !== null) {
+        if (radioButton.value === storedCheckedValue) {
+            radioButton.checked = true;
+            radioButton.nextElementSibling.textContent = radioButton.nextElementSibling.dataset.originalText;
+            radioButton.style.color = 'red';
+            radioButton.nextElementSibling.style.display = 'none'; // Hide the label initially
+        } else {
+            radioButton.nextElementSibling.textContent = radioButton.nextElementSibling.dataset.originalText;
+            radioButton.nextElementSibling.style.display = 'none'; // Show the label initially
+        }
+    }
+    
+    radioButton.addEventListener('click', function () {
+        if (radioButton.checked) {
+            radioButton.nextElementSibling.style.display = 'none'; // Hide the label when clicked
+        } else {
+            radioButton.nextElementSibling.style.display = 'none'; // Show the label when unclicked
+        }
+        
+        // Update local storage when radio button is clicked
+        var selectedValue = radioButton.value;
+        localStorage.setItem('checked_' + questionName, selectedValue);
+    });
+});
+
+// Event listener to update local storage when radio button is changed
 document.addEventListener('change', function(event) {
     var target = event.target;
     if (target.matches('.radio-button')) {
@@ -966,23 +1076,6 @@ document.addEventListener('change', function(event) {
     }
 });
 
-//3333 Retrieve the stored value from local storage for each question
-var allRadioButtons = document.querySelectorAll('.radio-button');
-
-allRadioButtons.forEach(function(radioButton) {
-    var questionName = radioButton.getAttribute('name');
-    var storedCheckedValue = localStorage.getItem('checked_' + questionName);
-
-    if (storedCheckedValue !== null) {
-        if (radioButton.value === storedCheckedValue) {
-            radioButton.checked = true;
-            radioButton.nextElementSibling.textContent = radioButton.nextElementSibling.dataset.originalText;
-            radioButton.style.color = 'red';
-        } else {
-            radioButton.nextElementSibling.textContent = radioButton.nextElementSibling.dataset.originalText;
-        }
-    }
-});
 
 // Event listener to clear local storage when submit button is clicked
 var submitButton = document.getElementById('submit');
@@ -1196,9 +1289,36 @@ submitButton.addEventListener('click', function() {
   </script>
    -->
 
+
+
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the element with id "timer"
+    var timerElement = document.getElementById('timer');
+    
+    // Add a click event listener to it
+    timerElement.addEventListener('click', function() {
+        // Reload the page
+        location.reload();
+    });
+});
 
-
+// page refresh
 
 </script>
+
+<script>
+  // Function to reload the page
+  function reloadPage() {
+      location.reload();
+  }
+  
+  // Set interval for page reload (5 minutes = 5 * 60 * 1000 milliseconds)
+  setInterval(reloadPage, 5 * 60 * 1000); // 5 minutes
+  
+  </script>
+
+
+<!-- latex -->
+
 {% endblock %} 

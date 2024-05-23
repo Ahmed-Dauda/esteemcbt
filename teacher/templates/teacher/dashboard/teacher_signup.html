@@ -1,4 +1,26 @@
-<!DOCTYPE html>
+<!-- users/templates/users/referral_signup.html -->
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block content %}
+
+<div class="text-center">
+    <br><br>
+  
+    <h2>Teacher Registration</h2>
+    <form method="post">
+        {% csrf_token %}
+       <p>{{ form.as_p }}</p> 
+        <button type="submit">Register</button>
+    </form>
+    
+
+</div>
+{% endblock %}
+
+
+
+
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -12,5 +34,6 @@
         {{ form.as_p }}
         <button type="submit">Register</button>
     </form>
+
 </body>
-</html>
+</html> -->

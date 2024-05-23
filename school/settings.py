@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'tinymce',
     'django_social_share',
     'import_export',
+    'django_mathjax',
     
     
     
@@ -69,6 +70,8 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     # 'allauth.socialaccount.providers.twitter',
 ]
+
+MATHJAX_ENABLED=True
 
 BASE_URL = 'https://codethinkers.org'
 

@@ -16,6 +16,7 @@ urlpatterns = [
     path('add-question/', views.add_question_view, name='add_question'),
     # Add more URLs as needed
     # path('teacherlogin', LoginView.as_view(template_name='teacher/teacherlogin.html'),name='teacherlogin'),
+    path('import-word/', views.import_word, name='import-word'),
     path('import/', views.import_data, name='import_data'),
     path('export/', views.export_data, name='export_data'),
     path('view-questions/', views.view_questions, name='view_questions'),
