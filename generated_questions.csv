@@ -1,6 +1,12 @@
 course,marks,question,img_quiz,option1,option2,option3,option4,answer
-MATH JSS2,1,What is the quadratic formula used to solve?,,Linear equations,Quadratic equations,Exponential equations,Trigonometric equations,Option2
-MATH JSS2,1,What does the term 'b' represent in the quadratic formula (b^2 - 4ac) / (2a)?,,Coefficient of (x^2 / 2),Coefficient of (x / 2),Constant term,Discriminant,Option2
-MATH JSS2,1,What is the discriminant of a quadratic equation?,, (b^2 / 2), (4ac / 2), (b^2 - 4ac / 2), (b^2 + 4ac / 2),Option3
-MATH JSS2,1,What does the discriminant tell us about a quadratic equation?,,The number of real solutions,The sum of the solutions,The product of the solutions,The nature of the solutions,Option1
-MATH JSS2,1,What does it mean if the discriminant is negative?,,The equation has two real and equal roots,The equation has two distinct real roots,The equation has no real roots,The equation has one real root,Option3
+ENGLISH JSS2,1,Which of the following is NOT an element of a narrative composition?,,Introduction,Conclusion,Summary,Climax,Option3
+ENGLISH JSS2,1,"In narrative composition, what role does dialogue typically serve?",,Introducing the characters,Providing background information,Advancing the plot and developing characters,Concluding the story,Option3
+ENGLISH JSS2,1,What is the purpose of brainstorming in narrative writing?,,To finalize the plot,To develop characters,To generate ideas and themes,To edit the narrative,Option3
+ENGLISH JSS2,1,Which aspect of setting is important for creating vivid descriptions in a narrative?,,Time period,Physical environment,Emotional atmosphere,All of the above,Option4
+ENGLISH JSS2,1,Why is revision and editing important in narrative composition?,,To correct spelling mistakes,To ensure grammatical accuracy and clarity,To add more characters,To change the ending,Option2
+ENGLISH JSS2,1,"Which word in the sentence ""The beautiful flowers bloomed in the garden"" is an adjective?",,flowers,bloomed,beautiful,garden,Option3
+ENGLISH JSS2,1,Which of the following is an adjective?,,run,quickly,tall,jump,Option3
+ENGLISH JSS2,1,"In the phrase ""The old book,"" what does the adjective ""old"" describe?",,the book,the,The old,book,Option1
+ENGLISH JSS2,1,Which sentence contains an adjective?,,She ran fast.,The cat meowed loudly.,The beautiful house is on fire.,They are playing soccer.,Option3
+ENGLISH JSS2,1,Which of the following words is NOT an adjective?,,blue,hungry,quickly,big,Option3
+ENGLISH JSS2,1,Which of the following words begins with the /p/ consonant sound?,,Dog,Pen,Fish,Sun,Option2
