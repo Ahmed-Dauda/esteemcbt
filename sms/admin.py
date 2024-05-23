@@ -147,9 +147,9 @@ class CategoriesResource(resources.ModelResource):
                
 class CoursesAdmin(ImportExportModelAdmin):
 
-    list_display = ['id', 'categories','title','display_subjects_school', 'desc', 'created']
-    list_filter =  ['categories','title']
-    search_fields = ['categories__name','title']
+    list_display = ['id','title','display_subjects_school', 'created']
+    list_filter =  ['title']
+    search_fields = ['title']
     ordering = ['id']
     
     resource_class = CategoriesResource
