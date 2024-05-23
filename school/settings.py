@@ -353,7 +353,7 @@ LOGIN_URL = 'account_login'
 LOGOUT_REDIRECT_URL = 'account_login'
 ACCOUNT_SIGNUP_REDIRECT_URL= 'account_login'
 # ACCOUNT_SIGNUP_REDIRECT_URL= 'settings.LOGOUT_URL'
-# django hit count 
+# django hit counts
 # HITCOUNT_KEEP_HIT_ACTIVE = {'seconds': 2}
 
 HITCOUNT_HITS_PER_IP_LIMIT = 0
