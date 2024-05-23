@@ -79,21 +79,21 @@ class Categories(models.Model, HitCountMixin):
 import uuid
 
 class Courses(models.Model):
-    COURSE_TYPE = [
-        ('Course', 'COURSE'),
-        ('Professional Certificate', 'PROFESSIONAL CERTIFICATE'),
-        ('Specialization', 'SPECIALIZATION'),
-        ('Degree', 'DEGREE'),
-        ('Diploma', 'DIPLOMA'),
-    ]
+    # COURSE_TYPE = [
+    #     ('Course', 'COURSE'),
+    #     ('Professional Certificate', 'PROFESSIONAL CERTIFICATE'),
+    #     ('Specialization', 'SPECIALIZATION'),
+    #     ('Degree', 'DEGREE'),
+    #     ('Diploma', 'DIPLOMA'),
+    # ]
 
-    PAYMENT_CHOICES = [
-        ('Premium', 'PREMIUM'),
-        ('Free', 'FREE'),
-        ('Sponsored', 'SPONSORED'),
-    ]
+    # PAYMENT_CHOICES = [
+    #     ('Premium', 'PREMIUM'),
+    #     ('Free', 'FREE'),
+    #     ('Sponsored', 'SPONSORED'),
+    # ]
 
-    img_course = CloudinaryField('image', blank=True, null=True)
+    # img_course = CloudinaryField('image', blank=True, null=True)
      # Add a ForeignKey field to represent the course a student is enrolled in.
     schools = models.ManyToManyField("quiz.School" , related_name='courses', blank=True)
     # prerequisites = models.ManyToManyField('self', blank=True, symmetrical=False)
