@@ -178,6 +178,7 @@
                 <div style="width: 33.33%; padding: 10px;">
                     <h6>{{course.course_name}} Quiz</h6>
                     <p>Number of Questions: {{q_count}}</p>
+                    <p>Student Info: {{request.user.first_name}} {{request.user.last_name}} -- {{student_class}}</p>
                 </div>
             </div>
         </div>
@@ -478,44 +479,77 @@ $(document).ready(function() {
 // inactive just
 
     // Event handler for manual submit button click
-    $('#submit').on('click', function (e) {
-        var confirmation = confirm("Are you sure you want to submit the quiz?");
-        if (confirmation) {
-            e.preventDefault();
+    // $('#submit').on('click', function (e) {
+    //     var confirmation = confirm("Are you sure you want to submit the quiz?");
+    //     if (confirmation) {
+    //         e.preventDefault();
             
-            // Clear timer interval and local storage
-            clearInterval(timerInterval);
-            localStorage.removeItem('remainingTime');
+    //         // Clear timer interval and local storage
+    //         clearInterval(timerInterval);
+    //         localStorage.removeItem('remainingTime');
             
-            // Restart the timer
-            updateTimer({{ course.duration_minutes }});
+    //         // Restart the timer
+    //         updateTimer({{ course.duration_minutes }});
             
-            // Proceed with the quiz submission
-            var formData = table.$('input, select').serialize();
-            var dataArray = formData.split('&');
-            var quizData = {};
-            for (var i = 0; i < dataArray.length; i++) {
-                var keyValue = dataArray[i].split('=');
-                var questionIndex = parseInt(keyValue[0]);
-                var answer = keyValue[1];
-                quizData[questionIndex] = answer;
-            }
-            var jsonData = JSON.stringify(quizData);
+    //         // Proceed with the quiz submission
+    //         var formData = table.$('input, select').serialize();
+    //         var dataArray = formData.split('&');
+    //         var quizData = {};
+    //         for (var i = 0; i < dataArray.length; i++) {
+    //             var keyValue = dataArray[i].split('=');
+    //             var questionIndex = parseInt(keyValue[0]);
+    //             var answer = keyValue[1];
+    //             quizData[questionIndex] = answer;
+    //         }
+    //         var jsonData = JSON.stringify(quizData);
 
-            $.ajax({
-                type: "POST",
-                url: "/student/calculate_marks",
-                data: jsonData,
-                success: function(response) {
-                    alert("Quiz submitted successfully!");
-                    window.location.href = "{% url 'student:view_result' %}";
-                },
-                error: function(xhr, status, error) {
-                    console.error("Error:", error);
-                }
+    //         $.ajax({
+    //             type: "POST",
+    //             url: "/student/calculate_marks",
+    //             data: jsonData,
+    //             success: function(response) {
+    //                 alert("Quiz submitted successfully!");
+    //                 window.location.href = "{% url 'student:view_result' %}";
+    //             },
+    //             error: function(xhr, status, error) {
+    //                 console.error("Error:", error);
+    //             }
+    //         });
+    //     }
+    // });
+    $(document).ready(function() {
+            $('#submit').on('click', function (e) {
+                e.preventDefault();
+
+                // Clear timer interval and local storage
+                clearInterval(timerInterval);
+                localStorage.removeItem('remainingTime');
+                
+                // Serialize form data
+                var formData = table.$('input, select').serializeArray();
+                var quizData = {};
+
+                $.each(formData, function(_, field) {
+                    quizData[field.name] = field.value;
+                });
+
+                var jsonData = JSON.stringify(quizData);
+
+                $.ajax({
+                    type: "POST",
+                    url: "/student/calculate_marks",
+                    data: jsonData,
+                    contentType: "application/json",
+                    success: function(response) {
+                        alert("Quiz submitted successfully!");
+                        window.location.href = "{% url 'student:view_result' %}";
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error:", error);
+                    }
+                });
             });
-        }
-    });
+        });
 });
 
 
@@ -743,8 +777,8 @@ function submitQuizinactive(inactiveCount) {
 //     window.location.href = "{% url 'student:view_result' %}";
 // }
 
-var isTabActive;
-var inactiveCount = parseInt(localStorage.getItem("inactiveCount")) || 0; // Retrieve count from localStorage or set to -1 if not present
+var isTabActive = true; // Initialize the variable
+var inactiveCount = parseInt(localStorage.getItem("inactiveCount")) || 0; // Retrieve count from localStorage or set to 0 if not present
 
 window.onfocus = function () { 
   isTabActive = true; 
@@ -755,26 +789,61 @@ window.onblur = function () {
   inactiveCount++; 
   localStorage.setItem("inactiveCount", inactiveCount); // Store the updated count in localStorage
   document.getElementById("inactiveCount").innerText = inactiveCount; 
-  if (inactiveCount >= {{num_attemps}}) {
+  if (inactiveCount >= {{ num_attemps }}) {
     // Perform action when count exceeds the threshold
     submitQuizinactive(inactiveCount);
-    localStorage.clear
+    localStorage.clear(); // Clear localStorage correctly
     window.location.reload();
   }
-  
 }; 
 
 setInterval(function () { 
-
-  if (isTabActive && inactiveCount >= {{num_attemps}}) {
+  if (isTabActive && inactiveCount >= {{ num_attemps }}) {
     submitQuizinactive(inactiveCount); 
-    localStorage.clear
+    localStorage.clear(); // Clear localStorage correctly
     window.location.reload();
   } 
-}, 
+}, 100);
+
+function submitQuizinactive(inactiveCount) {
+  // Define your function to handle the inactive count reaching the threshold
+  console.log(`Quiz submitted due to inactivity: ${inactiveCount} times`);
+  // Add your submission logic here
+}
 
 
-500);
+// var isTabActive;
+// var inactiveCount = parseInt(localStorage.getItem("inactiveCount")) || 0; // Retrieve count from localStorage or set to -1 if not present
+
+// window.onfocus = function () { 
+//   isTabActive = true; 
+// }; 
+
+// window.onblur = function () { 
+//   isTabActive = false; 
+//   inactiveCount++; 
+//   localStorage.setItem("inactiveCount", inactiveCount); // Store the updated count in localStorage
+//   document.getElementById("inactiveCount").innerText = inactiveCount; 
+//   if (inactiveCount >= {{num_attemps}}) {
+//     // Perform action when count exceeds the threshold
+//     submitQuizinactive(inactiveCount);
+//     localStorage.clear
+//     window.location.reload();
+//   }
+  
+// }; 
+
+// setInterval(function () { 
+
+//   if (isTabActive && inactiveCount >= {{num_attemps}}) {
+//     submitQuizinactive(inactiveCount); 
+//     localStorage.clear
+//     window.location.reload();
+//   } 
+// }, 
+
+
+// 1000);
 
 
 // real inactive codes
@@ -1106,7 +1175,7 @@ submitButton.addEventListener('click', function() {
 
     // Set interval to update pagination boxes every second
     // setInterval(updatePagination, 1000);
-    setInterval(updatePagination, 2000);
+    setInterval(updatePagination, 200);
 
     
 });

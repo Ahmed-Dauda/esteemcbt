@@ -450,7 +450,7 @@ def take_exams_view(request):
         school = user_newuser.school
         course_pay = user_newuser.school.course_pay
         course_names = Course.objects.filter(course_pay=course_pay)
-        print("course_names:", course_names)
+        # print("course_names:", course_names)
     else:
         school_name = "Default School Name"
         student_class = "Default Class"    
@@ -631,7 +631,24 @@ def permission_denied_view(request, exception):
 def start_exams_view(request, pk):
     course = Course.objects.get(id=pk)
     num_attemps = course.num_attemps
-    print("attemp", course.num_attemps)
+
+    user_newuser = get_object_or_404(NewUser, email=request.user)
+    if user_newuser is not None:
+        school_name = user_newuser.school.school_name
+        students_class = user_newuser.student_class
+        print("student class:", students_class )
+        school_name = school_name
+        # Fetch the courses associated with the user's school
+        school = user_newuser.school
+        course_pay = user_newuser.school.course_pay
+        course_names = Course.objects.filter(course_pay=course_pay)
+        # print("course_names:", course_names)
+    else:
+        school_name = "Default School Name"
+        student_class = "Default Class"    
+        print("school_name:", school_name )
+    
+    # print("attemp", course.course_name)
     student = request.user.profile
     # Check if the result exists
     result_exists = Result.objects.filter(student=student, exam=course).exists()
@@ -648,14 +665,21 @@ def start_exams_view(request, pk):
     total_questions = all_questions.count()
     
     # If there are enough questions, select a random subset
+    # if total_questions >= show_questions:
+    #     # Randomly select indices for the questions
+    #     random_indices = random.sample(range(total_questions), show_questions)
+    #     # Filter questions based on the random indices
+    #     questions = [all_questions[index] for index in random_indices]
+    # else:
+    #     # If there are not enough questions, display all questions
+    #     questions = all_questions
     if total_questions >= show_questions:
-        # Randomly select indices for the questions
-        random_indices = random.sample(range(total_questions), show_questions)
-        # Filter questions based on the random indices
-        questions = [all_questions[index] for index in random_indices]
+        questions = random.sample(list(all_questions), show_questions)
     else:
-        # If there are not enough questions, display all questions
-        questions = all_questions
+        questions = list(all_questions)
+
+    # Order the selected questions by their primary key for stable pagination
+    questions.sort(key=lambda q: q.id)
 
     # Shuffle the list of selected questions
     # random.shuffle(questions)
@@ -680,6 +704,7 @@ def start_exams_view(request, pk):
 
     context = {
         'course': course,
+        'student_class':students_class,
         'num_attemps':num_attemps,
         'questions': questions,
         'q_count': q_count,
