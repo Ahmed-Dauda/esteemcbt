@@ -32,21 +32,38 @@ from allauth.account import app_settings
 
 
 from django.http import HttpResponse
-
 from django.shortcuts import render, redirect
-
+from django.contrib import messages
+from django.http import JsonResponse
 
 def SchoolStudentView(request):
     if request.method == 'POST':
-
         form = SchoolStudentSignupForm(request.POST)
         if form.is_valid():
             form.save(request)
-            return redirect('sms:myprofile')  # Redirect to a success page
+            messages.success(request, 'Student registered successfully!')
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'message': 'Form submitted successfully!'})
+            return redirect('users:schoolstudentview')  # Redirect to the same page
     else:
         form = SchoolStudentSignupForm()
 
     return render(request, 'users/school_student.html', {'form': form})
+
+
+# def SchoolStudentView(request):
+#     if request.method == 'POST':
+
+#         form = SchoolStudentSignupForm(request.POST)
+#         if form.is_valid():
+#             form.save(request)
+#             return redirect('users:schoolstudentview')  # Redirect to a success page
+#     else:
+#         form = SchoolStudentSignupForm()
+
+#     return render(request, 'users/school_student.html', {'form': form})
+
+
 
 from django.views.generic.edit import CreateView
 from .forms import SchoolSignupForm  # Import your form
