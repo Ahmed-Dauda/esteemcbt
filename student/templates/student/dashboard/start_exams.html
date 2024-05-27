@@ -130,7 +130,7 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js">
 
 
  <!-- quiz timer  -->
- <div class='sticky-top' style="position: fixed; top: 70px; width: 100%; z-index: 1000;">
+ <!-- <div class='sticky-top' style="position: fixed; top: 0px; width: 100%; z-index: 1000;">
   <div class="row justify-content-left">
     <div class="col-mx-auto">
       <div class="alert alert-success" role="alert">
@@ -139,36 +139,50 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js">
       </div>
     </div>
   </div>
-</div>
- <!-- <div class='sticky-top' style="position: fixed; top: 70px; width: 100%; z-index: 1000;">
-  <div class="row justify-content-left">
-    <div class="col-mx-auto">
-      <div class="alert alert-success" role="alert">
-        <center><div id="timer">00:00</div></center>
-      </div>
-    </div>
-  </div>
 </div> -->
-<br> <br>
+
 <!--end quiz timer  -->
 
 
-  <div class="card">
-  <div class="card-header">
-   
-<hr>
+<div class="card">
+<div class="card-header">
 
 <form id="quizf" action="/student/calculate_marks" onsubmit="return saveAns()" enctype="multipart/form-data"  method="POST">
-  {% csrf_token %}
-  <!-- <span style="padding: 5px 10px;font-size: 30px;" onclick="goBack()" class="bi bi-arrow-left "></span> -->
-
-  <input type="hidden" name="csrfmiddlewaretoken" value="C24rUotmdHawVQJL3KrqiWxvti8UffOFYUc8TRbZtLt36AVLdP3jbkzUVe3beRAa">
-    <h4>{{course.course_name}} Quiz</h4>
-    <h5>Number of Questions in the Quiz: {{q_count}}</h5>
-    <!-- <hr>
-    <p>pages {{page_obj}}</p> -->
-    
-    <hr>
+    {% csrf_token %}
+    <!-- <span style="padding: 5px 10px;font-size: 30px;" onclick="goBack()" class="bi bi-arrow-left "></span> -->
+  
+    <input type="hidden" name="csrfmiddlewaretoken" value="C24rUotmdHawVQJL3KrqiWxvti8UffOFYUc8TRbZtLt36AVLdP3jbkzUVe3beRAa">
+     <!-- quiz timer  -->
+     <div class='sticky-top' style="position: fixed; top: 0px; width: 100%; z-index: 1000;">
+      <div class="row justify-content-left">
+          <div class="col-mx-auto">
+              <div class="alert alert-success" role="alert" style="padding-bottom: 1px; display: flex; flex-wrap: wrap;">
+                  <div style="width: 33.33%; padding: 10px;">
+          <!-- <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;"
+          src="{{ course.room_name }}" width="350px">
+          </iframe> -->
+          <div style="position: relative;">
+            <p style="position: absolute;background-color: black; top: -7px; left: 0; z-index: 0.5;">Focus on camera</p>
+            <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;" src="{{ course.room_name }}" width="350px"></iframe>
+        </div>
+        
+                  </div>
+                  <div style="width: 33.33%; padding: 10px;">
+                      <h6 id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</h6>
+                      <center><div id="timer">00:00</div></center>
+                  </div>
+                  <div style="width: 33.33%; padding: 10px;">
+                      <h6>{{course.course_name}} Quiz</h6>
+                      <p>Number of Questions: {{q_count}}</p>
+                      <p>Student Info: {{request.user.first_name}} {{request.user.last_name}} -- {{student_class}}</p>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+  
+  <br><br>
+  
     <table id="example" class="display question-table" style="width:100%">
 
       <thead>
