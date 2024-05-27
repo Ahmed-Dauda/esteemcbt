@@ -832,39 +832,12 @@ function submitQuiz() {
             }
         }
 
-//3333 Retrieve the stored value from local storage for each question
-var allRadioButtons = document.querySelectorAll('.radio-button');
 
-allRadioButtons.forEach(function (radioButton) {
-    var questionName = radioButton.getAttribute('name');
-    var storedCheckedValue = localStorage.getItem('checked_' + questionName);
+//333 Retrieve the stored value from local storage
+// Retrieve the stored value from local storage for each question
 
-    if (storedCheckedValue !== null) {
-        if (radioButton.value === storedCheckedValue) {
-            radioButton.checked = true;
-            radioButton.nextElementSibling.textContent = radioButton.nextElementSibling.dataset.originalText;
-            radioButton.style.color = 'red';
-            radioButton.nextElementSibling.style.display = 'none'; // Hide the label initially
-        } else {
-            radioButton.nextElementSibling.textContent = radioButton.nextElementSibling.dataset.originalText;
-            radioButton.nextElementSibling.style.display = 'none'; // Show the label initially
-        }
-    }
-    
-    radioButton.addEventListener('click', function () {
-        if (radioButton.checked) {
-            radioButton.nextElementSibling.style.display = 'none'; // Hide the label when clicked
-        } else {
-            radioButton.nextElementSibling.style.display = 'none'; // Show the label when unclicked
-        }
-        
-        // Update local storage when radio button is clicked
-        var selectedValue = radioButton.value;
-        localStorage.setItem('checked_' + questionName, selectedValue);
-    });
-});
-
-// Event listener to update local storage when radio button is changed
+var storedCheckedValue = localStorage.getItem('checked');
+// Event listener to update local storage when radio button is clicked or changed
 document.addEventListener('change', function(event) {
     var target = event.target;
     if (target.matches('.radio-button')) {
@@ -874,6 +847,29 @@ document.addEventListener('change', function(event) {
         localStorage.setItem('checked_' + questionName, selectedValue);
     }
 });
+
+
+// Retrieve the stored value from local storage for each question
+
+
+var allRadioButtons = document.querySelectorAll('.radio-button');
+
+allRadioButtons.forEach(function(radioButton) {
+    var questionName = radioButton.getAttribute('name');
+    var storedCheckedValue = localStorage.getItem('checked_' + questionName);
+
+    if (storedCheckedValue !== null) {
+        if (radioButton.value === storedCheckedValue) {
+            radioButton.checked = true;
+            radioButton.nextElementSibling.textContent = radioButton.nextElementSibling.dataset.origialText;
+            radioButton.style.color = 'red';
+        } else {
+            radioButton.nextElementSibling.textContent = radioButton.nextElementSibling.dataset.origialText;
+           
+        }
+    }
+});
+
       // Event listener to clear local storage when submit button is clicked
 var submitButton = document.getElementById('submit');
 submitButton.addEventListener('click', function() {
