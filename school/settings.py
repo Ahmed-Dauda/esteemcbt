@@ -407,6 +407,10 @@ TINYMCE_DEFAULT_CONFIG = {
     
 }
 
+# myproject/settings.py
+
+
+
 # TINYMCE_DEFAULT_CONFIG = {
 #     'height': 360,
 #     'width': 700,

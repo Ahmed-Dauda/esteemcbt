@@ -22,12 +22,11 @@ urlpatterns = [
   
     # path('process', views.process,name='process'),
     # new url subject_view_result
-    path('subject-take-exams', views.subject_take_exams,name='subject-take-exams'),
+   
     path('take-exam', views.take_exams_view,name='take-exam'),
     path('start-exam/<pk>/', views.start_exams_view,name='start-exam'),
     # path('subject-start-exams/<pk>/', views.subject_start_exams,name='subject-start-exams'),
     path('calculate_marks', views.calculate_marks_view,name='calculate_marks'),
-    path('subject_calculate_marks', views.subject_calculate_marks,name='subject_calculate_marks'),
     path('view_result', views.view_result_view,name='view_result'),
     path('exam_warning', views.exam_warning_view,name='exam_warning'),
     # path('subject_view_result', views.subject_view_result,name='subject_view_result'),

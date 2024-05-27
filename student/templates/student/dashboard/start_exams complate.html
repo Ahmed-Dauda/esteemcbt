@@ -1,19 +1,16 @@
 
-{% extends 'sms/dashboard/base.html' %}
+{% extends 'sms/dashboard/startexambase.html' %}
 
 
 {% load hitcount_tags %}
 {% load cloudinary %}
+
 {% load embed_video_tags %}
 {% block title %} Courses list view page {% endblock %}
 
-{% block content %} 
-<!-- <script type="text/javascript" id="MathJax-script" async
-src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js">
-</script> -->
-      <!-- mathjax -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>   
-    
+
+{% block content %}   
+
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.1/css/dataTables.dataTables.css">
     <!-- Include necessary libraries (jQuery and DataTables) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -22,48 +19,37 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js">
     <!-- prism.css and prism.js -->
     <link rel="stylesheet" type="text/css" href="/static/sms/prism.css">
     <script src="/static/sms/prism.js"> </script>
-    
-
-     <!-- bootsrap back arrow-->
-     <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">     -->
-      <!-- bootstrap link -->
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
       
-  
+      <!-- mathjax -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+      <script type="text/x-mathjax-config">
+          MathJax.Hub.Config({
+              tex2jax: {
+                  inlineMath: [['$', '$'], ['\\(', '\\)']],
+                  displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                  processEscapes: true
+              }
+          });
+      </script>
+      <style>
+          body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+          }
+          #rendered {
+              padding: 10px;
+              border: 1px solid #ddd;
+              margin-top: 10px;
+          }
+      </style>
 
 <style>
-    div.quiz p {
-  text-align: left;
-
-}
-
-    .quiz p {
-  text-align: left;
-}
-.quiz {
-  width: 100%;
-  display: flex;
-  border: 1px solid #ccc;
-}
-
-.quiz > * {
-  margin: 10px;
-  overflow-x: hidden;
-}
-
-.quiz input[type="radio"] {
-  transform: scale(1.5);
-  margin-right: 10px;
-}
-
-.quiz p {
-  text-align: left; /* Align paragraph text to the left */
-}
-
   
 .quiz {
   width: 100%;
   display: flex;
+  cursor: pointer;
   border: 1px solid #ccc; /* Add border to the .quiz container */
  
 }
@@ -76,8 +62,9 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js">
 
 .quiz input[type="radio"] {
     transform: scale(1.5); /* Increase the size by adjusting the scale value */
-    margin-right: 10px; /* Add some spacing between the radio input and label */
-    /* margin-top: -2px; */ 
+    margin-right: 5px; /* Add some spacing between the radio input and label */
+    /* margin-top: -2px; */
+   
 }
 
 .custom-container {
@@ -114,61 +101,91 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js">
       /* background-color: #00ff00; */
       background-color: rgb(211, 247, 211);
   }
+
+  .radio-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.radio-label {
+    flex: 1;
+    margin-left: 2px; /* Adjust as needed */
+}
+
+
   </style>   
 
-
-
  
-  <!-- <script>
+  <script>
   function goBack() {
     window.history.back();
   }
  
-  </script> -->
+  </script>
 
  <!-- <h1>{{quiz_end_time}}</h1>  -->
 
 
- <!-- quiz timer  -->
- <div class='sticky-top' style="position: fixed; top: 70px; width: 100%; z-index: 1000;">
-  <div class="row justify-content-left">
-    <div class="col-mx-auto">
-      <div class="alert alert-success" role="alert">
-        <h6 id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</h6>
-        <center><div id="timer">00:00</div></center>
-      </div>
-    </div>
-  </div>
-</div>
- <!-- <div class='sticky-top' style="position: fixed; top: 70px; width: 100%; z-index: 1000;">
-  <div class="row justify-content-left">
-    <div class="col-mx-auto">
-      <div class="alert alert-success" role="alert">
-        <center><div id="timer">00:00</div></center>
-      </div>
-    </div>
-  </div>
-</div> -->
-<br> <br>
+
+
+ <!-- Script to Access Camera -->
+ <!-- <script>
+     navigator.mediaDevices.getUserMedia({ video: true })
+         .then(function(stream) {
+             var video = document.getElementById('cameraFeed');
+             video.srcObject = stream;
+         })
+         .catch(function(error) {
+             console.error('Error accessing camera:', error);
+         });
+ </script> -->
+
 <!--end quiz timer  -->
+<!-- In the body of your HTML template -->
+
 
 
   <div class="card">
   <div class="card-header">
    
-<hr>
-
 <form id="quizf" action="/student/calculate_marks" onsubmit="return saveAns()" enctype="multipart/form-data"  method="POST">
   {% csrf_token %}
   <!-- <span style="padding: 5px 10px;font-size: 30px;" onclick="goBack()" class="bi bi-arrow-left "></span> -->
 
   <input type="hidden" name="csrfmiddlewaretoken" value="C24rUotmdHawVQJL3KrqiWxvti8UffOFYUc8TRbZtLt36AVLdP3jbkzUVe3beRAa">
-    <h4>{{course.course_name}} Quiz</h4>
-    <h5>Number of Questions in the Quiz: {{q_count}}</h5>
-    <!-- <hr>
-    <p>pages {{page_obj}}</p> -->
-    
-    <hr>
+   <!-- quiz timer  -->
+   <div class='sticky-top' style="position: fixed; top: 0px; width: 100%; z-index: 1000;">
+    <div class="row justify-content-left">
+        <div class="col-mx-auto">
+            <div class="alert alert-success" role="alert" style="padding-bottom: 1px; display: flex; flex-wrap: wrap;">
+                <div style="width: 33.33%; padding: 10px;">
+        <!-- <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;"
+        src="{{ course.room_name }}" width="350px">
+        </iframe> -->
+        <div style="position: relative;">
+          <p style="position: absolute;background-color: black; top: -7px; left: 0; z-index: 0.5;">Focus on camera</p>
+          <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;" src="{{ course.room_name }}" width="350px"></iframe>
+      </div>
+      
+                </div>
+                <div style="width: 33.33%; padding: 10px;">
+                    <h6 id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</h6>
+                    <center><div id="timer">00:00</div></center>
+                </div>
+                <div style="width: 33.33%; padding: 10px;">
+                    <h6>{{course.course_name}} Quiz</h6>
+                    <p>Number of Questions: {{q_count}}</p>
+                    <p>Student Info: {{request.user.first_name}} {{request.user.last_name}} -- {{student_class}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<br><br>
+
+
     <table id="example" class="display question-table" style="width:100%">
 
       <thead>
@@ -179,76 +196,74 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js">
       <tbody>
     
         {% for q in  page_obj %}
-        <tr>
-            <td colspan="4">
-            {% if q.img_quiz.url %}
-              <div  class="text-center" ><img src="{{q.img_quiz.url}}"  width="40%" height="250px" alt=""> </div><br>
-              {% endif %}
-          
+          <tr>
+              <td colspan="4">
               {% if q.img_quiz.url %}
-              <label style="font-size: 18px; text-align: center; display: block;">
-              {{ q.question|safe }}
-            </label>
+                <div  class="text-center" ><img src="{{q.img_quiz.url}}"  width="40%" height="250px" alt=""> </div><br>
+                {% endif %}
             
-              {% else %}
-              <label style="font-size: 18px;">
+                {% if q.img_quiz.url %}
+                <label style="font-size: 18px; text-align: center; display: block;">
                 {{ q.question|safe }}
               </label>
-              <!-- <p class="d-flex" style="overflow-x: auto; white-space: pre-wrap; font-size: 20px;font-family: sans-serif;" >
-                {{ q.question }}</p> -->
-               
-              {% endif %}
               
-              <h6 style="text-align: right;">[marks {{q.marks}}]</h6>
-  
-              {% if q.option1 %}
-              <div class="quiz">
-                  <div class="radio-container">
-                      <input class="radio-button" type="radio"  name="{{forloop.counter}}" id="option1" value="Option1" required>
-                      <label id="label-option1" data-original-text="{{ q.option1|safe|striptags }}" for="option1" data-label="my-label-button" class="radio-label"> </label>
-                  </div>
-                  <label>{{q.option1|safe}}</label>
-              </div>
-              {% endif %}
-              
-              {% if q.option2 %}
-              <div class="quiz">
-                  <div class="radio-container">
-                      <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option2" value="Option2" required>
-                      <label id="label-option2" data-original-text="{{ q.option2|safe|striptags }}" for="option2" data-label="my-label-button" class="radio-label"> {{q.otion2|safe|striptags}} </label>
-                  </div>
-                  <label>{{q.option2|safe}}</label>
-              </div>
-              {% endif %}
-              
-              {% if q.option3 %}
-              <div class="quiz">
-                  <div class="radio-container">
+                {% else %}
+                <label style="font-size: 18px;">
+                  {{ q.question|safe }}
+                </label>
+                <!-- <p class="d-flex" style="overflow-x: auto; white-space: pre-wrap; font-size: 20px;font-family: sans-serif;" >
+                  {{ q.question }}</p> -->
                  
-                      <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option3" value="Option3" required>
-                      <label id="label-option3" data-original-text="{{ q.option3|safe|striptags }}" for="option3" data-label="my-label-button" class="radio-label"> {{q.opton3|safe|striptags}} </label>
-                  </div>
-                  <label>{{q.option3|safe}}</label>
-              </div>
-              {% endif %}
-              
-              {% if q.option4 %}
-              <div class="quiz">
-                  <div class="radio-container">
-                  
-                      <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option4" value="Option4" required>
-                      <label id="label-option4" data-original-text="{{ q.option4|safe|striptags }}" for="option4" data-label="my-label-button" class="radio-label"> {{q.optin4|safe|striptags}} </label>
-                  </div>
-                  <label>{{q.option4|safe}}</label>
-              </div>
-              {% endif %}
-              
-              
-            
-            </td>
+                {% endif %}
+                
+                <h6 style="text-align: right;">[marks {{q.marks}}]</h6>
+    
+                {% if q.option1 %}
+                <div class="quiz">
+                    <div class="radio-container">
+                        <input class="radio-button" type="radio"  name="{{forloop.counter}}" id="option1" value="Option1" required>
+                        <label id="label-option1" data-original-text="{{ q.option1|safe|striptags }}" for="option1" data-label="my-label-button" class="radio-label"> </label>
+                    </div>
+                    <label>{{q.option1|safe}}</label>
+                </div>
+                {% endif %}
+                
+                {% if q.option2 %}
+                <div class="quiz">
+                    <div class="radio-container">
+                        <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option2" value="Option2" required>
+                        <label id="label-option2" data-original-text="{{ q.option2|safe|striptags }}" for="option2" data-label="my-label-button" class="radio-label"> {{q.otion2|safe|striptags}} </label>
+                    </div>
+                    <label>{{q.option2|safe}}</label>
+                </div>
+                {% endif %}
+                
+                {% if q.option3 %}
+                <div class="quiz">
+                    <div class="radio-container">
+                   
+                        <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option3" value="Option3" required>
+                        <label id="label-option3" data-original-text="{{ q.option3|safe|striptags }}" for="option3" data-label="my-label-button" class="radio-label"> {{q.opton3|safe|striptags}} </label>
+                    </div>
+                    <label>{{q.option3|safe}}</label>
+                </div>
+                {% endif %}
+                
+                {% if q.option4 %}
+                <div class="quiz">
+                    <div class="radio-container">
+                    
+                        <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option4" value="Option4" required>
+                        <label id="label-option4" data-original-text="{{ q.option4|safe|striptags }}" for="option4" data-label="my-label-button" class="radio-label"> {{q.optin4|safe|striptags}} </label>
+                    </div>
+                    <label>{{q.option4|safe}}</label>
+                </div>
+                {% endif %}
+                
+              </td>
 
-        </tr>
-        {% endfor %}
+          </tr>
+          {% endfor %}
         
       </tbody>
     
@@ -257,9 +272,7 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js">
    
 </form> 
 
-<!-- <div style="display: flex; justify-content: space-between;">
-  <button id="qui" onclick="disp()" class="btn btn-primary" type="submit">Submit</button>
-</div> -->
+
 <button id="submit" type="submit" >Submit Quiz</button>
 
 <div class="progress mt-4">
@@ -271,148 +284,35 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js">
 </div>
 </div>
 
-<br><br>
-
 
 <!-- new js -->
 <script> 
 
-$.fn.dataTable.ext.errMode = 'none';
+  $.fn.dataTable.ext.errMode = 'none';
 
-var table = $('#example').DataTable({
-    pageLength: 1,
-    order: [[3, 'desc']],
-    lengthChange: false, 
-    sDom: 'lrtip',
-    "ordering": false,
-   
-    dom: '<"top"fi>rt<"bottom"lp><"clear">',
-    columnDefs: [
-        {
-            orderable: false,
-            targets: [1, 2, 3]
-        }
-    ]
-
-    
-});
-
+  var table = $('#example').DataTable({
+      pageLength: 1,
+      order: [[3, 'desc']],
+      lengthChange: false, 
+      sDom: 'lrtip',
+      stateSave: true,
+      "ordering": false,
+     
+      dom: '<"top"fi>rt<"bottom"lp><"clear">',
+      columnDefs: [
+          {
+              orderable: false,
+              targets: [1, 2, 3]
+          }
+      ]
   
-  // $(document).ready(function() {
-  //     $('#submit').on('click', function (e) {
-  //         // Show a confirmation dialog
-  //         var confirmation = confirm("Are you sure you want to submit the quiz?");
-          
-  //         // If the user confirms, proceed with the submission
-  //         if (confirmation) {
-            
-  //             // Prevent the default form submission behavior
-  //             e.preventDefault();
-  //             // Serialize the input and select elements
-  //               // Gather form data
-  //   var formData = table.$('input, select').serialize(); // Serialize the form data within the table
-  //   var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
-  //   var pageInfo = table.page.info();
-  //   // Extract the total number of pages
-  //   var totalPages = pageInfo.pages;
+      
+  });
 
-  //   // Process each key-value pair
-  //   var quizData = {};
-  //   for (var i = 0; i < dataArray.length; i++) {
-  //       var keyValue = dataArray[i].split('=');
-  //       var questionIndex = parseInt(keyValue[0]);
-  //       var answer = keyValue[1];
-  //       quizData[questionIndex] = answer;
-  //   }
-
-  //   // Convert data to JSON
-  //   var jsonData = JSON.stringify(quizData);
-
-  //   console.log("jsonData", jsonData);
-  //             // Send the data to the calculate_marks view using AJAX
-  //             $.ajax({
-  //                 type: "POST",
-  //                 url: "/student/calculate_marks", // URL of the calculate_marks view
-  //                 data: jsonData,
-  //                 success: function(response) {
-
-  //                     // You can do further processing based on the response here
-  //                 },
-  //                 error: function(xhr, status, error) {
-  //                     // Handle error
-  //                     console.error("Error:", error);
-  //                 }
-  //             });
-  
-  //             // Or perform other actions based on your application logic
-  //             alert("Quiz submitted successfully!");
-  //             window.location.href = "{% url 'student:view_result' %}";
-  //             // alert('The following data would have been submitted to the server: \n\n' + data);
-    
-  //         }
-
-  //       });
-  //     });
-
-//   $(document).ready(function() {
-//     $('#submit').on('click', function (e) {
-//         // Show a confirmation dialog
-//         var confirmation = confirm("Are you sure you want to submit the quiz?");
-        
-//         // If the user confirms, proceed with the submission
-//         if (confirmation) {
-//             // Prevent the default form submission behavior
-//             e.preventDefault();
-
-//             // Serialize the input and select elements
-//             // Gather form data
-//             var formData = table.$('input, select').serialize(); // Serialize the form data within the table
-//             var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
-//             var pageInfo = table.page.info();
-//             // Extract the total number of pages
-//             var totalPages = pageInfo.pages;
-
-//             // Process each key-value pair
-//             var quizData = {};
-//             for (var i = 0; i < dataArray.length; i++) {
-//                 var keyValue = dataArray[i].split('=');
-//                 var questionIndex = parseInt(keyValue[0]);
-//                 var answer = keyValue[1];
-//                 quizData[questionIndex] = answer;
-//             }
-
-//             // Convert data to JSON
-//             var jsonData = JSON.stringify(quizData);
-
-//             // Send the data to the calculate_marks view using AJAX
-//             $.ajax({
-//                 type: "POST",
-//                 url: "/student/calculate_marks", // URL of the calculate_marks view
-//                 data: jsonData,
-//                 success: function(response) {
-//                     // Clear the timer local storage
-//                     localStorage.removeItem('remainingTime');
-//                     // You can do further processing based on the response here
-//                 },
-//                 error: function(xhr, status, error) {
-//                     // Handle error
-//                     console.error("Error:", error);
-//                 }
-//             });
-
-//             // Or perform other actions based on your application logic
-//             alert("Quiz submitted successfully!");
-//             window.location.href = "{% url 'student:view_result' %}";
-//             // alert('The following data would have been submitted to the server: \n\n' + data);
-//         }
-//     });
-// });
 
   </script>
 
 
-
-<!-- end of new js -->
     <!-- end of quiz timer --> 
 
     <script>
@@ -458,6 +358,7 @@ $(document).ready(function() {
 
     // Call the updateTimer function
     updateTimer({{ course.duration_minutes }});
+
 
     // Event handler for manual submit button click
     $('#submit').on('click', function (e) {
@@ -552,50 +453,15 @@ document.addEventListener('DOMContentLoaded', function() {
     updateTimer({{ course.duration_minutes }}, timerElement); // Pass timerElement
 });
 
-        // function updateTimer(time) {
-        //   if (time.toString().length < 2) {
-        //     timerElement.innerHTML = `<b>0${time}:00</b>`;
-        //   } else {
-        //     timerElement.innerHTML = `<b>${time}:00</b>`;
-        //   }
-    
-        //   let minutes = time;
-        //   let seconds = 0;
-        //   let displaySeconds;
-        //   let displayMinutes;
-       
-        //   const timer = setInterval(() => {
-        //     seconds--;
-        //     if (seconds < 0) {
-        //       seconds = 59;
-        //       minutes--;
-        //     }
-            
-    
-        //     if (minutes.toString().length < 2) {
-        //       displayMinutes = '0' + minutes;
-        //     } else {
-        //       displayMinutes = minutes;
-        //     }
-        //     if (seconds.toString().length < 2) {
-        //       displaySeconds = '0' + seconds;
-        //     } else {
-        //       displaySeconds = seconds;
-        //     }
-        //     if (minutes <= 0 && seconds <= 0) {
-        //       clearInterval(timer);
-        //       submitQuiz(); // Call the function to submit the quiz when time is over
-        //     }
-    
-        //     timerElement.innerHTML = `<b>Time Left: ${displayMinutes}:${displaySeconds}</b>`;
-        //   }, 1000);
-        // }
 
-  
-function submitQuiz() {
+    function showAlert(message) {
+    alert(message);
+}
+
+function submitQuiz(inactiveCount) {
     // Clear local storage
     localStorage.clear();
- 
+    window.location.reload();
     // Gather form data
     var formData = table.$('input, select').serialize(); // Serialize the form data within the table
     var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
@@ -629,10 +495,88 @@ function submitQuiz() {
             console.error("Error:", error);
         }
     });
-
-    alert("Quiz submitted automatically due to time expiration!");
+    
+    showAlert("Quiz submitted automatically due to time expiration!");
     window.location.href = "{% url 'student:view_result' %}";
 }
+
+
+// function submitQuizinactive(inactiveCount) {
+//     // Clear local storage
+//     localStorage.clear();
+//     window.location.reload();
+//     // Gather form data
+//     var formData = table.$('input, select').serialize(); // Serialize the form data within the table
+//     var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
+//     var pageInfo = table.page.info();
+//     // Extract the total number of pages
+//     var totalPages = pageInfo.pages;
+
+//     // Process each key-value pair
+//     var quizData = {};
+//     for (var i = 0; i < dataArray.length; i++) {
+//         var keyValue = dataArray[i].split('=');
+//         var questionIndex = parseInt(keyValue[0]);
+//         var answer = keyValue[1];
+//         quizData[questionIndex] = answer;
+//     }
+
+//     // Convert data to JSON
+//     var jsonData = JSON.stringify(quizData);
+//     console.log("jsonData", jsonData);
+//     // Send the data to the calculate_marks view using AJAX
+//     $.ajax({
+//         type: "POST",
+//         url: "/student/calculate_marks", // URL of the calculate_marks view
+//         contentType: "application/json",
+//         data: jsonData,
+//         success: function(response) {
+//             // You can do further processing based on the response here
+//         },
+//         error: function(xhr, status, error) {
+//             // Handle error
+//             console.error("Error:", error);
+//         }
+//     });
+    
+//     // showAlert("Quiz submitted automatically due to " + inactiveCount + " attemp of malpractice!");
+//     window.location.href = "{% url 'student:view_result' %}";
+// }
+
+
+var isTabActive = true; // Initialize the variable
+var inactiveCount = parseInt(localStorage.getItem("inactiveCount")) || 0; // Retrieve count from localStorage or set to 0 if not present
+
+window.onfocus = function () { 
+  isTabActive = true; 
+}; 
+
+window.onblur = function () { 
+  isTabActive = false; 
+  inactiveCount++; 
+  localStorage.setItem("inactiveCount", inactiveCount); // Store the updated count in localStorage
+  document.getElementById("inactiveCount").innerText = inactiveCount; 
+  if (inactiveCount >= {{ num_attemps }}) {
+    // Perform action when count exceeds the threshold
+    submitQuiz(inactiveCount);
+    localStorage.clear(); // Clear localStorage correctly
+    window.location.reload();
+  }
+}; 
+
+setInterval(function () { 
+  if (isTabActive && inactiveCount >= {{ num_attemps }}) {
+    submitQuiz(inactiveCount); 
+    localStorage.clear(); // Clear localStorage correctly
+    window.location.reload();
+  } 
+}, 1000);
+
+// function submitQuiz(inactiveCount) {
+//   // Define your function to handle the inactive count reaching the threshold
+//   console.log(`Quiz submitted due to inactivity: ${inactiveCount} times`);
+//   // Add your submission logic here
+// }
 
         //  test 
     function updateTimer(time) {
@@ -681,93 +625,6 @@ function submitQuiz() {
     </script>
     
 
-     <!-- <script>
-
-      document.addEventListener('DOMContentLoaded', function() {
-        var endTime = new Date("{{ quiz_end_time|date:"Y-m-d\TH:i:s" }}").getTime();
-        var timerElement = document.getElementById('timer');
-        var quizForm = document.getElementById('quizf');
-        
-        function updateTimer(time) {
-          if (time.toString().length < 2) {
-            timerElement.innerHTML = `<b>0${time}:00</b>`;
-          } else {
-            timerElement.innerHTML = `<b>${time}:00</b>`;
-          }
-    
-          let minutes = time;
-          let seconds = 0;
-          let displaySeconds;
-          let displayMinutes;
-       
-          const timer = setInterval(() => {
-            seconds--;
-            if (seconds < 0) {
-              seconds = 59;
-              minutes--;
-            }
-            
-    
-            if (minutes.toString().length < 2) {
-              displayMinutes = '0' + minutes;
-            } else {
-              displayMinutes = minutes;
-            }
-            if (seconds.toString().length < 2) {
-              displaySeconds = '0' + seconds;
-            } else {
-              displaySeconds = seconds;
-            }
-            if (minutes === 0 && seconds === 0) {
-              clearInterval(timer);
-          
-              
-
-            }
-
-            timerElement.innerHTML = `<b>Time Left: ${displayMinutes}:${displaySeconds}</b>`;
-          }, 1000);
-        }
-
-        updateTimer({{ course.duration_minutes }});
-      
-      });
-    </script> -->
-
-    
-    <!--end quiz timer  -->
-
-
-<!-- end of pagination -->
-      <!-- <script> 
-
-          function saveAns(){  
-              var ele = document.getElementsByTagName('input');
-              for(i = 0; i < ele.length; i++) { 
-                  if(ele[i].type="radio") { 
-                      if(ele[i].checked){       
-                        setCookie(ele[i].name,ele[i].value,3)
-                      }
-                  } 
-              } 
-                
-          }
-          
-        function setCookie(cname, cvalue, exdays) {
-        var d = new Date();
-        d.setTime(d.getTime() + (exdays*24*60*60*1000));
-        var expires = "expires="+ d.toUTCString();
-        document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
-      }
-    </script> 
-  -->
-
-<script>
-    function disp(){
-    alert('Note: You must answer all question before you will be able to submit')
-    } 
-</script>
-
 <script>
 
 
@@ -804,7 +661,7 @@ function submitQuiz() {
             $('.progress-bar').css('width', progress + '%').attr('aria-valuenow', progress).text(progress + '% Complete');  
             
             // test 
-            for (var j = 0; j < dataArray.length; j++) {
+          for (var j = 0; j < dataArray.length; j++) {
           var keyValue = dataArray[j].split('=');
 
           if (parseInt(keyValue[0]) === i) {      
@@ -819,6 +676,7 @@ function submitQuiz() {
                       radioButtons.forEach(function(rb) {
                         // Restore original label text for all radio buttons
                         radioButton.labels[0].textContent  = rb.dataset.originalText;
+                        
                 
                     });
                   
@@ -831,6 +689,7 @@ function submitQuiz() {
                 break; // exit the loop after finding a match
             }
         }
+
 
 //3333 Retrieve the stored value from local storage for each question
 var allRadioButtons = document.querySelectorAll('.radio-button');
@@ -874,11 +733,15 @@ document.addEventListener('change', function(event) {
         localStorage.setItem('checked_' + questionName, selectedValue);
     }
 });
-      // Event listener to clear local storage when submit button is clicked
+
+
+// Event listener to clear local storage when submit button is clicked
 var submitButton = document.getElementById('submit');
 submitButton.addEventListener('click', function() {
     localStorage.clear();
+    window.location.reload();
 });
+
           // test
 
             // Set the content of the pagination box
@@ -898,40 +761,45 @@ submitButton.addEventListener('click', function() {
     // Call the updatePagination function initially
     updatePagination();
 
-    // Set interval to update pagination boxes every second
     // setInterval(updatePagination, 1000);
-    setInterval(updatePagination, 1000);
-
-    
+    setInterval(updatePagination, 700);
+ 
 });
-
-
-// inactive js
-var isTabActive = true; // Initialize the variable
-var inactiveCount = parseInt(localStorage.getItem("inactiveCount")) || 0; // Retrieve count from localStorage or set to 0 if not present
-
-window.onfocus = function () { 
-  isTabActive = true; 
-}; 
-
-window.onblur = function () { 
-  isTabActive = false; 
-  inactiveCount++; 
-  localStorage.setItem("inactiveCount", inactiveCount); // Store the updated count in localStorage
-  document.getElementById("inactiveCount").innerText = inactiveCount; 
-  if (inactiveCount >= {{ num_attemps }}) {
-    // Perform action when count exceeds the threshold
-    submitQuiz(inactiveCount);
-    window.location.reload();
-  }
-}; 
-
 
   </script>
 
-
-
+<script>
+    // Disable right-clicking
+    document.addEventListener('contextmenu', function(event) {
+        event.preventDefault();
+    });
+  
+    // Disable keyboard shortcuts (Ctrl+C, Ctrl+V)
+    document.addEventListener('keydown', function(event) {
+        // Check if Ctrl key is pressed along with C or V
+        if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'C' || event.key === 'v' || event.key === 'V')) {
+            event.preventDefault();
+        }
+    });
+  
+  </script>
+  
+  
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+      // Get the element with id "timer"
+      var timerElement = document.getElementById('timer');
+      // Add a click event listener to it
+      timerElement.addEventListener('click', function() {
+          // Reload the page
+          location.reload();
+      });
+  });
+  
+  </script>
+  
 <br><br><br><br><br><br>
 
+<!-- latex -->
 
 {% endblock %} 

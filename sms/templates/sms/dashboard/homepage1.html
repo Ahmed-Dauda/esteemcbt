@@ -370,12 +370,6 @@ body {
 
 }
 
-/* partners css ending  */
-
-
-/* Testmony css  */
-
-
   
 /* Testmony css ending  */
 
@@ -730,7 +724,6 @@ p {
 
 /* video on mobile view */
 
-
 /* Media query for small screens */
 @media only screen and (max-width: 768px) {
   .carousel-inner .carousel-item {
@@ -770,11 +763,7 @@ p {
 
 }
 
-
 </style>
-
-
-
 
 <!-- courasel image -->
 <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
@@ -802,22 +791,6 @@ p {
     {% endfor %}
   </div>
   
-
-  <!-- <div class="carousel-inner">
-    {% for obj in carousel_images %}
-      {% if forloop.first %}
-        <div class="carousel-item active">
-      {% else %}
-        <div class="carousel-item">
-      {% endif %}
-      <img class=" mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 520px;" > 
-      <div class="carousel-caption d-none d-md-block">
-        <h5>{{ obj.caption }}</h5>
-      </div>
-      </div>
-    {% endfor %}
-  </div> -->
-
   
   <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -829,70 +802,6 @@ p {
   </a>
 </div>
 
-<!-- <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
-  <ol class="carousel-indicators">
-    {% for obj in carousel_images %}
-      {% if forloop.first %}
-        <li data-target="#carouselExampleIndicators" data-slide-to="{{forloop.counter0}}" class="active"></li>
-      {% else %}
-        <li data-target="#carouselExampleIndicators" data-slide-to="{{forloop.counter0}}"></li>
-      {% endif %}
-    {% endfor %}
-  </ol>
-  <div class="carousel-inner">
-    {% for obj in carousel_images %}
-      {% if forloop.first %}
-        <div class="carousel-item active">
-      {% else %}
-        <div class="carousel-item">
-      {% endif %}
-      <img class="d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 500px;">
-      <div class="carousel-caption d-none d-md-block">
-        <h5>{{ obj.caption }}</h5>
-      </div>
-      </div>
-    {% endfor %}
-  </div>
-  <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
-    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-    <span class="sr-only">Previous</span>
-  </a>
-  <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
-    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-    <span class="sr-only">Next</span>
-  </a>
-</div> -->
-
-<!-- <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
-  <ol class="carousel-indicators">
-      {% for obj in carousel_images %}
-          {% if forloop.first %}
-              <li data-target="#carouselExampleIndicators" data-slide-to="{{forloop.counter0}}" class="active"></li>
-          {% else %}
-              <li data-target="#carouselExampleIndicators" data-slide-to="{{forloop.counter0}}"></li>
-          {% endif %}
-      {% endfor %}
-  </ol>
-  <div class="carousel-inner">
-      {% for obj in carousel_images %}
-          {% if forloop.first %}
-              <div class="carousel-item active">
-          {% else %}
-              <div class="carousel-item">
-          {% endif %}
-          <img class="d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 500px;">
-          </div>
-      {% endfor %}
-  </div>
-  <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
-      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-      <span class="sr-only">Previous</span>
-  </a>
-  <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
-      <span class="carousel-control-next-icon" aria-hidden="true"></span>
-      <span class="sr-only">Next</span>
-  </a>
-</div> -->
 
 <!-- end of courasel image -->
 
@@ -940,21 +849,14 @@ p {
       </div>
     </div>
   
-    <!-- <div id="flash-message-container">
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-success">
-            {{ message }}
-          </div>
-        {% endfor %}
-      {% endif %}
-    </div> -->
 
   </div>
 </div>
 
 <div class="container">
   <button  class="btn text-center text-white" ><a class="btn btn-primary text-center"  href=""> Chat Us</a></button>
+  <button  class="btn text-center text-white" ><a class="btn btn-primary text-center"  href="">STUDENT LOGIN</a></button>
+  <button  class="btn text-center text-white" ><a class="btn btn-primary text-center"  href="">STAFF LOGIN</a></button>
 </div>
 
 <br><br><br>
@@ -1083,499 +985,12 @@ p {
 
 
 
-
-
-<!-- end of advert video -->
-
-  <!-- partners section  -->
-  
-  <!-- <div class="card-bod" style="padding-left: 20px; background-color: rgb(240, 238, 235)">
-   <h3 class="text-center ">Our Partners and Collaborators</h3>
-
-  <section class="partners " >
- 
-   
- 
-   {% for partner in partners %}
- 
-          
-     <img src="{{partner.img_partner.url}}" width="80px" height="80px" class="img-fluid" />
-    
-     {% empty %}
-     <h1 class="card text-center text-danger">no partners available Yet. CHECK LATER</h1>
- 
-     {% endfor %}
- 
- </section>
- </div> -->
-
- <!-- partners section endign -->
- 
-<!-- page Statistics -->
-
-<!-- <div class="statistics-section">
-  <div class="container">
-    <div class="row">
-      <div class="col-md-4">
-        <div class="stat-item">
-          <div class="stat-icon">
-
-          </div>
-          <div class="stat-number">{{students}}+</div>
-          <div class="stat-label">Students Enrolled</div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="stat-item">
-          <div class="stat-icon">
-            <i class="fas fa-list"></i>
-          </div>
-          <div class="stat-number">{{category}}+</div>
-          <div class="stat-label">Categories</div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="stat-item">
-          <div class="stat-icon">
-            <i class="fas fa-book"></i>
-          </div>
-          <div class="stat-number">{{courses}}+</div>
-          <div class="stat-label">Courses Offered</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-<br> <br> <br> -->
-   <!-- <div class="card-body">
-    <h3 style="color: black;  font-weight: bold;" >We Offer {{category}} Course Categories to Suit Your needs</h3>  
-   </div>
-    
-  <div  class="container1">
-  
-    {% for category in coursecategory %}
-    <a style="height: 10px;" class="" href="{% url 'sms:courseslist' category.pk %}">
-    <div  class="left-column-cat border ">
-      
-        
-            {% if category.img_cat %}
-            <img class="rounded images" src="{{category.img_cat.url}}" width="300px" height="250px" alt="cetagory image">
-            <br>
-            
-            {% endif %}
-            <br>
-            <a style="font-size: 12px;" class="pl-3" href="{% url 'sms:courseslist' category.pk %}">{{category|safe}}</a>
-            <p class="pl-3">{% get_hit_count for category %} <i class="fas fa-eye"></i> </p>
-
-            <p class="pl-3">{{category.desc}}</p>
-        
-            <div class="text-left container">{{courses_count}}</div> 
-
-     
-    </div>
-  </a>
-    {% empty %}
-      <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
-    {% endfor %}
-  </div>
-   -->
-<!-- END CATEGORIES OF COURSES-->
-
-
-
-<!-- <br> <br>  -->
-<!-- benefits -->
-
-<!-- <div  class="card-body">
-<h3 style="color: black;  font-weight: bold;" >Benefit Associated with the Courses:</h3>
-<ul>
-  <li>100% online</li>
-  <li>Flexible deadlines</li>
-  <li>Collaborators</li>
-  <li>Jobs opportunities</li>
-  <li>Certificate of completion</li>
-  <li>Language: English</li>
-</ul>
-
-</div> -->
-
-<!-- end benefits -->
-
- <!--DIFFERENT  COURSES-->
-
-
-<!-- END BEGINNER OF COURSES-->
-
-<!-- <br> <br> <br> -->
-
- <!--INTERMEDIATE DIFFERENT  COURSES-->
-
- <!-- {% for obj in intermediate %}
- {% if forloop.last %}
- <div class="card-body">
-   <div class="">
- <h3 style="color: black; font-weight: bold;" >{{intermediate_count}} Courses for {{obj.categories.name|title}}'s  Available for You</h3>
- <a style="height: 10px;color: red class;font-size: 20px;" href="{% url 'sms:courseslist' obj.categories.pk %}">View All Courses</a>
- </div>
- </div>
- {% endif %}
-{% endfor %}
-   
- <div  class="beginner">
- 
-  {% for obj in intermediate %}
-
-
-   <a style="height: 10px;" class="" href="{% url 'sms:courseslistdesc' obj.pk %}">
-   <div  class="left-column-cat border ">
-       
-           {% if obj.img_course %}
-           <img class="rounded images" src="{{obj.img_course.url}}" width="300px" height="300px" alt="cetagory image">
-           <br>
-           
-           {% endif %}
-           <div class="pl-2">
-           <div class="d-flex rounded owner">
-             <div class="d-flex rounded owner">
-               {% if obj.course_logo.url %}
-               <img  class="rounded" src="{{ obj.course_logo.url }}" width="30px"  height="33px" alt=""> <br>
-               {% else %}
-               <img  class="rounded" src=" /static/sms/images/newlogo3.jpg" width="30px"  height="33px" alt="{{obj.desc}}"> <br>
-             {% endif %}
-     
-             {% if obj.course_owner %}
-             <small class="text-dark">{{obj.course_owner|safe}}</small>
-             {% else %}
-             <small class="text-dark">Codethinkers Academy  </small>
-             {% endif %}
- 
-             </div>
-           </div>
-         <a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">{{obj}} </a>
-         {% if obj.status_type == 'Premium' and not customer == True %}
-         <div class="d-flex">
-         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}} |  &#8358;{{obj.price|safe|floatformat:"0g"}}</p> 
-         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
-        </div>
-         {% else %}
-         <div class="d-flex">
-         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}}</p> 
-         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
-        </div>
-         {% endif %}
-         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.categories.name|safe|title}} {{ obj.intermediate_topic_count }} Modules</small> <br>
-         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.course_type|safe}}</small>
-         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " ><a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">View Course</a></small>
-       </div>
-    
-   </div>
-
- </a>
- 
-
-   {% empty %}
-     <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
-   {% endfor %}
- </div>
-  -->
- <!-- END INTERMEDIATE OF COURSES-->
- 
- <!-- <br> <br> <br> -->
-
- <!-- ADVANCED DIFFERENT  COURSES-->
-
-
- <!-- {% for obj in advanced %}
- {% if forloop.last %}
-
- <div class="card-body">
-    <div class="">
- <h3 style="color: black;  font-weight: bold;" >{{advanced_count}} Courses for {{obj.categories.name|title}}'s  Available for You</h3>
- <a style="height: 10px;color: red; font-size: 20px;" class="" href="{% url 'sms:courseslist' obj.categories.pk %}">View All Courses</a>
-    </div>
- </div>
-
- {% endif %}
- {% endfor %}
-   
-
- <div  class="beginner ">
- 
-  {% for obj in advanced %}
-
-
-   <a style="height: 10px;" class="" href="{% url 'sms:courseslistdesc' obj.pk %}">
-   <div  class="left-column-cat border ">
-       
-           {% if obj.img_course %}
-           <img class="rounded images" src="{{obj.img_course.url}}" width="300px" height="300px" alt="cetagory image">
-           <br>
-           
-           {% endif %}
-           <div class="pl-2">
-           <div class="d-flex rounded owner">
-             <div class="d-flex rounded owner">
-               {% if obj.course_logo.url %}
-               <img  class="rounded" src="{{ obj.course_logo.url }}" width="300px"  height="33px" alt=""> <br>
-               {% else %}
-               <img  class="rounded" src=" /static/sms/images/newlogo3.jpg" width="30px"  height="33px" alt="{{obj.desc}}"> <br>
-             {% endif %}
-     
-             {% if obj.course_owner %}
-             <small class="text-dark">{{obj.course_owner|safe}}</small>
-             {% else %}
-             <small class="text-dark">Codethinkers Academy </small>
-             {% endif %}
- 
-             </div>
-           </div>
-         <a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">{{obj}} </a>
-         {% if obj.status_type == 'Premium' and not customer == True %}
-         <div class="d-flex">
-         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}} |  &#8358;{{obj.price|safe|floatformat:"0g"}}</p> 
-         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
-        </div>
-         {% else %}
-         <div class="d-flex">
-         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}}</p> 
-         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
-        </div>
-         {% endif %}
-         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.categories.name|safe|title}} {{ obj.advanced_topic_count }} Modules</small> <br>
-         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.course_type|safe}}</small>
-         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " ><a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">View Course</a></small>
-       </div>
-
-   </div>
- </a>
- 
-
-   {% empty %}
-     <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
-   {% endfor %}
- </div>
-  -->
- <!-- END ADVANCED OF COURSES-->
- 
-
- <!-- <br> <br> <br> -->
-
- <!-- LATEST DIFFERENT  COURSES-->
-
-  <!-- <div style="margin-bottom: -50px;" class="card-body">
-    <h3 style="color: black;  font-weight: bold;" >{{latest_course_count}} Latest Courses on Codethinkers Academy </h3>
-
-    <p class="" >Explore our newest programs, focused on delivering in-demand skills.</p> 
-  </div>
-
-
-<br> 
-
-
- <div  class="beginner ">
- 
-   {% for obj in latest_course %}
-
-
-   <a style="height: 10px;" class=""  href="{% url 'sms:courseslistdesc' obj.pk %}">
-   <div  class="left-column-cat border ">
-           {% if obj.img_course %}
-           <img class="rounded images" src="{{obj.img_course.url}}" width="300px" height="300px" alt="cetagory image">
-           <br>
-           
-           {% endif %}
-           <div class="pl-2">
-           <div class="d-flex rounded owner">
-             <div class="d-flex rounded owner">
-               {% if obj.course_logo.url %}
-               <img  class="rounded" src="{{ obj.course_logo.url }}" width="30px"  height="33px" alt=""> <br>
-               {% else %}
-               <img  class="rounded" src=" /static/sms/images/newlogo3.jpg" width="30px"  height="33px" alt="{{obj.desc}}"> <br>
-             {% endif %}
-     
-             {% if obj.course_owner %}
-             <small class="text-dark">{{obj.course_owner|safe}}</small>
-             {% else %}
-             <small class="text-dark">Codethinkers Academy </small>
-             {% endif %}
- 
-             </div>
-           </div>
-         <a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">{{obj}} </a>
-      
-         
-         {% if obj.status_type == 'Premium' and not customer == True %}
-         <div class="d-flex">
-         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}} |  &#8358;{{obj.price|safe|floatformat:"0g"}}</p> 
-         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
-        </div>
-         {% else %}
-         <div class="d-flex">
-         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}}</p> 
-         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
-        </div>
-         {% endif %}
-         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.categories.name|safe|title}} {{ obj.latest_course_topic_count }} Modules</small> <br>
-         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.course_type|safe}}</small>
-         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " ><a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">View Course</a></small>
-       </div>
-
-   </div>
- </a>
-
-
-   {% empty %}
-     <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
-   {% endfor %}
- </div> -->
-
-  <!--END LATEST  COURSES-->
-
-
- <!-- POPULAR DIFFERENT  COURSES-->
-<!-- 
- <br> <br> <br>
-
- <div class="card-body">
-   <div class="">
- <h3 style="color: black; font-weight: bold;" >Popular Courses</h3>
- </div>
- </div>
-
- <div  class="beginner ">
-
-   {% for obj in popular_course %}
-   <a style="height: 10px;" class=""  href="{% url 'sms:courseslistdesc' obj.pk %}">
-   <div  class="left-column-cat border ">
-
-           {% if obj.img_course %}
-           <img class="rounded images" src="{{obj.img_course.url}}" width="300px" height="300px" alt="cetagory image">
-           <br>
-           
-           {% endif %}
-           <div class="pl-2">
-           <div class="d-flex rounded owner">
-             <div class="d-flex rounded owner">
-               {% if obj.course_logo.url %}
-               <img  class="rounded" src="{{ obj.course_logo.url }}" width="30px"  height="33px" alt=""> <br>
-               {% else %}
-               <img  class="rounded" src=" /static/sms/images/newlogo3.jpg" width="30px"  height="33px" alt="{{obj.desc}}"> <br>
-             {% endif %}
-     
-             {% if obj.course_owner %}
-             <small class="text-dark">{{obj.course_owner|safe}}</small>
-             {% else %}
-             <small class="text-dark">Codethinkers Academy </small>
-             {% endif %}
- 
-             </div>
-           </div>
-         <a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">{{obj}} </a>
-         {% if obj.status_type == 'Premium' and not customer == True %}
-         <div class="d-flex">
-         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}} |  &#8358;{{obj.price|safe|floatformat:"0g"}}</p> 
-         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
-        </div>
-         {% else %}
-         <div class="d-flex">
-         <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}}</p> 
-         <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
-        </div>
-         {% endif %}
-         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.categories.name|safe|title}} {{ obj.popular_course_topic_count }} Modules</small> <br>
-         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.course_type|safe}}</small>
-         <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " ><a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">View Course</a></small>
-       </div>
-
-   </div>
- </a>
-
-
-   {% empty %}
-     <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
-   {% endfor %}
- </div> -->
- <!-- END POPULAR OF COURSES-->
-
-
- 
-  <!--FREE DIFFERENT  COURSES-->
-<!--   
-  <br> <br> <br>
- 
-  <div class="card-body">
-    <div class="">
-  <h3 style="color: black;  font-weight: bold;" >Enjoy Our {{Free_courses_count}} Free Courses Available for You</h3>
-
-  </div>
-  </div>
- 
-  <div  class="beginner ">
-  
-    {% for obj in Free_courses %}
-
-    <a style="height: 10px;" class="" href="{% url 'sms:courseslistdesc' obj.pk %}">
-    <div  class="left-column-cat border ">
-    
-            {% if obj.img_course %}
-            <img class="rounded images" src="{{obj.img_course.url}}" width="300px" height="300px" alt="cetagory image">
-            <br>
-            
-            {% endif %}
-            <div class="pl-2">
-            <div class="d-flex rounded owner">
-              <div class="d-flex rounded owner">
-                {% if obj.course_logo.url %}
-                <img  class="rounded" src="{{ obj.course_logo.url }}" width="30px"  height="33px" alt=""> <br>
-                {% else %}
-                <img  class="rounded" src=" /static/sms/images/newlogo3.jpg" width="30px"  height="33px" alt="{{obj.desc}}"> <br>
-              {% endif %}
-      
-              {% if obj.course_owner %}
-              <small class="text-dark">{{obj.course_owner|safe}}</small>
-              {% else %}
-              <small class="text-dark">Codethinkers Academy </small>
-              {% endif %}
-  
-              </div>
-            </div>
-          <a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">{{obj}} </a>
-          {% if obj.status_type == 'Premium' and not customer == True %}
-          <div class="d-flex">
-          <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}} |  &#8358;{{obj.price|safe|floatformat:"0g"}}</p> 
-          <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
-        </div>
-          {% else %}
-          <div class="d-flex">
-          <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}}</p> 
-          <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i></p>
-        </div>
-          {% endif %}
-          <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.categories.name|safe|title}} {{ obj.Free_courses_topic_count }} Modules</small> <br>
-          <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.course_type|safe}}</small>
-          <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " ><a style="font-size: 12px;"  href="{% url 'sms:courseslistdesc' obj.pk %}">View Course</a></small>
-        </div>
-    </div>
-  </a>
-  </a>
-    {% empty %}
-      <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
-    {% endfor %}
-  </div> -->
-
-
   <!-- END CATEGORIES OF COURSES-->
 
 
 <br> <br> <br> <br> <br>
 
-  <!-- what parent say about us -->
-  <!-- <div class="row d-flex justify-content-center">
-    <h3 style="background: linear-gradient(to right, #29100a, rgb(22, 22, 190)); color: white; font-weight: bold; text-align: center; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); padding: 10px 20px; border-radius: 10px; background-size: 50%; width: 70%; margin: 0 auto;" class="mb-4">What Parents Say About Us</h3>
-  </div> -->
+
   <div id="digital-form-heading" class="text-center">
     <h4 style="font-family: Arial, sans-serif; color: #333;">What Parents Say About Us</h4>
   </div>
@@ -1614,6 +1029,7 @@ p {
     </div>
   </section>
 
+
 <script>
   // JavaScript to handle carousel animation
   const testimonialCards = document.querySelectorAll('.testimonial-card');
@@ -1622,7 +1038,7 @@ p {
     testimonialCards.forEach((card, index) => {
       setTimeout(() => {
         card.classList.add('active');
-      }, index * 500); // Adjust the delay between testimonials (in milliseconds)
+      }, index); // Adjust the delay between testimonials (in milliseconds)
     });
   }
 
@@ -1630,110 +1046,6 @@ p {
 </script>
   <!--end of  what parent say about us -->
  
-
-  
-  <!--GALLERY-->
-  <!-- <br> <br> <br>
-
-  <div style="color: black; font-size: 18px; font-weight: bold;"   class="card-body">
-    <h3 >Our Gallery </h3>
-  </div>
-  
-  <div class="gallery rounded-4 text-center">
-    {% for category in gallery %}
-    <div class="left-column-cat">
-      <p class="text-center category">
-        {% if category.gallery %}
-        <img class="rounded-4 images" src="{{category.gallery.url}}" width="300px" height="300px" alt="category image">
-        {% endif %}
-        {% if category.title %}
-        <div class="text-left container">{{category.title}}</div>
-        {% endif %}
-      </p>
-    </div>
-    {% empty %}
-    <h4 class="card text-center text-danger">No Gallery Yet. CHECK LATER</h4>
-    {% endfor %}
-  </div> -->
-<!-- END GALLERY-->
-
-  <!--DIFFERENT  COURSES-->
-  <!-- <br> <br> <br>
-
-  <div class="card-body">
-    <div class="">
-  <h3 style="color: red;  font-weight: bold;" >Latest News Feed</h3>
-  <a href="{% url 'sms:bloglistview' %}" class="btn btn-primary">read more articles....</a>
-  </div>
-  </div>
- 
-  <div style="height: 500px;"  class="beginner ">
-  
-    {% for obj in blogs %}
-   
-    <a style="height: 10px;" class="" href="{% url 'sms:blogdetaillistview' obj.slug %}">
-    <div  class="left-column-cat border ">
-       
-            {% if obj.img_blog %}
-            <img class="rounded images" src="{{obj.img_blog.url}}" width="300px" height="280px" alt="cetagory image">
-          
-            
-            {% endif %}
-          <div class="pl-2">
-           
-            
-            <div class="d-flex view-latest">
-			      <p style="color: black;">{{obj.created|timesince}}</p>
-            <p  class="text-center" style="color: black;"> {% get_hit_count for obj %}<i class="fas fa-eye"></i> </p>
-          </div>
-            {% if obj.author %}
-           
-              <p style="color: black; font-weight: bold;" class="card-text">By {{obj.author}}</p>
-             
-              {% else %}
-              <small style="color: black; font-weight: bold;" class="card-text">By {{obj.poster}}</small>
-              {% endif %}	
-              <h6  style="color: black; font-weight: bold;">{{obj.title|safe}}</h6>
-              <p  style="color: black; ">{{obj.desc|safe|striptags|truncatewords:5}}</p>
-
-              <a href="{% url 'sms:blogdetaillistview' obj.slug %}" class="action-news">
-                Find out more
-                <span aria-hidden="true">
-                  →
-                </span>
-              </a>      
-        </div>
-  
-    </div>
-  </a>
-
-    {% empty %}
-      <h4 class="card text-center text-danger">No News Yet. CHECK LATER</h4>
-    {% endfor %}
-  </div> -->
-  <!-- END CATEGORIES OF COURSES-->
-  
-
-<!-- Categories and Courses -->
-
-<!-- <br><br><br>
-<h3 class="text-center text-primary">Categories and Courses</h3>
-<br>
-
-<div class="flex-container">
-  {% for category in category_sta %}
-  <div class="card card-cat">
-   
-    <div class="card-body child-ele">
-      <img class="" src="/static/sms/images/newlogo3.jpg" width="100px" height="50px" alt="{{ obj.desc }}">
-      <div class="">
-        <h5 style="font-weight: bold;" class="card-title">{{ category.name|title }}</h5>
-        <p class="card-text">{{ category.num_courses }} Courses</p>
-      </div>
-    </div>
-  </div>
-  {% endfor %}
-</div> -->
 
 <!--end Categories and Courses -->
 
@@ -1784,33 +1096,6 @@ p {
 </div>
 <br>
 
-<!-- <hr>
-
-<div style="padding: 0px 20px 0px 20px;" class="card-bod">
-  <h4>Empower Schools and Organizations with our New Program!</h4>
-
-
-<div class="te">
-  <h4>Unlock a World of Learning Opportunities for Your School or Organization</h4>
-  <p>Experience the next level of education with our cutting-edge courses in the New Program, tailored for schools and organizations. From in-depth content to practical skills, we have it all.</p>
-  <p>Don't miss out on this opportunity to enhance the knowledge and skills of your students or members.</p>
-
-  <a href="{% url 'users:school_signup' %}" class="cta-button">Sign Up Now</a>
-
-  <div class="benefits">
-      <h2>Benefits for Schools and Organizations</h2>
-      <ul class="">
-          <li>Customized Certificates of Completion with your School or Organization Logo</li>
-          <li>Inclusion of Head's Signature and Name on Certificates</li>
-          <li>Option to Add Portfolio Information on Certificates</li>
-          <li>Effortless Management – We Handle It All!</li>
-      </ul>
-  </div>
-</div>
-
-
-</div>
-<hr> -->
 
 
 <!-- flesh javacsripts -->
@@ -1824,7 +1109,7 @@ p {
   // Hide the flash message after 5 seconds (5000 milliseconds)
   setTimeout(() => {
     flashContainer.style.display = 'none';
-  }, 5000);
+  }, );
 </script>
 
 
@@ -1893,8 +1178,9 @@ p {
   }
 
   // Open the popup when the page loads
-  setTimeout(openPopup, 1000); // Adjust the delay as needed
+  setTimeout(openPopup); // Adjust the delay as needed
 </script>
+
 <!-- 
 error image loading -->
 <script>
@@ -1906,7 +1192,7 @@ error image loading -->
 
   function handleImageErrorcarousel(image) {
     // Replace the broken image with a placeholder or alternative content
-    image.src = '/static/sms/images/schoolviewmin.jpg.jpg'; // Replace with the path to your placeholder image
+    image.src = '/static/sms/images/schoolviewmin.jpg'; // Replace with the path to your placeholder image
     image.alt = 'library image'; // Optional: Set alternative text
   }
   </script>
