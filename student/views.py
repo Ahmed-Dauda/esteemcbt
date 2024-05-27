@@ -633,6 +633,22 @@ def permission_denied_view(request, exception):
 def start_exams_view(request, pk):
     course = QMODEL.Course.objects.get(id=pk)
     num_attemps = course.num_attemps
+    user_newuser = get_object_or_404(NewUser, email=request.user)
+    if user_newuser is not None:
+        school_name = user_newuser.school.school_name
+        students_class = user_newuser.student_class
+        print("student class:", students_class )
+        school_name = school_name
+        # Fetch the courses associated with the user's school
+        school = user_newuser.school
+        course_pay = user_newuser.school.course_pay
+        course_names = Course.objects.filter(course_pay=course_pay)
+        # print("course_names:", course_names)
+    else:
+        school_name = "Default School Name"
+        student_class = "Default Class"    
+        print("school_name:", school_name )
+
     questions = QMODEL.Question.objects.filter(course=course).order_by('id')
     q_count = questions.count()
     paginator = Paginator(questions, 200)  # Show 100 questions per page.
@@ -662,6 +678,7 @@ def start_exams_view(request, pk):
 
     context = {
         'course': course,
+        'student_class':students_class,
         'questions': questions,
         'num_attemps':num_attemps,
         'result_exists':result_exists,
