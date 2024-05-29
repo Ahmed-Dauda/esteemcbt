@@ -282,10 +282,53 @@ var table = $('#example').DataTable({
 
 
 
-<!-- end of new js -->
     <!-- end of quiz timer --> 
 
     <script>
+ 
+ function submitQuiz() {
+    // Clear local storage
+    localStorage.clear();
+ 
+    // Gather form data
+    var formData = table.$('input, select').serialize(); // Serialize the form data within the table
+    var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
+    var pageInfo = table.page.info();
+    // Extract the total number of pages
+    var totalPages = pageInfo.pages;
+
+    // Process each key-value pair
+    var quizData = {};
+    for (var i = 0; i < dataArray.length; i++) {
+        var keyValue = dataArray[i].split('=');
+        var questionIndex = parseInt(keyValue[0]);
+        var answer = keyValue[1];
+        quizData[questionIndex] = answer;
+    }
+
+    // Convert data to JSON
+    var jsonData = JSON.stringify(quizData);
+    console.log("jsonData", jsonData);
+    // Send the data to the calculate_marks view using AJAX
+    $.ajax({
+        type: "POST",
+        url: "/student/calculate_marks", // URL of the calculate_marks view
+        contentType: "application/json",
+        data: jsonData,
+        success: function(response) {
+            // You can do further processing based on the response here
+        },
+        error: function(xhr, status, error) {
+            // Handle error
+            console.error("Error:", error);
+        }
+    });
+
+    // alert("Quiz submitted automatically due to time expiration!");
+    window.location.href = "{% url 'student:view_result' %}";
+}
+
+
 $(document).ready(function() {
     var timerInterval; // Variable to store the timer interval ID
     var timerElement = document.getElementById('timer'); // Define timerElement here
@@ -422,48 +465,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateTimer({{ course.duration_minutes }}, timerElement); // Pass timerElement
 });
 
-  
-function submitQuiz() {
-    // Clear local storage
-    localStorage.clear();
- 
-    // Gather form data
-    var formData = table.$('input, select').serialize(); // Serialize the form data within the table
-    var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
-    var pageInfo = table.page.info();
-    // Extract the total number of pages
-    var totalPages = pageInfo.pages;
-
-    // Process each key-value pair
-    var quizData = {};
-    for (var i = 0; i < dataArray.length; i++) {
-        var keyValue = dataArray[i].split('=');
-        var questionIndex = parseInt(keyValue[0]);
-        var answer = keyValue[1];
-        quizData[questionIndex] = answer;
-    }
-
-    // Convert data to JSON
-    var jsonData = JSON.stringify(quizData);
-    console.log("jsonData", jsonData);
-    // Send the data to the calculate_marks view using AJAX
-    $.ajax({
-        type: "POST",
-        url: "/student/calculate_marks", // URL of the calculate_marks view
-        contentType: "application/json",
-        data: jsonData,
-        success: function(response) {
-            // You can do further processing based on the response here
-        },
-        error: function(xhr, status, error) {
-            // Handle error
-            console.error("Error:", error);
-        }
-    });
-
-    alert("Quiz submitted automatically due to time expiration!");
-    window.location.href = "{% url 'student:view_result' %}";
-}
 
         //  test 
     function updateTimer(time) {
@@ -666,7 +667,7 @@ window.onblur = function () {
   document.getElementById("inactiveCount").innerText = inactiveCount; 
   if (inactiveCount >= {{ num_attemps }}) {
     // Perform action when count exceeds the threshold
-    submitQuiz(inactiveCount);
+    submitQuiz();
     window.location.reload();
   }
 }; 
