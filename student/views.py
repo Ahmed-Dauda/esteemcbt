@@ -834,108 +834,11 @@ def start_exams_view(request, pk):
 #     return response
 
 
-# @login_required
-# def start_exams_view(request, pk):
-#     course = QMODEL.Course.objects.get(id=pk)
-#     # Get the number of questions to display for the course
-#     show_questions = course.show_questions
-#     # Retrieve questions for the course
-#     questions = QMODEL.Question.objects.filter(course=course).order_by('id')[:show_questions]
-#     print("show q", questions)
-#     q_count = questions.count()
-#     # questions = QMODEL.Question.objects.filter(course=course).order_by('id')
-#     # q_count = questions.count()
-
-#     paginator = Paginator(questions, 200)  # Show 100 questions per page.
-#     page_number = request.GET.get('page')
-#     page_obj = paginator.get_page(page_number)
-    
-#     # Calculate quiz end time
-#     quiz_duration = course.duration_minutes
-#     quiz_start_time = timezone.now()
-#     quiz_end_time = quiz_start_time + timedelta(minutes=quiz_duration)
-    
-#     # Store the quiz end time in cache
-#     cache.set(f'quiz_end_time_{course.id}', quiz_end_time, timeout=None)
-
-#     # Calculate remaining time until the end of the quiz
-#     remaining_time = quiz_end_time - timezone.now()
-#     remaining_seconds = max(int(remaining_time.total_seconds()), 0)
-
-#     # updating timer
-
-#     # if request.method == 'POST':
-#     #     timer_data = request.POST.get('timer_data')
-#     #     # Split the timer data into minutes and seconds
-#     #     minutes, seconds = timer_data.split(':')
-        
-#     #     # Convert minutes and seconds to integers
-#     #     minutes = int(minutes)
-#     #     seconds = int(seconds)
-        
-#     #     # Calculate the total duration in minutes
-#     #     total_minutes = minutes + seconds / 60
-#     #     print("total_minutes", total_minutes)
-        
-#     #     # Update the model with the total duration
-#     #     instance.duration_minutes = total_minutes
-#     #     instance.save()
-        
-#     #     return JsonResponse({'status': 'success'})
-
-
-
-#     context = {
-#         'course': course,
-#         'questions': questions,
-#         'q_count': q_count,
-#         'page_obj': page_obj,
-#         'remaining_seconds': remaining_seconds,  # Pass remaining time to template
-#     }
-
-#     if request.method == 'POST':
-#         # Handle form submission
-#         pass
-
-#     response = render(request, 'student/dashboard/start_exams.html', context=context)
-#     response.set_cookie('course_id', course.id)
-#     return response
-
 
 # end of dashboard view
 
 import json
 from django.http import JsonResponse
-
-# school calculate marks view
-
-# @login_required
-# def subject_calculate_marks(request):
-#     if request.COOKIES.get('course_id') is not None:
-#         course_id = request.COOKIES.get('course_id')
-#         course = QMODEL.Subjects.objects.get(id=course_id)
-        
-#         total_marks = 0
-#         questions = QMODEL.Subject_Question.objects.filter(course=course).order_by('id')
-        
-#         if request.body:
-#             json_data = json.loads(request.body)
-#             for i, question in enumerate(questions, start=1):
-#                 selected_ans = json_data.get(str(i))
-#                 print("answers" + str(i), selected_ans)
-#                 actual_answer = question.answer
-#                 if selected_ans == actual_answer:
-#                     total_marks += question.marks
-        
-#         student = Profile.objects.get(user_id=request.user.id)
-#         result = QMODEL.Subject_Result.objects.create(marks=total_marks, exam=course, student=student)
-        
-#         # Redirect to the view_result URL
-#         return JsonResponse({'success': True, 'message': 'Marks calculated successfully.'})
-    
-#     else:
-#         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
-
 
 
 # example 2

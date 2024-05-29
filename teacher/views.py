@@ -528,6 +528,7 @@ def tex_to_mathml(tex_input):
         logger.error(f"Error converting TeX to MathML: {e}, Input: {tex_input}")
         return tex_input  # If conversion fails, return the original TeX input
 
+
 def import_data(request):
     if request.method == 'POST':
         dataset = Dataset()

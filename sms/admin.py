@@ -21,21 +21,6 @@ admin.site.site_header = 'Esteem super admin dashboard'
 admin.site.site_title = 'Esteem super admin dashboard'
 # admin.site.register(Courses)
 admin.site.register(FrequentlyAskQuestions)
-# admin.site.register(Partners)
-# admin.site.register(CourseFrequentlyAskQuestions)
-# admin.site.register(Skillyouwillgain)
-# admin.site.register(CourseLearnerReviews)
-# admin.site.register(Whatyouwilllearn)
-# admin.site.register(CareerOpportunities)
-# admin.site.register(Whatyouwillbuild)
-# admin.site.register(CompletedTopics)
-# admin.site.register(AboutCourseOwner)
-
-# class ArticleAdminResource(resources.ModelResource):
-    
-#     class Meta:
-#         model = Gallery
-        # fields = ('title',)
 
 # admin.py
 

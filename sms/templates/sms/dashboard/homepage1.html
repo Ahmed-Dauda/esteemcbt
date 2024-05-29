@@ -855,8 +855,8 @@ p {
 
 <div class="container">
   <button  class="btn text-center text-white" ><a class="btn btn-primary text-center"  href=""> Chat Us</a></button>
-  <button  class="btn text-center text-white" ><a class="btn btn-primary text-center"  href="">STUDENT LOGIN</a></button>
-  <button  class="btn text-center text-white" ><a class="btn btn-primary text-center"  href="">STAFF LOGIN</a></button>
+  <button  class="btn text-center text-white" ><a class="btn btn-primary text-center"  href="{% url 'teacher:student-dashboard' %}">STUDENT LOGIN</a></button>
+  <button  class="btn text-center text-white" ><a class="btn btn-primary text-center"  href="{% url 'teacher:teacher-dashboard' %}">STAFF LOGIN</a></button>
 </div>
 
 <br><br><br>
@@ -1109,7 +1109,7 @@ p {
   // Hide the flash message after 5 seconds (5000 milliseconds)
   setTimeout(() => {
     flashContainer.style.display = 'none';
-  }, );
+  }, 100);
 </script>
 
 

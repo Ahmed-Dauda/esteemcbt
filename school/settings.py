@@ -392,19 +392,88 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # for TinyMCE 
+# settings.py
+
+# settings.py
 
 TINYMCE_DEFAULT_CONFIG = {
-
     'height': 360,
     'width': 700,
+    'entity_encoding': "raw",
     'cleanup_on_startup': True,
     'custom_undo_redo_levels': 20,
     'selector': 'textarea',
-    'plugins': 'math link image preview codesample contextmenu table code math',  # Include MathType plugin
-    'toolbar': 'math undo redo | styleselect | bold italic | link image | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table | codesample | math',  # Add MathType button to the toolbar
+    'plugins': 'link image preview codesample contextmenu table code mathjax',
+    'toolbar': 'undo redo | styleselect | bold italic | link image | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table | codesample | mathjax',
     'theme': 'silver',
-    
+
+    # Additional configuration for MathML
+    'extended_valid_elements': 'math[*],mrow[*],mfrac[*],mi[*],mn[*],mo[*]',
+    'custom_elements': 'math,mrow,mfrac,mi,mn,mo',
+    'content_style': "math, mrow, mfrac, mi, mn, mo",
+    'mathjax': {
+        'lib': 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS_HTML',
+        'symbols': { 'mathml': True }
+    },
+    'init_instance_callback': '''
+        function (editor) {
+            console.log('Editor is initialized.');
+
+            // Add event listener for MathML elements
+            editor.on('click', function(e) {
+                if (e.target.nodeName === 'MATH' || e.target.closest('math')) {
+                    editor.focus();
+                }
+            });
+        }
+    ''',
+
+    # // Prevent wrapping text in <p> tags
+    'forced_root_block': '',  # Default is 'p', setting to empty string disables it
+    'forced_root_block_attrs': {},  # Clears any forced attributes
+    'br_in_pre': False,  # Insert <br> tags instead of wrapping in <p> tags
+
+    # // Allow all elements and attributes
+    'valid_elements': '*[*]',  # Allow all elements
+    'valid_children': '+body[style|link|script|iframe|section],+section[div|p],+div[math|mrow|mfrac|mi|mn|mo]',
 }
+
+# TINYMCE_DEFAULT_CONFIG = {
+#     'height': 360,
+#     'width': 700,
+#     'cleanup_on_startup': True,
+#     'custom_undo_redo_levels': 20,
+#     'selector': 'textarea',
+#     'plugins': 'link image preview codesample contextmenu table code',
+#     'toolbar': 'undo redo | styleselect | bold italic | link image | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table | codesample',
+#     'theme': 'silver',
+
+#     # Additional configuration for MathML
+#     'extended_valid_elements': 'math[*],mrow[*],mfrac[*],mi[*],mn[*],mo[*]',
+#     'custom_elements': 'math,mrow,mfrac,mi,mn,mo',
+#     'content_style': "math, mrow, mfrac, mi, mn, mo",
+#     'init_instance_callback': '''
+#         function (editor) {
+#             // This callback runs after the editor is initialized
+#             console.log('Editor is initialized.');
+#         }
+#     '''
+# }
+
+# TINYMCE_DEFAULT_CONFIG = {
+
+#     'height': 360,
+#     'width': 700,
+#     'cleanup_on_startup': True,
+#     'custom_undo_redo_levels': 20,
+#     'selector': 'textarea',
+#     'plugins': 'link image preview codesample contextmenu table code', 
+#     'toolbar': 'undo redo | styleselect | bold italic | link image | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table | codesample',  
+#     'theme': 'silver',
+
+#     # new
+
+# }
 
 # myproject/settings.py
 
