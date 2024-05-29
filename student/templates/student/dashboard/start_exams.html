@@ -285,16 +285,17 @@ var table = $('#example').DataTable({
     <!-- end of quiz timer --> 
 
     <script>
- 
- function submitQuiz() {
+
+function submitQuiz() {
+    console.log("submitQuiz function called");
+
     // Clear local storage
     localStorage.clear();
- 
+
     // Gather form data
     var formData = table.$('input, select').serialize(); // Serialize the form data within the table
     var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
     var pageInfo = table.page.info();
-    // Extract the total number of pages
     var totalPages = pageInfo.pages;
 
     // Process each key-value pair
@@ -309,6 +310,10 @@ var table = $('#example').DataTable({
     // Convert data to JSON
     var jsonData = JSON.stringify(quizData);
     console.log("jsonData", jsonData);
+
+    // Disable the submit button to prevent multiple submissions
+    $('#submit').prop('disabled', true);
+
     // Send the data to the calculate_marks view using AJAX
     $.ajax({
         type: "POST",
@@ -316,17 +321,59 @@ var table = $('#example').DataTable({
         contentType: "application/json",
         data: jsonData,
         success: function(response) {
-            // You can do further processing based on the response here
+            console.log("AJAX Success:", response);
+            // Redirect to the results page
+            window.location.href = "{% url 'student:view_result' %}";
         },
         error: function(xhr, status, error) {
-            // Handle error
-            console.error("Error:", error);
+            console.error("AJAX Error:", error);
+            // Re-enable the submit button if needed
+            $('#submit').prop('disabled', false);
         }
     });
-
-    // alert("Quiz submitted automatically due to time expiration!");
-    window.location.href = "{% url 'student:view_result' %}";
 }
+
+//  function submitQuiz() {
+//     // Clear local storage
+//     localStorage.clear();
+ 
+//     // Gather form data
+//     var formData = table.$('input, select').serialize(); // Serialize the form data within the table
+//     var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
+//     var pageInfo = table.page.info();
+//     // Extract the total number of pages
+//     var totalPages = pageInfo.pages;
+
+//     // Process each key-value pair
+//     var quizData = {};
+//     for (var i = 0; i < dataArray.length; i++) {
+//         var keyValue = dataArray[i].split('=');
+//         var questionIndex = parseInt(keyValue[0]);
+//         var answer = keyValue[1];
+//         quizData[questionIndex] = answer;
+//     }
+
+//     // Convert data to JSON
+//     var jsonData = JSON.stringify(quizData);
+//     // console.log("jsonData", jsonData);
+//     // Send the data to the calculate_marks view using AJAX
+//     $.ajax({
+//         type: "POST",
+//         url: "/student/calculate_marks", // URL of the calculate_marks view
+//         contentType: "application/json",
+//         data: jsonData,
+//         success: function(response) {
+//             // You can do further processing based on the response here
+//         },
+//         error: function(xhr, status, error) {
+//             // Handle error
+//             console.error("Error:", error);
+//         }
+//     });
+
+//     // alert("Quiz submitted automatically due to time expiration!");
+//     window.location.href = "{% url 'student:view_result' %}";
+// }
 
 
 $(document).ready(function() {
