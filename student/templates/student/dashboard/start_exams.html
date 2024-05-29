@@ -427,13 +427,21 @@ document.addEventListener('DOMContentLoaded', function() {
     updateTimer({{ course.duration_minutes }}, timerElement); // Pass timerElement
 });
 
-  
+var quizSubmitted = false; // Flag variable to track whether quiz has already been submitted
+
 function submitQuiz() {
-    // Clear local storage
+    if (quizSubmitted) {
+        // If quiz has already been submitted, do nothing
+        return;
+    }
     
+    // Set the flag to true to indicate quiz submission
+    quizSubmitted = true;
+
+    // Clear local storage
     localStorage.clear();
     // localStorage.removeItem('remainingTime');
- 
+
     // Gather form data
     var formData = table.$('input, select').serialize(); // Serialize the form data within the table
     var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
@@ -471,6 +479,50 @@ function submitQuiz() {
     alert("Quiz submitted automatically due to time expiration!");
     window.location.href = "{% url 'student:view_result' %}";
 }
+
+// function submitQuiz() {
+//     // Clear local storage
+    
+//     localStorage.clear();
+//     // localStorage.removeItem('remainingTime');
+ 
+//     // Gather form data
+//     var formData = table.$('input, select').serialize(); // Serialize the form data within the table
+//     var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
+//     var pageInfo = table.page.info();
+//     // Extract the total number of pages
+//     var totalPages = pageInfo.pages;
+
+//     // Process each key-value pair
+//     var quizData = {};
+//     for (var i = 0; i < dataArray.length; i++) {
+//         var keyValue = dataArray[i].split('=');
+//         var questionIndex = parseInt(keyValue[0]);
+//         var answer = keyValue[1];
+//         quizData[questionIndex] = answer;
+//     }
+
+//     // Convert data to JSON
+//     var jsonData = JSON.stringify(quizData);
+//     console.log("jsonData", jsonData);
+//     // Send the data to the calculate_marks view using AJAX
+//     $.ajax({
+//         type: "POST",
+//         url: "/student/calculate_marks", // URL of the calculate_marks view
+//         contentType: "application/json",
+//         data: jsonData,
+//         success: function(response) {
+//             // You can do further processing based on the response here
+//         },
+//         error: function(xhr, status, error) {
+//             // Handle error
+//             console.error("Error:", error);
+//         }
+//     });
+
+//     alert("Quiz submitted automatically due to time expiration!");
+//     window.location.href = "{% url 'student:view_result' %}";
+// }
 
         //  test 
     function updateTimer(time) {
