@@ -440,9 +440,10 @@ $(document).ready(function() {
             timerElement.innerHTML = `<b>Time Left: ${displayMinutes}:${displaySeconds}</b>`;
 
             if (remainingTime <= 0) {
+                submitQuiztime();
                 clearInterval(timer);
                 localStorage.removeItem('remainingTime');
-                submitQuiztime(); // Call the function to submit the quiz when time is over
+                 // Call the function to submit the quiz when time is over
                 return;
             }
 
@@ -533,9 +534,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             if (minutes <= 0 && seconds <= 0) {
+                submitQuiztime(); 
                 clearInterval(timer);
                 localStorage.removeItem('remainingTime');
-                submitQuiztime(); // Call the function to submit the quiz when time is over
+                // Call the function to submit the quiz when time is over
             }
 
             remainingTime--;
@@ -752,8 +754,9 @@ window.onblur = function () {
   document.getElementById("inactiveCount").innerText = inactiveCount; 
   if (inactiveCount >= {{ num_attemps }}) {
     // Perform action when count exceeds the threshold
-    localStorage.clear();
     submitQuizinactive();
+    localStorage.clear();
+    
     window.location.reload();
   }
 }; 
