@@ -667,6 +667,7 @@ window.onblur = function () {
   document.getElementById("inactiveCount").innerText = inactiveCount; 
   if (inactiveCount >= {{ num_attemps }}) {
     // Perform action when count exceeds the threshold
+    localStorage.clear();
     submitQuiz();
     window.location.reload();
   }
