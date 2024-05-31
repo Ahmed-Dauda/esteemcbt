@@ -304,7 +304,7 @@ class ResultResource(resources.ModelResource):
                
 class ResultAdmin(ImportExportModelAdmin):
     list_display = ['id', 'student', 'exam', 'marks', 'created']
-    list_filter = ['id', 'student', 'exam', 'marks']
+    list_filter = ['exam', 'student']
     search_fields = ['student__first_name', 'student__last_name', 'exam__course_name__title', 'marks', 'created']
     ordering = ['id']
     resource_class = ResultResource

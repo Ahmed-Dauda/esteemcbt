@@ -981,14 +981,14 @@ def view_result_view(request):
     }
     return render(request, 'student/dashboard/view_result.html', context)
 
-@login_required
-def view_result_ajax(request):
-    qcourses = Course.objects.order_by('id').values(
-        'id', 'room_name', 'course_name__title', 'question_number', 
-        'course_pay', 'total_marks', 'num_attemps', 'pass_mark', 
-        'show_questions', 'duration_minutes', 'created', 'updated'
-    )
-    return JsonResponse(list(qcourses), safe=False)
+# @login_required
+# def view_result_ajax(request):
+#     qcourses = Course.objects.order_by('id').values(
+#         'id', 'room_name', 'course_name__title', 'question_number', 
+#         'course_pay', 'total_marks', 'num_attemps', 'pass_mark', 
+#         'show_questions', 'duration_minutes', 'created', 'updated'
+#     )
+#     return JsonResponse(list(qcourses), safe=False)
 
 
 from django.db.models import Count
