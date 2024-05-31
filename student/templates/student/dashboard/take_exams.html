@@ -1,6 +1,6 @@
 {% extends 'sms/dashboard/startexambase.html' %}
 
-{% block title %} table {% endblock %}
+{% block title %} Start the Quiz {% endblock %}
 
   {% block content %} 
   <style>
@@ -8,11 +8,15 @@
     </style>
        
     <!--Products-->
-
+    <a class="dropdown-item" href="{% url 'teacher:student-logout' %}" >
+        <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+        Logout 
+    </a>
     <div class="text-center">
-        <h3><i class="fas fa-book"></i> Select a Subject to Take Exam</h3>
+        <h3><i class="fas fa-book"></i>Welcome: {{request.user.profile}}</h3>
         <p><i class="fas fa-play-circle"></i> Start the Quiz</p>
         <p><i class="fas fa-thumbs-up"></i> Good luck!</p>
+        
     </div>
     
 
@@ -31,55 +35,83 @@
    </div>
    </div>
 
-</div>
+</div> 
     {% endfor %}
+   
 </div>
 
 {% else %}
 
-
 <!-- schools exams sections  -->
 <div style="display: flex; flex-wrap: wrap; justify-content: center; padding: 0 10px 0px 10px;">
     {% for item in courses %}
+   
         {% for subj in subjects %}
             <!-- Check if the item (course) is associated with the subject -->
             {% if item|lower == subj|lower %}
                 {% if sub_grade|lower == student_class|lower and item.schools.school_name|lower == school_name|lower %}
-                    <div style="width: 100%; max-width: 400px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; display: flex;">
-                        <div style="background-color: #f0f0f0; color: #333; font-size: 24px; font-weight: bold; padding: 20px; border-right: 1px solid #ccc;">
+                
+                <a style="color: #333; text-decoration: none; font-size:12px;" href="{% url 'student:start-exam' item.id %}">
+                    <div style="width: 100%; max-width: 400px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; display: flex;">       
+                        <div style="background-color: #2612c2; color: white; font-size: 24px; font-weight: bold; padding: 20px; border-right: 1px solid #ccc;">
                             {{ item|make_list|first }}
                         </div>
                         <div style="flex-grow: 1;">
-                            <div style="padding: 20px;">
+                            <div style="padding: 20px; color: #2612c2;">
                                 <!-- Ensure item.id is the correct way to get the course ID -->
-                                <a style="color: #333; text-decoration: none; font-size:12px;" href="{% url 'student:start-exam' item.id %}">{{ item }}</a>
+                                    {{ item }}                         
                             </div>
                         </div>
+                   
                     </div>
+               
                 {% else %}
-                    <div style="padding: 20px;">
-                        <!-- Ensure subj represents the correct subject name -->
-                        <!-- <a style="color: #333; text-decoration: none; font-size:12px;" href="{% url 'student:start-exam' item.id %}">{{ subj }}</a> -->
-                    </div>
+                
+                <div style="border: 1px solid #ccc; border-radius: 8px; padding: 0px; margin-bottom: 20px; background-color: #f9f9f9; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;">
+                    <p style="color: #2612c2; padding: 0px 10px 0p 10px; font-size: 18px;  margin: 0 0 10px;">{{ item }}</p> 
+                    <p style="color: #777; font-size: 14px; margin: 0;">Exam not started</p>
+                </div>
+               
                 {% endif %}
+            </a>
+            {% else %}
+         
+    
             {% endif %}
-        {% endfor %}
-        {% empty %}
-        <div style="width: 100%; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden;">
-            <div style="padding: 20px;">
-                <small>No Exams Available Yet. CHECK LATER</small>
+           
+            <!-- {% if forloop.first %}
+            <div style="width: 100%; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden;">
+                <div style="padding: 20px; text-align: center;">
+                    <small>No exam assign to you. Ask the instructor for assistance</small>
+                </div>
             </div>
-        </div>
+            {% endif  %} -->
+            {% empty %}
+            {% if forloop.first %}
+            <div style="width: 100%; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden;">
+                <div style="padding: 20px; text-align: center;">
+                    <small>No exam assign to you. Ask the instructor for assistance</small>
+                </div>
+            </div>
+            {% endif  %}
+        {% endfor %}
+        
+       
     {% endfor %}
 </div>
-
+<ul>
+{% for subject in subjects %}
+{% if  subject|lower %} 
+<li>{{ subject }} </li> 
+     {% else %} 
+    
+{% endif %}
+{% endfor %}
+</ul>
 <!-- end schools exams sections  -->
 
-
 {% endif %}
-<!-- end codethinkers academy courses  -->
-    
-    
+
    
 
   {% endblock %} 

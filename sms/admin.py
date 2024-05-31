@@ -118,7 +118,7 @@ admin.site.register(CarouselImage, CarouselImageAdmin)
 # admin.site.register(Categories, CategoriesAdmin)
 
 
-class CategoriesResource(resources.ModelResource):
+class CoursesResource(resources.ModelResource):
     
     courses = fields.Field(
         column_name= 'categories',
@@ -137,7 +137,7 @@ class CoursesAdmin(ImportExportModelAdmin):
     search_fields = ['title']
     ordering = ['id']
     
-    resource_class = CategoriesResource
+    resource_class = CoursesResource
     def display_subjects_school(self, obj):
         return ", ".join([str(course) for course in obj.schools.all()])
 

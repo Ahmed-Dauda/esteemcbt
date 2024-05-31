@@ -28,6 +28,7 @@ urlpatterns = [
     # path('subject-start-exams/<pk>/', views.subject_start_exams,name='subject-start-exams'),
     path('calculate_marks', views.calculate_marks_view,name='calculate_marks'),
     path('view_result', views.view_result_view,name='view_result'),
+     path('view-result/ajax/', views.view_result_ajax, name='view_result_ajax'),
     path('exam_warning', views.exam_warning_view,name='exam_warning'),
     # path('subject_view_result', views.subject_view_result,name='subject_view_result'),
 

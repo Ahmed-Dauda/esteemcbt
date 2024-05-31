@@ -21,6 +21,7 @@
                     <tr>
                         <th>Course</th>
                         <th>Question</th>
+                        <th>img_quiz</th>
                         <th>Marks</th>
                         
                         <th>Option 1</th>
@@ -38,6 +39,11 @@
                     <tr>
                         <td>{{ question.course }}</td>
                         <td>{{ question.question }}</td>
+                        <td>
+                            <img src=" {{ question.img_quiz.url }}" width="50" height="50" alt="">
+                           
+                        </td>
+                       
                         <td>{{ question.marks }}</td>
                         
                         <td>{{ question.option1 }}</td>

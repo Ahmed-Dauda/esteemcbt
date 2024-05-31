@@ -92,17 +92,15 @@ class SimpleSignupForm(SignupForm):
         
         return user
 
-
-
 class SchoolStudentSignupForm(SignupForm):
     first_name = forms.CharField(max_length=222, label='First-name')
     last_name = forms.CharField(max_length=225, label='Last-name')
     phone_number = forms.CharField(max_length=225, widget=forms.HiddenInput(), required=False)
-    admission_no = forms.CharField(max_length=50, label='Aadmission Number')
+    admission_no = forms.CharField(max_length=50, label='Admission Number')
     student_class = forms.CharField(label='Student Class', )
     countries = forms.ChoiceField(choices=country_choice, label='Country')
     school = forms.ModelChoiceField(queryset=School.objects.all(), label='School', required=True)
-   
+
     def save(self, request):
         user = super(SchoolStudentSignupForm, self).save(request)
         user.first_name = self.cleaned_data['first_name']
@@ -115,6 +113,28 @@ class SchoolStudentSignupForm(SignupForm):
         user.save()
         
         return user
+
+# class SchoolStudentSignupForm(SignupForm):
+#     first_name = forms.CharField(max_length=222, label='First-name')
+#     last_name = forms.CharField(max_length=225, label='Last-name')
+#     phone_number = forms.CharField(max_length=225, widget=forms.HiddenInput(), required=False)
+#     admission_no = forms.CharField(max_length=50, label='Aadmission Number')
+#     student_class = forms.CharField(label='Student Class', )
+#     countries = forms.ChoiceField(choices=country_choice, label='Country')
+#     school = forms.ModelChoiceField(queryset=School.objects.all(), label='School', required=True)
+   
+#     def save(self, request):
+#         user = super(SchoolStudentSignupForm, self).save(request)
+#         user.first_name = self.cleaned_data['first_name']
+#         user.last_name = self.cleaned_data['last_name']
+#         user.phone_number = self.cleaned_data.get('phone_number', '')
+#         user.admission_no = self.cleaned_data['admission_no']
+#         user.student_class = self.cleaned_data['student_class']
+#         user.countries = self.cleaned_data['countries']
+#         user.school = self.cleaned_data['school']
+#         user.save()
+        
+#         return user
 
 
 

@@ -26,6 +26,12 @@
 
 <br> <br>
 <!-- Assuming you want to iterate over the subjects -->
+{% if request.user.is_superuser %}
+<p class="text-center">You logged In as super admin</p>
+{% else %}
+<p class="text-center">You logged In as Teacher</p>
+{% endif %}
+<hr>
 <div class="container">
 
 <div class="row">

@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'cloudinary',
+    'cloudinary_storage',
     'embed_video',
     'xhtml2pdf',
     'tinymce',
@@ -174,7 +175,7 @@ cloudinary.config(
     cloud_name='dcomiviua',
     api_key='365524854341134',
     api_secret='_a3awGtK3hznGaSpvLff2RFTt_I',
-      secure = True
+    secure = True
 )
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
@@ -331,7 +332,6 @@ USE_TZ = True
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
-
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 SECURE_SSL_REDIDERECT = True

@@ -112,6 +112,11 @@ def teacher_logout_view(request):
     return render(request, 'teacher/dashboard/teacher_logout.html')
 
 
+def student_logout_view(request):
+
+    return render(request, 'teacher/dashboard/student_logout.html')
+
+
 def teacher_login_view(request):
     teachers = Teacher.objects.all()
     print('teachers:',teachers)
@@ -185,7 +190,7 @@ def teacher_dashboard_view(request):
 def student_dashboard_view(request):
 
     user = request.user
-    print("useridd:", user)
+    # print("useridd:", user)
 
     dict={
     
@@ -529,6 +534,9 @@ def tex_to_mathml(tex_input):
         return tex_input  # If conversion fails, return the original TeX input
 
 
+
+# original codes
+
 def import_data(request):
     if request.method == 'POST':
         dataset = Dataset()
@@ -549,7 +557,7 @@ def import_data(request):
                 imported_data = dataset.load(data, format=file_extension)
                 # Convert TeX to MathML for CSV data
                 for row in imported_data.dict:
-                    for key in ['question', 'option1', 'option2', 'option3', 'option4', 'answer']:
+                    for key in ['question','img_quiz' ,'option1', 'option2', 'option3', 'option4', 'answer']:
                         if key in row:
                             original_value = row[key]
                             row[key] = tex_to_mathml(row[key])
@@ -560,7 +568,7 @@ def import_data(request):
                 imported_data = dataset.load(new_file.read(), format=file_extension)
                 # Convert TeX to MathML for Excel data
                 for row in imported_data.dict:
-                    for key in ['question', 'option1', 'option2', 'option3', 'option4', 'answer']:
+                    for key in ['question','img_quiz' ,'option1', 'option2', 'option3', 'option4', 'answer']:
                         if key in row:
                             original_value = row[key]
                             row[key] = tex_to_mathml(row[key])
@@ -580,7 +588,7 @@ def import_data(request):
                 writer.writerows(rows)
                 csv_data.seek(0)
                 imported_data = dataset.load(csv_data, format='csv')
-                messages.success(request, "Data imported successfully.")
+                # messages.success(request, "Data imported successfully.")
             else:
                 messages.error(request, f"An error occurred while importing {file_extension} file.")
                 return render(request, 'teacher/dashboard/import.html')
@@ -606,16 +614,16 @@ def import_data(request):
             return HttpResponseRedirect(request.path_info)
 
         except Exception as e:
-            messages.error(request, f"An error occurred: {e}")
+            messages.error(request, f"You have no permission to import this subject. Check dashboard for your assigned subjects")
+            # print('resu', result)
+            # messages.error(request, f"An error occurred: {e}")
             logger.error(f"An error occurred while processing the file: {e}")
             return render(request, 'teacher/dashboard/import.html')
 
     return render(request, 'teacher/dashboard/import.html')
 
+
 # views.py
-
-
-
 # def import_data(request):
 #     if request.method == 'POST':
 #         dataset = Dataset()

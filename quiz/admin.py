@@ -30,9 +30,10 @@ class SchoolAdmin(admin.ModelAdmin):
 
 admin.site.register(School, SchoolAdmin)
 
+from django.contrib import admin
 
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ['get_school_name', 'show_questions','course_name', 'question_number', 'total_marks', 'pass_mark', 'duration_minutes', 'created', 'updated']
+    list_display = ['get_school_name', 'show_questions', 'course_name', 'question_number', 'total_marks', 'pass_mark', 'duration_minutes', 'created', 'updated']
     search_fields = ['course_name', 'schools__name']  # Add search field for course name
 
     def get_school_name(self, obj):
@@ -40,6 +41,17 @@ class CourseAdmin(admin.ModelAdmin):
     get_school_name.short_description = 'School Name'
 
 admin.site.register(Course, CourseAdmin)
+
+# class CourseAdmin(admin.ModelAdmin):
+#     list_display = ['get_school_name', 'show_questions','course_name', 'question_number', 'total_marks', 'pass_mark', 'duration_minutes', 'created', 'updated']
+#     search_fields = ['course_name', 'schools__name']  # Add search field for course name
+
+#     def get_school_name(self, obj):
+#         return obj.schools.school_name if obj.schools else "Unknown School"
+#     get_school_name.short_description = 'School Name'
+
+# admin.site.register(Course, CourseAdmin)
+
 
 from .models import CourseGrade
 

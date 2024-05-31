@@ -35,13 +35,48 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import JsonResponse
+from quiz.models import CourseGrade
+
+
+# def assign_course_grade(student):
+#     try:
+#         # Find the CourseGrade where the name matches the student_class
+#         grade = CourseGrade.objects.get(name=student.student_class)
+#         grade.students.add(student)
+#         grade.save()
+#     except CourseGrade.DoesNotExist:
+#         # Handle the case where no matching CourseGrade is found
+#         pass
+
+
+def assign_course_grade(student):
+    try:
+        # Find the CourseGrade where the name matches the student_class
+        grade = CourseGrade.objects.get(name=student.student_class)
+        grade.students.add(student)
+        grade.save()
+        
+        # Assign the subjects from the CourseGrade to the student
+        for subject in grade.subjects.all():
+            if subject:
+                student.subjects.add(subject)
+                student.save()
+            else:
+                pass
+
+        
+    except CourseGrade.DoesNotExist:
+        # Handle the case where no matching CourseGrade is found
+        pass
+
 
 def SchoolStudentView(request):
     if request.method == 'POST':
         form = SchoolStudentSignupForm(request.POST)
         if form.is_valid():
-            form.save(request)
-            messages.success(request, 'Student registered successfully!')
+            student = form.save(request)  # form.save() returns the student instance
+            assign_course_grade(student)  # Assign course grade here
+            messages.success(request, 'Student registered successfully and assigned to a course grade!')
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'message': 'Form submitted successfully!'})
             return redirect('users:schoolstudentview')  # Redirect to the same page
@@ -49,6 +84,20 @@ def SchoolStudentView(request):
         form = SchoolStudentSignupForm()
 
     return render(request, 'users/school_student.html', {'form': form})
+
+# def SchoolStudentView(request):
+#     if request.method == 'POST':
+#         form = SchoolStudentSignupForm(request.POST)
+#         if form.is_valid():
+#             form.save(request)
+#             messages.success(request, 'Student registered successfully!')
+#             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+#                 return JsonResponse({'message': 'Form submitted successfully!'})
+#             return redirect('users:schoolstudentview')  # Redirect to the same page
+#     else:
+#         form = SchoolStudentSignupForm()
+
+#     return render(request, 'users/school_student.html', {'form': form})
 
 
 # def SchoolStudentView(request):
@@ -207,7 +256,6 @@ def become_referrer(request):
 #     # ...
 
 #     return HttpResponse(f"Referral signup page for referrer {referrer_code}")
-
 
 
 def take_exams_view(request):

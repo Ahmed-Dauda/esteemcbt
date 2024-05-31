@@ -454,8 +454,8 @@ def take_exams_view(request):
     else:
         school_name = "Default School Name"
         student_class = "Default Class"    
-        print("school_name:", school_name )
-        print("student_class", student_class)
+        # print("school_name:", school_name )
+        # print("student_class", student_class)
 
     sub_grade = None  # Initialize sub_grade with a default value
     subjects = None  # Initialize subjects with a default value
@@ -469,9 +469,11 @@ def take_exams_view(request):
         sub_grade = course_grade.name
         subjects = course_grade.subjects.all()
         print("Name:", sub_grade)
-        print("Subjects:")
+        # print("Subjects:")
+        class_subj = []
         for subject in subjects:
-            print(subject)
+            class_subj.append(subject)
+            print("Subjects:", subject)
     else:
        
         print("No CourseGrade instance found for the current user.")
@@ -480,6 +482,7 @@ def take_exams_view(request):
 
     context = {
         'courses': course,
+        'class_subj':class_subj,
         'student_class': student_class,
         'school_name': school_name,
         "sub_grade": sub_grade,
@@ -960,16 +963,32 @@ def exam_warning_view(request):
 
     return render(request,'student/dashboard/examwarning.html', context = context)
 
+# @login_required
+# def view_result_view(request):
+#     qcourses = Course.objects.order_by('id')
+
+    
+#     context = {
+#         'courses':qcourses
+#         }
+
+#     return render(request,'student/dashboard/view_result.html', context = context)
 @login_required
 def view_result_view(request):
     qcourses = Course.objects.order_by('id')
-
-    
     context = {
-        'courses':qcourses
-        }
+        'courses': qcourses
+    }
+    return render(request, 'student/dashboard/view_result.html', context)
 
-    return render(request,'student/dashboard/view_result.html', context = context)
+@login_required
+def view_result_ajax(request):
+    qcourses = Course.objects.order_by('id').values(
+        'id', 'room_name', 'course_name__title', 'question_number', 
+        'course_pay', 'total_marks', 'num_attemps', 'pass_mark', 
+        'show_questions', 'duration_minutes', 'created', 'updated'
+    )
+    return JsonResponse(list(qcourses), safe=False)
 
 
 from django.db.models import Count

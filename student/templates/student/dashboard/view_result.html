@@ -4,9 +4,27 @@
 
   {% block content %} 
 
+  <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        let reloadCount = localStorage.getItem('reloadCount') ? parseInt(localStorage.getItem('reloadCount')) : 0;
+
+        if (reloadCount < 2) {
+            setTimeout(function() {
+                reloadCount++;
+                localStorage.setItem('reloadCount', reloadCount);
+                location.reload();
+            }, 1000); // Refresh the page every 5 seconds
+        } else {
+            localStorage.removeItem('reloadCount'); // Clear the count after 2 reloads
+        }
+    });
+</script>
  
 
 <br> <br> <br>
+
+
+
 <div class="text-center">
   <i class="fas fa-check-circle" style="font-size: 48px; color: #28a745;"></i>
   <p class="mb-0" style="font-size: 18px; color: #333;">Congratulations! You have successfully submitted your exam.</p>
@@ -16,24 +34,8 @@
   <br>
  <button class="btn btn-primary text-white"><a class=" text-white" style="color: #333; text-decoration: none; font-size:12px;" href="{% url 'student:take-exam' %}">Click here</a></button> 
 </div>
-
-
-
-<!-- End of Main Content -->
-
-<script>
-  // Add an event listener for the pageshow event
-  window.addEventListener('pageshow', function(event) {
-      // If the navigation type is 'back_forward', it means the user navigated back to this page
-      if (event.persisted) {
-          // Reload the page to enforce the redirect
-          window.location.reload();
-      }
-  });
-
-
   
-</script>
+<!-- End of Main Content -->
 
 
   {% endblock %} 

@@ -70,17 +70,6 @@ class Course(models.Model):
    room_name = models.CharField(max_length=100,blank=True, null= True)
    schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='course', blank=True, null=True)
    course_name = models.ForeignKey(Courses,on_delete=models.CASCADE, blank=True, null= True)
-#    school = models.ForeignKey(School, on_delete=models.SET_NULL, blank=True, null=True)
-#    schools = models.ManyToManyField("quiz.School" , related_name='course', blank=True)
-#    partdesc1 = models.CharField(max_length=300, blank=True, null= True)
-#    img_partdesc1 = CloudinaryField('image', blank=True, null= True)
-#    partdesc2 = models.CharField(max_length=225, blank=True, null= True)
-#    img_partdesc2 = CloudinaryField('image', blank=True, null= True)
-#    partdesc3 = models.CharField(max_length=225, blank=True, null= True)
-#    signature = CloudinaryField('signature', blank=True, null= True)
-#    signby = models.CharField(max_length=229, blank=True, null= True)
-#    signby_portfolio = models.CharField(max_length=229 ,blank=True, null= True)
-
    question_number = models.PositiveIntegerField()
    course_pay = models.BooleanField(default=False)
    total_marks = models.PositiveIntegerField()
@@ -92,7 +81,10 @@ class Course(models.Model):
    updated = models.DateTimeField(auto_now=True, blank=True, null= True)
    id = models.AutoField(primary_key=True)
 
-   
+   class Meta:
+        verbose_name = 'Exam'
+        verbose_name_plural = 'Exams'
+
    def __str__(self):
         return f'{self.course_name}'
    
@@ -160,7 +152,11 @@ class CourseGrade(models.Model):
     name = models.CharField(max_length=200, blank=True, null=True)
     students = models.ManyToManyField(NewUser, related_name='course_grades', blank= True)  # Change to ManyToManyField for multiple students
     subjects = models.ManyToManyField(Courses, related_name='course_grade', blank= True)
-
+    
+    class Meta:
+        verbose_name = 'Student class'
+        verbose_name_plural = 'student classes'
+        
     def __str__(self):
         course_names = '\n'.join(str(course) for course in self.subjects.all())
         return f'{course_names}'
