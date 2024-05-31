@@ -8,7 +8,17 @@
 {% block title %} Courses list view page {% endblock %}
 
 {% block content %} 
-
+<script>
+    window.onload = function() {
+        // Add a new state to the history.
+        history.pushState(null, "", location.href);
+        // Listen for the popstate event (triggered by the back button).
+        window.addEventListener("popstate", function() {
+            // Refresh the page when the back button is pressed.
+            location.reload();
+        });
+    };
+</script>
 
       <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>   
      -->
@@ -735,7 +745,7 @@ window.onblur = function () {
   </script>
 
 
-<script type="text/javascript">
+<!-- <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function() {
         let reloadCount = localStorage.getItem('reloadCount') ? parseInt(localStorage.getItem('reloadCount')) : 0;
 
@@ -749,8 +759,9 @@ window.onblur = function () {
             localStorage.removeItem('reloadCount'); // Clear the count after 2 reloads
         }
     });
-</script>
+</script> -->
  
+
 <br><br><br><br><br><br>
 
 

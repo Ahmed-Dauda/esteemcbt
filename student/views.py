@@ -634,6 +634,7 @@ def permission_denied_view(request, exception):
 
 @login_required
 def start_exams_view(request, pk):
+
     course = QMODEL.Course.objects.get(id=pk)
     num_attemps = course.num_attemps
     
@@ -904,9 +905,11 @@ def calculate_marks_view(request):
         
         student = Profile.objects.get(user_id=request.user.id)
         result = QMODEL.Result.objects.create(marks=total_marks, exam=course, student=student)
-        
+        if result:
+            return redirect('student:view_result')
         # Redirect to the view_result URL
-        return JsonResponse({'success': True, 'message': 'Marks calculated successfully.'})
+        return redirect('student:view_result')
+        # return JsonResponse({'success': True, 'message': 'Marks calculated successfully.'})
     
     else:
         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
