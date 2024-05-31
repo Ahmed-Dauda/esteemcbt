@@ -3,6 +3,21 @@
 {% block title %} Exams Ends {% endblock %}
 
   {% block content %} 
+  <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        let reloadCount = localStorage.getItem('reloadCount') ? parseInt(localStorage.getItem('reloadCount')) : 0;
+
+        if (reloadCount < 1) {
+            setTimeout(function() {
+                reloadCount++;
+                localStorage.setItem('reloadCount', reloadCount);
+                location.reload();
+            }, 500); // Refresh the page every 5 seconds
+        } else {
+            localStorage.removeItem('reloadCount'); // Clear the count after 2 reloads
+        }
+    });
+</script>
 
 <br> <br> <br>
 
