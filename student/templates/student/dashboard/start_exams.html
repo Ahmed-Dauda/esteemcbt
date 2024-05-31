@@ -744,7 +744,7 @@ window.onblur = function () {
                 reloadCount++;
                 localStorage.setItem('reloadCount', reloadCount);
                 location.reload();
-            }, 500); // Refresh the page every 5 seconds
+            }, 1000); // Refresh the page every 5 seconds
         } else {
             localStorage.removeItem('reloadCount'); // Clear the count after 2 reloads
         }
