@@ -749,7 +749,7 @@ window.onblur = function () {
     document.addEventListener('DOMContentLoaded', function() {
         let reloadCount = localStorage.getItem('reloadCount') ? parseInt(localStorage.getItem('reloadCount')) : 0;
 
-        if (reloadCount < 2) {
+        if (reloadCount < 1) {
             setTimeout(function() {
                 reloadCount++;
                 localStorage.setItem('reloadCount', reloadCount);

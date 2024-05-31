@@ -649,8 +649,14 @@ def start_exams_view(request, pk):
     result_exists = Result.objects.filter(student=student, exam=course).exists()
     # Check if the student has already taken this exam
     if result_exists:
-        # If the student has already taken the exam, raise PermissionDenied
-        return redirect("student:view_result")
+   
+        request.session['quiz_taken'] = True
+    # Check if the quiz has already been taken
+        if request.session.get('quiz_taken'):
+            print('quiz_taken')
+            return redirect('student:view_result')
+            # If the student has already taken the exam, raise PermissionDenied
+            # return redirect("student:view_result")
 
     
     # Calculate quiz end time
@@ -905,11 +911,9 @@ def calculate_marks_view(request):
         
         student = Profile.objects.get(user_id=request.user.id)
         result = QMODEL.Result.objects.create(marks=total_marks, exam=course, student=student)
-        if result:
-            return redirect('student:view_result')
+        
         # Redirect to the view_result URL
-        return redirect('student:view_result')
-        # return JsonResponse({'success': True, 'message': 'Marks calculated successfully.'})
+        return JsonResponse({'success': True, 'message': 'Marks calculated successfully.'})
     
     else:
         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
