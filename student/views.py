@@ -637,36 +637,25 @@ def start_exams_view(request, pk):
 
     course = QMODEL.Course.objects.get(id=pk)
     num_attemps = course.num_attemps
-    
     questions = QMODEL.Question.objects.filter(course=course).order_by('id')
     q_count = questions.count()
     paginator = Paginator(questions, 200)  # Show 100 questions per page.
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
     student = request.user.profile
     # Check if the result exists
     result_exists = Result.objects.filter(student=student, exam=course).exists()
     # Check if the student has already taken this exam
-    if result_exists:
-   
-        request.session['quiz_taken'] = True
-    # Check if the quiz has already been taken
-        if request.session.get('quiz_taken'):
-            print('quiz_taken')
-            return redirect('student:view_result')
-            # If the student has already taken the exam, raise PermissionDenied
-            # return redirect("student:view_result")
 
-    
+    if result_exists:
+        return redirect('student:view_result')
+
     # Calculate quiz end time
     quiz_duration = course.duration_minutes
     quiz_start_time = timezone.now()
     quiz_end_time = quiz_start_time + timedelta(minutes=quiz_duration)
-    
     # Store the quiz end time in cache
     cache.set(f'quiz_end_time_{course.id}', quiz_end_time, timeout=None)
-
     # Calculate remaining time until the end of the quiz
     remaining_time = quiz_end_time - timezone.now()
     remaining_seconds = max(int(remaining_time.total_seconds()), 0)
@@ -911,12 +900,16 @@ def calculate_marks_view(request):
         
         student = Profile.objects.get(user_id=request.user.id)
         result = QMODEL.Result.objects.create(marks=total_marks, exam=course, student=student)
+        if result:
+            return JsonResponse({'success11': True, 'result_exists': True})
         
+        if result:
+            return HttpResponseRedirect("student:view_result")
         # Redirect to the view_result URL
-        return JsonResponse({'success': True, 'message': 'Marks calculated successfully.'})
+        return JsonResponse({'success3333': True, 'message': 'Marks calculated successfully.'})
     
     else:
-        return JsonResponse({'success': False, 'error': 'Course ID not found.'})
+        return JsonResponse({'success5555': False, 'error': 'Course ID not found.'})
 
 
 # @login_required

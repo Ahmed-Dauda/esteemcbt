@@ -8,17 +8,6 @@
 {% block title %} Courses list view page {% endblock %}
 
 {% block content %} 
-<script>
-    window.onload = function() {
-        // Add a new state to the history.
-        history.pushState(null, "", location.href);
-        // Listen for the popstate event (triggered by the back button).
-        window.addEventListener("popstate", function() {
-            // Refresh the page when the back button is pressed.
-            location.reload();
-        });
-    };
-</script>
 
       <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>   
      -->
@@ -488,6 +477,7 @@ function submitQuiz() {
 
     // alert("Quiz submitted automatically due to time expiration!");
     window.location.href = "{% url 'student:view_result' %}";
+    window.location.replace("{% url 'student:view_result' %}");
 }
 
 // function submitQuiz() {
@@ -759,8 +749,10 @@ window.onblur = function () {
             localStorage.removeItem('reloadCount'); // Clear the count after 2 reloads
         }
     });
+
+   
 </script>
- 
+
 
 <br><br><br><br><br><br>
 
