@@ -635,6 +635,7 @@ def permission_denied_view(request, exception):
 @login_required
 def start_exams_view(request, pk):
 
+
     course = QMODEL.Course.objects.get(id=pk)
     num_attemps = course.num_attemps
     questions = QMODEL.Question.objects.filter(course=course).order_by('id')
@@ -646,10 +647,8 @@ def start_exams_view(request, pk):
     # Check if the result exists
     result_exists = Result.objects.filter(student=student, exam=course).exists()
     # Check if the student has already taken this exam
-
     if result_exists:
         return redirect('student:view_result')
-
     # Calculate quiz end time
     quiz_duration = course.duration_minutes
     quiz_start_time = timezone.now()
@@ -900,16 +899,16 @@ def calculate_marks_view(request):
         
         student = Profile.objects.get(user_id=request.user.id)
         result = QMODEL.Result.objects.create(marks=total_marks, exam=course, student=student)
-        if result:
-            return JsonResponse({'success11': True, 'result_exists': True})
+        # if result:
+        #     return JsonResponse({'success11': True, 'result_exists': True})
         
-        if result:
-            return HttpResponseRedirect("student:view_result")
+        # if result:
+        #     return redirect("student:view_result")
         # Redirect to the view_result URL
-        return JsonResponse({'success3333': True, 'message': 'Marks calculated successfully.'})
+        return JsonResponse({'success': True, 'message': 'Marks calculated successfully.'})
     
     else:
-        return JsonResponse({'success5555': False, 'error': 'Course ID not found.'})
+        return JsonResponse({'success': False, 'error': 'Course ID not found.'})
 
 
 # @login_required

@@ -339,6 +339,7 @@ $(document).ready(function() {
             // Clear timer interval and local storage
             clearInterval(timerInterval);
             localStorage.removeItem('remainingTime');
+            localStorage.removeItem("inactiveCount");
             localStorage.clear()
             
             // Restart the timer
@@ -361,9 +362,22 @@ $(document).ready(function() {
                 url: "/student/calculate_marks",
                 data: jsonData,
                 success: function(response) {
-                    alert("Quiz submitted successfully!");
-                    window.location.href = "{% url 'student:view_result' %}";
+                alert("Quiz submitted successfully!");
+                localStorage.removeItem("inactiveCount");
+                localStorage.clear()
+
+                // First reload
+                // window.location.reload();
+                    // Second reload after a delay
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1000); // Delay of 1000 milliseconds (1 second)
                 },
+
+                // success: function(response) {
+                //     // alert("Quiz submitted successfully!");
+                //     // window.location.href = "{% url 'student:view_result' %}";
+                // },
                 error: function(xhr, status, error) {
                     console.error("Error:", error);
                 }
@@ -426,21 +440,69 @@ document.addEventListener('DOMContentLoaded', function() {
     updateTimer({{ course.duration_minutes }}, timerElement); // Pass timerElement
 });
 
-var quizSubmitted = false; // Flag variable to track whether quiz has already been submitted
+// var quizSubmitted = false; // Flag variable to track whether quiz has already been submitted
+
+// function submitQuiz() {
+//     if (quizSubmitted) {
+//         // If quiz has already been submitted, do nothing
+        
+//         return;
+//     }
+    
+//     // Set the flag to true to indicate quiz submission
+//     quizSubmitted = true;
+
+//     // Clear local storage
+//     localStorage.clear();
+//     // localStorage.removeItem('remainingTime');
+
+//     // Gather form data
+//     var formData = table.$('input, select').serialize(); // Serialize the form data within the table
+//     var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
+//     var pageInfo = table.page.info();
+//     // Extract the total number of pages
+//     var totalPages = pageInfo.pages;
+
+//     // Process each key-value pair
+//     var quizData = {};
+//     for (var i = 0; i < dataArray.length; i++) {
+//         var keyValue = dataArray[i].split('=');
+//         var questionIndex = parseInt(keyValue[0]);
+//         var answer = keyValue[1];
+//         quizData[questionIndex] = answer;
+//     }
+
+//     // Convert data to JSON
+//     var jsonData = JSON.stringify(quizData);
+//     console.log("jsonData", jsonData);
+//     // Send the data to the calculate_marks view using AJAX
+//     $.ajax({
+//         type: "POST",
+//         url: "/student/calculate_marks", // URL of the calculate_marks view
+//         contentType: "application/json",
+//         data: jsonData,
+//         success: function(response) {
+//             // You can do further processing based on the response here
+//         },
+//         error: function(xhr, status, error) {
+//             // Handle error
+//             console.error("Error:", error);
+//         }
+//     });
+
+//     // alert("Quiz submitted automatically due to time expiration!");
+//     window.location.href = "{% url 'student:view_result' %}";
+    
+// }
+
 
 function submitQuiz() {
-    if (quizSubmitted) {
-        // If quiz has already been submitted, do nothing
-        return;
-    }
-    
-    // Set the flag to true to indicate quiz submission
-    quizSubmitted = true;
-
     // Clear local storage
+    
     localStorage.clear();
+    localStorage.removeItem("inactiveCount");
     // localStorage.removeItem('remainingTime');
-
+ 
     // Gather form data
     var formData = table.$('input, select').serialize(); // Serialize the form data within the table
     var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
@@ -477,52 +539,7 @@ function submitQuiz() {
 
     // alert("Quiz submitted automatically due to time expiration!");
     window.location.href = "{% url 'student:view_result' %}";
-    window.location.replace("{% url 'student:view_result' %}");
 }
-
-// function submitQuiz() {
-//     // Clear local storage
-    
-//     localStorage.clear();
-//     // localStorage.removeItem('remainingTime');
- 
-//     // Gather form data
-//     var formData = table.$('input, select').serialize(); // Serialize the form data within the table
-//     var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
-//     var pageInfo = table.page.info();
-//     // Extract the total number of pages
-//     var totalPages = pageInfo.pages;
-
-//     // Process each key-value pair
-//     var quizData = {};
-//     for (var i = 0; i < dataArray.length; i++) {
-//         var keyValue = dataArray[i].split('=');
-//         var questionIndex = parseInt(keyValue[0]);
-//         var answer = keyValue[1];
-//         quizData[questionIndex] = answer;
-//     }
-
-//     // Convert data to JSON
-//     var jsonData = JSON.stringify(quizData);
-//     console.log("jsonData", jsonData);
-//     // Send the data to the calculate_marks view using AJAX
-//     $.ajax({
-//         type: "POST",
-//         url: "/student/calculate_marks", // URL of the calculate_marks view
-//         contentType: "application/json",
-//         data: jsonData,
-//         success: function(response) {
-//             // You can do further processing based on the response here
-//         },
-//         error: function(xhr, status, error) {
-//             // Handle error
-//             console.error("Error:", error);
-//         }
-//     });
-
-//     alert("Quiz submitted automatically due to time expiration!");
-//     window.location.href = "{% url 'student:view_result' %}";
-// }
 
         //  test 
     function updateTimer(time) {
@@ -548,7 +565,7 @@ function submitQuiz() {
 
         if (remainingTime <= 0) {
             clearInterval(timer);
-            localStorage.clear()
+            // localStorage.clear()
             localStorage.removeItem('remainingTime');
             submitQuiz(); // Call the function to submit the quiz when time is over
             return;
@@ -680,10 +697,15 @@ allRadioButtons.forEach(function(radioButton) {
 });
 
       // Event listener to clear local storage when submit button is clicked
-var submitButton = document.getElementById('submit');
-submitButton.addEventListener('click', function() {
-    localStorage.clear();
-});
+// var submitButton = document.getElementById('submit');
+// submitButton.addEventListener('click', function() {
+    
+//     submitQuiz();
+//     localStorage.removeItem("inactiveCount");
+//     localStorage.clear();
+   
+
+// });
           // test
 
             // Set the content of the pagination box
@@ -712,43 +734,58 @@ submitButton.addEventListener('click', function() {
 
 // inactive js
 
-
 var isTabActive = true; // Initialize the variable
 var inactiveCount = parseInt(localStorage.getItem("inactiveCount")) || 0; // Retrieve count from localStorage or set to 0 if not present
 
-window.onfocus = function () { 
-  isTabActive = true; 
-}; 
+// window.onfocus = function () { 
+//   isTabActive = true; 
+// }; 
 
 window.onblur = function () { 
   isTabActive = false; 
   inactiveCount++; 
   localStorage.setItem("inactiveCount", inactiveCount); // Store the updated count in localStorage
   document.getElementById("inactiveCount").innerText = inactiveCount; 
-  if (inactiveCount >= {{ num_attemps }}) {
+  if (inactiveCount + 1 >= {{ num_attemps }}) {
     // Perform action when count exceeds the threshold
     submitQuiz();
-    window.location.reload();
+    // window.location.reload();
+      // Add an event listener for the submit button
+
+   
   }
+  
 }; 
+
+
+document.getElementById("submit").addEventListener("click", function() {
+  // Clear the inactive count from localStorage
+
+//   window.location.href = "{% url 'student:view_result' %}";
+  // Perform the submit action, if any other logic is required
+//   submitQuiz();
+    // submitQuiz();
+    localStorage.removeItem("inactiveCount");
+    // localStorage.clear();
+});
+
+
+//   // Add an event listener for the submit button
+//   document.getElementById("submit").addEventListener("click", function() {
+//   // Clear the inactive count from localStorage
+
+// //   window.location.href = "{% url 'student:view_result' %}";
+//   // Perform the submit action, if any other logic is required
+// //   submitQuiz();
+// submitQuiz();
+//     localStorage.removeItem("inactiveCount");
+//     localStorage.clear();
+// });
 
   </script>
 
 
 <script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', function() {
-        let reloadCount = localStorage.getItem('reloadCount') ? parseInt(localStorage.getItem('reloadCount')) : 0;
-
-        if (reloadCount < 1) {
-            setTimeout(function() {
-                reloadCount++;
-                localStorage.setItem('reloadCount', reloadCount);
-                location.reload();
-            }, 1000); // Refresh the page every 5 seconds
-        } else {
-            localStorage.removeItem('reloadCount'); // Clear the count after 2 reloads
-        }
-    });
 
    
 </script>
