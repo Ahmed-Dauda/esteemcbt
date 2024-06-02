@@ -898,7 +898,17 @@ def calculate_marks_view(request):
                     total_marks += question.marks
         
         student = Profile.objects.get(user_id=request.user.id)
-        result = QMODEL.Result.objects.create(marks=total_marks, exam=course, student=student)
+        # result = QMODEL.Result.objects.create(marks=total_marks, exam=course, student=student)
+        existing_result = QMODEL.Result.objects.filter(exam=course, student=student).first()
+        if existing_result:
+            # Update the existing result
+            existing_result.marks = total_marks
+            existing_result.save()
+        else:
+            # Create a new result
+            result = QMODEL.Result.objects.create(marks=total_marks, exam=course, student=student)
+        
+        
         # if result:
         #     return JsonResponse({'success11': True, 'result_exists': True})
         
@@ -909,45 +919,6 @@ def calculate_marks_view(request):
     
     else:
         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
-
-
-# @login_required
-# def calculate_marks_view(request):
-#     if request.COOKIES.get('course_id') is not None:
-#         course_id = request.COOKIES.get('course_id')
-#         course=QMODEL.Course.objects.get(id=course_id)
-        
-#         total_marks=0
-#         questions=QMODEL.Question.objects.get_queryset().filter(course=course).order_by('id')
-#         for i in range(len(questions)):
-            
-#             # selected_ans = request.COOKIES.get(str(i+1))
-#             selected_ans = request.POST.get(str(i+1))
-#             print("answers1", selected_ans)
-#             actual_answer = questions[i].answer
-#             if selected_ans == actual_answer:
-#                 total_marks = total_marks + questions[i].marks
-#         student = Profile.objects.get(user_id=request.user.id)
-#         result = QMODEL.Result()
-        
-#         result.marks=total_marks 
-#         result.exam=course
-#         result.student=student
-#         # m = QMODEL.Result.objects.aggregate(Max('marks'))
-#         # max_q = Result.objects.filter(student_id = OuterRef('student_id'),exam_id = OuterRef('exam_id'),).order_by('-marks').values('id')
-#         # max_result = Result.objects.filter(id__in = Subquery(max_q[:1]), exam=course, student=student)
-        
-#         result.save()
-#         # score = 0
-#         # for max_value in max_result:
-#         #     score = score + max_value.marks
-            
-#         # if total_marks > score:
-            
-#         return HttpResponseRedirect('view_result')
-#     else:
-#         return HttpResponseRedirect('take-exam')
-# subject_view_result.html
 
 
 
