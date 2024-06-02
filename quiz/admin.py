@@ -33,7 +33,7 @@ admin.site.register(School, SchoolAdmin)
 from django.contrib import admin
 
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ['get_school_name', 'show_questions', 'course_name', 'question_number', 'total_marks', 'pass_mark', 'duration_minutes', 'created', 'updated']
+    list_display = ['get_school_name', 'show_questions', 'course_name', 'question_number', 'total_marks', 'num_attemps', 'duration_minutes','created']
     search_fields = ['course_name', 'schools__name']  # Add search field for course name
 
     def get_school_name(self, obj):
@@ -349,7 +349,7 @@ class QuestionResource(resources.ModelResource):
         fields = ('course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer', 'created', 'updated', 'id')
        
 class QuestionAdmin(ImportExportModelAdmin):
-    list_display = ['id','course','marks' ,'question']
+    list_display = ['id','course','marks' ,'question', 'answer']
     # prepopulated_fields = {"slug": ("title",)}
     list_filter =  ['course','marks' ,'question']
     search_fields= ['course__course_name__title','marks' ,'question']

@@ -28,18 +28,18 @@
        -->
  
 <style>
-    div.quiz p {
+div.quiz p {
   text-align: left;
-
 }
 
-    .quiz p {
+.quiz p {
   text-align: left;
 }
 .quiz {
   width: 100%;
   display: flex;
   border: 1px solid #ccc;
+
 }
 
 .quiz > * {
@@ -107,8 +107,8 @@
   </style>   
 
 
-<div class="card">
-<div class="card-header">
+
+
 
 <form id="quizf" action="/student/calculate_marks" onsubmit="return saveAns()" enctype="multipart/form-data"  method="POST">
     {% csrf_token %}
@@ -116,23 +116,24 @@
   
     <input type="hidden" name="csrfmiddlewaretoken" value="C24rUotmdHawVQJL3KrqiWxvti8UffOFYUc8TRbZtLt36AVLdP3jbkzUVe3beRAa">
      <!-- quiz timer  -->
-     <div class='sticky-top' style="position: fixed; top: 0px; width: 100%; z-index: 1000;">
+     <div class='sticky-top' style="position: fixed; top: -20px; width: 100%; z-index: 1000;">
       <div class="row justify-content-left">
           <div class="col-mx-auto">
               <div class="alert alert-success" role="alert" style="padding-bottom: 1px; display: flex; flex-wrap: wrap;">
                   <div style="width: 33.33%; padding: 10px;">
-          <!-- <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;"
-          src="{{ course.room_name }}" width="350px">
-          </iframe> -->
-          <div style="position: relative;">
-            <p style="position: absolute;background-color: black; top: -7px; left: 0; z-index: 0.5;">Focus on camera</p>
-            <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;" src="{{ course.room_name }}" width="350px"></iframe>
-        </div>
+
+                <div style="position: relative;">
+                    <p style="position: absolute;background-color: black; top: -7px; left: 0; z-index: 0.5;">Focus on camera</p>
+                    <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;" src="{{ course.room_name }}" width="300px" height="120px"></iframe>
+                </div>
         
                   </div>
                   <div style="width: 33.33%; padding: 10px;">
-                      <h6 id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</h6>
+                      <h6 id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</h6> 
                       <center><div id="timer">00:00</div></center>
+                      <div class="progress mt-4">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0% Complete</div>
+                      </div>
                   </div>
                   <div style="width: 33.33%; padding: 10px;">
                       <h6>{{course.course_name}} Quiz</h6>
@@ -144,8 +145,7 @@
       </div>
   </div>
   
-  <br><br>
-  
+ <hr> 
     <table id="example" class="display question-table" style="width:100%">
 
       <thead>
@@ -204,7 +204,6 @@
               {% if q.option3 %}
               <div class="quiz">
                   <div class="radio-container">
-                 
                       <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option3" value="Option3" required>
                       <label id="label-option3" data-original-text="{{ q.option3|safe|striptags }}" for="option3" data-label="my-label-button" class="radio-label"> {{q.opton3|safe|striptags}} </label>
                   </div>
@@ -214,8 +213,7 @@
               
               {% if q.option4 %}
               <div class="quiz">
-                  <div class="radio-container">
-                  
+                  <div class="radio-container">               
                       <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option4" value="Option4" required>
                       <label id="label-option4" data-original-text="{{ q.option4|safe|striptags }}" for="option4" data-label="my-label-button" class="radio-label"> {{q.optin4|safe|striptags}} </label>
                   </div>
@@ -237,16 +235,14 @@
    
 </form> 
 
+<!-- Button with inline CSS -->
 
-<button id="submit" type="submit" >Submit Quiz</button>
-
-<div class="progress mt-4">
-  <div class="progress-bar bg-success" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0% Complete</div>
-</div>
-<br>
-  <div id="paginationBoxes"></div>
-
-</div>
+<!-- <button id="submit" type="submit">Submit Quiz</button> -->
+<div class=" d-flex justify-content-center">
+    <button  id="submit" type="submit" style="background-color: green;max-height: 60px ; border-radius: 10px ;border: none; color: white; padding: 5px 30px; font-size: 16px; margin: 0px 2px; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: background-color 0.3s, transform 0.3s;" onmouseover="this.style.backgroundColor='#0056b3';" onmouseout="this.style.backgroundColor='#007bff';" onmousedown="this.style.backgroundColor='#004085'; this.style.transform='scale(0.95)';" onmouseup="this.style.backgroundColor='#0056b3'; this.style.transform='scale(1)';">
+        Submit Quiz
+    </button>
+    <div id="paginationBoxes"></div>
 </div>
 
 <br><br>
@@ -626,7 +622,10 @@ function submitQuiz() {
 
                // Calculate progress
             var answeredCount = dataCount;
+            // var progress = (answeredCount / totalPages) * 100;
             var progress = (answeredCount / totalPages) * 100;
+            progress = parseFloat(progress.toFixed(1)); // Round to 1 decimal place and convert to number
+
             // Update progress bar
             $('.progress-bar').css('width', progress + '%').attr('aria-valuenow', progress).text(progress + '% Complete');  
             

@@ -74,7 +74,7 @@ class Course(models.Model):
    course_pay = models.BooleanField(default=False)
    total_marks = models.PositiveIntegerField()
    num_attemps = models.PositiveIntegerField(default=4)
-   pass_mark = models.PositiveIntegerField(null=True)
+#    pass_mark = models.PositiveIntegerField(null=True)
    show_questions = models.PositiveIntegerField(default=10)
    duration_minutes = models.PositiveIntegerField(default=10)  # Add this field for quiz duration
    created = models.DateTimeField(auto_now_add=True,blank=True, null= True)

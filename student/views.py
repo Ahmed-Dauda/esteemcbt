@@ -635,7 +635,6 @@ def permission_denied_view(request, exception):
 @login_required
 def start_exams_view(request, pk):
 
-
     course = QMODEL.Course.objects.get(id=pk)
     num_attemps = course.num_attemps
     questions = QMODEL.Question.objects.filter(course=course).order_by('id')
@@ -649,6 +648,36 @@ def start_exams_view(request, pk):
     # Check if the student has already taken this exam
     if result_exists:
         return redirect('student:view_result')
+    
+    #     # Get the number of questions to display for the course
+    show_questions = course.show_questions
+    # Retrieve all questions for the course
+    all_questions = QMODEL.Question.objects.filter(course=course)
+    # Count the total number of questions
+    total_questions = all_questions.count()
+    # If there are enough questions, select a random subset
+    # if total_questions >= show_questions:
+    #     # Randomly select indices for the questions
+    #     random_indices = random.sample(range(total_questions), show_questions)
+    #     # Filter questions based on the random indices
+    #     questions = [all_questions[index] for index in random_indices]
+    # else:
+    #     # If there are not enough questions, display all questions
+    #     questions = all_questions
+    if total_questions >= show_questions:
+        questions = random.sample(list(all_questions), show_questions)
+    else:
+        questions = list(all_questions)
+
+    # Order the selected questions by their primary key for stable pagination
+    questions.sort(key=lambda q: q.id)
+    # print("quest", questions)
+    # Shuffle the list of selected questions
+    # random.shuffle(questions)
+
+    q_count = len(questions)  # Calculate the count of questions
+    print("q_count", q_count)
+
     # Calculate quiz end time
     quiz_duration = course.duration_minutes
     quiz_start_time = timezone.now()
@@ -665,7 +694,7 @@ def start_exams_view(request, pk):
         'num_attemps':num_attemps,
         'result_exists':result_exists,
         'q_count': q_count,
-        'page_obj': page_obj,
+        'page_obj': questions,
         'remaining_seconds': remaining_seconds,  # Pass remaining time to template
     }
 
@@ -741,7 +770,7 @@ def start_exams_view(request, pk):
 #     paginator = Paginator(questions, 200)  # Show 100 questions per page.
 #     page_number = request.GET.get('page')
 #     page_obj = paginator.get_page(page_number)
-    
+  
 #     # Calculate quiz end time
 #     quiz_duration = course.duration_minutes
 #     quiz_start_time = timezone.now()
@@ -907,8 +936,7 @@ def calculate_marks_view(request):
         else:
             # Create a new result
             result = QMODEL.Result.objects.create(marks=total_marks, exam=course, student=student)
-        
-        
+
         # if result:
         #     return JsonResponse({'success11': True, 'result_exists': True})
         
