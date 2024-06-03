@@ -124,8 +124,3 @@ urlpatterns = [
 
  
 ]
-
-
-
-
-

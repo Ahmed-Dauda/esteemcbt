@@ -34,7 +34,8 @@ import latex2mathml.converter
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
+from teacher import forms as QFORM
+from quiz import models as QMODEL
 
 # from django.shortcuts import render,redirect, get_object_or_404
 # from . import forms,models

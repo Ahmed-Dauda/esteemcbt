@@ -327,7 +327,7 @@ USE_L10N = True
 USE_TZ = True
 
 
-# ADDITIONALs SITE SECURITY
+# ADDITIONAL SITE SECURITY
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
@@ -344,15 +344,16 @@ CSRF_COOKIE_SECURE = True
 SESSION_COOKIES_HTTPONLY = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+# end of security
 
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 LOGIN_REDIRECT_URL = 'teacher:student-dashboard'
 LOGIN_URL = 'account_login'
 LOGOUT_REDIRECT_URL = 'account_login'
 ACCOUNT_SIGNUP_REDIRECT_URL= 'account_login'
-# ACCOUNT_SIGNUP_REDIRECT_URL= 'settings.LOGOUT_URL'
+ACCOUNT_SIGNUP_REDIRECT_URL= 'settings.LOGOUT_URL'
 # django hit count 
-# HITCOUNT_KEEP_HIT_ACTIVE = {'seconds': 2}
+HITCOUNT_KEEP_HIT_ACTIVE = {'seconds': 2}
 
 HITCOUNT_HITS_PER_IP_LIMIT = 0
 

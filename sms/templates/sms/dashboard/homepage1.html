@@ -1197,18 +1197,18 @@ error image loading -->
   }
   </script>
   
-  
+
 <!-- Refresh page once -->
 <script>
    document.addEventListener('DOMContentLoaded', function() {
         let reloadCount = localStorage.getItem('reloadCount') ? parseInt(localStorage.getItem('reloadCount')) : 0;
 
-        if (reloadCount < 2) {
+        if (reloadCount < 1) {
             setTimeout(function() {
                 reloadCount++;
                 localStorage.setItem('reloadCount', reloadCount);
                 location.reload();
-            }, 1500); // Refresh the page every 5 seconds
+            }, 2000); // Refresh the page every 5 seconds
         } else {
             localStorage.removeItem('reloadCount'); // Clear the count after 2 reloads
         }
