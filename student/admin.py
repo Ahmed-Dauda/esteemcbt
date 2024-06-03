@@ -16,7 +16,7 @@ from django.contrib import admin
 from users.models import NewUser
 from .models import  Question, Choice
 from django.db.models import Q 
-from sms.models import  Topics
+
 from django.utils.html import format_html
 from .models import AdvertisementImage
 

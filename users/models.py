@@ -107,7 +107,7 @@ class Profile(models.Model):
 
     user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE, unique=True, related_name='profile')
     username = models.CharField(max_length=225, blank=True)
-    completed_topics = models.ManyToManyField('sms.Topics', blank=True)
+    # completed_topics = models.ManyToManyField('sms.Topics', blank=True)
     student_course = models.ForeignKey('sms.Courses', on_delete=models.SET_NULL, related_name='students', null=True)
     first_name = models.CharField(max_length=225, blank=True, null=True)
     last_name = models.CharField(max_length=225, blank=True, null=True)

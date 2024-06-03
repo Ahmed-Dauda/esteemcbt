@@ -6,15 +6,13 @@ from import_export.widgets import ForeignKeyWidget
   
 
 from sms.models import (
-    Categories, Courses, Topics, 
-    Comment, Blog, Blogcomment,Alert, Gallery, 
-    FrequentlyAskQuestions, Partners, CourseFrequentlyAskQuestions, Skillyouwillgain, 
+    Categories, Courses,
+  Gallery, 
+    FrequentlyAskQuestions, CourseFrequentlyAskQuestions,
     # CourseLearnerReviews, 
-    Whatyouwilllearn, 
-    CareerOpportunities, Whatyouwillbuild, 
-    AboutCourseOwner, 
+ 
     CourseLearnerReviews,
-    CompletedTopics
+
     )
 
 admin.site.site_header = 'Esteem super admin dashboard'
@@ -188,11 +186,11 @@ admin.site.register(Courses, CoursesAdmin)
 
 
 
-class AlertAdmin(ImportExportModelAdmin):
-    list_display = ['id','title','content','created']
+# class AlertAdmin(ImportExportModelAdmin):
+#     list_display = ['id','title','content','created']
 
-    list_filter =  ['title','content','created']
-    search_fields= ['id','title','content','created']
-    ordering = ['id']
+#     list_filter =  ['title','content','created']
+#     search_fields= ['id','title','content','created']
+#     ordering = ['id']
 
-admin.site.register(Alert, AlertAdmin)
+# admin.site.register(Alert, AlertAdmin)

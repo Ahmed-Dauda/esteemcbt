@@ -1,7 +1,7 @@
 from django.urls import path
-from sms.views import update_referrer_mentor
-
 from . import views
+# from sms.views import update_referrer_mentor
+
 
 
 app_name = 'student'
@@ -10,9 +10,8 @@ urlpatterns = [
     path('paystack/webhook/', views.paystack_webhook, name='paystack_webhook'),
     # path('withdrawal/', views.withdrawal_request, name='withdrawal_request'),
     # URL for updating a referrer mentor
-    path('referrer_mentor_detail/<int:pk>/', update_referrer_mentor, name='referrer_mentor_detail'),
+    # path('referrer_mentor_detail/<int:pk>/', update_referrer_mentor, name='referrer_mentor_detail'),
    
-    
     # path('question-list/', views.question_list_view, name='question-list'),
     # path('question-form/', views.question_form_view, name='question-form'),      
     # path('verify/<str:id>/', views.verify,name='verify'),
@@ -39,13 +38,11 @@ urlpatterns = [
     # path('pdf_document_detail/<str:pk>/', views.pdf_document_detail, name='pdf_document_detail'),
     # end
 
-    path('pdf/<pk>/', views.pdf_id_view,name='pdf'),
+    # path('pdf/<pk>/', views.pdf_id_view,name='pdf'),
     # path('check_marks/<pk>/', views.check_marks_view,name='check_marks'),
     # path('verify/', views.verify_cert, name='verify_cert'),
-
-    path('verify/<str:certificate_code>/', views.verify_certificate, name='verify_certificate'),
+    # path('verify/<str:certificate_code>/', views.verify_certificate, name='verify_certificate'),
     
-   
 ]
 
 

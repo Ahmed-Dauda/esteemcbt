@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-
+{% load cache %}
 <html lang="en">
     <head>
         <meta charset="utf-8">
@@ -109,7 +109,7 @@
     <!-- Page Wrapper -->
     <div id="wrapper" class="bg-white">
         <!-- Sidebar -->
-
+        {% cache 500 sidebar %}
         
         <ul style="background-color: rgb(25, 26, 26); margin-bottom: 0;" class="navbar-nav sidebar sidebar-dark accordion toggled" id="accordionSidebar">
             <!-- Nav Item - Pages Collapse Menu -->
@@ -132,6 +132,12 @@
                     <a class="nav-link" href="{% url 'teacher:teacher_signup' %}">
                         <i class="fas fa-fw fa-book"></i>
                         <span> teacher signup</span></a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:teacher_login' %}">
+                    <i class="fas fa-fw fa-sign-in-alt"></i> 
+                    <span>Teacher Login</span>
+                </a>
             </li>
             <li class="nav-item">
                     <a class="nav-link" href="{% url 'users:schoolstudentview' %}">
@@ -202,6 +208,7 @@
             <!-- Sidebar Message -->
         </ul>
         
+        {% endcache %}
         
 
         <!-- End of Sidebar -->

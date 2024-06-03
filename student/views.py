@@ -34,12 +34,12 @@ from student.models import Logo, Designcert
 from quiz.models import Result, Course
 from xhtml2pdf import pisa
 from django.contrib.staticfiles import finders
-
+from django.views.decorators.cache import cache_page
 
 # from pypaystack import Transaction, Customer, Plan
 
 
-
+@cache_page(60 * 15)
 @csrf_exempt
 @require_POST
 @transaction.non_atomic_requests(using='db_name')
@@ -360,7 +360,7 @@ def withdrawal_request(request):
 #     return render(request, 'student/dashboard/withdrawal_form.html')
 
 
-
+@cache_page(60 * 15)
 def pdf_document_list(request):
     documents = PDFDocument.objects.all()
     return render(request, 'student/dashboard/pdf_document_list.html', {'documents': documents})
@@ -433,13 +433,14 @@ def pdf_document_list(request):
 
 
 # dashboard view
+@cache_page(60 * 15)
 @login_required
 def take_exams_view(request):
     course = QMODEL.Course.objects.all()
 
     # print("no",course)
     current_user = request.user
-    print('current user', current_user)
+    # print('current user', current_user)
 
     user_newuser = get_object_or_404(NewUser, email=request.user)
     if user_newuser is not None:
@@ -631,7 +632,7 @@ def permission_denied_view(request, exception):
     # Redirect the user to the desired page
     return redirect("student:view_result")
 
-
+@cache_page(60 * 15)
 @login_required
 def start_exams_view(request, pk):
 
@@ -676,7 +677,7 @@ def start_exams_view(request, pk):
     # random.shuffle(questions)
 
     q_count = len(questions)  # Calculate the count of questions
-    print("q_count", q_count)
+    # print("q_count", q_count)
 
     # Calculate quiz end time
     quiz_duration = course.duration_minutes
@@ -907,7 +908,7 @@ from django.db.models import F
 #         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
 
 # quizapp/tasks.py
-
+@cache_page(60 * 15)
 @login_required
 def calculate_marks_view(request):
     if request.COOKIES.get('course_id') is not None:
@@ -949,7 +950,7 @@ def calculate_marks_view(request):
         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
 
 
-
+@cache_page(60 * 15)
 @login_required
 def exam_warning_view(request):
     qcourses = Course.objects.order_by('id')
@@ -971,6 +972,8 @@ def exam_warning_view(request):
 #         }
 
 #     return render(request,'student/dashboard/view_result.html', context = context)
+
+@cache_page(60 * 15)
 @login_required
 def view_result_view(request):
     qcourses = Course.objects.order_by('id')
@@ -991,32 +994,29 @@ def view_result_view(request):
 
 from django.db.models import Count
 
-@login_required
-def check_marks_view(request,pk):
-    course=QMODEL.Course.objects.get(id=pk)
-    student = Profile.objects.get_queryset().order_by('id')
+# @cache_page(60 * 15)
+# @login_required
+# def check_marks_view(request,pk):
+#     course=QMODEL.Course.objects.get(id=pk)
+#     student = Profile.objects.get_queryset().order_by('id')
  
-    context = {
-        'results':student,
-        'course':course,
-        'st':request.user,
+#     context = {
+#         'results':student,
+#         'course':course,
+#         'st':request.user,
         
-    }
-    return render(request,'student/check_marks.html', context)
+#     }
+#     return render(request,'student/check_marks.html', context)
 
 
+# def verify_certificate(request, certificate_code):
+#     certificate = get_object_or_404(Certificate, code=certificate_code, user=request.user)
+#     # Perform any additional verification logic here
 
-
-
-
-def verify_certificate(request, certificate_code):
-    certificate = get_object_or_404(Certificate, code=certificate_code, user=request.user)
-    # Perform any additional verification logic here
-
-    context = {
-        'certificate': certificate,
-    }
-    return render(request, 'student/verify_certificate.html', context)
+#     context = {
+#         'certificate': certificate,
+#     }
+#     return render(request, 'student/verify_certificate.html', context)
 
 
 # download pdf id view
@@ -1098,71 +1098,71 @@ def verify_certificate(request, certificate_code):
    
 #     return response
     
-@login_required
-def pdf_id_view(request, *args, **kwargs):
-    course = QMODEL.Course.objects.all()
-    student = Profile.objects.get(user_id=request.user.id)
-    date = datetime.now()
-    logo = Logo.objects.all()
-    sign = Signature.objects.all()
-    design = Designcert.objects.all()
-    pk = kwargs.get('pk')
-    posts = get_list_or_404(course, pk=pk)
-    user_profile = Profile.objects.filter(user_id=request.user)
+# @login_required
+# def pdf_id_view(request, *args, **kwargs):
+#     course = QMODEL.Course.objects.all()
+#     student = Profile.objects.get(user_id=request.user.id)
+#     date = datetime.now()
+#     logo = Logo.objects.all()
+#     sign = Signature.objects.all()
+#     design = Designcert.objects.all()
+#     pk = kwargs.get('pk')
+#     posts = get_list_or_404(course, pk=pk)
+#     user_profile = Profile.objects.filter(user_id=request.user)
 
-    template_path = 'student/dashboard/certificatepdf_testing.html'
+#     template_path = 'student/dashboard/certificatepdf_testing.html'
 
-    # students = QMODEL.Student.objects.all()
+#     # students = QMODEL.Student.objects.all()
 
-    # Initialize variables with default values
-    school_name = ''
-    principal_name = ''
-    portfolio = ''
-    school_logo = ''
-    school_sign = ''
-    # student_name = student.first_name
+#     # Initialize variables with default values
+#     school_name = ''
+#     principal_name = ''
+#     portfolio = ''
+#     school_logo = ''
+#     school_sign = ''
+#     # student_name = student.first_name
 
-    # Now you can get the associated school for this student
-    user_newuser = get_object_or_404(NewUser, email=request.user)
+#     # Now you can get the associated school for this student
+#     user_newuser = get_object_or_404(NewUser, email=request.user)
 
-    associated_school = user_newuser.school
+#     associated_school = user_newuser.school
 
-    # Check if there is an associated school
-    if associated_school:
-        school_name = associated_school.school_name
-        principal_name = associated_school.name
-        portfolio = associated_school.portfolio
-        school_logo = associated_school.logo
-        school_sign = associated_school.principal_signature
+#     # Check if there is an associated school
+#     if associated_school:
+#         school_name = associated_school.school_name
+#         principal_name = associated_school.name
+#         portfolio = associated_school.portfolio
+#         school_logo = associated_school.logo
+#         school_sign = associated_school.principal_signature
 
-    context = {
-        'results': posts,
-        'student': student,
-        'date': date,
-        'course': posts,
-        'logo': logo,
-        'sign': sign,
-        'design': design,
-        # school
-        'school_name': school_name,
-        'school_logo': school_logo,
-        'school_sign': school_sign,
-        'principal_name': principal_name,
-        'portfolio': portfolio,
-    }
+#     context = {
+#         'results': posts,
+#         'student': student,
+#         'date': date,
+#         'course': posts,
+#         'logo': logo,
+#         'sign': sign,
+#         'design': design,
+#         # school
+#         'school_name': school_name,
+#         'school_logo': school_logo,
+#         'school_sign': school_sign,
+#         'principal_name': principal_name,
+#         'portfolio': portfolio,
+#     }
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="certificate.pdf"'
+#     response = HttpResponse(content_type='application/pdf')
+#     response['Content-Disposition'] = 'attachment; filename="certificate.pdf"'
 
-    # find the template and render it.
-    template = get_template(template_path)
-    html = template.render(context)
+#     # find the template and render it.
+#     template = get_template(template_path)
+#     html = template.render(context)
 
-    # create a pdf
-    pisa_status = pisa.CreatePDF(html, dest=response)
+#     # create a pdf
+#     pisa_status = pisa.CreatePDF(html, dest=response)
     
-    # if error then show some funny view
-    if pisa_status.err:
-        return HttpResponse('We had some errors <pre>' + html + '</pre>')
+#     # if error then show some funny view
+#     if pisa_status.err:
+#         return HttpResponse('We had some errors <pre>' + html + '</pre>')
 
-    return response
+#     return response

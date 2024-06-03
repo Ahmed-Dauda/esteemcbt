@@ -1,25 +1,106 @@
-from django.shortcuts import render,redirect, get_object_or_404
-
-from . import forms,models
+from django.shortcuts import render, redirect, get_object_or_404
+from . import forms, models
 from django.db.models import Sum
-from django.contrib.auth.models import Group
-from django.http import HttpResponseRedirect
-from django.contrib.auth.decorators import login_required,user_passes_test
+from django.contrib.auth.models import Group, AnonymousUser
+from django.http import HttpResponse, HttpResponseRedirect
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.conf import settings
 from datetime import date, timedelta
 from teacher import forms as QFORM
 from users.models import NewUser
+from quiz.models import Course, Result, Question
+from django.utils.datastructures import MultiValueDictKeyError
+from .models import SampleCodes, Teacher
+from .forms import JSONForm, TeacherSignupForm, TeacherLoginForm, QuestionForm, UploadCSVForm
+from django.views.decorators.cache import cache_page
+import csv
+import json
+from sms.models import Courses
+from django.forms import formset_factory
+from import_export import resources
+from tablib import Dataset
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from io import BytesIO
+from quiz.admin import QuestionResource
+import codecs
+import io
+import logging
+from django.contrib import messages
+from docx import Document
+import latex2mathml.converter
 
-# views.py
-from quiz import models as QMODEL
-from student import models as SMODEL
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
-from .forms import TeacherSignupForm
-from .models import Teacher
-from .forms import TeacherLoginForm
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
-from .forms import TeacherSignupForm  # Import your form
+
+# from django.shortcuts import render,redirect, get_object_or_404
+# from . import forms,models
+# from django.db.models import Sum
+# from django.contrib.auth.models import Group
+# from django.http import HttpResponseRedirect
+# from django.contrib.auth.decorators import login_required,user_passes_test
+# from django.conf import settings
+# from datetime import date, timedelta
+# from teacher import forms as QFORM
+# from users.models import NewUser
+# from django.contrib.auth.models import AnonymousUser
+# from quiz.models import Course
+# from django.utils.datastructures import MultiValueDictKeyError
+# from .models import SampleCodes
+# from .forms import JSONForm
+
+# # views.py
+# from quiz import models as QMODEL
+# from student import models as SMODEL
+# from django.shortcuts import render, redirect
+# from django.contrib.auth import authenticate, login
+# from .forms import TeacherSignupForm
+# from .models import Teacher
+# from .forms import TeacherLoginForm
+# from .forms import TeacherSignupForm  # Import your form
+# from django.views.decorators.cache import cache_page
+# import csv
+# import json
+# from quiz.models import Result
+# from sms.models import Courses
+# from django.forms import formset_factory
+# from django.http import HttpResponse
+# from django.shortcuts import render, redirect
+# from .forms import QuestionForm, UploadCSVForm
+# from quiz.models import Question
+# from import_export import resources
+# from tablib import Dataset
+# from django.forms import formset_factory
+# from .forms import QuestionForm
+# from .forms import QuestionForm
+# from django.http import HttpResponse
+# from quiz.models import Course
+# from reportlab.lib import colors
+# from reportlab.lib.pagesizes import letter
+# from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+# from io import BytesIO
+# from django.shortcuts import render
+# from django.http import HttpResponse
+# from quiz.admin import QuestionResource
+# import codecs
+
+# import io
+# import logging
+# from django.http import HttpResponse, HttpResponseRedirect
+# from django.shortcuts import render
+# from django.contrib import messages
+# from tablib import Dataset
+# from docx import Document
+# import latex2mathml.converter
+# # Configure logging
+# logging.basicConfig(level=logging.DEBUG)
+# logger = logging.getLogger(__name__)
+
+
+
 
 # def teacher_signup_view(request):
 #     user = request.user
@@ -58,7 +139,7 @@ from .forms import TeacherSignupForm  # Import your form
 
 #     return render(request, 'teacher/dashboard/login_section.html',context = context)
 
-
+@cache_page(60 * 15)
 def teacher_signup_view(request):
     if request.method == 'POST':
         form = TeacherSignupForm(request.POST)
@@ -106,17 +187,17 @@ def teacher_signup_view(request):
 #         form = TeacherLoginForm()
 #     return render(request, 'teacher/dashboard/teacher_login.html', {'form': form})
 
-
+@cache_page(60 * 15)
 def teacher_logout_view(request):
 
     return render(request, 'teacher/dashboard/teacher_logout.html')
 
-
+@cache_page(60 * 15)
 def student_logout_view(request):
 
     return render(request, 'teacher/dashboard/student_logout.html')
 
-
+@cache_page(60 * 15)
 def teacher_login_view(request):
     teachers = Teacher.objects.all()
     print('teachers:',teachers)
@@ -160,7 +241,7 @@ from teacher.models import School
 #     }
 #     return render(request,'teacher/dashboard/teacher_dashboard.html',context=dict)
 
-
+@cache_page(60 * 15)
 @login_required(login_url='teacher:teacher_login')
 def teacher_dashboard_view(request):
 
@@ -185,7 +266,7 @@ def teacher_dashboard_view(request):
         return redirect('account_login')
         # return render(request, 'teacher/dashboard/teacher_login.html')
 
-
+@cache_page(60 * 15)
 @login_required(login_url='account_login')
 def student_dashboard_view(request):
 
@@ -201,26 +282,8 @@ def student_dashboard_view(request):
     return render(request,'teacher/dashboard/student_dashboard.html',context=dict)
 
 
-from sms.models import Courses
 
-
-import csv
-
-from django.forms import formset_factory
-
-
-from django.http import HttpResponse
-from django.shortcuts import render, redirect
-from .forms import QuestionForm, UploadCSVForm
-from quiz.models import Question
-from import_export import resources
-from tablib import Dataset
-from django.forms import formset_factory
-from .forms import QuestionForm
-
-from django.forms import formset_factory
-from .forms import QuestionForm
-
+@cache_page(60 * 15)
 def add_question_view(request):
     # Retrieve the currently logged-in user
     user = request.user
@@ -262,8 +325,8 @@ def add_question_view(request):
 
 
 
-from quiz.models import Result
 
+@cache_page(60 * 15)
 def teacher_results_view(request):
     # Retrieve the currently logged-in user
     user = request.user
@@ -292,18 +355,8 @@ def teacher_results_view(request):
     return render(request, 'teacher/dashboard/teacher_results.html', context)
 
 
-import csv
 
-from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from quiz.models import Result
-from quiz.models import Course
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-from io import BytesIO
-import csv
-
+@cache_page(60 * 15)
 def export_results_csv(request):
     if request.method == 'POST':
         file_type = request.POST.get('file-type')
@@ -496,28 +549,7 @@ def export_results_csv(request):
 #     }
 #     return render(request, 'teacher/dashboard/teacher_add_question.html', context)
 
-from django.shortcuts import render
-from django.http import HttpResponse
 
-from quiz.admin import QuestionResource
-from tablib import Dataset
-import codecs
-
-from docx import Document
-import io
-import csv
-import logging
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
-from django.contrib import messages
-from tablib import Dataset
-from docx import Document
-import latex2mathml.converter
-
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 def tex_to_mathml(tex_input):
     try:
@@ -536,7 +568,7 @@ def tex_to_mathml(tex_input):
 
 
 # original codes
-
+@cache_page(60 * 15)
 def import_data(request):
     if request.method == 'POST':
         dataset = Dataset()
@@ -659,6 +691,8 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib import messages
 import csv
+
+@cache_page(60 * 15)
 def import_word(request):
     if request.method == 'POST':
         # Check if the uploaded file format is supported
@@ -734,9 +768,7 @@ def import_word(request):
 
 # utils.py
 
-import csv
-import csv
-import json
+
 
 def write_to_csv(data, filename):
     with open(filename, 'w', newline='') as csvfile:
@@ -799,22 +831,14 @@ json_data = '''
 
 # Parse JSON string into a list of dictionaries
 questions_data = json.loads(json_data)
-
 # Write generated data to CSV file
 write_to_csv(questions_data, 'generated_questions8.csv')
 
-
-
-write_to_csv(questions_data, 'generated_questions8.csv')
-
-from .models import SampleCodes
-from .forms import JSONForm
 
 def generate_csv(request):
 
     sample_codes = SampleCodes.objects.all()
     # print('sample',sample_codes)
-
     if request.method == 'POST':
         form = JSONForm(request.POST)
         if form.is_valid():
@@ -835,10 +859,10 @@ def generate_csv(request):
     else:
         form = JSONForm()
         
-
     return render(request, 'teacher/dashboard/generate_csv.html', {'form': form, 'sample_codes':sample_codes})
 
 
+@cache_page(60 * 15)
 def download_csv(request):
     # Assuming the CSV file is generated and saved as 'generated_questions.csv'
     filename = 'generated_questions.csv'
@@ -849,11 +873,6 @@ def download_csv(request):
         response['Content-Disposition'] = 'attachment; filename=' + filename
         return response
     
-
-
-from quiz.models import Course
-
-from django.utils.datastructures import MultiValueDictKeyError
 
 def export_data(request):
     if request.method == 'POST':
@@ -903,8 +922,9 @@ def export_data(request):
 #         print('cor',courses)
 #         return render(request, 'teacher/dashboard/export_questions.html', {'courses': courses})
 
-from django.contrib.auth.models import AnonymousUser
 
+
+@cache_page(60 * 15)
 def view_questions(request):
     # Check if user is authenticated
     if not request.user.is_authenticated:
@@ -931,11 +951,11 @@ def view_questions(request):
     return render(request, 'teacher/dashboard/view_questions.html', context)
 
 
-
+@cache_page(60 * 15)
 def edit_question(request, question_id):
     question = get_object_or_404(Question, id=question_id)
     if request.method == 'POST':
-        form = QuestionForm(request.POST, instance=question)
+        form = QuestionForm(request.POST, request.FILES,instance=question)
         if form.is_valid():
             form.save()
             return redirect('teacher:view_questions')  # Redirect to the view questions page
@@ -944,6 +964,8 @@ def edit_question(request, question_id):
     return render(request, 'teacher/dashboard/edit_questions.html', {'form': form})
 
 
+
+@cache_page(60 * 15)
 def delete_question_view(request, question_id):
     question = get_object_or_404(Question, id=question_id)
     if request.method == 'POST':

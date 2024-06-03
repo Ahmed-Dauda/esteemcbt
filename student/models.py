@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
-from sms.models import Topics
+
 
 # from sms.paystack import Paystack
 
@@ -24,7 +24,7 @@ from sms.models import Topics
 
 
 class Question(models.Model):
-    topic = models.ForeignKey(Topics, on_delete=models.CASCADE)
+    # topic = models.ForeignKey(Topics, on_delete=models.CASCADE)
     text = models.TextField()
 
     def __str__(self):

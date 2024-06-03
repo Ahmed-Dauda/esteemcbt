@@ -1,15 +1,12 @@
 import profile
 from django.contrib import admin
-from quiz.models import Certificate_note
-
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from import_export import fields,resources
 from import_export.widgets import ForeignKeyWidget
 from users.models import Profile
 from quiz.models import (
-    Question, Course, Result,
-    QuestionAssessment, TopicsAssessment, ResultAssessment, School,
+    Question, Course, Result,School,
      
    
     )

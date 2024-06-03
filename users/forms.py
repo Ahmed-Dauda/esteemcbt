@@ -3,10 +3,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django import forms
 from django.db import models 
 from django.forms import ModelForm
-
 from student.models import ReferrerMentor
 from django.contrib.auth import get_user_model
-from sms.models import Comment
 from allauth.account.forms import SignupForm
 from .models import *
 from users.models import NewUser
@@ -179,20 +177,20 @@ class ReferrerMentorForm(forms.ModelForm):
 
 
 
-class smspostform(ModelForm):
-    class Meta:
+# class smspostform(ModelForm):
+#     class Meta:
         
-        # model = smsform
-        fields= '__all__'
+#         # model = smsform
+#         fields= '__all__'
     
-class feedbackform(ModelForm):
-    class Meta:
+# class feedbackform(ModelForm):
+#     class Meta:
         
-        model = Comment
-        fields= '__all__'
+#         model = Comment
+#         fields= '__all__'
 
-class userprofileform(ModelForm):
-    class Meta:
+# class userprofileform(ModelForm):
+#     class Meta:
         
-        # model = Profile
-        fields= '__all__'
+#         # model = Profile
+#         fields= '__all__'
