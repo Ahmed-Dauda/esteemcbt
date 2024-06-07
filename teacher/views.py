@@ -30,6 +30,7 @@ import logging
 from django.contrib import messages
 from docx import Document
 import latex2mathml.converter
+from django.contrib.auth import authenticate, login
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)

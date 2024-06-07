@@ -436,12 +436,11 @@ def pdf_document_list(request):
 @cache_page(60 * 15)
 @login_required
 def take_exams_view(request):
-    course = QMODEL.Course.objects.all()
 
+    course = QMODEL.Course.objects.all()
     # print("no",course)
     current_user = request.user
     # print('current user', current_user)
-
     user_newuser = get_object_or_404(NewUser, email=request.user)
     if user_newuser is not None:
         school_name = user_newuser.school.school_name
@@ -469,12 +468,12 @@ def take_exams_view(request):
         # If the CourseGrade instance exists, you can access its name and subjects
         sub_grade = course_grade.name
         subjects = course_grade.subjects.all()
-        print("Name:", sub_grade)
+        # print("Name:", sub_grade)
         # print("Subjects:")
         class_subj = []
         for subject in subjects:
             class_subj.append(subject)
-            print("Subjects:", subject)
+            # print("Subjects:", subject)
     else:
        
         print("No CourseGrade instance found for the current user.")
@@ -632,7 +631,8 @@ def permission_denied_view(request, exception):
     # Redirect the user to the desired page
     return redirect("student:view_result")
 
-@cache_page(60 * 15)
+
+
 @login_required
 def start_exams_view(request, pk):
 
