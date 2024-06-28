@@ -1,20 +1,87 @@
 <!-- users/templates/users/referral_signup.html -->
 {% extends 'sms/dashboard/teacherbase.html' %}
 
-{% block content %}
+{% load crispy_forms_tags %}
 
-<div class="text-center">
+{% block content %}
+<style>
+     .errorlist {
+        margin-top: 50px;
+            display: none; /* Hide the default error list */
+        }
+        .error-message {
+            color: red;
+            font-size: 12px;
+            margin-top: 50px;
+        }
+</style>
     <br><br>
-  
-    <h2>Teacher Registration</h2>
+   
+<div class="container">
+    <h2 class="text-center text-success">Teacher Registration</h2>
+    <!-- <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-primary">Sign in</button>
+      </form> -->
+
+      <hr>
+
+      <form method="post">
+        {{ form|as_crispy_errors }}
+        {% csrf_token %}
+        <div class="form-row">
+          <div class="form-group col-md-6 mb-0">
+            {{ form.email|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-6 mb-0">
+            {{ form.username|as_crispy_field }}
+          </div>
+        
+          <div class="form-group col-md-6 mb-0">
+            {{form.first_name|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-6 mb-0">
+            {{ form.last_name|as_crispy_field }}
+          </div>
+
+          <div class="form-group col-md-6 mb-0">
+            {{ form.password1|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-6 mb-0">
+            {{ form.password2|as_crispy_field }}
+          </div>
+
+         
+        </div>
+       
+        <div class="form-row">
+          <div class="form-group col-md-6 mb-0">
+            {{ form.subjects_taught|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-6 mb-0">
+            {{ form.classes_taught|as_crispy_field }}
+          </div>
+
+          <div class="form-group col-md-6 mb-0">
+            {{ form.school|as_crispy_field }}
+          </div>
+        </div>
+       
+        <button type="submit" class="btn btn-primary">Register</button>
+      </form>
+</div>
+    
+      
+    <!-- <h2>Teacher Registration</h2>
     <form method="post">
         {% csrf_token %}
        <p>{{ form.as_p }}</p> 
         <button type="submit">Register</button>
     </form>
-    
+     -->
 
-</div>
+
 {% endblock %}
 
 

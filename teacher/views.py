@@ -141,7 +141,7 @@ from quiz import models as QMODEL
 
 #     return render(request, 'teacher/dashboard/login_section.html',context = context)
 
-@cache_page(60 * 15)
+# @cache_page(60 * 15)
 def teacher_signup_view(request):
     if request.method == 'POST':
         form = TeacherSignupForm(request.POST)
@@ -243,32 +243,64 @@ from teacher.models import School
 #     }
 #     return render(request,'teacher/dashboard/teacher_dashboard.html',context=dict)
 
-@cache_page(60 * 15)
+# @cache_page(60 * 15)
+# @login_required(login_url='teacher:teacher_login')
+# def teacher_dashboard_view(request):
+
+#     username = request.user.username
+#     print('user',username)
+#     try:
+#         teacher = Teacher.objects.get(username=username)
+#         teacher_subjects = teacher.subjects_taught.all()
+#         teacher_class = teacher.classes_taught.all()
+#         # print('teacher',teacher)
+#         # print('teacher_subjects',teacher_subjects)
+#         # Your further logic here
+#         dict = {
+#             'username': username,
+#             'teacher_class': teacher_class,
+#              'teacher_subjects': teacher_subjects,
+
+#             }
+#         return render(request, 'teacher/dashboard/teacher_dashboard.html', context=dict)
+#     except Teacher.DoesNotExist:
+#         # Handle case where Teacher instance does not exist
+#         return redirect('account_login')
+#         # return render(request, 'teacher/dashboard/teacher_login.html')
+
 @login_required(login_url='teacher:teacher_login')
 def teacher_dashboard_view(request):
-
+    if request.user.is_superuser:
+        return render(request, 'sms/dashboard/adminbase.html')  # Render a "not authorized" page or handle as needed
+    
     username = request.user.username
-    print('user',username)
+    
     try:
         teacher = Teacher.objects.get(username=username)
         teacher_subjects = teacher.subjects_taught.all()
         teacher_class = teacher.classes_taught.all()
-        print('teacher',teacher)
-        print('teacher_subjects',teacher_subjects)
-        # Your further logic here
-        dict = {
+        
+        context = {
             'username': username,
             'teacher_class': teacher_class,
-             'teacher_subjects': teacher_subjects,
-
-            }
-        return render(request, 'teacher/dashboard/teacher_dashboard.html', context=dict)
+            'teacher_subjects': teacher_subjects,
+        }
+       
+        return render(request, 'teacher/dashboard/teacher_dashboard.html', context=context)
+    
     except Teacher.DoesNotExist:
         # Handle case where Teacher instance does not exist
         return redirect('account_login')
-        # return render(request, 'teacher/dashboard/teacher_login.html')
+    
 
-@cache_page(60 * 15)
+@login_required(login_url='teacher:teacher_login')
+@user_passes_test(lambda u: u.is_superuser)
+def logged_in_superuser_view(request):
+    # Logic for the view accessible only to logged-in superusers
+    return render(request, 'sms/dashboard/adminbase.html')
+
+
+# @cache_page(60 * 15)
 @login_required(login_url='account_login')
 def student_dashboard_view(request):
 
@@ -327,18 +359,20 @@ def add_question_view(request):
 
 
 
-
 @cache_page(60 * 15)
+@login_required
 def teacher_results_view(request):
-    # Retrieve the currently logged-in user
     user = request.user
+
+    # Check if the user is authenticated
+    if not user.is_authenticated:
+        return redirect('login')  # Redirect to login if user is not authenticated
 
     # Get the teacher instance associated with the user
     try:
         teacher = Teacher.objects.get(user=user)
     except Teacher.DoesNotExist:
         # Handle the case where the user is not a teacher
-        # Redirect to an error page or return an appropriate response
         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
 
     # Get the subjects taught by the teacher
@@ -346,6 +380,7 @@ def teacher_results_view(request):
     
     subjects_taught_titles = [course.course_name for course in subjects_taught]
     print("subjects_taught66", subjects_taught_titles)
+    
     # Retrieve the results associated with the subjects taught by the teacher
     results = Result.objects.filter(exam__course_name__in=subjects_taught_titles)
     print('results', results)
@@ -355,6 +390,35 @@ def teacher_results_view(request):
         'results': results,
     }
     return render(request, 'teacher/dashboard/teacher_results.html', context)
+
+
+# @cache_page(60 * 15)
+# def teacher_results_view(request):
+#     # Retrieve the currently logged-in user
+#     user = request.user
+
+#     # Get the teacher instance associated with the user
+#     try:
+#         teacher = Teacher.objects.get(user=user)
+#     except Teacher.DoesNotExist:
+#         # Handle the case where the user is not a teacher
+#         # Redirect to an error page or return an appropriate response
+#         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
+
+#     # Get the subjects taught by the teacher
+#     subjects_taught = teacher.subjects_taught.all()
+    
+#     subjects_taught_titles = [course.course_name for course in subjects_taught]
+#     print("subjects_taught66", subjects_taught_titles)
+#     # Retrieve the results associated with the subjects taught by the teacher
+#     results = Result.objects.filter(exam__course_name__in=subjects_taught_titles)
+#     print('results', results)
+
+#     context = {
+#         'teacher': teacher,
+#         'results': results,
+#     }
+#     return render(request, 'teacher/dashboard/teacher_results.html', context)
 
 
 

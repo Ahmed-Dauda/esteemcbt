@@ -43,6 +43,10 @@ def move_group(request, from_group_name=None, to_group_name=None):
     return render(request, 'quiz/dashboard/move_group_form.html', {'form': form})
 
 
+def success_page_view(request):
+    return render(request, 'quiz/dashboard/success_page.html')
+
+
 # @cache_page(60 * 15)
 # @login_required
 # def take_exams_view(request):

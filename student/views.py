@@ -443,17 +443,20 @@ def take_exams_view(request):
     # print('current user', current_user)
     user_newuser = get_object_or_404(NewUser, email=request.user)
     if user_newuser is not None:
-        school_name = user_newuser.school.school_name
-        student_class = user_newuser.student_class
-        school_name = school_name
-        # Fetch the courses associated with the user's school
         school = user_newuser.school
-        course_pay = user_newuser.school.course_pay
-        course_names = Course.objects.filter(course_pay=course_pay)
-        # print("course_names:", course_names)
+        if school is not None:
+            school_name = school.school_name
+            course_pay = school.course_pay
+            course_names = Course.objects.filter(course_pay=course_pay)
+        else:
+            school_name = "Default School Name"
+            course_names = []
+        
+        student_class = user_newuser.student_class
     else:
         school_name = "Default School Name"
-        student_class = "Default Class"    
+        student_class = "Default Class"
+        course_names = []   
         # print("school_name:", school_name )
         # print("student_class", student_class)
 
@@ -481,16 +484,16 @@ def take_exams_view(request):
   
 
     context = {
-        'courses': course,
-        'class_subj':class_subj,
-        'student_class': student_class,
-        'school_name': school_name,
-        "sub_grade": sub_grade,
-        "subjects": subjects,
-        "course_names":course_names,
-        'course_pay':course_pay,
-        "grades": QMODEL.CourseGrade.objects.all()
-    }
+            'courses': course,
+            'class_subj':class_subj,
+            'student_class': student_class,
+            'school_name': school_name,
+            "sub_grade": sub_grade,
+            "subjects": subjects,
+            "course_names":course_names,
+            'course_pay':course_pay,
+            "grades": QMODEL.CourseGrade.objects.all()
+        }
     return render(request, 'student/dashboard/take_exams.html', context=context)
 
 

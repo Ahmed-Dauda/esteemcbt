@@ -110,7 +110,7 @@
     <div id="wrapper" class="bg-white">
         <!-- Sidebar -->
 
-        {% cache 500 sidebar %}
+ 
         <ul style="background-color: rgb(25, 26, 26); margin-bottom: 0;" class="navbar-nav sidebar sidebar-dark accordion toggled" id="accordionSidebar">
             <!-- Nav Item - Pages Collapse Menu -->
 <br>
@@ -120,7 +120,7 @@
             </div>
             <!-- Divider -->
             <hr class="sidebar-divider">
-            {% if request.user.is_superuser %}
+            {% if request.user.is_authenticated and request.user.is_superuser %}
             <li class="nav-item" style="margin-bottom: -10px;">
                 <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
                     <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
@@ -212,7 +212,7 @@
             <!-- Sidebar Message -->
         </ul>
         
-        {% endcache %}
+
         
 
         <!-- End of Sidebar -->
@@ -352,7 +352,7 @@
                 <!-- Begin Page Content -->
               <div class="bg-body">
                 <br>
-                <h1 class="text-center">Teacher view</h1>
+                <h3 class="text-center">Teacher view</h3>
                 
                 {% block content %} 
                 

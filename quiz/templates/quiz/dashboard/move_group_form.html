@@ -2,17 +2,107 @@
 {% extends 'sms/dashboard/teacherbase.html' %}
 
 {% block content %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f9;
+        color: #333;
+    }
+    .container {
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+        background-color: #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+    }
+    h1 {
+        text-align: center;
+        color: #4CAF50;
+    }
+    p {
+        font-size: 16px;
+        line-height: 1.5;
+    }
+    h2 {
+        color: #333;
+    }
+    ol {
+        margin: 20px 0;
+        padding-left: 20px;
+    }
+    ol li {
+        margin: 10px 0;
+    }
+    form {
+        margin-top: 20px;
+    }
+    form p {
+        margin-bottom: 20px;
+    }
+    input[type="text"],
+    select,
+    button {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0 20px 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #45a049;
+    }
+    .info {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #e7f4e4;
+        border-left: 6px solid #4CAF50;
+    }
+    .info p {
+        margin: 0;
+    }
+</style>
 
-<div class="text-center">
     <br><br>
 
-    <h1>Move Group</h1>
+    <div class="container">
+        <h1>Move Students from One Class to Another</h1>
+        <p>Use this form to move a group of students from one class to another. This might be necessary when students are promoted to the next grade or when you need to reorganize classes for any reason.</p>
+        
+        <h2>Instructions</h2>
+        <ol>
+            <li>Select the class you want to move the students from.</li>
+            <li>Select the class you want to move the students to.</li>
+            <li>Click the "Move Group" button to complete the transfer.</li>
+        </ol>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Move Group</button>
+        </form>
+        
+        <div class="info">
+            <p>If you encounter any issues or need assistance, please contact the administrative office.</p>
+        </div>
+    </div>
+
+
+    <!-- <h1>Move students from one class to another</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Move Group</button>
-    </form>
+    </form> -->
 
-</div>
+
 {% endblock %}
 

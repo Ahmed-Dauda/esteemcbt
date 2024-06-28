@@ -763,7 +763,41 @@ p {
 
 }
 
+/* new rolling  */
+#rolling-text-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #fff;
+            z-index: 1000;
+        }
+        #rolling-text {
+            font-size: 24px;
+            color: #333;
+            display: inline-block;
+            white-space: nowrap;
+            animation: roll 10s linear infinite;
+        }
+        @keyframes roll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .hidden {
+            display: none !important;
+        }
+        /* end of rolling css */
 </style>
+
+<div id="rolling-text-container">
+  <div id="rolling-text">Loading...</div>
+</div>
+
+<div id="main-content" class="hidden">
+  <!-- Your main content here -->
+
 
 <!-- courasel image -->
 <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
@@ -1096,7 +1130,7 @@ p {
 </div>
 <br>
 
-
+</div>
 
 <!-- flesh javacsripts -->
 
@@ -1208,11 +1242,30 @@ error image loading -->
                 reloadCount++;
                 localStorage.setItem('reloadCount', reloadCount);
                 location.reload();
-            }, 2000); // Refresh the page every 5 seconds
+            }, 3000); // Refresh the page every 5 seconds
         } else {
             localStorage.removeItem('reloadCount'); // Clear the count after 2 reloads
         }
     });
+</script>
+
+<!-- js for loading animation -->
+
+<script>
+  function hideLoadingScreen() {
+      document.getElementById('rolling-text-container').classList.add('hidden');
+      document.getElementById('main-content').classList.remove('hidden');
+  }
+
+  if (document.readyState === 'complete') {
+      // Document is already fully loaded
+      hideLoadingScreen();
+  } else {
+      // Document is not fully loaded yet
+      window.onload = function() {
+          hideLoadingScreen();
+      };
+  }
 </script>
 {% endblock %} 
  
