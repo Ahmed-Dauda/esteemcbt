@@ -243,54 +243,56 @@ from teacher.models import School
 #     }
 #     return render(request,'teacher/dashboard/teacher_dashboard.html',context=dict)
 
+
 # @cache_page(60 * 15)
-# @login_required(login_url='teacher:teacher_login')
-# def teacher_dashboard_view(request):
-
-#     username = request.user.username
-#     print('user',username)
-#     try:
-#         teacher = Teacher.objects.get(username=username)
-#         teacher_subjects = teacher.subjects_taught.all()
-#         teacher_class = teacher.classes_taught.all()
-#         # print('teacher',teacher)
-#         # print('teacher_subjects',teacher_subjects)
-#         # Your further logic here
-#         dict = {
-#             'username': username,
-#             'teacher_class': teacher_class,
-#              'teacher_subjects': teacher_subjects,
-
-#             }
-#         return render(request, 'teacher/dashboard/teacher_dashboard.html', context=dict)
-#     except Teacher.DoesNotExist:
-#         # Handle case where Teacher instance does not exist
-#         return redirect('account_login')
-#         # return render(request, 'teacher/dashboard/teacher_login.html')
-
 @login_required(login_url='teacher:teacher_login')
 def teacher_dashboard_view(request):
-    if request.user.is_superuser:
-        return render(request, 'sms/dashboard/adminbase.html')  # Render a "not authorized" page or handle as needed
-    
+
     username = request.user.username
-    
+    print('user',username)
     try:
         teacher = Teacher.objects.get(username=username)
         teacher_subjects = teacher.subjects_taught.all()
         teacher_class = teacher.classes_taught.all()
-        
-        context = {
+        # print('teacher',teacher)
+        # print('teacher_subjects',teacher_subjects)
+        # Your further logic here
+        dict = {
             'username': username,
             'teacher_class': teacher_class,
-            'teacher_subjects': teacher_subjects,
-        }
-       
-        return render(request, 'teacher/dashboard/teacher_dashboard.html', context=context)
-    
+             'teacher_subjects': teacher_subjects,
+
+            }
+        return render(request, 'teacher/dashboard/teacher_dashboard.html', context=dict)
     except Teacher.DoesNotExist:
         # Handle case where Teacher instance does not exist
         return redirect('account_login')
+        # return render(request, 'teacher/dashboard/teacher_login.html')
+
+
+# @login_required(login_url='teacher:teacher_login')
+# def teacher_dashboard_view(request):
+#     if request.user.is_superuser:
+#         return render(request, 'sms/dashboard/adminbase.html')  # Render a "not authorized" page or handle as needed
+    
+#     username = request.user.username
+    
+#     try:
+#         teacher = Teacher.objects.get(username=username)
+#         teacher_subjects = teacher.subjects_taught.all()
+#         teacher_class = teacher.classes_taught.all()
+        
+#         context = {
+#             'username': username,
+#             'teacher_class': teacher_class,
+#             'teacher_subjects': teacher_subjects,
+#         }
+       
+#         return render(request, 'teacher/dashboard/teacher_dashboard.html', context=context)
+    
+#     except Teacher.DoesNotExist:
+#         # Handle case where Teacher instance does not exist
+#         return redirect('account_login')
     
 
 @login_required(login_url='teacher:teacher_login')
