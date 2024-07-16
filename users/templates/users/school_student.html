@@ -85,13 +85,38 @@
     <br><br>
   <h4>Student registration form</h4>
 
-  {% if messages %}
+  <!-- {% if messages %}
   <ul class="messages">
       {% for message in messages %}
           <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
-  {% endif %}
+  {% endif %} -->
+
+  {% if messages %}
+  <ul id="messages" class="messages">
+      {% for message in messages %}
+          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      {% endfor %}
+  </ul>
+{% endif %}
+
+<script>
+  // Wait for the DOM to be fully loaded
+  document.addEventListener('DOMContentLoaded', (event) => {
+    // Select the messages container
+    const messagesContainer = document.getElementById('messages');
+    
+    // Check if the container exists
+    if (messagesContainer) {
+      // Set a timeout to hide the messages after 5 seconds (5000 milliseconds)
+      setTimeout(() => {
+        messagesContainer.style.display = 'none';
+      }, 5000);
+    }
+  });
+</script>
+
 
   <form method="post" id="myForm" class="formcontainer">
       {% csrf_token %}
