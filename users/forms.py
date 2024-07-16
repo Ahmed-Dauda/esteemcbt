@@ -91,7 +91,7 @@ class SimpleSignupForm(SignupForm):
 class SchoolStudentSignupForm(SignupForm):
     first_name = forms.CharField(max_length=222, label='First-name')
     last_name = forms.CharField(max_length=225, label='Last-name')
-    phone_number = forms.CharField(max_length=225, widget=forms.HiddenInput(), required=False)
+    # phone_number = forms.CharField(max_length=225, widget=forms.HiddenInput(), required=False)
     admission_no = forms.CharField(max_length=50, label='Admission Number')
     student_class = forms.CharField(label='Student Class', )
     countries = forms.ChoiceField(choices=country_choice, label='Country')

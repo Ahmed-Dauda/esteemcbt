@@ -433,14 +433,13 @@ def pdf_document_list(request):
 
 
 # dashboard view
+
 @cache_page(60 * 15)
 @login_required
 def take_exams_view(request):
-
     course = QMODEL.Course.objects.all()
-    # print("no",course)
     current_user = request.user
-    # print('current user', current_user)
+
     user_newuser = get_object_or_404(NewUser, email=request.user)
     if user_newuser is not None:
         school = user_newuser.school
@@ -451,50 +450,106 @@ def take_exams_view(request):
         else:
             school_name = "Default School Name"
             course_names = []
-        
+            course_pay = None
         student_class = user_newuser.student_class
     else:
         school_name = "Default School Name"
         student_class = "Default Class"
-        course_names = []   
-        # print("school_name:", school_name )
-        # print("student_class", student_class)
+        course_names = []
+        course_pay = None
 
     sub_grade = None  # Initialize sub_grade with a default value
     subjects = None  # Initialize subjects with a default value
+    class_subj = []  # Initialize class_subj with a default value
 
     # Query the CourseGrade instance associated with the current user
     course_grade = QMODEL.CourseGrade.objects.filter(students__in=[current_user]).first()
 
-    
     if course_grade:
         # If the CourseGrade instance exists, you can access its name and subjects
         sub_grade = course_grade.name
         subjects = course_grade.subjects.all()
-        # print("Name:", sub_grade)
-        # print("Subjects:")
-        class_subj = []
         for subject in subjects:
             class_subj.append(subject)
-            # print("Subjects:", subject)
     else:
-       
         print("No CourseGrade instance found for the current user.")
-        # Filter out courses that are not in the CourseGrade subjects
-  
 
     context = {
-            'courses': course,
-            'class_subj':class_subj,
-            'student_class': student_class,
-            'school_name': school_name,
-            "sub_grade": sub_grade,
-            "subjects": subjects,
-            "course_names":course_names,
-            'course_pay':course_pay,
-            "grades": QMODEL.CourseGrade.objects.all()
-        }
+        'courses': course,
+        'class_subj': class_subj,
+        'student_class': student_class,
+        'school_name': school_name,
+        "sub_grade": sub_grade,
+        "subjects": subjects,
+        "course_names": course_names,
+        'course_pay': course_pay,
+        "grades": QMODEL.CourseGrade.objects.all()
+    }
     return render(request, 'student/dashboard/take_exams.html', context=context)
+
+
+# @cache_page(60 * 15)
+# @login_required
+# def take_exams_view(request):
+
+#     course = QMODEL.Course.objects.all()
+#     # print("no",course)
+#     current_user = request.user
+#     # print('current user', current_user)
+#     user_newuser = get_object_or_404(NewUser, email=request.user)
+#     if user_newuser is not None:
+#         school = user_newuser.school
+#         if school is not None:
+#             school_name = school.school_name
+#             course_pay = school.course_pay
+#             course_names = Course.objects.filter(course_pay=course_pay)
+#         else:
+#             school_name = "Default School Name"
+#             course_names = []
+        
+#         student_class = user_newuser.student_class
+#     else:
+#         school_name = "Default School Name"
+#         student_class = "Default Class"
+#         course_names = []   
+#         # print("school_name:", school_name )
+#         # print("student_class", student_class)
+
+#     sub_grade = None  # Initialize sub_grade with a default value
+#     subjects = None  # Initialize subjects with a default value
+
+#     # Query the CourseGrade instance associated with the current user
+#     course_grade = QMODEL.CourseGrade.objects.filter(students__in=[current_user]).first()
+
+    
+#     if course_grade:
+#         # If the CourseGrade instance exists, you can access its name and subjects
+#         sub_grade = course_grade.name
+#         subjects = course_grade.subjects.all()
+#         # print("Name:", sub_grade)
+#         # print("Subjects:")
+#         class_subj = []
+#         for subject in subjects:
+#             class_subj.append(subject)
+#             # print("Subjects:", subject)
+#     else:
+       
+#         print("No CourseGrade instance found for the current user.")
+#         # Filter out courses that are not in the CourseGrade subjects
+  
+
+#     context = {
+#             'courses': course,
+#             'class_subj':class_subj,
+#             'student_class': student_class,
+#             'school_name': school_name,
+#             "sub_grade": sub_grade,
+#             "subjects": subjects,
+#             "course_names":course_names,
+#             'course_pay':course_pay,
+#             "grades": QMODEL.CourseGrade.objects.all()
+#         }
+#     return render(request, 'student/dashboard/take_exams.html', context=context)
 
 
 
