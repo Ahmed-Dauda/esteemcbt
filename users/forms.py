@@ -17,7 +17,6 @@ from quiz.models import Course, CourseGrade,School
 
 
 
-
 country_choice = [
     ('select country here', 'select country here'),('Nigeria', 'Nigeria'), ('United State', 'United State'), ('Afghanistan', 'Afghanistan'),
     ('Albania', 'Albania'),('Algeria', 'Algeria'), ('Andorra', 'Andorra'), ('Angola', 'Angola'),
@@ -38,7 +37,6 @@ country_choice = [
 
 from django import forms
 from allauth.account.forms import SignupForm
-
 from quiz.models import School
 
 # class SchoolStudentForm(SignupForm):
@@ -59,7 +57,7 @@ from quiz.models import School
 #         user.school = self.cleaned_data.get('school', '')  # Handle the school field
         
 #         user.save()
-        
+      
 #         return user
     
 
@@ -86,9 +84,9 @@ class SimpleSignupForm(SignupForm):
             default_school, created = School.objects.get_or_create(school_name="Codethinkers Academy")
             user.school = default_school
             user.save()
-       
         
         return user
+
 
 class SchoolStudentSignupForm(SignupForm):
     first_name = forms.CharField(max_length=222, label='First-name')

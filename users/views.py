@@ -57,12 +57,12 @@ def assign_course_grade(student):
         grade.save()
         
         # Assign the subjects from the CourseGrade to the student
-        for subject in grade.subjects.all():
-            if subject:
-                student.subjects.add(subject)
-                student.save()
-            else:
-                pass
+        # for subject in grade.subjects.all():
+        #     if subject:
+        #         student.subjects.add(subject)
+        #         student.save()
+        #     else:
+        #         pass
 
         
     except CourseGrade.DoesNotExist:
