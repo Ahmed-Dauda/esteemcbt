@@ -434,11 +434,19 @@ def pdf_document_list(request):
 
 # dashboard view
 
-@cache_page(60 * 15)
+
 @login_required
 def take_exams_view(request):
     course = QMODEL.Course.objects.all()
     current_user = request.user
+    user_profile = get_object_or_404(Profile, user=request.user)
+    
+    # Get the results related to this user
+    user_results = Result.objects.filter(student=user_profile)
+    print('user_results',user_results)
+    # Optionally, get the related courses for these results
+    user_courses = Course.objects.filter(result__student=user_profile).distinct()
+    print(' user_courses', user_courses)
 
     user_newuser = get_object_or_404(NewUser, email=request.user)
     if user_newuser is not None:
@@ -483,7 +491,8 @@ def take_exams_view(request):
         "subjects": subjects,
         "course_names": course_names,
         'course_pay': course_pay,
-        "grades": QMODEL.CourseGrade.objects.all()
+        "grades": QMODEL.CourseGrade.objects.all(),
+        'user_results':user_results,
     }
     return render(request, 'student/dashboard/take_exams.html', context=context)
 

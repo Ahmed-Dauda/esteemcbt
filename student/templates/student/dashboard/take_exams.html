@@ -8,12 +8,15 @@
     </style>
        
     <!--Products-->
-    <a class="dropdown-item" href="{% url 'teacher:student-logout' %}" >
-        <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-        Logout 
+    <div class="" >
+    <a  class="dropdown-item" href="{% url 'teacher:student-logout' %}" >
+        <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400" ></i>
+      <p style="background-color: blue;color: #f0f0f0;">Logout</p>  
     </a>
+</div>
     <div class="text-center">
         <h3><i class="fas fa-book"></i>Welcome: {{request.user.profile}}</h3>
+        <p class="text-danger">Note: you can start with any exam</p>
         <p><i class="fas fa-play-circle"></i> Start the Quiz</p>
         <p><i class="fas fa-thumbs-up"></i> Good luck!</p>
         
@@ -46,7 +49,9 @@
 <div style="display: flex; flex-wrap: wrap; justify-content: center; padding: 0 10px 0px 10px;">
     {% for item in courses %}
    
+    
         {% for subj in subjects %}
+        
             <!-- Check if the item (course) is associated with the subject -->
             {% if item|lower == subj|lower %}
                 {% if sub_grade|lower == student_class|lower and item.schools.school_name|lower == school_name|lower %}
@@ -59,12 +64,20 @@
                         <div style="flex-grow: 1;">
                             <div style="padding: 20px; color: #2612c2;">
                                 <!-- Ensure item.id is the correct way to get the course ID -->
-                                    {{ item }}                         
+                                {% for result in user_results %}
+                                {% if result.exam.course_name|lower == item|lower %}
+                                 <P class="text-danger"> exam taken </P>      
+                                {% endif %}
+                                {% endfor %}   
+                                
+                                {{ item }}
+                                                   
                             </div>
-                        </div>
-                   
+                        </div>                    
                     </div>
+                </a>
                
+
                 {% else %}
                 
                 <div style="border: 1px solid #ccc; border-radius: 8px; padding: 0px; margin-bottom: 20px; background-color: #f9f9f9; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;">
@@ -73,7 +86,8 @@
                 </div>
                
                 {% endif %}
-            </a>
+              
+            
             {% else %}
          
     
@@ -100,8 +114,10 @@
     {% endfor %}
 </div>
 <ul>
+<h5 class="text-primary">Exams to be taken</h5>
 {% for subject in subjects %}
 {% if  subject|lower %} 
+
 <li>{{ subject }} </li> 
      {% else %} 
     
