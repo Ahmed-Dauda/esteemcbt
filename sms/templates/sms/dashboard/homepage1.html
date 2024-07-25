@@ -759,6 +759,8 @@ p {
 @media (min-width: 768px) {
     .embed-responsive {
         width: 70%; /* Set width to 70% on desktop */
+       
+       
     }
 
 }
@@ -952,11 +954,9 @@ p {
 <div id="digital-form-heading" class="text-center">
   <h3 style="font-family: Arial, sans-serif; color: #333; font-weight: bold;">Exceptional Video Presentations</h3>
 </div>
-<!-- <div class="row d-flex justify-content-center">
-  <h3 class = 'video-heading' style="background: linear-gradient(to right, #29100a, rgb(22, 22, 190)); color: white; font-weight: bold; text-align: center; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); padding: 10px 20px; border-radius: 10px; background-size: 50%; width: 90%; margin: 0 auto;" class="mb-4">Exceptional Video Presentations</h3>
-</div> -->
 
 <br>
+
 <div id="frontPageVideoCarousel" class="carousel slide">
   <div class="carousel-inner">
     {% for video in front_page_videos %}
@@ -965,8 +965,9 @@ p {
         {% else %}
             <div class="carousel-item align-items-center justify-content-center">
         {% endif %}
-        <div class="embed-responsive embed-responsive-16by9" style=""> <!-- Adjust the width here for mobile -->
+        <div class="embed-responsive embed-responsive-16by9" style=""> 
             <iframe
+            id="video-{{ forloop.counter }}"
             src="{{ video.video }}"
             frameborder="0"
             modestbranding="1"
@@ -976,14 +977,42 @@ p {
             disablekb="1"
             class="frontvideo"
             >
-            </iframe> <!-- Embed the video using the EmbedVideoField -->
+            </iframe> 
+         
         </div>
         <div class="carousel-caption">
-            <h5>{{ video.title }}</h5> <!-- Display the title of the video -->
+            <h5>{{ video.title }}</h5> 
         </div>
         </div>
     {% endfor %}
 </div>
+
+<hr>
+
+<!-- <div id="frontPageVideoCarousel" class="carousel slide">
+  <div class="carousel-inner">
+    {% for video in front_page_videos %}
+        {% if forloop.first %}
+            <div class="carousel-item active d-flex align-items-center justify-content-center">
+        {% else %}
+            <div class="carousel-item align-items-center justify-content-center">
+        {% endif %}
+        <div class="embed-responsive embed-responsive-16by9">
+            <iframe
+                id="video-{{ forloop.counter }}"
+                frameborder="0"
+                allowfullscreen
+                class="frontvideo">
+            </iframe>
+        </div>
+        <div class="carousel-caption">
+            <h5>{{ video.title }}</h5>
+        </div>
+        </div>
+    {% endfor %}
+  </div>
+</div> -->
+
 
 <a class="carousel-control-prev" href="#frontPageVideoCarousel" role="button" data-slide="prev" style="left: calc((100% - 80%) / 2); padding: 140px;">
   <span class="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -1245,6 +1274,30 @@ error image loading -->
       };
   }
 </script> -->
+
+<!-- setting for vidos url direct parse -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      const videos = [
+          {% for video in front_page_videos %}
+              "{{ video.video|escapejs }}"{% if not forloop.last %},{% endif %}
+          {% endfor %}
+      ];
+  
+      videos.forEach((videoUrl, index) => {
+          const videoId = extractYouTubeId(videoUrl);
+          const iframe = document.getElementById(`video-${index + 1}`);
+          iframe.src = `https://www.youtube.com/embed/${videoId}?theme=dark&autoplay=1&keyboard=1&autohide=2&cc_load_policy=1&modestbranding=1&fs=0&showinfo=0&rel=0&iv_load_policy=3&mute=0&loop=0&controls=0`;
+      });
+  
+      function extractYouTubeId(url) {
+          const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+          const match = url.match(regex);
+          return match ? match[1] : null;
+      }
+  });
+  </script>
+  
 
 {% endblock %} 
  
