@@ -106,53 +106,69 @@ div.quiz p {
   }
   </style>   
 
+<style>
+    @media (max-width: 767px) {
+        .sticky-top {
+            position: static;
+            top: 0;
+        }
+        .alert {
+            flex-direction: column;
+            align-items: center;
+        }
+        .alert div {
+            width: 100%;
+           
+        }
+        .question-table {
+            margin-top: 10px;
+            padding-top: 260px;
+        }
+    }
+    </style>
 
 
-
-
-<form id="quizf" action="/student/calculate_marks" onsubmit="return saveAns()" enctype="multipart/form-data"  method="POST">
+<form class="no-copy" id="quizf" action="/student/calculate_marks" onsubmit="return saveAns()" enctype="multipart/form-data"  method="POST">
     {% csrf_token %}
-    <!-- <span style="padding: 5px 10px;font-size: 30px;" onclick="goBack()" class="bi bi-arrow-left "></span> -->
-  
-    <input type="hidden" name="csrfmiddlewaretoken" value="C24rUotmdHawVQJL3KrqiWxvti8UffOFYUc8TRbZtLt36AVLdP3jbkzUVe3beRAa">
-     <!-- quiz timer  -->
-     <div class='sticky-top' style="position: fixed; top: -20px; width: 100%; z-index: 1000;">
-      <div class="row justify-content-left">
-          <div class="col-mx-auto">
-              <div class="alert alert-success" role="alert" style="padding-bottom: 1px; display: flex; flex-wrap: wrap;">
-                  <div style="width: 33.33%; padding: 10px;">
 
-                <div style="position: relative;">
-                    <p style="position: absolute;background-color: black; top: -7px; left: 0; z-index: 0.5;">Focus on camera</p>
-                    <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;" src="{{ course.room_name }}" width="300px" height="120px"></iframe>
+    <input type="hidden" name="csrfmiddlewaretoken" value="C24rUotmdHawVQJL3KrqiWxvti8UffOFYUc8TRbZtLt36AVLdP3jbkzUVe3beRAa">
+     
+   <div class="sticky-top" style="position: fixed; top: -20px; width: 100%; z-index: 1000;">
+    <div class="row justify-content-left">
+        <div class="col-12">
+            <div class="alert alert-success" role="alert" style="padding-bottom: 1px; display: flex; flex-wrap: wrap;">
+                <div class="col-12 col-md-4" style="padding: 10px;">
+                    <div style="position: relative;">
+                        <p style="position: absolute; background-color: black; top: -7px; left: 0; z-index: 0.5;">Focus on camera</p>
+                        <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;" src="{{ course.room_name }}" width="100%" height="120px"></iframe>
+                    </div>
                 </div>
-        
-                  </div>
-                  <div style="width: 33.33%; padding: 10px;">
-                      <h6 id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</h6> 
-                      <center><div id="timer">00:00</div></center>
-                      <div class="progress mt-4">
+                <div class="col-12 col-md-4" style="padding: 10px;">
+                    <h6 id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</h6>
+                    <center><div id="timer">00:00</div></center>
+                    <div class="progress mt-4">
                         <div class="progress-bar bg-success" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0% Complete</div>
-                      </div>
-                  </div>
-                  <div style="width: 33.33%; padding: 10px;">
-                      <h6>{{course.course_name}} Quiz</h6>
-                      <p>Number of Questions: {{q_count}}</p>
-                      <p>Student Info: {{request.user.first_name}} {{request.user.last_name}} -- {{student_class}}</p>
-                  </div>
-              </div>
-          </div>
-      </div>
-  </div>
-  
+                    </div>
+                </div>
+                <div class="col-12 col-md-4" style="padding: 10px;">
+                    <h6>{{course.course_name}} Quiz</h6>
+                    <p>Number of Questions: {{q_count}}</p>
+                    <p>Student Info: {{request.user.first_name}} {{request.user.last_name}} -- {{student_class}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
  <hr> 
-    <table id="example" class="display question-table" style="width:100%">
+
+    <table id="example" class="display question-table" style="width:98%">
 
       <thead>
           <tr>
     
           </tr>
       </thead>
+     
       <tbody>
     
         {% for q in  page_obj %}
@@ -173,9 +189,7 @@ div.quiz p {
               <label style="font-size: 18px;">
                 {{ q.question|safe }}
               </label>
-              <!-- <p class="d-flex" style="overflow-x: auto; white-space: pre-wrap; font-size: 20px;font-family: sans-serif;" >
-                {{ q.question }}</p> -->
-               
+    
               {% endif %}
               
               <h6 style="text-align: right;">[marks {{q.marks}}]</h6>
@@ -221,19 +235,19 @@ div.quiz p {
               </div>
               {% endif %}
               
-              
-            
             </td>
 
         </tr>
         {% endfor %}
         
       </tbody>
-    
+   
     </table>
     
-   
 </form> 
+
+
+
 
 <!-- Button with inline CSS -->
 
@@ -244,6 +258,7 @@ div.quiz p {
     </button>
     <div id="paginationBoxes"></div>
 </div>
+
 
 <br><br>
 
@@ -784,9 +799,31 @@ document.getElementById("submit").addEventListener("click", function() {
   </script>
 
 
+<!-- codes to stop copy and paste on the platform -->
+
 <script type="text/javascript">
 
-   
+document.addEventListener('DOMContentLoaded', (event) => {
+    // Disable text selection
+    document.body.style.userSelect = 'none';
+
+    // Disable right-click context menu
+    document.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+    });
+
+    // Disable copy event
+    document.addEventListener('copy', (e) => {
+        e.preventDefault();
+    });
+
+    // Disable text selection for specific elements
+    let elements = document.querySelectorAll('.no-copy');
+    elements.forEach((element) => {
+        element.style.userSelect = 'none';
+    });
+});
+  
 </script>
 
 

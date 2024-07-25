@@ -31,6 +31,7 @@ from django.contrib import messages
 from docx import Document
 import latex2mathml.converter
 from django.contrib.auth import authenticate, login
+from django.core.cache import cache
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -142,17 +143,29 @@ from quiz import models as QMODEL
 #     return render(request, 'teacher/dashboard/login_section.html',context = context)
 
 # @cache_page(60 * 15)
+# def teacher_signup_view(request):
+#     if request.method == 'POST':
+#         form = TeacherSignupForm(request.POST)
+#         # form = TeacherSignupForm(request.POST)
+#         if form.is_valid():
+#             user = form.save()
+#             form.save_teacher(user)
+#             return redirect('teacher:teacher_login')  # Redirect to teacher login page
+#     else:
+#         form = TeacherSignupForm(request.POST)
+
+#     return render(request, 'teacher/dashboard/teacher_signup.html', {'form': form})
+
 def teacher_signup_view(request):
     if request.method == 'POST':
         form = TeacherSignupForm(request.POST)
-
-        # form = TeacherSignupForm(request.POST)
         if form.is_valid():
             user = form.save()
             form.save_teacher(user)
             return redirect('teacher:teacher_login')  # Redirect to teacher login page
     else:
-        form = TeacherSignupForm(request.POST)
+        form = TeacherSignupForm()
+        print(form.errors)
 
     return render(request, 'teacher/dashboard/teacher_signup.html', {'form': form})
 
@@ -319,7 +332,8 @@ def student_dashboard_view(request):
 
 
 
-@cache_page(60 * 15)
+# @cache_page(60 * 15)
+@login_required(login_url='teacher:teacher_login')
 def add_question_view(request):
     # Retrieve the currently logged-in user
     user = request.user
@@ -336,7 +350,7 @@ def add_question_view(request):
     subjects_taught_titles = [course.course_name.title for course in subjects_taught]
     print("subjects_taughty", subjects_taught_titles)
     courses = Courses.objects.filter(title__in=subjects_taught_titles)
-    print("ccc", courses)
+    # print("ccc", courses)
     # Filter courses based on the subjects taught by the teacher
     # courses = Courses.objects.filter(title__in=subjects_taught)
     # print("ccc", courses)
@@ -361,7 +375,10 @@ def add_question_view(request):
 
 
 
-@cache_page(60 * 15)
+import logging
+
+logger = logging.getLogger(__name__)
+
 @login_required
 def teacher_results_view(request):
     user = request.user
@@ -377,21 +394,61 @@ def teacher_results_view(request):
         # Handle the case where the user is not a teacher
         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
 
-    # Get the subjects taught by the teacher
-    subjects_taught = teacher.subjects_taught.all()
+    # Cache key for the teacher's results
+    cache_key = f"teacher_results_{teacher.id}"
+    results = cache.get(cache_key)
     
-    subjects_taught_titles = [course.course_name for course in subjects_taught]
-    print("subjects_taught66", subjects_taught_titles)
-    
-    # Retrieve the results associated with the subjects taught by the teacher
-    results = Result.objects.filter(exam__course_name__in=subjects_taught_titles)
-    print('results', results)
+    if not results:
+        # Get the subjects taught by the teacher
+        subjects_taught = teacher.subjects_taught.all()
+        subjects_taught_titles = [course.course_name for course in subjects_taught]
+        
+        # Retrieve the results associated with the subjects taught by the teacher
+        results = Result.objects.filter(exam__course_name__in=subjects_taught_titles)
+        
+        # Cache the results for 15 minutes
+        cache.set(cache_key, results, 60 * 15)
+        logger.info(f"Results cached for teacher {teacher.id}")
+    else:
+        logger.info(f"Results fetched from cache for teacher {teacher.id}")
 
     context = {
         'teacher': teacher,
         'results': results,
     }
     return render(request, 'teacher/dashboard/teacher_results.html', context)
+
+
+# @login_required
+# def teacher_results_view(request):
+#     user = request.user
+
+#     # Check if the user is authenticated
+#     if not user.is_authenticated:
+#         return redirect('login')  # Redirect to login if user is not authenticated
+
+#     # Get the teacher instance associated with the user
+#     try:
+#         teacher = Teacher.objects.get(user=user)
+#     except Teacher.DoesNotExist:
+#         # Handle the case where the user is not a teacher
+#         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
+
+#     # Get the subjects taught by the teacher
+#     subjects_taught = teacher.subjects_taught.all()
+    
+#     subjects_taught_titles = [course.course_name for course in subjects_taught]
+#     print("subjects_taught66", subjects_taught_titles)
+    
+#     # Retrieve the results associated with the subjects taught by the teacher
+#     results = Result.objects.filter(exam__course_name__in=subjects_taught_titles)
+#     print('results', results)
+
+#     context = {
+#         'teacher': teacher,
+#         'results': results,
+#     }
+#     return render(request, 'teacher/dashboard/teacher_results.html', context)
 
 
 # @cache_page(60 * 15)
@@ -636,7 +693,7 @@ def tex_to_mathml(tex_input):
 
 
 # original codes
-@cache_page(60 * 15)
+@login_required(login_url='teacher:teacher_login')
 def import_data(request):
     if request.method == 'POST':
         dataset = Dataset()
@@ -646,7 +703,8 @@ def import_data(request):
         allowed_formats = ['xlsx', 'xls', 'csv', 'docx']
         file_extension = new_file.name.split('.')[-1]
         if file_extension not in allowed_formats:
-            return HttpResponse('File format not supported. Supported formats: XLSX, XLS, CSV, DOCX')
+            messages.error(request, 'File format not supported. Supported formats: XLSX, XLS, CSV, DOCX')
+            return redirect(request.path_info)
 
         imported_data = None
 
@@ -655,72 +713,142 @@ def import_data(request):
                 # Handle CSV
                 data = io.TextIOWrapper(new_file, encoding='utf-8')
                 imported_data = dataset.load(data, format=file_extension)
-                # Convert TeX to MathML for CSV data
-                for row in imported_data.dict:
-                    for key in ['question','img_quiz' ,'option1', 'option2', 'option3', 'option4', 'answer']:
-                        if key in row:
-                            original_value = row[key]
-                            row[key] = tex_to_mathml(row[key])
-                            logger.debug(f"Converted {key} from {original_value} to {row[key]}")
-                messages.success(request, "Data imported successfully.")
             elif file_extension in ['xlsx', 'xls']:
                 # Handle Excel files
                 imported_data = dataset.load(new_file.read(), format=file_extension)
-                # Convert TeX to MathML for Excel data
-                for row in imported_data.dict:
-                    for key in ['question','img_quiz' ,'option1', 'option2', 'option3', 'option4', 'answer']:
-                        if key in row:
-                            original_value = row[key]
-                            row[key] = tex_to_mathml(row[key])
-                            logger.debug(f"Converted {key} from {original_value} to {row[key]}")
-                messages.success(request, "Data imported successfully.")
             elif file_extension == 'docx':
                 # Handle Word documents
                 document = Document(new_file)
                 rows = []
                 for table in document.tables:
                     for row in table.rows:
-                        row_data = [tex_to_mathml(cell.text) for cell in row.cells]  # Convert TeX to MathML
+                        row_data = [tex_to_mathml(cell.text) for cell in row.cells]
                         rows.append(row_data)
-                # Convert to CSV-like format
                 csv_data = io.StringIO()
                 writer = csv.writer(csv_data)
                 writer.writerows(rows)
                 csv_data.seek(0)
                 imported_data = dataset.load(csv_data, format='csv')
-                # messages.success(request, "Data imported successfully.")
             else:
-                messages.error(request, f"An error occurred while importing {file_extension} file.")
-                return render(request, 'teacher/dashboard/import.html')
+                messages.error(request, 'An error occurred while importing the file.')
+                return redirect(request.path_info)
 
-            # Import data using the resource
+            # Convert TeX to MathML for imported data
+            for row in imported_data.dict:
+                for key in ['question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer']:
+                    if key in row:
+                        original_value = row[key]
+                        row[key] = tex_to_mathml(row[key])
+                        logger.debug(f"Converted {key} from {original_value} to {row[key]}")
+
             resource = QuestionResource()
             result = resource.import_data(imported_data, dry_run=True)  # Dry run first
 
             if result.has_errors():
                 messages.error(request, "Errors occurred during import: {}".format(result.errors))
-                logger.error("Errors occurred during import: {}".format(result.errors))
             else:
-                # Perform the actual import
                 result = resource.import_data(imported_data, dry_run=False)
                 if result.has_errors():
                     messages.error(request, "Errors occurred during saving: {}".format(result.errors))
-                    logger.error("Errors occurred during saving: {}".format(result.errors))
                 else:
-                    messages.success(request, "Data saved successfully.")
+                    messages.success(request, "Data imported and saved successfully.")
                     logger.info("Data saved successfully.")
 
-            # Redirect back to the import page after processing
-            return HttpResponseRedirect(request.path_info)
+            return redirect(request.path_info)
 
         except Exception as e:
-            messages.error(request, f"You have no permission to import this subject. Check dashboard for your assigned subjects")
-            # print('resu', result)
-            # messages.error(request, f"An error occurred: {e}")
+            messages.error(request, "You do not have permission to import this subject, or the subject name does not match your assigned subject. Please check the dashboard for your assigned subjects.")
+            # messages.error(request, "You have no permission to import this subject or your subject is not the same with your assigned subject name. Check dashboard for your assigned subjects")
             logger.error(f"An error occurred while processing the file: {e}")
-            return render(request, 'teacher/dashboard/import.html')
+            return redirect(request.path_info)
 
     return render(request, 'teacher/dashboard/import.html')
+
+
+# def import_data(request):
+#     if request.method == 'POST':
+#         dataset = Dataset()
+#         new_file = request.FILES['myfile']
+
+#         # Check if the uploaded file format is supported
+#         allowed_formats = ['xlsx', 'xls', 'csv', 'docx']
+#         file_extension = new_file.name.split('.')[-1]
+#         if file_extension not in allowed_formats:
+#             return HttpResponse('File format not supported. Supported formats: XLSX, XLS, CSV, DOCX')
+
+#         imported_data = None
+
+#         try:
+#             if file_extension == 'csv':
+#                 # Handle CSV
+#                 data = io.TextIOWrapper(new_file, encoding='utf-8')
+#                 imported_data = dataset.load(data, format=file_extension)
+#                 # Convert TeX to MathML for CSV data
+#                 for row in imported_data.dict:
+#                     for key in ['question','img_quiz' ,'option1', 'option2', 'option3', 'option4', 'answer']:
+#                         if key in row:
+#                             original_value = row[key]
+#                             row[key] = tex_to_mathml(row[key])
+#                             logger.debug(f"Converted {key} from {original_value} to {row[key]}")
+#                 messages.success(request, "Data imported successfully.")
+#             elif file_extension in ['xlsx', 'xls']:
+#                 # Handle Excel files
+#                 imported_data = dataset.load(new_file.read(), format=file_extension)
+#                 # Convert TeX to MathML for Excel data
+#                 for row in imported_data.dict:
+#                     for key in ['question','img_quiz' ,'option1', 'option2', 'option3', 'option4', 'answer']:
+#                         if key in row:
+#                             original_value = row[key]
+#                             row[key] = tex_to_mathml(row[key])
+#                             logger.debug(f"Converted {key} from {original_value} to {row[key]}")
+#                 messages.success(request, "Data imported successfully.")
+#             elif file_extension == 'docx':
+#                 # Handle Word documents
+#                 document = Document(new_file)
+#                 rows = []
+#                 for table in document.tables:
+#                     for row in table.rows:
+#                         row_data = [tex_to_mathml(cell.text) for cell in row.cells]  # Convert TeX to MathML
+#                         rows.append(row_data)
+#                 # Convert to CSV-like format
+#                 csv_data = io.StringIO()
+#                 writer = csv.writer(csv_data)
+#                 writer.writerows(rows)
+#                 csv_data.seek(0)
+#                 imported_data = dataset.load(csv_data, format='csv')
+#                 messages.success(request, "Data imported successfully.")
+#             else:
+#                 messages.error(request, f"An error occurred while importing {file_extension} file.")
+#                 return render(request, 'teacher/dashboard/import.html')
+
+#             # Import data using the resource
+#             resource = QuestionResource()
+#             result = resource.import_data(imported_data, dry_run=True)  # Dry run first
+
+#             if result.has_errors():
+#                 messages.error(request, "Errors occurred during import: {}".format(result.errors))
+#                 logger.error("Errors occurred during import: {}".format(result.errors))
+#             else:
+#                 # Perform the actual import
+#                 result = resource.import_data(imported_data, dry_run=False)
+#                 if result.has_errors():
+#                     messages.error(request, "Errors occurred during saving: {}".format(result.errors))
+#                     logger.error("Errors occurred during saving: {}".format(result.errors))
+#                 else:
+#                     # messages.success(request, "Data saved successfully.")
+#                     logger.info("Data saved successfully.")
+
+#             # Redirect back to the import page after processing
+#             return HttpResponseRedirect(request.path_info)
+
+#         except Exception as e:
+#             messages.error(request, f"You have no permission to import this subject. Check dashboard for your assigned subjects")
+#             # print('resu', result)
+#             # messages.error(request, f"An error occurred: {e}")
+#             logger.error(f"An error occurred while processing the file: {e}")
+#             return render(request, 'teacher/dashboard/import.html')
+
+#     return render(request, 'teacher/dashboard/import.html')
 
 
 # views.py
@@ -760,7 +888,7 @@ from django.shortcuts import render
 from django.contrib import messages
 import csv
 
-@cache_page(60 * 15)
+# @cache_page(60 * 15)
 def import_word(request):
     if request.method == 'POST':
         # Check if the uploaded file format is supported
@@ -992,7 +1120,7 @@ def export_data(request):
 
 
 
-@cache_page(60 * 15)
+# @cache_page(60 * 15)
 def view_questions(request):
     # Check if user is authenticated
     if not request.user.is_authenticated:

@@ -194,18 +194,25 @@ class Table(LoginRequiredMixin, ListView):
 #         return context
 
 # views.py
-
+@method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
 class AwardView(ListView):
     model = Awards
     template_name = 'sms/dashboard/awards.html'
     context_object_name = 'awards_list'
 
+@method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
 class AboutUsView(ListView):
     model = AboutUs
     template_name = 'sms/dashboard/about_us.html'
     context_object_name = 'about_us_list'
 
+# class AboutUsView(ListView):
+#     model = AboutUs
+#     template_name = 'sms/dashboard/about_us.html'
+#     context_object_name = 'about_us_list'
 
+
+@method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
 class ManagementView(ListView):
     models = Management
     template_name = 'sms/dashboard/managements.html'
@@ -222,7 +229,8 @@ class ManagementView(ListView):
         
         return context
     
-  
+
+@method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
 class DirectorsView(ListView):
     models = Directors
     template_name = 'sms/dashboard/directors.html'
@@ -240,6 +248,7 @@ class DirectorsView(ListView):
         return context
     
 
+@method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
 class PDFGalleryView(ListView):
     models = PDFGallery
     template_name = 'sms/dashboard/pdf_gallery.html'
@@ -257,6 +266,7 @@ class PDFGalleryView(ListView):
         return context
 
 
+@method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
 class DigitalForm(ListView):
     model = PDFDocument
     template_name = 'sms/dashboard/digital_form.html'
@@ -406,7 +416,7 @@ class DigitalForm(ListView):
 
 
 
-
+@method_decorator(cache_page(60 * 40), name='dispatch')  # Cache for 15 minutes
 class Homepage(ListView):
     model = Courses
     template_name = 'sms/dashboard/homepage1.html'
@@ -850,7 +860,7 @@ class gotopdfconfirmpage(HitCountDetailView,LoginRequiredMixin, DetailView):
 
 # important
 
-
+@method_decorator(cache_page(60 * 30), name='dispatch')
 class PDFDocumentDetailView(LoginRequiredMixin, DetailView):
     model = Courses
     template_name = 'student/dashboard/pdf_document_detail1.html'  # Update with your actual template name
@@ -881,7 +891,7 @@ class PDFDocumentDetailView(LoginRequiredMixin, DetailView):
         return render(request, self.template_name, context=context)
 
 
-
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class ClubsListView(ListView):
     model = Clubs
     template_name = 'student/dashboard/clubs_list.html'
@@ -894,7 +904,7 @@ class ClubsListView(ListView):
         context['documents'] = self.get_queryset()  # Use self.get_queryset() instead of Clubs.objects.all()
         return context
 
-
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class Clubs(HitCountDetailView,LoginRequiredMixin,DetailView):
     models =  Clubs
     template_name = 'student/dashboard/clubs.html'
@@ -921,6 +931,7 @@ class Clubs(HitCountDetailView,LoginRequiredMixin,DetailView):
         return context
 
 
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class GalleryDetailView(HitCountDetailView,DetailView):
     models = PDFGallery
     template_name = 'student/dashboard/gallerydetails.html'
@@ -947,6 +958,7 @@ class GalleryDetailView(HitCountDetailView,DetailView):
         return context
 
 
+@method_decorator(cache_page(60 * 5), name='dispatch')
 class Ebooks(HitCountDetailView,DetailView):
     models = PDFDocument
     template_name = 'student/dashboard/ebooks.html'

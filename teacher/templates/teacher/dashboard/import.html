@@ -3,6 +3,21 @@
 {% block title %} import Questions {% endblock %}
 
   {% block content %}  
+<style>
+  #messages li {
+  transition: opacity 1s ease-out;
+}
+
+.success {
+  color: green;
+}
+
+.error {
+  color: red;
+}
+
+</style>
+
 
   <div class="container mt-5">
     <div class="row justify-content-center">
@@ -14,12 +29,34 @@
             <div class="text-center mb-4">xlsx, xls, csv, docx</div>
             
             {% if messages %}
+            <ul id="messages">
               {% for message in messages %}
-                <div class="text-danger alert alert-{{ message.tags }}" role="alert">
-                  {{ message }}
-                </div>
+                <li style="font-size: 18px;" id="message-{{ forloop.counter }}" 
+                    class="{% if 'success' in message.tags %}success{% elif 'error' in message.tags %}error{% endif %}">
+                    {{ message }}
+                </li>
               {% endfor %}
-            {% endif %}
+            </ul>
+            <script>
+              document.addEventListener("DOMContentLoaded", function() {
+                var messages = document.querySelectorAll("#messages li");
+          
+                function fadeOutAndRemove(message) {
+                  setTimeout(function() {
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                      message.remove();
+                    }, 1000);
+                  }, 10000);
+                }
+          
+                messages.forEach(fadeOutAndRemove);
+              });
+            </script>
+          {% endif %}
+          
+          
+
             <form method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <div class="form-group">
@@ -36,30 +73,7 @@
       </div>
     </div>
   </div>
-    
-  <!-- <div class="container mt-5">
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-body">
-            <h1 class="text-center mb-4">Import Data</h1>
-            <form method="post" enctype="multipart/form-data">
-              {% csrf_token %}
-              <div class="form-group">
-                <input type="file" class="form-control-file" name="myfile">
-              </div>
-              <div class="text-center">
-                <button type="submit" class="btn btn-primary">
-                  <i class="fas fa-upload"></i> Import Data
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-   -->
-  
+     
+
   {% endblock %} 
  

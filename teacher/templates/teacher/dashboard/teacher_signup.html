@@ -4,17 +4,7 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<style>
-     .errorlist {
-        margin-top: 50px;
-            display: none; /* Hide the default error list */
-        }
-        .error-message {
-            color: red;
-            font-size: 12px;
-            margin-top: 50px;
-        }
-</style>
+
     <br><br>
    
 <div class="container">
@@ -30,30 +20,42 @@
       <form method="post">
         {{ form|as_crispy_errors }}
         {% csrf_token %}
-        <div class="form-row">
+        <!-- <div class="form-row">
           <div class="form-group col-md-6 mb-0">
             {{ form.email|as_crispy_field }}
           </div>
           <div class="form-group col-md-6 mb-0">
             {{ form.username|as_crispy_field }}
           </div>
-        
-          <div class="form-group col-md-6 mb-0">
+        </div> -->
+
+        <div class="form-row">
+          <div class="form-group col-md-3 mb-0">
+            {{ form.email|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-3 mb-0">
+            {{ form.username|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-3 mb-0">
             {{form.first_name|as_crispy_field }}
           </div>
-          <div class="form-group col-md-6 mb-0">
+          <div class="form-group col-md-3 mb-0">
             {{ form.last_name|as_crispy_field }}
           </div>
+          
+        </div>
 
-          <div class="form-group col-md-6 mb-0">
+      <div class="form-row">  
+        <div class="form-group col-md-4 mb-0">
             {{ form.password1|as_crispy_field }}
           </div>
-          <div class="form-group col-md-6 mb-0">
+          <div class="form-group col-md-4 mb-0">
             {{ form.password2|as_crispy_field }}
           </div>
-
-         
-        </div>
+          <div class="form-group col-md-4 mb-0">
+            {{ form.school|as_crispy_field }}
+          </div>
+      </div>
        
         <div class="form-row">
           <div class="form-group col-md-6 mb-0">
@@ -61,10 +63,6 @@
           </div>
           <div class="form-group col-md-6 mb-0">
             {{ form.classes_taught|as_crispy_field }}
-          </div>
-
-          <div class="form-group col-md-6 mb-0">
-            {{ form.school|as_crispy_field }}
           </div>
         </div>
        

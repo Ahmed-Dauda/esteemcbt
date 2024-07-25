@@ -1,97 +1,13 @@
 <!-- users/templates/users/referral_signup.html -->
 {% extends 'sms/dashboard/teacherbase.html' %}
+{% load crispy_forms_tags %}
 
 {% block content %}
-<style>
-  .messages {
-      list-style-type: none;
-      padding: 0;
-      margin: 20px 0;
-  }
 
-  .messages li {
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 5px;
-      font-size: 14px;
-  }
 
-  .messages li.success {
-      background-color: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-  }
-
-  .messages li.error {
-      background-color: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-  }
-
-  .messages li.info {
-      background-color: #d1ecf1;
-      color: #0c5460;
-      border: 1px solid #bee5eb;
-  }
-
-  /* Flexbox container for the form */
-  .formcontainer {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      /* Arrange items vertically by default */
-  }
-
-  .form-group {
-      display: flex;
-     text-align: center;
-      margin: 10px;
-       /* Align items vertically centered */
-  }
-
-  .form-group label {
-      flex: 1;
-      margin-right: 10px; /* Space between label and input */
-  }
-
-  .form-group input, .form-group select, .form-group textarea {
-      flex: 2;
-      padding: 5px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-  }
-
-  .form-group button {
-      align-self: flex-end; /* Align the button to the end of the form */
-      padding: 10px 20px;
-      border: none;
-      background-color: #007bff;
-      color: #fff;
-      border-radius: 4px;
-      cursor: pointer;
-  }
-
-  .form-group button:hover {
-      background-color: #0056b3;
-  }
-  .formcontainer .error {
-        color: #e74c3c;
-        margin-top: 0.25rem;
-        font-size: 20px;
-    }
-</style>
-
-<div class="text-center">
+<div class="container">
     <br><br>
   <h4>Student registration form</h4>
-
-  <!-- {% if messages %}
-  <ul class="messages">
-      {% for message in messages %}
-          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-      {% endfor %}
-  </ul>
-  {% endif %} -->
 
   {% if messages %}
   <ul id="messages" class="messages">
@@ -105,18 +21,52 @@
 
   <form method="post" id="myForm" class="formcontainer">
       {% csrf_token %}
-      {% for field in form %}
-      <div class="form-group">
-          {{ field.label_tag }}
-          {{ field }}
-          {% if field.errors %}
-              <div class="error">{{ field.errors }}</div>
-          {% endif %}
-      </div>
-      {% endfor %}
+    <div class="form-row">
+        <div class="form-group col-md-6 mb-0">
+            {{ form.email|as_crispy_field }}
+        </div>
+        <div class="form-group col-md-6 mb-0">
+            {{ form.username|as_crispy_field }}
+          </div> 
+          <div class="form-group col-md-6 mb-0">
+            {{form.first_name|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-6 mb-0">
+            {{ form.last_name|as_crispy_field }}
+          </div>
+          
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-4 mb-0">
+            {{ form.student_class|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-4 mb-0">
+            {{ form.countries|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-4 mb-0">
+            {{ form.admission_no|as_crispy_field }}
+          </div>
+    </div>
+
+    <div class="form-row">    
+          <div class="form-group col-md-4 mb-0">
+            {{ form.school|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-4 mb-0">
+            {{ form.password1|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-4 mb-0">
+            {{ form.password2|as_crispy_field }}
+          </div>
+    </div>
+
       <div class="form-group">
           <button type="submit">Submit</button>
       </div>
+
+  
+
   </form>
 
 

@@ -580,3 +580,9 @@ PAYSTACK_PUBLIC_KEY = 'pk_test_72337ad2f9419ff6eb3204519bb884067c075ed8'
 
 # step 4
 # python manage.py migrate #in the heroku shell
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}

@@ -34,6 +34,12 @@ class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
         fields = "__all__"
+        widgets = {
+            'option1': forms.Textarea(attrs={'style': 'height: 60px;'}),
+            'option2': forms.Textarea(attrs={'style': 'height: 60px;'}),
+            'option3': forms.Textarea(attrs={'style': 'height: 60px;'}),
+            'option4': forms.Textarea(attrs={'style': 'height: 60px;'}),
+        }
         # fields = ['question', 'marks', 'course']
 
 # class QuestionForm(forms.ModelForm):

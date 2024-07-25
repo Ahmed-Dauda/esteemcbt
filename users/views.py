@@ -85,6 +85,7 @@ def SchoolStudentView(request):
 
     return render(request, 'users/school_student.html', {'form': form})
 
+
 # def SchoolStudentView(request):
 #     if request.method == 'POST':
 #         form = SchoolStudentSignupForm(request.POST)
