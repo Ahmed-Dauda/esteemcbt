@@ -12,7 +12,7 @@ from teacher import models as TMODEL
 # from student.models import  Student
 from users.models import NewUser
 from users.models import Profile
-
+from django.views.decorators.cache import cache_page
 
 
 # views.py
@@ -38,15 +38,6 @@ from django.http import JsonResponse
 from quiz.models import CourseGrade
 
 
-# def assign_course_grade(student):
-#     try:
-#         # Find the CourseGrade where the name matches the student_class
-#         grade = CourseGrade.objects.get(name=student.student_class)
-#         grade.students.add(student)
-#         grade.save()
-#     except CourseGrade.DoesNotExist:
-#         # Handle the case where no matching CourseGrade is found
-#         pass
 
 
 def assign_course_grade(student):
@@ -68,6 +59,8 @@ def assign_course_grade(student):
     except CourseGrade.DoesNotExist:
         # Handle the case where no matching CourseGrade is found
         pass
+
+
 
 
 def SchoolStudentView(request):

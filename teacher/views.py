@@ -156,6 +156,8 @@ from quiz import models as QMODEL
 
 #     return render(request, 'teacher/dashboard/teacher_signup.html', {'form': form})
 
+
+
 def teacher_signup_view(request):
     if request.method == 'POST':
         form = TeacherSignupForm(request.POST)
@@ -257,7 +259,7 @@ from teacher.models import School
 #     return render(request,'teacher/dashboard/teacher_dashboard.html',context=dict)
 
 
-# @cache_page(60 * 15)
+
 @login_required(login_url='teacher:teacher_login')
 def teacher_dashboard_view(request):
 
