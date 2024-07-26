@@ -956,7 +956,7 @@ p {
 
 <br>
 
-<div id="frontPageVideoCarousel" class="carousel slide">
+<div id="frontPageVideoCarousel"  class="carousel slide" data-bs-ride="carousel" data-bs-interval="false">
   <div class="carousel-inner">
     {% for video in front_page_videos %}
         {% if forloop.first %}
@@ -1020,6 +1020,7 @@ p {
   <span class="carousel-control-next-icon" aria-hidden="true"></span>
   <span class="sr-only">Next</span>
 </a>
+
 </div>
 
 
