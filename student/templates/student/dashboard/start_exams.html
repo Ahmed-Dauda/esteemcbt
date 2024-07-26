@@ -727,8 +727,10 @@ allRadioButtons.forEach(function(radioButton) {
                 paginationBox.text('answered: ' + i);
                 var answeredBoxCount = $('#paginationBoxes').length;
 
-            } else {
-                paginationBox.text('unanswered: ' + i);
+            } 
+            else {
+                // paginationBox.text('unanswered: ' + i);
+                paginationBox.text(i);
             }
 
             // Append the pagination box to the paginationBoxes container

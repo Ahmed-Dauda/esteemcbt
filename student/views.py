@@ -562,62 +562,6 @@ def take_exams_view(request):
 
 
 
-# dashboard view
-# @login_required
-# def subject_take_exams(request):
-
-#     # course = QMODEL.Subjects.objects.all()
-#     # # Query all subjects along with their related schools
-#     # subjects_with_schools = QMODEL.Subjects.objects.all().prefetch_related('schools')
-#     # schools = QMODEL.School.objects.all()
-#     # print("sch",schools)
-#     # user_newuser = get_object_or_404(NewUser, email=request.user)
-#     # if user_newuser.school:
-#     #     school_name = user_newuser.school.school_name
-
-#     # Retrieve the current user's group
-#     user = request.user
-#     # student = get_object_or_404(QMODEL.Student, email=user)
-#     # group = student.group
-#     # print("User's group:", group)
-
-#     # group_subjects = student.group.subjects
-#     # print("User's subjects:", group_subjects)
-#     # subject_list = "\n".join(str(subject) for subject in groupw)
-#     # print(subject_list)
-
-#     # group_list = group.split(", ")  # Split the string by comma and space
-
-#     # for subject in group_list:
-#     #     print('grou',subject)
-
-#     # print("student_school:", student.school)
-#     # user_school = student.school
-#     # # Retrieve subjects associated with the student
-#     # # Query all Subjects objects
-#     # subjects = QMODEL.Subjects.objects.all()
-
-#     # Iterate through each Subjects object and retrieve the associated school and course names
-
-#     # groups = QMODEL.Group.objects.all()
-#     # Query subjects associated with the user's group
-#     # student = QMODEL.Student.objects.filter(group=group).distinct()
-#     # # print("student name:", student)
-  
-#     context = {
-#         # 'courses':course,
-#         # 'group':group,
-#         # 'user_school':user_school,
-#         # 'subjects':subjects,
-#         # 'schools':schools,
-#         # 'groups':groups,
-#         # # "school_exam":school_name,
-#         # "exam_subject":course_names,
-#         # 'group_subjects':group_subjects
-#     }
-#     return render(request, 'student/dashboard/subject_take_exams.html', context=context)
-
-
 
 # @login_required
 # def start_exams_view(request, pk):
@@ -649,45 +593,6 @@ from django.core.cache import cache  # Import Django's caching framework
 from django.utils import timezone
 
 
-
-# @login_required
-# def subject_start_exams(request, pk):
-#     # course = QMODEL.Subjects.objects.get(id=pk)
-#     course_name = pk  # If pk is the name itself, no need for pk.name
-#     course = get_object_or_404(QMODEL.Subjects, course_name=course_name)
-#     questions = QMODEL.Subject_Question.objects.filter(course=course).order_by('id')
-#     q_count = questions.count()
-#     paginator = Paginator(questions, 200)  # Show 100 questions per page.
-#     page_number = request.GET.get('page')
-#     page_obj = paginator.get_page(page_number)
-    
-#     # Calculate quiz end time
-#     quiz_duration = course.duration_minutes
-#     quiz_start_time = timezone.now()
-#     quiz_end_time = quiz_start_time + timedelta(minutes=quiz_duration)
-    
-#     # Store the quiz end time in cache
-#     cache.set(f'quiz_end_time_{course.id}', quiz_end_time, timeout=None)
-
-#     # Calculate remaining time until the end of the quiz
-#     remaining_time = quiz_end_time - timezone.now()
-#     remaining_seconds = max(int(remaining_time.total_seconds()), 0)
-
-#     context = {
-#         'course': course,
-#         'questions': questions,
-#         'q_count': q_count,
-#         'page_obj': page_obj,
-#         'remaining_seconds': remaining_seconds,  # Pass remaining time to template
-#     }
-
-#     if request.method == 'POST':
-#         # Handle form submission
-#         pass
-
-#     response = render(request, 'student/dashboard/subject_start_exams.html', context=context)
-#     response.set_cookie('course_id', course.id)
-#     return response
 
 import random
 
@@ -1006,42 +911,7 @@ from django.http import JsonResponse
 
 from django.db.models import F
 
-# @login_required
-# def calculate_marks_view(request):
-#     if request.COOKIES.get('course_id') is not None:
-#         course_id = request.COOKIES.get('course_id')
-#         course = QMODEL.Course.objects.get(id=course_id)
-        
-#         total_marks = 0
-#         questions = QMODEL.Question.objects.filter(course=course).order_by('id')
-        
-#         if request.body:
-#             json_data = json.loads(request.body)
-#             for i, question in enumerate(questions, start=1):
-#                 selected_ans = json_data.get(str(i))
-#                 actual_answer = question.answer
-#                 if selected_ans == actual_answer:
-#                     total_marks += question.marks
-        
-#         student = Profile.objects.get(user_id=request.user.id)
-#         # Check if a result already exists for this course and student
-#         existing_result = QMODEL.Result.objects.filter(exam=course, student=student).first()
-#         if existing_result:
-#             # Update the existing result
-#             existing_result.marks = total_marks
-#             existing_result.save()
-#         else:
-#             # Create a new result
-#             result = QMODEL.Result.objects.create(marks=total_marks, exam=course, student=student)
-        
-#         # Redirect to the view_result URL
-#         return JsonResponse({'success': True, 'message': 'Marks calculated successfully.'})
-    
-#     else:
-#         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
 
-# quizapp/tasks.py
-@cache_page(60 * 15)
 @login_required
 def calculate_marks_view(request):
     if request.COOKIES.get('course_id') is not None:
@@ -1055,32 +925,61 @@ def calculate_marks_view(request):
             json_data = json.loads(request.body)
             for i, question in enumerate(questions, start=1):
                 selected_ans = json_data.get(str(i))
-                # print("answers" + str(i), selected_ans)
                 actual_answer = question.answer
                 if selected_ans == actual_answer:
                     total_marks += question.marks
         
         student = Profile.objects.get(user_id=request.user.id)
-        # result = QMODEL.Result.objects.create(marks=total_marks, exam=course, student=student)
-        existing_result = QMODEL.Result.objects.filter(exam=course, student=student).first()
-        if existing_result:
-            # Update the existing result
-            existing_result.marks = total_marks
-            existing_result.save()
-        else:
-            # Create a new result
-            result = QMODEL.Result.objects.create(marks=total_marks, exam=course, student=student)
-
-        # if result:
-        #     return JsonResponse({'success11': True, 'result_exists': True})
         
-        # if result:
-        #     return redirect("student:view_result")
-        # Redirect to the view_result URL
+        # Check if the result already exists
+        existing_result = QMODEL.Result.objects.filter(exam=course, student=student, marks=total_marks).exists()
+        
+        if not existing_result:
+            # Create a new result only if it doesn't exist
+           existing_result = QMODEL.Result.objects.create(marks=total_marks, exam=course, student=student)
+        
+        # Return a JSON response indicating the result of the operation
         return JsonResponse({'success': True, 'message': 'Marks calculated successfully.'})
     
     else:
         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
+
+
+# @login_required
+# def calculate_marks_view(request):
+#     if request.COOKIES.get('course_id') is not None:
+#         course_id = request.COOKIES.get('course_id')
+#         course = QMODEL.Course.objects.get(id=course_id)
+        
+#         total_marks = 0
+#         questions = QMODEL.Question.objects.filter(course=course).order_by('id')
+        
+#         if request.body:
+#             json_data = json.loads(request.body)
+#             for i, question in enumerate(questions, start=1):
+#                 selected_ans = json_data.get(str(i))
+#                 # print("answers" + str(i), selected_ans)
+#                 actual_answer = question.answer
+#                 if selected_ans == actual_answer:
+#                     total_marks += question.marks
+        
+#         student = Profile.objects.get(user_id=request.user.id)
+#         # result = QMODEL.Result.objects.create(marks=total_marks, exam=course, student=student)
+#         existing_result = QMODEL.Result.objects.filter(marks=total_marks, exam=course, student=student).first()
+#         if existing_result:
+#             # Update the existing result
+#             existing_result.marks = total_marks
+#             existing_result.save()
+#         else:
+#             # Create a new result
+#             result = QMODEL.Result.objects.create(marks=total_marks, exam=course, student=student)
+
+#         # Redirect to the view_result URL
+#         return JsonResponse({'success': True, 'message': 'Marks calculated successfully.'})
+    
+#     else:
+#         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
+
 
 
 @cache_page(60 * 15)
