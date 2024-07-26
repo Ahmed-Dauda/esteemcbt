@@ -698,56 +698,63 @@ def permission_denied_view(request, exception):
     # Redirect the user to the desired page
     return redirect("student:view_result")
 
+
 @login_required
 def start_exams_view(request, pk):
-    # Fetch course and questions from cache or database
-    course = get_object_or_404(QMODEL.Course, id=pk)
-    questions_cache_key = f'questions_course_{pk}_v{course.last_modified.timestamp()}'
-    questions = cache.get(questions_cache_key)
 
-    if not questions:
-        questions = list(QMODEL.Question.objects.filter(course=course).order_by('id'))
-        cache.set(questions_cache_key, questions, timeout=60*15)  # Cache for 15 minutes
-
+    course = QMODEL.Course.objects.get(id=pk)
     num_attemps = course.num_attemps
-    q_count = len(questions)
-
-    paginator = Paginator(questions, 200)  # Show 200 questions per page.
+    questions = QMODEL.Question.objects.filter(course=course).order_by('id')
+    q_count = questions.count()
+    paginator = Paginator(questions, 200)  # Show 100 questions per page.
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
     student = request.user.profile
+    # Check if the result exists
     result_exists = Result.objects.filter(student=student, exam=course).exists()
-
+    # Check if the student has already taken this exam
     if result_exists:
         return redirect('student:view_result')
-
+    
+    #     # Get the number of questions to display for the course
     show_questions = course.show_questions
-    total_questions = len(questions)
-
+    # Retrieve all questions for the course
+    all_questions = QMODEL.Question.objects.filter(course=course)
+    # Count the total number of questions
+    total_questions = all_questions.count()
+  
     if total_questions >= show_questions:
-        questions = random.sample(questions, show_questions)
+        questions = random.sample(list(all_questions), show_questions)
     else:
-        questions = questions
+        questions = list(all_questions)
 
+    # Order the selected questions by their primary key for stable pagination
     questions.sort(key=lambda q: q.id)
+    # print("quest", questions)
+    # Shuffle the list of selected questions
+    # random.shuffle(questions)
 
+    q_count = len(questions)  # Calculate the count of questions
+    # print("q_count", q_count)
+
+    # Calculate quiz end time
     quiz_duration = course.duration_minutes
     quiz_start_time = timezone.now()
     quiz_end_time = quiz_start_time + timedelta(minutes=quiz_duration)
+    # Store the quiz end time in cache
     cache.set(f'quiz_end_time_{course.id}', quiz_end_time, timeout=None)
-
+    # Calculate remaining time until the end of the quiz
     remaining_time = quiz_end_time - timezone.now()
     remaining_seconds = max(int(remaining_time.total_seconds()), 0)
 
     context = {
         'course': course,
         'questions': questions,
-        'num_attemps': num_attemps,
-        'result_exists': result_exists,
+        'num_attemps':num_attemps,
+        'result_exists':result_exists,
         'q_count': q_count,
-        'page_obj': page_obj,
-        'remaining_seconds': remaining_seconds,
+        'page_obj': questions,
+        'remaining_seconds': remaining_seconds,  # Pass remaining time to template
     }
 
     if request.method == 'POST':
@@ -757,6 +764,7 @@ def start_exams_view(request, pk):
     response = render(request, 'student/dashboard/start_exams.html', context=context)
     response.set_cookie('course_id', course.id)
     return response
+
 
 # @login_required
 # def start_exams_view(request, pk):
