@@ -1060,7 +1060,7 @@ def generate_csv(request):
     return render(request, 'teacher/dashboard/generate_csv.html', {'form': form, 'sample_codes':sample_codes})
 
 
-@cache_page(60 * 15)
+
 def download_csv(request):
     # Assuming the CSV file is generated and saved as 'generated_questions.csv'
     filename = 'generated_questions.csv'
