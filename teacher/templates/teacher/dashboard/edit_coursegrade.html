@@ -1,0 +1,109 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block content %}
+
+{% load crispy_forms_tags %}
+
+
+    <title>Edit Course Grade</title>
+
+
+    <h1 class="text-center my-4">Edit Subjects and Students</h1>
+
+    <form method="post" class="container">
+        {% csrf_token %}
+        <div class="row justify-content-center">
+            <div class="form-group col-md-6 mb-4">
+                <label class="form-label font-weight-bold">Students</label>
+                <div class="checkbox-group">
+                    {{ form.students|as_crispy_field }}
+                </div>
+            </div>
+            <div class="form-group col-md-6 mb-4">
+                <label class="form-label font-weight-bold">Subjects</label>
+                <div class="checkbox-group">
+                    {{ form.subjects|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+    
+        <div class="form-group text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-lg">Save Changes</button>
+        </div>
+    </form>
+    
+    <div class="text-center mt-3">
+        <a href="{% url 'teacher:examiner_dashboard' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+    
+    <style>
+        h1 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+    
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+    
+        .form-group {
+            margin-bottom: 15px;
+        }
+    
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            color: #555;
+        }
+    
+        .checkbox-group {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+    
+        .checkbox-group .form-check {
+            margin-bottom: 10px;
+        }
+    
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+        }
+    
+        .btn-secondary {
+            color: #6c757d;
+            background-color: #f8f9fa;
+            border-color: #6c757d;
+            padding: 10px 20px;
+            font-size: 1rem;
+        }
+    
+        .btn-primary:hover,
+        .btn-secondary:hover {
+            color: white;
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+    
+        .cancel-link a {
+            font-size: 1rem;
+            text-decoration: none;
+            color: #6c757d;
+        }
+    
+        .cancel-link a:hover {
+            color: #495057;
+        }
+    </style>
+        
+
+    {% endblock %}

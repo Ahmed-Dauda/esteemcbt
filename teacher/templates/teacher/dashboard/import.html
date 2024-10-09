@@ -1,79 +1,167 @@
 {% extends 'sms/dashboard/teacherbase.html' %}
 
-{% block title %} import Questions {% endblock %}
+{% block title %} Import Questions {% endblock %}
 
-  {% block content %}  
+{% block content %}
+
 <style>
+  .container {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+  }
+
+  .card {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background-color: #fff;
+    border: none;
+  }
+
+  .card-body {
+    padding: 30px;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: bold;
+    color: #007bff;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  h4 {
+    font-size: 20px;
+    font-weight: normal;
+    color: #333;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .file-types {
+    font-size: 16px;
+    color: #555;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .form-control-file {
+    margin: 0 auto;
+    display: block;
+    font-size: 16px;
+    padding: 10px;
+    border-radius: 5px;
+  }
+
+  .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+  }
+
+  .btn-primary:hover {
+    background-color: #0056b3;
+  }
+
+  #messages {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+  }
+
   #messages li {
-  transition: opacity 1s ease-out;
-}
+    font-size: 18px;
+    transition: opacity 1s ease-out;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
 
-.success {
-  color: green;
-}
+  .success {
+    color: #28a745;
+    background-color: #e6f4ea;
+    border: 1px solid #28a745;
+  }
 
-.error {
-  color: red;
-}
-
+  .error {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #dc3545;
+  }
 </style>
 
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-body">
+          <h1 class="text-center mb-4">Import Questions</h1>
+          <h4 class="text-center mb-4">Supported Formats</h4>
+          <div class="file-types text-center mb-4">xlsx, xls, csv, docx</div>
 
-  <div class="container mt-5">
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-body">
-            <h1 class="text-center mb-4">Import Questions</h1>
-            <h4 class="text-center mb-4">supported format</h4>
-            <div class="text-center mb-4">xlsx, xls, csv, docx</div>
-            
-            {% if messages %}
-            <ul id="messages">
-              {% for message in messages %}
-                <li style="font-size: 18px;" id="message-{{ forloop.counter }}" 
-                    class="{% if 'success' in message.tags %}success{% elif 'error' in message.tags %}error{% endif %}">
-                    {{ message }}
-                </li>
-              {% endfor %}
-            </ul>
-            <script>
-              document.addEventListener("DOMContentLoaded", function() {
-                var messages = document.querySelectorAll("#messages li");
-          
-                function fadeOutAndRemove(message) {
+          {% if messages %}
+          <ul id="messages">
+            {% for message in messages %}
+              <li id="message-{{ forloop.counter }}" class="{% if 'success' in message.tags %}success{% elif 'error' in message.tags %}error{% endif %}">
+                {{ message }}
+              </li>
+            {% endfor %}
+          </ul>
+          <script>
+            document.addEventListener("DOMContentLoaded", function() {
+              var messages = document.querySelectorAll("#messages li");
+
+              function fadeOutAndRemove(message) {
+                setTimeout(function() {
+                  message.style.opacity = '0';
                   setTimeout(function() {
-                    message.style.opacity = '0';
-                    setTimeout(function() {
-                      message.remove();
-                    }, 1000);
-                  }, 10000);
-                }
-          
-                messages.forEach(fadeOutAndRemove);
-              });
-            </script>
-          {% endif %}
-          
-          
+                    message.remove();
+                  }, 1000);
+                }, 10000);
+              }
 
-            <form method="post" enctype="multipart/form-data">
-              {% csrf_token %}
-              <div class="form-group">
-                <input type="file" class="form-control-file" name="myfile">
-              </div>
-              <div class="text-center">
-                <button type="submit" class="btn btn-primary">
-                  <i class="fas fa-upload"></i> Import Data
-                </button>
-              </div>
-            </form>
-          </div>
+              messages.forEach(fadeOutAndRemove);
+            });
+          </script>
+          {% endif %}
+
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+              <input type="file" class="form-control-file" name="myfile" id="fileInput">
+            </div>
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-upload"></i> Import Data
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
   </div>
-     
+</div>
 
-  {% endblock %} 
- 
+<script>
+  document.querySelector("form").addEventListener("submit", function(event) {
+    var fileInput = document.querySelector('#fileInput');
+    var allowedExtensions = ['xlsx', 'xls', 'csv', 'docx'];
+    var fileExtension = fileInput.value.split('.').pop().toLowerCase();
+
+    if (!allowedExtensions.includes(fileExtension)) {
+      alert("Unsupported file format. Please upload a file in one of the following formats: XLSX, XLS, CSV, DOCX.");
+      event.preventDefault();
+    } else {
+      // Disable the submit button and show loading state
+      var submitButton = document.querySelector('.btn-primary');
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...';
+    }
+  });
+</script>
+
+{% endblock %}

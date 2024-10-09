@@ -120,6 +120,46 @@
                     <span>Take Exam</span>
                 </a>
             </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'student:report_card_list' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Exam Report</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'student:leaderboard_list' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Leaderboard</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'student:badge_list_view' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Badges</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'student:exams_conducted_statistics' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Exams Conducted Statistics</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'student:download_statistics' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Download Statistics</span>
+                </a>
+            </li>
+            
+
+          
+            
+            
+
+            
             
             <!-- <li class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:view_questions' %}">

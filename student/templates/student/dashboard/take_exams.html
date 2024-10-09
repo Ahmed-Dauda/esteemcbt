@@ -3,87 +3,84 @@
 {% block title %} Start the Quiz {% endblock %}
 
   {% block content %} 
-  <style>
- 
-    </style>
-       
+
     <!--Products-->
-    <div class="" >
-    <a  class="dropdown-item" href="{% url 'teacher:student-logout' %}" >
-        <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400" ></i>
-      <p style="background-color: blue;color: #f0f0f0;">Logout</p>  
-    </a>
-</div>
-    <div class="text-center">
-        <h3><i class="fas fa-book"></i>Welcome: {{request.user.profile}}</h3>
-        <p class="text-danger">Note: you can start with any exam</p>
-        <p><i class="fas fa-play-circle"></i> Start the Quiz</p>
-        <p><i class="fas fa-thumbs-up"></i> Good luck!</p>
-        
+    <div class="d-flex mb-3 container">
+        <a class="btn btn-primary d-flex align-items-center" href="{% url 'teacher:student-logout' %}">
+            <i class="fas fa-sign-out-alt fa-lg text-light mr-2"></i>
+            <span class="text-light">Logout</span>
+        </a>
     </div>
+    
+    <div class="text-center mt-5 mb-4">
+        <h3 class="mb-3">
+            <i class="fas fa-book fa-2x text-primary"></i>
+            <span class="ml-2">Welcome, {{ request.user.profile.first_name }}!</span>
+        </h3>
+        <div class="alert alert-info" role="alert">
+            <i class="fas fa-info-circle"></i> Note: You can start with any exam.
+        </div>
+        <div class="my-4">
+            <i class="fas fa-play-circle fa-3x text-success"></i>
+            <p class="mt-2 text-muted">Start the Quiz</p>
+        </div>
+        <div>
+            <i class="fas fa-thumbs-up fa-2x text-warning"></i>
+            <p class="mt-2 text-muted">Good luck!</p>
+        </div>
+    </div>
+    
     
 
 {% if course_pay %}
-   <div style="display: flex; flex-wrap: wrap; justify-content: center; padding: 0 10px 0px 10px;">
-    {% for course_name in course_names %}
-    <div style="width: 100%; max-width: 400px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; display: flex;">
-    
-     <div style="background-color: #f0f0f0; color: #333; font-size: 24px; font-weight: bold; padding: 20px; border-right: 1px solid #ccc;">
-        {{course_name|make_list|first }}
-    </div>
-
-    <div style="flex-grow: 1;">
-    <div style="padding: 20px;">
-      <a style="color: #333; text-decoration: none; font-size:12px;" href="{% url 'student:start-exam' course_name.id %}">{{ course_name }}</a>
-   </div>
-   </div>
-
-</div> 
-    {% endfor %}
-   
-</div>
 
 {% else %}
 
 <!-- schools exams sections  -->
 <div style="display: flex; flex-wrap: wrap; justify-content: center; padding: 0 10px 0px 10px;">
     {% for item in courses %}
+
+
    
-    
         {% for subj in subjects %}
         
             <!-- Check if the item (course) is associated with the subject -->
             {% if item|lower == subj|lower %}
                 {% if sub_grade|lower == student_class|lower and item.schools.school_name|lower == school_name|lower %}
                 
-                <a style="color: #333; text-decoration: none; font-size:12px;" href="{% url 'student:start-exam' item.id %}">
-                    <div style="width: 100%; max-width: 400px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; display: flex;">       
-                        <div style="background-color: #2612c2; color: white; font-size: 24px; font-weight: bold; padding: 20px; border-right: 1px solid #ccc;">
+                <a href="{% url 'student:start-exam' item.id %}" class="text-decoration-none text-dark d-block mb-4">
+                    <div class="d-flex border border-light rounded shadow-sm overflow-hidden">
+                        <div class="bg-primary text-white d-flex align-items-center justify-content-center font-weight-bold" style="width: 100px; font-size: 24px;">
                             {{ item|make_list|first }}
                         </div>
-                        <div style="flex-grow: 1;">
-                            <div style="padding: 20px; color: #2612c2;">
-                                <!-- Ensure item.id is the correct way to get the course ID -->
+                        <div class="flex-grow-1 p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-primary font-weight-bold">
+                                  {{ item }} 
+                                </div>
                                 {% for result in user_results %}
+
                                 {% if result.exam.course_name|lower == item|lower %}
-                                 <P class="text-danger"> exam taken </P>      
+                                <span class="badge badge-danger">Exam Taken</span>
                                 {% endif %}
-                                {% endfor %}   
-                                
-                                {{ item }}
-                                                   
+                                {% endfor %}
                             </div>
-                        </div>                    
+                        </div>
                     </div>
                 </a>
-               
+                
 
                 {% else %}
                 
-                <div style="border: 1px solid #ccc; border-radius: 8px; padding: 0px; margin-bottom: 20px; background-color: #f9f9f9; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;">
-                    <p style="color: #2612c2; padding: 0px 10px 0p 10px; font-size: 18px;  margin: 0 0 10px;">{{ item }}</p> 
-                    <p style="color: #777; font-size: 14px; margin: 0;">Exam not started</p>
+                <div class="card shadow-sm border-light rounded mb-4 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary font-weight-bold mb-2">{{ item }}</h5>
+                        <p class="card-text text-muted mb-0">
+                            <span class="badge badge-warning">Exam not started</span>
+                        </p>
+                    </div>
                 </div>
+                
                
                 {% endif %}
               
@@ -113,24 +110,30 @@
        
     {% endfor %}
 </div>
-<ul>
-<h5 class="text-primary">Exams to be taken</h5>
-{% for subject in subjects %}
-{% if  subject|lower %} 
 
-<li>{{ subject }} </li> 
-     {% else %} 
-    
-{% endif %}
-{% endfor %}
-</ul>
+
+<div class="container mt-4">
+    <h5 class="text-primary mb-3">Enrolled Subjects</h5>
+    <ul class="list-group">
+        {% for subject in subjects %}
+            {% if subject|lower %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ subject }} - {{ subject.session }} - {{ subject.term }} TERM - {{ subject.exam_type }}
+                    <span class="badge badge-primary badge-pill">Enrolled</span>
+                </li>
+            {% else %}
+                <li class="list-group-item">No subjects enrolled.</li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>
+
 <!-- end schools exams sections  -->
 
 {% endif %}
 
    
-
-  {% endblock %} 
+{% endblock %} 
  
 
 

@@ -11,14 +11,23 @@ from sms.models import (
     FrequentlyAskQuestions, CourseFrequentlyAskQuestions,
     # CourseLearnerReviews, 
  
-    CourseLearnerReviews,
+    CourseLearnerReviews,Session, Term)
 
-    )
+from quiz.models import ExamType
 
-admin.site.site_header = 'Esteem super admin dashboard'
+admin.site.site_header = 'Esteem dashboard'
 admin.site.site_title = 'Esteem super admin dashboard'
 # admin.site.register(Courses)
 admin.site.register(FrequentlyAskQuestions)
+admin.site.register(Session)
+admin.site.register(Term)
+
+class ExamTypeAdmin(admin.ModelAdmin):
+
+    list_display = ['name','description']
+    search_fields = ['name']  # Add search field for course name
+
+admin.site.register(ExamType, ExamTypeAdmin)
 
 # admin.py
 
@@ -62,59 +71,6 @@ class CarouselImageAdmin(admin.ModelAdmin):
 admin.site.register(CarouselImage, CarouselImageAdmin)
 
 
-# class ArticleAdminResource(resources.ModelResource):
-    
-#     class Meta:
-#         model = Blog
-#         # fields = ('title',)
-               
-# class ArticleAdminAdmin(ImportExportModelAdmin):
-    
-#     prepopulated_fields = {"slug": ("title",)}
-#     list_display = ['id', 'title', 'desc', 'created']
-#     list_filter =  ['title']
-#     search_fields = ['author__user','title']
-#     ordering = ['id']
-    
-#     resource_class = ArticleAdminResource
-
-# admin.site.register(Blog, ArticleAdminAdmin)
-
-
-
-# class FeedbackcommentResource(resources.ModelResource):
-    
-#     class Meta:
-#         model = Comment
-#         # fields = ('title',)
-               
-# class FeedbackcommentResourceAdmin(ImportExportModelAdmin):
-#     list_display = ['id', 'title', 'desc', 'created']
-#     list_filter =  ['title']
-#     search_fields= ['title']
-#     ordering = ['id']
-    
-#     resource_class = FeedbackcommentResource
-
-# admin.site.register(Comment, FeedbackcommentResourceAdmin)
-
-
-# class CategoriesResource(resources.ModelResource):
-    
-#     class Meta:
-#         model = Categories
-#         # fields = ('title',)
-               
-# class CategoriesAdmin(ImportExportModelAdmin):
-#     list_display = ['id', 'name', 'desc', 'created']
-#     list_filter =  ['name']
-#     search_fields= ['name', 'desc']
-#     ordering = ['id']
-    
-#     resource_class = CategoriesResource
-
-# admin.site.register(Categories, CategoriesAdmin)
-
 
 class CoursesResource(resources.ModelResource):
     
@@ -130,7 +86,7 @@ class CoursesResource(resources.ModelResource):
                
 class CoursesAdmin(ImportExportModelAdmin):
 
-    list_display = ['id','title','display_subjects_school', 'created']
+    list_display = ['title','session','term','exam_type','display_subjects_school', 'created']
     list_filter =  ['title']
     search_fields = ['title']
     ordering = ['id']
@@ -144,53 +100,3 @@ class CoursesAdmin(ImportExportModelAdmin):
 admin.site.register(Courses, CoursesAdmin)
 
 
-
-# class blogcommentResource(resources.ModelResource):
-    
-#     class Meta:
-#         model = Blogcomment
-#         # fields = ('title',)
-               
-# class blogcommentAdmin(ImportExportModelAdmin):
-#     list_display = ['id','post','name' ,'content']
-#      # prepopulated_fields = {"slug": ("title",)}
-#     list_filter =  ['post','created','name']
-#     search_fields= ['post','name']
-#     ordering = ['id']
-    
-#     resource_class = blogcommentResource
-
-# admin.site.register(Blogcomment, blogcommentAdmin)
-    
-
-# class TopicsResource(resources.ModelResource):
-    
-#     courses = fields.Field(
-#         column_name= 'courses',
-#         attribute='courses',
-#         widget=ForeignKeyWidget(Courses,'title') )
-    
-#     class Meta:
-#         model = Topics
-#         # fields = ('title',)
-
-# class TopicsAdmin(ImportExportModelAdmin):
-#     list_display = ['id', 'categories', 'courses','title', 'desc', 'img_topic', 'video', 'topics_url', 'created', 'updated']
-#     prepopulated_fields = {"slug": ("title",)}
-#     list_filter = ['categories', 'courses', 'created']
-#     search_fields = ['id', 'title', 'created', 'categories__name', 'courses__title']  # Use double underscore for related fields
-#     ordering = ['id']
-#     resource_class = TopicsResource
-
-# admin.site.register(Topics, TopicsAdmin)
-
-
-
-# class AlertAdmin(ImportExportModelAdmin):
-#     list_display = ['id','title','content','created']
-
-#     list_filter =  ['title','content','created']
-#     search_fields= ['id','title','content','created']
-#     ordering = ['id']
-
-# admin.site.register(Alert, AlertAdmin)

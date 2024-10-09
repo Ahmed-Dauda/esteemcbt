@@ -1,5 +1,3 @@
-from django.db import models
-from cloudinary.models import CloudinaryField
 from django.contrib import admin
 from django.db.models import Count, Q
 from django.db.models import Count, Sum
@@ -14,29 +12,29 @@ from django.contrib import messages
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
+from users.models import Profile 
+import secrets
+from django.db import models
+from sms.paystack import Paystack  # Assuming the Paystack class is imported correctly
+from django.utils import timezone
+from sms.models import Courses
+from cloudinary.models import CloudinaryField
 
 
-# from sms.paystack import Paystack
+# class Question(models.Model):
+#     # topic = models.ForeignKey(Topics, on_delete=models.CASCADE)
+#     text = models.TextField()
 
+#     def __str__(self):
+#         return self.text
 
+# class Choice(models.Model):
+#     question = models.ForeignKey(Question, on_delete=models.CASCADE)
+#     text = models.CharField(max_length=200)
+#     is_correct = models.BooleanField(default=False)
 
-
-
-
-class Question(models.Model):
-    # topic = models.ForeignKey(Topics, on_delete=models.CASCADE)
-    text = models.TextField()
-
-    def __str__(self):
-        return self.text
-
-class Choice(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    text = models.CharField(max_length=200)
-    is_correct = models.BooleanField(default=False)
-
-    def __str__(self):
-        return self.text
+#     def __str__(self):
+#         return self.text
 
 
 def generate_certificate_code():
@@ -45,55 +43,91 @@ def generate_certificate_code():
     return ''.join(random.choice(characters) for _ in range(code_length))
 
 
-class Certificate(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null= True)
-    code = models.CharField(max_length=10, unique=True, default=generate_certificate_code)
-    holder = models.CharField(max_length=255, null= True)
-    issued_date = models.DateField(null= True)
+# class Certificate(models.Model):
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null= True)
+#     code = models.CharField(max_length=10, unique=True, default=generate_certificate_code)
+#     holder = models.CharField(max_length=255, null= True)
+#     issued_date = models.DateField(null= True)
 
-    # Add any additional fields relevant to the certificate
+#     # Add any additional fields relevant to the certificate
+
+#     def __str__(self):
+#         return self.holder
+
+
+
+# class Logo(models.Model):
+   
+#    logo = CloudinaryField('image', blank=True, null= True)
+   
+#    def __str__(self):
+#         return f"{self.logo}"
+
+# class PartLogo(models.Model):
+   
+#    logo = CloudinaryField('image', blank=True, null= True)
+   
+#    def __str__(self):
+#         return f"{self.logo}"
+   
+# class Signature(models.Model):
+       
+#    sign = CloudinaryField('image', blank=True, null= True)
+   
+#    def __str__(self):
+#         return f"{self.sign}"  
+
+# class Designcert(models.Model):
+       
+#    design = CloudinaryField('image', blank=True, null= True)
+   
+#    def __str__(self):
+#         return f"{self.design}"  
+
+from quiz.models import School
+
+class ExamStatistics(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    total_exams_conducted = models.PositiveIntegerField(default=0)
+    session = models.CharField(max_length=20, blank=True, null=True)
+    term = models.CharField(max_length=20, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.holder
+        return f"{self.school} - {self.session} - {self.term} - {self.total_exams_conducted}"
+    
+from quiz.models import Result, Course
+
+class Badge(models.Model):
+    student = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    session = models.CharField(max_length=120, blank=True, null=True)
+    term = models.CharField(max_length=120, blank=True, null=True)
+    badge_type = models.CharField(max_length=255, blank=True, null=True)
+    description = models.CharField(max_length=255, blank=True, null=True)
+    final_average = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)  # Field for final average
+    final_grade = models.CharField(max_length=2, blank=True, null=True)  # Field for final grade (e.g., A, B, C)
+
+    def __str__(self):
+        return f"{self.student.first_name} - Session: {self.session}, Term: {self.term}, Badge: {self.description}, Final Grade: {self.final_grade}"
 
 
-
-class Logo(models.Model):
-   
-   logo = CloudinaryField('image', blank=True, null= True)
-   
-   def __str__(self):
-        return f"{self.logo}"
-
-class PartLogo(models.Model):
-   
-   logo = CloudinaryField('image', blank=True, null= True)
-   
-   def __str__(self):
-        return f"{self.logo}"
-   
-class Signature(models.Model):
-       
-   sign = CloudinaryField('image', blank=True, null= True)
-   
-   def __str__(self):
-        return f"{self.sign}"  
-
-class Designcert(models.Model):
-       
-   design = CloudinaryField('image', blank=True, null= True)
-   
-   def __str__(self):
-        return f"{self.design}"  
-
-
-from users.models import Profile 
-import secrets
-from django.db import models
-from sms.paystack import Paystack  # Assuming the Paystack class is imported correctly
 from django.utils import timezone
-from sms.models import Courses
-from cloudinary.models import CloudinaryField
+from django.conf import settings
+
+class BadgeDownloadStats(models.Model):
+    school = models.ForeignKey('quiz.School', on_delete=models.CASCADE, blank=True, null=True)  # Replace 'yourapp' with your actual app name
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE, blank=True, null=True)
+    month = models.PositiveIntegerField( blank=True, null=True)  # Store the month (1-12)
+    year = models.PositiveIntegerField( blank=True, null=True)  # Store the year
+    download_count = models.PositiveIntegerField(default=0)  # Track download count for the month
+
+    class Meta:
+        unique_together = ('school', 'badge', 'month', 'year')  # Prevent duplicate entries for same month/year
+        ordering = ['year', 'month']
+
+    def __str__(self):
+        return f"{self.school} - {self.badge} ({self.month}/{self.year})"
 
 
 class Clubs(models.Model):
@@ -108,41 +142,38 @@ class Clubs(models.Model):
     def __str__(self):
         return  f"{self.title}"
 
+
 class PDFGallery(models.Model):
     title = models.CharField(max_length=200)
     desc = models.TextField()
     img_ebook = CloudinaryField('gallery images', blank=True, null=True)
-    # price = models.DecimalField(max_digits=10, decimal_places=0, default='500', max_length=225, blank=True, null=True)
-    # pdf_file = models.FileField(upload_to='pdf_documents/')  
     pdf_url = models.URLField(blank=True, null=True)  # Add the URL field for Google Drive PDF link
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return  f"{self.title}"
 
+
+
 class Directors(models.Model):
     title = models.CharField(max_length=200)
     desc = models.TextField()
     img_ebook = CloudinaryField('directors images', blank=True, null=True)
-    # price = models.DecimalField(max_digits=10, decimal_places=0, default='500', max_length=225, blank=True, null=True)
-    # pdf_file = models.FileField(upload_to='pdf_documents/')  
-    # pdf_url = models.URLField(blank=True, null=True)  # Add the URL field for Google Drive PDF link
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return  f"{self.title}"
+
 
 class Management(models.Model):
     title = models.CharField(max_length=200)
     desc = models.TextField()
     img_ebook = CloudinaryField('management images', blank=True, null=True)
-    # price = models.DecimalField(max_digits=10, decimal_places=0, default='500', max_length=225, blank=True, null=True)
-    # pdf_file = models.FileField(upload_to='pdf_documents/')  
-    # pdf_url = models.URLField(blank=True, null=True)  # Add the URL field for Google Drive PDF link
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return  f"{self.title}"
+
 
 class PDFDocument(models.Model):
     title = models.CharField(max_length=200)
@@ -203,27 +234,6 @@ class CertificatePayment(models.Model):
 
 
 
-    # def __str__(self):
-    #     # Get a comma-separated list of course titles
-    #     course_titles = ', '.join(course.title for course in self.courses.all())
-    #     # Get the associated Profile
-    #     payment_user_profile = self.payment_user
-
-    #     # Initialize referrer_code as None
-    #     referrer_code = None
-
-    #     # Check if the user has a profile
-    #     if payment_user_profile:
-    #         # Check if the profile has a referrer_profile
-    #         referrer_profile = payment_user_profile.referrer_profile
-    #         if referrer_profile:
-    #             # Get the referrer code
-    #             referrer_code = referrer_profile.referral_code
-
-    #     return f"{self.payment_user} - {self.content_type} Payment - Amount: {self.amount} - Courses: {course_titles} - Referrer Code: {referrer_code}"
-     
-
-
 class DocPayment(models.Model):
     payment_user = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
     pdfdocument = models.ManyToManyField(PDFDocument, related_name='docpayments')
@@ -277,17 +287,6 @@ class ReferrerMentor(models.Model):
     bank = models.CharField(max_length=50, blank=True, null=True)
     phone_no = models.CharField(max_length=50, blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
-    # # ... widthral methods ...
-    # withdrawal_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    # withdrawal_request_status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('approved', 'Rejected')], default='pending')
-    # withdrawal_request_date = models.DateTimeField(null=True, blank=True)
-
-    # # ... existing methods ...
-    # def has_paystack_customer_id(self):
-    #     return bool(self.paystack_customer_id)
-
-    # def can_withdraw(self):
-    #     return self.withdrawal_balance > 0 and self.withdrawal_request_status == 'pending'
 
     def get_referral_url(self):
         return reverse('referral_signup', args=[str(self.referrer_code)])

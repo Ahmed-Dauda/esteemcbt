@@ -1,0 +1,14 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %}Delete Exam{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px; margin: 20px auto;">
+    <h3>Are you sure you want to delete the exam "{{ course.course_name }}"?</h3>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Delete Exam</button>
+        <a href="{% url 'teacher:manage_exam' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

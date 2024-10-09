@@ -1,107 +1,168 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generate CSV from JSON</title>
-    <style>
-        /* Center everything vertically and horizontally */
-   
-        .sample{
-            width: 100%;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .sample >*{
-            flex: 1 1 auto;
-            margin: 10px;
-        }
+{% extends 'sms/dashboard/teacherbase.html' %}
 
-        /* Container for form and sample prompt */
-    
+{% block title %} Generate CSV from JSON {% endblock %}
 
-        /* CSS styling for code blocks */
-        pre {
-            background-color: #f4f4f4;
-            border: 1px solid #ddd;
-            border-left: 3px solid #007bff; /* Blue border on the left */
-            color: #333;
-            font-family: 'Courier New', Courier, monospace; /* Monospace font */
-            font-size: 14px;
-            line-height: 1.5;
-          /* Center the text horizontally */
-            padding: 10px;
-            white-space: pre-wrap; /* Wrap long lines */
-            width: 90%; /* Make the text box wider */
-            height: 370px;
-        }
+{% block content %}
+<div class="container">
 
-        /* CSS styling for "Copy" button */
-        .copy-btn {
-            background-color: #007bff;
-            border: none;
-            border-radius: 5px;
-            color: #fff;
-            cursor: pointer;
-            font-size: 14px;
-           
-      
-           
-        }
-        .copy-btn:hover {
-            background-color: #0056b3;
-        }
+    <a href="https://drive.google.com/file/d/1sMre2xCkmERW2qSUaektFnh8nSNlW-pA/view?usp=sharing" target="_blank">Questions Sample CSV</a>
 
-        /* Center the headings */
-        h1, h3 {
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <div class="sample">
-        <div>
+
+    <div class="row">
+        <div class="col-12">
             <h2>Sample of Prompt</h2>
             <h3>Instructions</h3>
-            <div class="instructions">
-                <p>Copy the sample codes below and replace the objectives with your desired topics for generating multiple-choice questions. Adjust the number "3" to match the desired number of MCQs. Paste the result in the box below and click "Generate CSV".</p>
-            {% for sample in sample_codes %}
-                <div style="width: 90%; margin: 0 auto;font-size: 20px;">
-                    <pre id="sample{{ forloop.counter }}">
-                        <code>{{ sample.code|safe }}</code> 
-                    </pre>
-                    <div style="margin: 0 auto;display: block;">
-                        <button  class="copy-btn" onclick="copyToClipboard('sample{{ forloop.counter }}')">Copy</button>
-                    </div>
-
-                </div>
-            {% endfor %}
-        </div>
-
-        <div style=" text-align: center; width: 90%;">
-            <h1>Generate CSV from JSON</h1>
-            <form method="post">
-                {% csrf_token %}
-                <textarea name="json_data" rows="20" cols="80"></textarea><br> <!-- Increased rows and cols -->
-                <button type="submit">Generate CSV</button>
-            </form>
+            <p>
+                Enter the number of questions and the learning objectives you want to generate questions for in the fields below. 
+                Copy the prompt, paste it into AI to generate questions in JSON format, then copy the output and paste it in the textarea below. 
+                Click "Generate CSV" to proceed.
+            </p>
         </div>
     </div>
 
-<br><br><br><br><br><br><br><br><br>
+    <div class="row">
+        <div class="col-lg-8 col-md-10 col-12">
+            <p>
+                {% for subject in teacher_subjects %}
+                    <h5>{{ subject }}</h5>
+                    <a href="{% url 'teacher:update_teacher_settings' %}">Edit question number and learning objectives</a>
+              
+                    <pre style="width: 80%;"  class="text-left" id="sample{{ forloop.counter }}">
+                     
+                        <code>
+                            {% if 'MATH' in subject|upper or 'MATHEMATICS' in subject|upper or 'MATHS' in subject|upper %}
+                            <p>
+                                Give me <strong>{{ ai_question_num }}</strong> MCQs and answers on these objectives:
+                                <strong>{{ learning_objectives }}</strong>.
+                                Questions and answers should be formatted as valid JSON in MathML exactly as <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                                    <mfrac>
+                                      <mn>1</mn>
+                                      <mn>2</mn>
+                                    </mfrac>
+                                  </math>  following the structure below.
+                            </p>
+                                <!-- Display MathML statement for Math-related courses -->
+                                [
+                                {
+                                    "course": "{{ subject }}",
+                                    "marks": "1",
+                                    "question": "Sample Math question in MathML... ?",
+                                    "img_quiz": "",
+                                    "option1": "Option A",
+                                    "option2": "Option B",
+                                    "option3": "Option C",
+                                    "option4": "Option D",
+                                    "answer": "C"
+                                }
+                                ]
+                            {% elif 'CHEM' in subject|upper or 'CHEMISTRY' in subject|upper %}
+                            <p>
+                                Give me <strong>{{ ai_question_num }}</strong> MCQs and answers on these objectives:
+                                <strong>{{ learning_objectives }}</strong>.
+                                Questions and answers should include Chemistry-related content and be formatted as valid JSON.
+                            </p>
+                                <!-- Display Chemistry-specific JSON structure -->
+                                [
+                                {
+                                    "course": "{{ subject }}",
+                                    "marks": "1",
+                                    "question": "What is the molecular formula of water?",
+                                    "img_quiz": "",
+                                    "option1": "H2O",
+                                    "option2": "CO2",
+                                    "option3": "NaCl",
+                                    "option4": "CH4",
+                                    "answer": "A"
+                                }
+                                ]
+                            {% elif 'PHYS' in subject|upper or 'PHYSICS' in subject|upper %}
+                            <p>
+                                Give me <strong>{{ ai_question_num }}</strong> MCQs and answers on these objectives:
+                                <strong>{{ learning_objectives }}</strong>.
+                                Questions and answers should include Physics-related content and be formatted as valid JSON.
+                            </p>
+                                <!-- Display Physics-specific JSON structure -->
+                                [
+                                {
+                                    "course": "{{ subject }}",
+                                    "marks": "1",
+                                    "question": "Which of the following is a scalar quantity?",
+                                    "img_quiz": "",
+                                    "option1": "Velocity",
+                                    "option2": "Acceleration",
+                                    "option3": "Energy",
+                                    "option4": "Displacement",
+                                    "answer": "C"
+                                }
+                                ]
+                            {% else %}
+                                <!-- Display JSON structure for non-math, non-chemistry, and non-physics courses -->
+                                <p>
+                                    Give me <strong>{{ ai_question_num }}</strong> MCQs and answers on these objectives:
+                                    <strong>{{ learning_objectives }}</strong>.
+                                    Questions and answers should be formatted as valid JSON.
+                                </p>
+                                [
+                                {
+                                    "course": "{{ subject }}",
+                                    "marks": "1",
+                                    "question": "Which of the following factors should developers consider when selecting an IDE?",
+                                    "img_quiz": "",
+                                    "option1": "Coffee quality in the office",
+                                    "option2": "Number of likes on IDE's Facebook page",
+                                    "option3": "Language support, feature set, customization options, and performance",
+                                    "option4": "The color of the IDE's logo",
+                                    "answer": "C"
+                                }
+                                ]
+                            {% endif %}
+                        </code>
+                    </pre>
+                    
+                    <div style="text-align: left;">
+                        <button class="copy-btn btn btn-secondary" onclick="copyToClipboard('sample{{ forloop.counter }}')">Copy</button>
+                    </div>
+                    {% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+        </div>
+    </div>
 
-    <script>
-        function copyToClipboard(elementId) {
-            var copyText = document.getElementById(elementId);
-            var range = document.createRange();
-            range.selectNode(copyText);
-            window.getSelection().removeAllRanges();
-            window.getSelection().addRange(range);
-            document.execCommand("copy");
-            window.getSelection().removeAllRanges();
-            alert("Copied to clipboard!");
+    <div class="row">
+        <div class="col-lg-8 col-md-10 col-12">
+            <h1>Generate CSV from JSON</h1>
+            <form method="post">
+                {% csrf_token %}
+                <textarea class="form-control styled-textarea" name="json_data" rows="10" placeholder="Paste your JSON data here..." required></textarea>
+                <br>
+                <button type="submit" class="btn btn-primary">Generate CSV</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyToClipboard(elementId) {
+        var copyText = document.getElementById(elementId);
+        var range = document.createRange();
+        range.selectNode(copyText);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        document.execCommand("copy");
+        window.getSelection().removeAllRanges();
+        alert("Copied to clipboard!");
+    }
+
+    // Automatically hide the success message after 5 seconds
+    setTimeout(function() {
+        var messageContainer = document.getElementById('message-container');
+        if (messageContainer) {
+            messageContainer.style.transition = 'opacity 0.5s ease-out';
+            messageContainer.style.opacity = '0';
+            setTimeout(function() {
+                messageContainer.style.display = 'none';
+            }, 500);
         }
-    </script>
-</body>
-</html>
+    }, 5000);
+</script>
+{% endblock %}

@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'django_social_share',
     'import_export',
     'django_mathjax',
+    "debug_toolbar",
     
     
     
@@ -218,8 +219,8 @@ DEFAULT_FROM_EMAIL = 'techsupport@esteemlearningcentre.com'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 
@@ -327,7 +328,7 @@ USE_L10N = True
 USE_TZ = True
 
 
-# ADDITIONAL SITE SECURITie
+# ADDITIONAL SITE SECURITies
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
@@ -413,7 +414,7 @@ TINYMCE_DEFAULT_CONFIG = {
     'content_style': "math, mrow, mfrac, mi, mn, mo",
     'mathjax': {
         'lib': 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS_HTML',
-        'symbols': { 'mathml': True }
+        'symbols': {'mathml': True}
     },
     'init_instance_callback': '''
         function (editor) {
@@ -428,55 +429,15 @@ TINYMCE_DEFAULT_CONFIG = {
         }
     ''',
 
-    # // Prevent wrapping text in <p> tags
-    'forced_root_block': '',  # Default is 'p', setting to empty string disables it
+    # Prevent wrapping text in <p> tags
+    'forced_root_block': ' ',  # Use <div> instead of <p>
     'forced_root_block_attrs': {},  # Clears any forced attributes
-    'br_in_pre': False,  # Insert <br> tags instead of wrapping in <p> tags
+    'br_in_pre': True,  # Insert <br> tags instead of wrapping in <p> tags
 
-    # // Allow all elements and attributes
+    # Allow all elements and attributes
     'valid_elements': '*[*]',  # Allow all elements
     'valid_children': '+body[style|link|script|iframe|section],+section[div|p],+div[math|mrow|mfrac|mi|mn|mo]',
 }
-
-# TINYMCE_DEFAULT_CONFIG = {
-#     'height': 360,
-#     'width': 700,
-#     'cleanup_on_startup': True,
-#     'custom_undo_redo_levels': 20,
-#     'selector': 'textarea',
-#     'plugins': 'link image preview codesample contextmenu table code',
-#     'toolbar': 'undo redo | styleselect | bold italic | link image | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table | codesample',
-#     'theme': 'silver',
-
-#     # Additional configuration for MathML
-#     'extended_valid_elements': 'math[*],mrow[*],mfrac[*],mi[*],mn[*],mo[*]',
-#     'custom_elements': 'math,mrow,mfrac,mi,mn,mo',
-#     'content_style': "math, mrow, mfrac, mi, mn, mo",
-#     'init_instance_callback': '''
-#         function (editor) {
-#             // This callback runs after the editor is initialized
-#             console.log('Editor is initialized.');
-#         }
-#     '''
-# }
-
-# TINYMCE_DEFAULT_CONFIG = {
-
-#     'height': 360,
-#     'width': 700,
-#     'cleanup_on_startup': True,
-#     'custom_undo_redo_levels': 20,
-#     'selector': 'textarea',
-#     'plugins': 'link image preview codesample contextmenu table code', 
-#     'toolbar': 'undo redo | styleselect | bold italic | link image | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table | codesample',  
-#     'theme': 'silver',
-
-#     # new
-
-# }
-
-# myproject/settings.py
-
 
 
 # TINYMCE_DEFAULT_CONFIG = {
@@ -586,3 +547,9 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
+
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
+]

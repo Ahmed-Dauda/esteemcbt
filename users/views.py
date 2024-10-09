@@ -13,10 +13,7 @@ from teacher import models as TMODEL
 from users.models import NewUser
 from users.models import Profile
 from django.views.decorators.cache import cache_page
-
-
 # views.py
-
 from django.shortcuts import render, redirect
 from allauth.account.views import SignupView
 from .forms import SimpleSignupForm, SchoolStudentSignupForm
@@ -32,7 +29,6 @@ from allauth.account import app_settings
 
 
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import JsonResponse
 from quiz.models import CourseGrade
@@ -47,14 +43,6 @@ def assign_course_grade(student):
         grade.students.add(student)
         grade.save()
         
-        # Assign the subjects from the CourseGrade to the student
-        # for subject in grade.subjects.all():
-        #     if subject:
-        #         student.subjects.add(subject)
-        #         student.save()
-        #     else:
-        #         pass
-
         
     except CourseGrade.DoesNotExist:
         # Handle the case where no matching CourseGrade is found
@@ -65,7 +53,7 @@ def assign_course_grade(student):
 
 def SchoolStudentView(request):
     if request.method == 'POST':
-        form = SchoolStudentSignupForm(request.POST)
+        form = SchoolStudentSignupForm(request.POST, request=request)
         if form.is_valid():
             student = form.save(request)  # form.save() returns the student instance
             assign_course_grade(student)  # Assign course grade here
@@ -74,7 +62,7 @@ def SchoolStudentView(request):
                 return JsonResponse({'message': 'Form submitted successfully!'})
             return redirect('users:schoolstudentview')  # Redirect to the same page
     else:
-        form = SchoolStudentSignupForm()
+        form = SchoolStudentSignupForm(request=request)
 
     return render(request, 'users/school_student.html', {'form': form})
 
@@ -171,38 +159,6 @@ from django.utils.decorators import method_decorator
 from allauth.account.views import SignupView
 
 
-# class ReferralSignupView(SignupView):
-#     template_name = 'users/referrer.html'
-#     form_class = SimpleSignupForm  # Default form class
-
-#     def get_form_class(self):
-#         referral_code = self.kwargs.get('referrer_code', None)
-#         if referral_code:
-#             # If there's a referral code in the URL, use the ReferralSignupForm
-#             return SimpleSignupForm
-#         else:
-#             # Otherwise, use the default form class
-#             return super().get_form_class()
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         referral_code = self.kwargs.get('referrer_code', '')
-#         context['form'].fields['phone_number'].initial = referral_code
-#         context['referrer_code'] = referral_code
-#         return context
-
-#     def form_valid(self, form):
-#         response = super().form_valid(form)
-#         referral_code = form.cleaned_data.get('phone_number', '')
-
-#         # Perform actions with the referral code, e.g., associate it with the user
-#         user = self.request.user  # The user object after signup
-#         user.phone_number = referral_code
-#         user.save()
-
-#         return response
-
-
 class ReferralSignupView(SignupView):
     template_name = 'users/referrer.html'  # Replace with your actual template path
     form_class = SimpleSignupForm
@@ -252,72 +208,74 @@ def become_referrer(request):
 #     return HttpResponse(f"Referral signup page for referrer {referrer_code}")
 
 
-def take_exams_view(request):
-    course = QMODEL.Course.objects.all()
-    context = {
-        'courses':course
-    }
-    return render(request, 'student/take_exams.html', context=context)
+# def take_exams_view(request):
+#     course = QMODEL.Course.objects.all()
+#     context = {
+#         'courses':course
+#     }
+#     return render(request, 'student/take_exams.html', context=context)
 
-def start_exams_view(request, pk):
+# def start_exams_view(request, pk):
 
-    course = QMODEL.Course.objects.get(id = pk)
-    questions = QMODEL.Question.objects.all().filter(course = course)
-    context = {
-        'course':course,
-        'questions':questions
-    }
-    if request.method == 'POST':
-        pass
-    response = render(request, 'student/start_exams.html', context=context)
-    response.set_cookie('course_id', course.id)
-    return response
+#     course = QMODEL.Course.objects.get(id = pk)
+#     questions = QMODEL.Question.objects.all().filter(course = course)
+#     context = {
+#         'course':course,
+#         'questions':questions
+#     }
+#     if request.method == 'POST':
+#         pass
+#     response = render(request, 'student/start_exams.html', context=context)
+#     response.set_cookie('course_id', course.id)
+#     return response
 
 
-def calculate_marks_view(request):
-    if request.COOKIES.get('course_id') is not None:
-        course_id = request.COOKIES.get('course_id')
-        course=QMODEL.Course.objects.get(id=course_id)
+# def calculate_marks_view(request):
+#     if request.COOKIES.get('course_id') is not None:
+#         course_id = request.COOKIES.get('course_id')
+#         course=QMODEL.Course.objects.get(id=course_id)
         
-        total_marks=0
-        questions=QMODEL.Question.objects.all().filter(course=course)
-        for i in range(len(questions)):
+#         total_marks=0
+#         questions=QMODEL.Question.objects.all().filter(course=course)
+#         for i in range(len(questions)):
             
-            selected_ans = request.COOKIES.get(str(i+1))
-            actual_answer = questions[i].answer
-            if selected_ans == actual_answer:
-                total_marks = total_marks + questions[i].marks
-        student = Profile.objects.filter(user_id=request.user.id)
-        result = QMODEL.Result()
-        result.marks=total_marks
-        result.exam=course
-        result.student=student
-        result.save()
+#             selected_ans = request.COOKIES.get(str(i+1))
+#             actual_answer = questions[i].answer
+#             if selected_ans == actual_answer:
+#                 total_marks = total_marks + questions[i].marks
+#         student = Profile.objects.filter(user_id=request.user.id)
+#         result = QMODEL.Result()
+#         result.marks=total_marks
+#         result.exam=course
+#         result.student=student
+#         result.save()
 
-        return HttpResponseRedirect('view_result')
-import itertools
-def view_result_view(request):
-    courses=QMODEL.Course.objects.all()
-    return render(request,'student/view_result.html',{'courses':courses})
-
-
-from django.db.models import Count
-
-def check_marks_view(request,pk):
-    course=QMODEL.Course.objects.get(id=pk)
-    student = Profile.objects.filter(user_id=request.user.id)
-    res= QMODEL.Result.objects.values_list('marks', flat=True).order_by('-marks').distinct()
-    stu= QMODEL.Result.objects.values('student','exam','marks').distinct()
+#         return HttpResponseRedirect('view_result')
     
-    vr = QMODEL.Result.objects.values('marks', 'student').annotate(marks_count = Count('marks')).filter(marks_count__gt = 0)
+
+# import itertools
+# def view_result_view(request):
+#     courses=QMODEL.Course.objects.all()
+#     return render(request,'student/view_result.html',{'courses':courses})
+
+
+# from django.db.models import Count
+
+# def check_marks_view(request,pk):
+#     course=QMODEL.Course.objects.get(id=pk)
+#     student = Profile.objects.filter(user_id=request.user.id)
+#     res= QMODEL.Result.objects.values_list('marks', flat=True).order_by('-marks').distinct()
+#     stu= QMODEL.Result.objects.values('student','exam','marks').distinct()
+    
+#     vr = QMODEL.Result.objects.values('marks', 'student').annotate(marks_count = Count('marks')).filter(marks_count__gt = 0)
         
 
-    results= QMODEL.Result.objects.order_by('-marks').filter(exam=course).filter(student=student)[:3]
-    context = {
-        'results':results,
-        'course':course,
-        'st':request.user,
-        'res':res,
-        'stu':stu
-    }
-    return render(request,'student/check_marks.html', context)
+#     results= QMODEL.Result.objects.order_by('-marks').filter(exam=course).filter(student=student)[:3]
+#     context = {
+#         'results':results,
+#         'course':course,
+#         'st':request.user,
+#         'res':res,
+#         'stu':stu
+#     }
+#     return render(request,'student/check_marks.html', context)

@@ -1,38 +1,63 @@
-{% extends 'sms/dashboard/startexambase.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exam Completed</title>
+  <!-- Include Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Include Bootstrap for styling (optional) -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .card {
+      background-color: #ffffff;
+    }
+    .btn {
+      text-transform: uppercase;
+      border-radius: 50px;
+    }
+    .btn:hover {
+      background-color: #218838;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
 
-{% block title %} Exams Ends {% endblock %}
-
-  {% block content %} 
-  <!-- <script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', function() {
-        let reloadCount = localStorage.getItem('reloadCount') ? parseInt(localStorage.getItem('reloadCount')) : 0;
-
-        if (reloadCount < 1) {
-            setTimeout(function() {
-                reloadCount++;
-                localStorage.setItem('reloadCount', reloadCount);
-                location.reload();
-            }, 1000); // Refresh the page every 5 seconds
-        } else {
-            localStorage.removeItem('reloadCount'); // Clear the count after 2 reloads
-        }
-    });
-</script> -->
-
-<br> <br> <br>
-
-
-<div class="text-center">
-  <i class="fas fa-check-circle" style="font-size: 48px; color: #28a745;"></i>
-  <p class="mb-0" style="font-size: 18px; color: #333;">Congratulations! You have successfully submitted your exam.</p>
-  <p style="font-size: 16px; color: #555;">Please feel free to leave the examination area.</p>
-  or take the next exam if available for you.
-  <br>
-  <br>
- <button class="btn btn-primary text-white"><a class=" text-white" style="color: #333; text-decoration: none; font-size:12px;" href="{% url 'student:take-exam' %}">Click here</a></button> 
-</div>
+  <div class="container text-center my-5">
+      <div class="card shadow-lg border-light rounded p-5 bg-light">
+          <div class="card-body">
+              <!-- Happiness Icon -->
+              <i class="fas fa-smile-beam mb-4" style="font-size: 100px; color: #ffcc00;"></i>
+              
+              <!-- Success Icon -->
+              <i class="fas fa-check-circle mb-4" style="font-size: 100px; color: #28a745;"></i>
+              
+              <!-- Title -->
+              <h1 class="mb-4" style="color: #333; font-weight: 700;">Congratulations!</h1>
+              
+              <!-- Message -->
+              <p class="lead mb-4" style="font-size: 20px; color: #555;">
+                  You've successfully submitted your exam!
+                  <br>
+                  Feel free to exit the examination area or proceed to the next available exam.
+              </p>
+              
+              <!-- Button -->
+              <a class="btn btn-success btn-lg text-white" href="{% url 'student:take-exam' %}" style="transition: all 0.3s ease-in-out;">
+                  <i class="fas fa-arrow-right mr-2"></i> Take the Next Exam
+              </a>
+          </div>
+      </div>
+  </div>
   
-<!-- End of Main Content -->
+  <!-- Include Bootstrap JS (optional) -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
-{% endblock %} 
- 
+</body>
+</html>

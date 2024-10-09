@@ -2,84 +2,164 @@
 
 {% block title %} Teacher Dashboard {% endblock %}
 
-  {% block content %} 
+{% block content %}
 
-  <style>
+<style>
+  /* Light Theme */
+  body {
+      background-color: #f8f9fa;
+      color: #212529;
+      transition: background-color 0.3s, color 0.3s;
+  }
 
-.container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-}
+  .dashboard-header {
+      background-color: #e4e7eb;
+      padding: 20px;
+      border-bottom: 1px solid #dee2e6;
+  }
 
-.left-column-cat {
-    flex: 1;
-    margin: 5px;
-    background-color: #4158D0;
-    color: black;
-    background-image: linear-gradient(#ffff 100%, #ffff 46%, white 100%);
+  .dashboard-header img {
+      max-height: 80px;
+  }
 
-}
+  .card {
+      border: 1px solid #dee2e6;
+      border-radius: 0.375rem;
+      background-color: #ffffff;
+  }
 
+  .card-header {
+      background-color: #007bff;
+      color: #ffffff;
+      border-bottom: 0;
+  }
+
+  .card-body {
+      padding: 20px;
+  }
+
+  .card-body ul li {
+      font-size: 1.1rem;
+  }
+
+  .card-footer {
+      background-color: #f8f9fa;
+      border-top: 1px solid #dee2e6;
+  }
+
+  .btn-custom {
+      background-color: #007bff;
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      padding: 10px 20px;
+      border-radius: 0.375rem;
+  }
+
+  .btn-custom:hover {
+      background-color: #0056b3;
+      color: #ffffff;
+  }
+
+  .text-primary {
+      color: #007bff !important;
+  }
+
+  /* Dark Theme Styles */
+  .dark-theme body {
+      background-color: #343a40;
+      color: #f8f9fa;
+  }
+
+  .dark-theme .dashboard-header {
+      background-color: #495057;
+  }
+
+  .dark-theme .card {
+      border: 1px solid #6c757d;
+      background-color: #495057;
+  }
+
+  .dark-theme .card-header {
+      background-color: #007bff;
+      color: #ffffff;
+  }
+
+  .dark-theme .card-body ul li {
+      color: #f8f9fa;
+  }
+
+  .dark-theme .card-footer {
+      background-color: #495057;
+      border-top: 1px solid #6c757d;
+  }
+
+  .dark-theme .btn-custom {
+      background-color: #007bff;
+      color: #ffffff;
+  }
+
+  .dark-theme .btn-custom:hover {
+      background-color: #0056b3;
+      color: #ffffff;
+  }
+
+  .dark-theme .text-primary {
+      color: #007bff !important;
+  }
 </style>
-    
 
-<br> <br>
-<!-- Assuming you want to iterate over the subjects -->
-{% if request.user.is_superuser %}
-<p class="text-center">You logged In as super admin</p>
-{% else %}
-<p class="text-center">You logged In as Teacher</p>
-{% endif %}
-<hr>
-<div class="container">
 
-<div class="row">
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">Classes Taught</h5>
-      </div>
-      <div class="card-body">
-        <h5 class="card-title">Welcome, {{ username }}</h5>
-        <ul class="list-group list-group-flush">
-          {% for teacher_cla in teacher_class %}
-            <li class="list-group-item">{{teacher_cla.name}}</li>
-          {% endfor %}
-        </ul>
-      </div>
+<div class="container-fluid">
+    <div class="dashboard-header text-center mb-4">
+        {% if school.logo %}
+            <img src="{{ school.logo.url }}" alt="School Logo" class="img-fluid">
+        {% endif %}
+        <h3 class="mt-2">{{ school.school_name }}</h3>
+        {% if request.user.is_superuser %}
+            <p class="text-success font-weight-bold">You are logged in as Super Admin</p>
+        {% else %}
+            <p class="text-primary font-weight-bold">You are logged in as Teacher</p>
+        {% endif %}
     </div>
-  </div>
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-header bg-success text-white">
-        <h5 class="mb-0">Subjects Taught</h5>
-      </div>
-      <div class="card-body">
-        <!-- <h5 class="card-title">Welcome, {{ username }}</h5> -->
-        <ul class="list-group list-group-flush">
-          {% for subject in teacher_subjects %}
-            <li class="list-group-item">{{ subject }}</li>
-          {% endfor %}
-        </ul>
-      </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header text-center">
+                    <h5 class="mb-0">Classes Taught</h5>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Welcome, {{ request.user.username }}</h5>
+                    <ul class="list-group list-group-flush">
+                        {% for teacher_cla in teacher_class %}
+                            <li class="list-group-item">{{ teacher_cla.name }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="card-footer text-center">
+                    <!-- Optional footer content -->
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header text-center bg-success">
+                    <h5 class="mb-0">Subjects Taught</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for subject in teacher_subjects %}
+                            <li class="list-group-item">{{ subject }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="card-footer text-center">
+                    <!-- Optional footer content -->
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
-</div>
-
-
-
-
-<!-- End of Main Content -->
-
-  {% endblock %} 
- 
-
-
-
-
-
-
-
+{% endblock %}

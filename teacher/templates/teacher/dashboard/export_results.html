@@ -1,33 +1,34 @@
 {% extends 'sms/dashboard/teacherbase.html' %}
 
-{% block title %} Export Results {% endblock %}
+{% block title %}Export Results{% endblock %}
 
-  {% block content %}  
-
+{% block content %}  
   <div class="container mt-5">
     <div class="row justify-content-center">
       <div class="col-md-6">
-        <div class="card">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white text-center">
+            <h4 class="mb-0">Export Results</h4>
+          </div>
           <div class="card-body">
-            <h4 class="text-center mb-4">Export Result</h4>
             <form method="post">
               {% csrf_token %}
               <div class="form-group">
-                <label for="file-type">Select file type:</label>
+                <label for="file-type" class="font-weight-bold">Select File Type:</label>
                 <select class="form-control" name="file-type" id="file-type">
                   <option value="csv">CSV</option>
                   <option value="pdf">PDF</option>
                 </select>
               </div>
               <div class="form-group">
-                <label for="course">Select subject:</label>
+                <label for="course" class="font-weight-bold">Select Subject:</label>
                 <select class="form-control" name="course" id="course">
                   {% for subject in subjects_taught %}
-                  <option value="{{ subject.id }}">{{ subject }}</option>
+                    <option value="{{ subject.id }}">{{ subject }}</option>
                   {% endfor %}
                 </select>
               </div>
-              <div class="text-center">
+              <div class="text-center mt-4">
                 <button type="submit" class="btn btn-primary">
                   <i class="fas fa-download"></i> Export
                 </button>
@@ -38,7 +39,4 @@
       </div>
     </div>
   </div>
-  
-
-  {% endblock %} 
- 
+{% endblock %} 

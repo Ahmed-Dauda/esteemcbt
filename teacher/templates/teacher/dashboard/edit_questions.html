@@ -3,33 +3,214 @@
 
 {% block title %} Edit Question {% endblock %}
 
-  {% block content %} 
+{% block content %}
 
-  <style>
+<style>
+  .container {
+      max-width: 900px;
+      margin: auto;
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+  }
 
+  h1 {
+      text-align: center;
+      color: #007bff;
+      margin-bottom: 20px;
+  }
+
+  .form-group {
+      margin-bottom: 15px;
+  }
+
+  .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+      padding: 10px 20px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+  }
+
+  .btn-primary:hover {
+      background-color: #0056b3;
+  }
+
+  .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      padding: 10px 20px;
+      border-radius: 5px;
+      margin-left: 10px;
+      transition: background-color 0.3s ease;
+  }
+
+  .btn-secondary:hover {
+      background-color: #5a6268;
+  }
+
+  .btn-container {
+      text-align: center;
+      margin-top: 20px;
+  }
+
+  .form-label {
+      font-weight: bold;
+      color: #333;
+  }
+
+  .card {
+      background-color: #ffffff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .form-control {
+      border-radius: 5px;
+      padding: 10px;
+      font-size: 16px;
+  }
+
+  .math-preview {
+      background-color: #e9ecef;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+  }
 </style>
-    
-<br> <br>
-<h1>Edit Question</h1>
+
+<!-- MathJax for MathML rendering -->
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js">
+</script>
+
 <div class="container">
+    <h1>Edit Question</h1>
+    <div class="card">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <!-- {{ form|crispy }} -->
+            <!-- Subject Field -->
+            <div class="form-group">
+                <label for="course">Subject:</label>
+                {{ form.course }}
+                <div class="math-preview" id="course-preview">
+                    <!-- Render MathML Preview -->
+                    {{ form.course.value|safe }}
+                </div>
+            </div>
 
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form|crispy }}
-        <button type="submit">Save Changes</button>
-        <a href="{% url 'teacher:view_questions' %}">Cancel</a>
-    </form>
+            <!-- Question Field -->
+            <div class="form-group">
+                <label for="question">Question:</label>
+                {{ form.question }}
+                <div class="math-preview" id="question-preview">
+                    <!-- Render MathML Preview -->
+                    {{ form.question.value|safe }}
+                </div>
+            </div>
 
+            <!-- Marks Field -->
+            <div class="form-group">
+                <label for="marks">Mark:</label>
+                {{ form.marks }}
+                <div class="math-preview" id="marks-preview">
+                    <!-- Render MathML Preview -->
+                    {{ form.marks.value|safe }}
+                </div>
+            </div>
+
+            <!-- Option1 Field -->
+            <div class="form-group">
+                <label for="option1">Option 1:</label>
+                {{ form.option1 }}
+                <div class="math-preview" id="option1-preview">
+                    <!-- Render MathML Preview -->
+                    {{ form.option1.value|safe }}
+                </div>
+            </div>
+
+            <!-- Option2 Field -->
+            <div class="form-group">
+                <label for="option2">Option 2:</label>
+                {{ form.option2 }}
+                <div class="math-preview" id="option2-preview">
+                    <!-- Render MathML Preview -->
+                    {{ form.option2.value|safe }}
+                </div>
+            </div>
+
+            <!-- Option3 Field -->
+            <div class="form-group">
+                <label for="option3">Option 3:</label>
+                {{ form.option3 }}
+                <div class="math-preview" id="option3-preview">
+                    <!-- Render MathML Preview -->
+                    {{ form.option3.value|safe }}
+                </div>
+            </div>
+
+            <!-- Option4 Field -->
+            <div class="form-group">
+                <label for="option4">Option 4:</label>
+                {{ form.option4 }}
+                <div class="math-preview" id="option4-preview">
+                    <!-- Render MathML Preview -->
+                    {{ form.option4.value|safe }}
+                </div>
+            </div>
+
+            <!-- Answer Field -->
+            <div class="form-group">
+                <label for="answer">Answer:</label>
+                {{ form.answer }}
+            </div>
+
+            <!-- Buttons -->
+            <div class="btn-container">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{% url 'teacher:view_questions' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+        
+    </div>
 </div>
 
-<!-- End of Main Content -->
+<script>
+    // Function to update the MathML previews in real-time
+    function updatePreview(fieldId, previewId) {
+        const field = document.getElementById(fieldId);
+        const preview = document.getElementById(previewId);
+        preview.innerHTML = field.value;
+        MathJax.typesetPromise([preview]);  // Re-render MathJax content
+    }
 
-  {% endblock %} 
- 
+    // Add event listeners to each input field for live preview updates
+    document.getElementById('{{ form.question.id_for_label }}').addEventListener('input', function() {
+        updatePreview('{{ form.question.id_for_label }}', 'question-preview');
+    });
 
+    document.getElementById('{{ form.marks.id_for_label }}').addEventListener('input', function() {
+        updatePreview('{{ form.marks.id_for_label }}', 'marks-preview');
+    });
 
+    document.getElementById('{{ form.option1.id_for_label }}').addEventListener('input', function() {
+        updatePreview('{{ form.option1.id_for_label }}', 'option1-preview');
+    });
 
+    document.getElementById('{{ form.option2.id_for_label }}').addEventListener('input', function() {
+        updatePreview('{{ form.option2.id_for_label }}', 'option2-preview');
+    });
 
+    document.getElementById('{{ form.option3.id_for_label }}').addEventListener('input', function() {
+        updatePreview('{{ form.option3.id_for_label }}', 'option3-preview');
+    });
 
+    document.getElementById('{{ form.option4.id_for_label }}').addEventListener('input', function() {
+        updatePreview('{{ form.option4.id_for_label }}', 'option4-preview');
+    });
+</script>
 
-
+{% endblock %}

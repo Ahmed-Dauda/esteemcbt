@@ -1,0 +1,14 @@
+<!-- templates/teacher/dashboard/delete_coursegrade.html -->
+<div style="text-align: center; margin-top: 50px;">
+    <h1 style="color: red; font-size: 24px;">Delete Subject Level</h1>
+    <p style="font-weight: bold;">Are you sure you want to delete {{ course_grade.name }}?</p>
+    <form method="post" style="display: inline-block; text-align: left;">
+        {% csrf_token %}
+        <button type="submit" style="background-color: red; color: white; padding: 10px 20px; border: none; cursor: pointer; display: block; margin: 0 auto;">
+            Confirm
+        </button>
+    </form>
+    <a href="{% url 'teacher:examiner_dashboard' %}" style="color: blue; text-decoration: none; margin-top: 10px; display: inline-block;">
+        Cancel
+    </a>
+</div>

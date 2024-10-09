@@ -17,30 +17,91 @@ from django.http import HttpResponseRedirect
 from django.views.decorators.cache import cache_page
 
 
-@cache_page(60 * 15)
+   
+# @cache_page(60 * 15)
 def move_group(request, from_group_name=None, to_group_name=None):
+    user = request.user
+    user_school = user.school  # Assuming `school` is related to the `NewUser` model
+
     if request.method == 'POST':
-        form = MoveGroupForm(request.POST)
+        form = MoveGroupForm(request.POST, user_school=user_school)
         if form.is_valid():
             from_group = form.cleaned_data['from_group']
             to_group = form.cleaned_data['to_group']
+
+            # Logic for moving students between groups
             if to_group is None:
-                # Handle moving the group itself (from_group)
-                users_to_update = NewUser.objects.filter(student_class=from_group.name)
+                # No target group specified, just re-assign within the same group
+                users_to_update = NewUser.objects.filter(student_class=from_group.name, school=user_school)
+                
                 users_to_update.update(student_class=from_group.name)
                 return redirect('quiz:move_group', from_group_name=from_group.name, to_group_name=from_group.name)
             else:
-                # Update student_class field for users in the from_group to the new group name
-                users_to_update = NewUser.objects.filter(student_class=from_group.name)
+                # Move students from one group to another
+                users_to_update = NewUser.objects.filter(student_class=from_group.name, school=user_school)
                 users_to_update.update(student_class=to_group.name)
-                # Add all students from the source group to the destination group
+                print(users_to_update)
                 to_group.students.add(*from_group.students.all())
-                # Optional: Clear the students from the source group
                 from_group.students.clear()
                 return redirect('quiz:success_page')
     else:
-        form = MoveGroupForm()
+        form = MoveGroupForm(user_school=user_school)
+
     return render(request, 'quiz/dashboard/move_group_form.html', {'form': form})
+
+# def move_group(request, from_group_name=None, to_group_name=None):
+#     user = request.user
+#     user_school = user.school  # Assuming `school` is related to the `NewUser` model
+
+#     if request.method == 'POST':
+#         form = MoveGroupForm(request.POST, user_school=user_school)
+#         if form.is_valid():
+#             from_group = form.cleaned_data['from_group']
+#             to_group = form.cleaned_data['to_group']
+
+#             if to_group is None:
+#                 users_to_update = NewUser.objects.filter(student_class=from_group.name, school=user_school)
+#                 users_to_update.update(student_class=from_group.name)
+#                 return redirect('quiz:move_group', from_group_name=from_group.name, to_group_name=from_group.name)
+#             else:
+#                 users_to_update = NewUser.objects.filter(student_class=from_group.name, school=user_school)
+#                 users_to_update.update(student_class=to_group.name)
+#                 to_group.students.add(*from_group.students.all())
+#                 from_group.students.clear()
+#                 return redirect('quiz:success_page')
+#     else:
+#         form = MoveGroupForm(user_school=user_school)
+    
+#     return render(request, 'quiz/dashboard/move_group_form.html', {'form': form})
+
+
+# def move_group(request, from_group_name=None, to_group_name=None):
+#     if request.method == 'POST':
+#         form = MoveGroupForm(request.POST)
+#         if form.is_valid():
+#             from_group = form.cleaned_data['from_group']
+#             to_group = form.cleaned_data['to_group']
+           
+#             if to_group is None:
+#                 # Handle moving the group itself (from_group)
+                
+#                 users_to_update = NewUser.objects.filter(student_class=from_group.name)
+#                 users_to_update.update(student_class=from_group.name)
+#                 return redirect('quiz:move_group', from_group_name=from_group.name, to_group_name=from_group.name)
+#             else:
+               
+#                 # Update student_class field for users in the from_group to the new group name
+#                 users_to_update = NewUser.objects.filter(student_class=from_group.name)
+#                 users_to_update.update(student_class=to_group.name)
+#                 # Add all students from the source group to the destination group
+#                 to_group.students.add(*from_group.students.all())
+#                 # Optional: Clear the students from the source group
+#                 from_group.students.clear()
+#                 return redirect('quiz:success_page')
+#     else:
+#         form = MoveGroupForm()
+#     return render(request, 'quiz/dashboard/move_group_form.html', {'form': form})
+
 
 
 def success_page_view(request):

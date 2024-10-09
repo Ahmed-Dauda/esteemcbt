@@ -1,0 +1,69 @@
+<!-- your_template.html -->
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %} Subject Registration Form {% endblock title %} 
+{% block content %}
+
+<div class="container">
+    <br><br>
+    <h4>Subject Registration Form</h4>
+
+    {% if messages %}
+    <ul id="messages" class="messages">
+        {% for message in messages %}
+            <li style="color: green;" {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="post" id="myForm" class="formcontainer">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            <div class="form-group col-md-6 mb-0">
+                {{ form.title|as_crispy_field }}
+            </div>
+            <div class="form-group col-md-6 mb-0">
+                {{ form.session|as_crispy_field }}
+            </div> 
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-6 mb-0">
+                {{ form.term|as_crispy_field }}
+            </div>
+            <div class="form-group col-md-6 mb-0">
+                {{ form.exam_type|as_crispy_field }}
+            </div>
+        </div>
+
+        <div class="form-row">    
+            <div class="form-group col-md-12 mb-0">
+                {{ form.schools|as_crispy_field }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Save Subject</button>
+        </div>
+    </form>
+
+    <script>
+        // Wait for the DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // Select the messages container
+            const messagesContainer = document.getElementById('messages');
+            
+            // Check if the container exists
+            if (messagesContainer) {
+                // Set a timeout to hide the messages after 5 seconds (5000 milliseconds)
+                setTimeout(() => {
+                    messagesContainer.style.display = 'none';
+                }, 5000);
+            }
+        });
+    </script>
+
+</div>
+{% endblock %}

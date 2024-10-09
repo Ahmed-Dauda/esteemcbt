@@ -1,0 +1,16 @@
+<h3>Badges Awarded</h3>
+<ul>
+  {% for badge_data in awarded_badges %}
+    <li>
+      <strong>{{ badge_data.badge.badge_type }} Badge</strong>: {{ badge_data.badge.description }}<br>
+      <em>Subject: {{ badge_data.subject }}</em>
+
+      <!-- Link to download the badge as a PDF -->
+      <a href="{% url 'student:render_badge_pdf_view' badge_data.badge.id session=session term=term %}" class="btn btn-primary">
+          Download {{ badge_data.badge.badge_type }} Badge PDF
+      </a>
+    </li>
+  {% empty %}
+    <li>No badges awarded</li>
+  {% endfor %}
+</ul>

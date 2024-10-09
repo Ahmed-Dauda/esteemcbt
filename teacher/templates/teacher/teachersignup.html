@@ -4,22 +4,31 @@
   <head>
     <meta charset="utf-8">
     <style>
-
         form{
            margin: 50px; 
-          
         }
-
     </style>
   </head>
   <body>
 
- 
-
-<br><br><br>
-<h3 style="text-align: center;color: red;">TEACHER SIGNUP</h3>
-<form method="POST" autocomplete="off" enctype="multipart/form-data">
+  <!-- Flash message block -->
+  <body>
+    {% if messages %}
+      <div>
+        {% for message in messages %}
+          <div class="alert alert-success">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  
+  
+  <br><br><br>
+  <h3 style="text-align: center;color: red;">TEACHER SIGNUP</h3>
+  <form method="POST" autocomplete="off" enctype="multipart/form-data">
     {% csrf_token %}
+    
     <div class="form-row">
       <div class="form-group col-md-6">
         <label for="username">Username</label>
@@ -58,13 +67,10 @@
           <label for="profile_pic">Profile Picture</label>
           {% render_field teacherForm.profile_pic|attr:'required:true' class="form-control" placeholder="" %}
         </div>
-        
       </div>
-
 
     <button type="submit" class="btn btn-primary">Sign Up</button>
   </form>
-
 
 <br><br>
 

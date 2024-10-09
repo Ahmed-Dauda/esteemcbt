@@ -128,6 +128,37 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" href="{% url 'teacher:create_course_view' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Add subject</span>
+                </a>
+             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'teacher:examiner_dashboard' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Manage Students</span>
+                </a>
+             </li>
+             <li class="nav-item">
+                <a class="nav-link" href="{% url 'teacher:manage_exam' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Manage Exams</span>
+                </a>
+             </li>
+             <li class="nav-item">
+                <a class="nav-link" href="{% url 'teacher:create_examiner_exam' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span> Create Exams </span>
+                </a>
+             </li>
+             <li class="nav-item">
+                <a class="nav-link" href="{% url 'teacher:teacher_list' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Teacher List </span>
+                </a>
+             </li>
+            
+            <li class="nav-item">
                 <a class="nav-link" href="{% url 'quiz:move_group' %}">
                     <i class="fas fa-fw fa-book"></i>
                     <span>promote students</span></a>
@@ -144,6 +175,13 @@
                         <span>Registration students</span>
                     </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'teacher:exam_list' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Result statistics</span>
+                </a>
+        </li>
+            
 
             
 

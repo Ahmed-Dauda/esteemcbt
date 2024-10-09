@@ -1,0 +1,20 @@
+
+
+
+<h2>Update Teacher Settings</h2>
+
+<form method="post" >
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+</form>
+
+<a href="{% url 'teacher:generate_csv' %}">Back to generate</a>
+{% if messages %}
+    <ul>
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+

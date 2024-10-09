@@ -1,0 +1,17 @@
+/* Styling for checkboxes in the admin */
+.checkbox-multiple {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-width: 800px;
+   
+}
+
+.checkbox-multiple label {
+    color: rgb(16, 16, 15);
+    flex-basis: 25%; /* Each checkbox will take 25% of the row, resulting in 4 columns */
+}
+
+.checkbox-multiple input {
+    margin-right: 5px; /* Add space between checkbox and label */
+}

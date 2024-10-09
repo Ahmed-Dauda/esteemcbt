@@ -1,0 +1,74 @@
+{% extends 'sms/dashboard/studentbase.html' %}
+
+{% block title %} Student Dashboard {% endblock %}
+
+{% block content %}
+
+<style>
+    .leaderboard-wrapper {
+        margin-top: 30px;
+    }
+    .leaderboard-table {
+        width: 100%;
+        margin: 0 auto;
+        text-align: center;
+        border-collapse: collapse;
+    }
+    .leaderboard-table th, .leaderboard-table td {
+        border: 1px solid #ddd;
+        padding: 12px;
+    }
+    .leaderboard-table th {
+        background-color: #f8f9fa;
+    }
+    .leaderboard-table tbody tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+    .badge-gold {
+        color: #FFD700;
+        font-weight: bold;
+    }
+    .badge-silver {
+        color: #C0C0C0;
+        font-weight: bold;
+    }
+    .badge-bronze {
+        color: #CD7F32;
+        font-weight: bold;
+    }
+</style>
+
+
+<div class="container leaderboard-wrapper">
+<h4 style="text-align: center;">Leaderboard for {{ session }} - {{ term }} Term</h4>
+
+<table class="table leaderboard-table">
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Student</th>
+            <th>School Name</th>
+            <th>Total Marks (Sum of Percentages)</th>
+            <th>Final Average (%)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in leaderboard %}
+        <tr>
+            <td>{{ entry.rank }}</td>
+            <td>{{ entry.student.user.first_name }} - {{ entry.student.user.last_name }}</td>
+            <td>{{ entry.student.schools}}</td>
+            <!-- Show the total marks obtained (Sum of all subject percentages) -->
+            <td>{{ entry.total_marks|floatformat:2 }}</td>
+            <!-- Show the final average percentage -->
+            <td>{{ entry.final_average|floatformat:2 }}%</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{% endblock %}
+
+
+

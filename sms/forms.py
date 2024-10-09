@@ -5,45 +5,32 @@ from django import forms
 from django.db import models 
 from django.forms import ModelForm
 from django import forms
-from django.db import models 
 
 from users.models import NewUser, BaseUserManager
 from student.models import Payment
-
-
-
 from tinymce.widgets import TinyMCE
-
 
 # forms.py
 
-from django import forms
+from .models import Courses
+from quiz.models import School
 
+class CoursesForm(forms.ModelForm):
+    class Meta:
+        model = Courses
+        fields = ['title', 'session', 'term', 'exam_type', 'schools']  # Include 'schools'
 
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # Get the user instance, default to None
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['schools'].queryset = School.objects.filter(id=user.school.id)  # Ensure queryset contains only the user's school
+           
 
 class PaymentForm(ModelForm):
     class Meta:
         model = Payment
         fields = ('amount', 'email',)
 
-# class smspostform(ModelForm):
-#     class Meta:
-        
-#         # model = smsform
-#         fields= '__all__'
-    
-# class feedbackform(ModelForm):
-#     class Meta:
-        
-#         model = Comment
-#         fields= '__all__'
-
-
-# class BlogcommentForm(forms.ModelForm):
-#     content =forms.CharField()
-#     class Meta:
-#         model = Blogcomment
-#         fields = ('name','content',)
-        
-       
+     
        

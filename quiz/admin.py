@@ -1,24 +1,15 @@
-import profile
+
 from django.contrib import admin
-from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from import_export import fields,resources
 from import_export.widgets import ForeignKeyWidget
 from users.models import Profile
-from quiz.models import (
-    Question, Course, Result,School,
-     
-   
-    )
-# Register your models here.
+from quiz.models import (Question, Course, Result,School)
+from import_export import fields, resources
+from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
+from .models import Question, Course, Session, Term, ExamType  # Import required models
+from import_export.fields import Field
 
-# admin.site.register(Course)
-# admin.site.register(Group)
-# admin.site.register(List_Subjects)
-# admin.site.register(Subjects)
-# admin.site.register(School)
-# admin.site.register(TopicsAssessment)
-# admin.site.register(QuestionAssessment)
 
 class SchoolAdmin(admin.ModelAdmin):
 
@@ -29,36 +20,43 @@ admin.site.register(School, SchoolAdmin)
 
 from django.contrib import admin
 
+from django.db.models import Prefetch
+
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ['get_school_name', 'show_questions', 'course_name', 'question_number', 'total_marks', 'num_attemps', 'duration_minutes','created']
-    search_fields = ['course_name', 'schools__name']  # Add search field for course name
+    list_display = ['get_school_name', 'show_questions', 'course_name', 'session','term','exam_type','question_number', 'total_marks', 'num_attemps', 'duration_minutes', 'created']
+    search_fields = ['course_name__title', 'schools__school_name', 'exam_type__name']  # Add search field for course name and school name
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related('schools', 'course_name')
 
     def get_school_name(self, obj):
-        return obj.schools.school_name if obj.schools else "Unknown School"
+        return obj.schools.school_name if obj.schools else "Enable Exam"
     get_school_name.short_description = 'School Name'
 
 admin.site.register(Course, CourseAdmin)
 
-# class CourseAdmin(admin.ModelAdmin):
-#     list_display = ['get_school_name', 'show_questions','course_name', 'question_number', 'total_marks', 'pass_mark', 'duration_minutes', 'created', 'updated']
-#     search_fields = ['course_name', 'schools__name']  # Add search field for course name
-
-#     def get_school_name(self, obj):
-#         return obj.schools.school_name if obj.schools else "Unknown School"
-#     get_school_name.short_description = 'School Name'
-
-# admin.site.register(Course, CourseAdmin)
 
 
 from .models import CourseGrade
+from quiz.forms import CourseGradeForm
 
 class CourseGradeAdmin(admin.ModelAdmin):
-    list_display = ['name', 'get_students_emails', 'get_subject_names']
+    form = CourseGradeForm
+    list_display = ['name','schools', 'get_students_details', 'get_subject_names']
     search_fields = ['name', 'students__email', 'subjects__name']
 
-    def get_students_emails(self, obj):
-        return '\n'.join(str(student.email) for student in obj.students.all())
-    get_students_emails.short_description = 'Student Emails'
+    class Media:
+        css = {
+            'all': ('sms/css/admin_custom.css',)  # Load the custom CSS file
+        }
+
+    def get_students_details(self, obj):
+        return '\n'.join(
+            f"({student.school})-({student.first_name}-{student.last_name}, {student.student_class})"
+            for student in obj.students.all()
+        )
+    get_students_details.short_description = 'Student Details'
 
     def get_subject_names(self, obj):
         return '\n'.join(str(subject) for subject in obj.subjects.all())
@@ -66,211 +64,7 @@ class CourseGradeAdmin(admin.ModelAdmin):
 
 admin.site.register(CourseGrade, CourseGradeAdmin)
 
-# class CourseGradeAdmin(admin.ModelAdmin):
-#     list_display = ['name','email', 'get_subject_names']
-#     search_fields = ['name', 'subjects__name']
 
-#     def get_subject_names(self, obj):
-#         return '\n'.join(str(subject) for subject in obj.subjects.all())
-#     get_subject_names.short_description = 'Subject Names'
-
-# admin.site.register(CourseGrade, CourseGradeAdmin)
-
-# def promote_students(modeladmin, request, queryset):
-#     # Assuming queryset contains students to be promoted
-#     print("Queryset:", queryset)  # Print the queryset to check its contents
-#     for student in queryset:
-#         print("Promoting student:", student.name)  # Print the name of each student being promoted
-#         student.promote_to_next_grade()  # You need to define this method in your Student model
-#         print("Student promoted successfully.")  # Print a message after promoting each student
-
-# promote_students.short_description = "Promote selected students"
-
-
-
-
-# class SubjectsAdmin(admin.ModelAdmin):
-#     list_display = ['get_school_name', 'get_course_names', 'question_number', 'total_marks', 'pass_mark', 'duration_minutes', 'created', 'updated']
-#     search_fields = ['course_name__name']  # Add search field for course name
-
-#     def get_school_name(self, obj):
-#         return obj.schools.school_name if obj.schools else "Unknown School"
-#     get_school_name.short_description = 'School Name'
-
-#     def get_course_names(self, obj):
-#         if obj.course_name:
-#             return obj.course_name.name
-#         else:
-#             return "No course assigned"
-#     get_course_names.short_description = 'Course Names'
-
-# admin.site.register(Subjects, SubjectsAdmin)
-
-
-# class SubjectsAdmin(admin.ModelAdmin):
-#     list_display = ['get_school_name', 'get_course_names', 'question_number', 'total_marks', 'pass_mark', 'duration_minutes', 'created', 'updated']
-    
-#     def get_school_name(self, obj):
-#         return obj.schools.school_name if obj.schools else "Unknown School"
-#     get_school_name.short_description = 'School Name'
-
-#     def get_course_names(self, obj):
-#         return '\n'.join(str(course) for course in obj.course_name.all())
-#     get_course_names.short_description = 'Course Names'
-
-# admin.site.register(Subjects, SubjectsAdmin)
-
-
-# @admin.register(Student)
-# class StudentAdmin(admin.ModelAdmin):
-#     list_display = ['name', 'email', 'group', 'school']   # Include 'name' field in the list display
-#     search_fields = ['name', 'email', 'group__name', 'school__school_name'] 
-
-#     # Optionally, customize the admin change form to display additional information or controls
-#     def change_view(self, request, object_id, form_url='', extra_context=None):
-#         extra_context = extra_context or {}
-#         # Add additional context variables here if needed
-#         return super().change_view(request, object_id, form_url, extra_context=extra_context)
-    
-
-# @admin.register(Student)
-# class StudentAdmin(admin.ModelAdmin):
-#     list_display = ('name', 'grade')
-
-# admin.site.register(Group)
-
-# from django.contrib import admin
-
-
-# class GroupAdmin(admin.ModelAdmin):
-#     list_display = ['name', 'display_subjects']  # Define fields to display in the list
-
-#     def display_subjects(self, obj):
-#         """
-#         Custom method to display subjects associated with the group.
-#         """
-#         subject_names = '\n'.join(str(subject) for subject in obj.subjects.all())
-#         return subject_names if subject_names else "-"  # Return subject names or "-" if no subjects
-
-#     display_subjects.short_description = 'Subjects'  # Set column header
-
-# admin.site.register(Group, GroupAdmin)
-
-
-# subjectQUESTION
-# class QuestionSubjectResource(resources.ModelResource):
-    
-#     course = fields.Field(
-#         column_name= 'course',
-#         attribute='course',
-#         widget=ForeignKeyWidget(Course, field='course_name__title'))
-    
-#     class Meta:
-#         model = Subject_Question
-#         # fields = ('title',)
-               
-# class SubjectQuestionAdmin(ImportExportModelAdmin):
-#     list_display = ['id','course','marks' ,'question']
-#     # prepopulated_fields = {"slug": ("title",)}
-#     list_filter =  ['course','marks' ,'question']
-#     search_fields= ['id','course__course_name__title','marks' ,'question']
-#     ordering = ['id']
-    
-#     resource_class = QuestionSubjectResource
-
-# admin.site.register(Subject_Question, SubjectQuestionAdmin)
-
-# END subjectQUESTION
-
-
-# QuestionAssessment
-
-# class QuestionAssessmentResource(resources.ModelResource):
-    
-#     course = fields.Field(
-#         column_name= 'course',
-#         attribute='course',
-#         widget=ForeignKeyWidget(Course, field='course_name__title'))
-    
-#     class Meta:
-#         model = QuestionAssessment
-#         # fields = ('title',)
-               
-# class QuestionAssessmentAdmin(ImportExportModelAdmin):
-#     list_display = ['id','course','marks' ,'question']
-#     # prepopulated_fields = {"slug": ("title",)}
-#     list_filter =  ['course','marks' ,'question']
-#     search_fields= ['id','course__course_name__title','marks' ,'question']
-#     ordering = ['id']
-    
-#     resource_class = QuestionAssessmentResource
-
-# admin.site.register(QuestionAssessment, QuestionAssessmentAdmin)
-
-# ENDQUESTIONASSESSMENT
-
-# ResultAssessment
-
-# class ResultAssessmentResource(resources.ModelResource):
-    
-#     courses = fields.Field(
-#         column_name= 'student',
-#         attribute='student',
-#         widget=ForeignKeyWidget(Profile,'username') )
-    
-#     class Meta:
-#         model = Result
-#         # fields = ('title',)
-  
-# class ResultAssessmentAdmin(ImportExportModelAdmin):
-#     list_display = ['id', 'student', 'exam', 'marks', 'created']
-#     list_filter = ['id', 'student', 'exam', 'marks']
-#     search_fields = ['id', 'student__first_name', 'student__last_name', 'exam__course_name__title', 'marks', 'created']
-#     ordering = ['id']
-#     resource_class = ResultAssessmentResource
-
-# admin.site.register(ResultAssessment, ResultAssessmentAdmin)
-
-# end of ResultAssessment
-
-
-# SubjectResultResource
-# class SubjectResultResource(resources.ModelResource):
-#     exam_course_name = fields.Field(
-#         column_name='exam',
-#         attribute='exam__course_name__title'  
-#     )
-    
-#     student_username = fields.Field(
-#         column_name='student_username',
-#         attribute='student__user__username',
-#     )
-
-#     student_first_name = fields.Field(
-#         column_name='student_first_name',
-#         attribute='student__first_name',
-#     )
-
-#     student_last_name = fields.Field(
-#         column_name='student_last_name',
-#         attribute='student__last_name',
-#     )
-    
-#     class Meta:
-#         model = Subject_Result
-#         fields = ('id', 'exam_course_name', 'student_username', 'student_first_name', 'student_last_name', 'marks', 'created')
-
-               
-# class SubjectResultAdmin(ImportExportModelAdmin):
-#     list_display = ['id', 'student', 'exam', 'marks', 'created']
-#     list_filter = ['id', 'student', 'exam', 'marks']
-#     search_fields = ['student__first_name', 'student__last_name', 'exam__course_name__title', 'marks', 'created']
-#     ordering = ['id']
-#     resource_class = SubjectResultResource
-
-# admin.site.register(Subject_Result, SubjectResultAdmin)
-
-# end of SubjectResultResource
 
 # ResultResource
 class ResultResource(resources.ModelResource):
@@ -296,65 +90,163 @@ class ResultResource(resources.ModelResource):
     
     class Meta:
         model = Result
-        fields = ('id', 'exam_course_name', 'student_username', 'student_first_name', 'student_last_name', 'marks', 'created')
+        fields = ('id', 'exam_course_name','result_class','session','term','exam_type_name', 'student_username', 'student_first_name', 'student_last_name', 'marks', 'created')
 
                
-class ResultAdmin(ImportExportModelAdmin):
-    list_display = ['id', 'student', 'exam', 'marks', 'created']
-    list_filter = ['exam', 'student']
-    search_fields = ['student__first_name', 'student__last_name', 'exam__course_name__title', 'marks', 'created']
+class ResultAdmin(ImportExportModelAdmin):    
+    list_display = ['student', 'exam', 'marks','exam_type', 'result_class', 'session', 'term', 'created']
+    list_filter = ['exam', 'student', 'exam_type']
+    search_fields = ['student__first_name', 'student__last_name', 'exam__course_name__title', 'marks', 'exam_type__name', 'created']
     ordering = ['id']
     resource_class = ResultResource
 
 admin.site.register(Result, ResultAdmin)
 
+
 # end of ResultResource
- 
 
-# class CertificateResource(resources.ModelResource):
-    
-#     # course = fields.Field(
-#     #     column_name= 'course',
-#     #     attribute='course',
-#     #     widget=ForeignKeyWidget(Course,'course_name') )
-    
+
+# from import_export import resources, fields
+# from import_export.widgets import ForeignKeyWidget
+# from .models import Question, Course, School, Session, Term, ExamType
+
+# class CustomCourseWidget(ForeignKeyWidget):
+#     def clean(self, value, row=None, **kwargs):
+#         if 'course' in row and 'session' in row and 'exam_type' in row and 'schools' in row:
+#             # Fetch courses that match the course name, session, exam_type, and school
+#             courses = self.model.objects.filter(
+#                 course_name__title=row['course'],
+#                 session__name=row['session'],
+#                 exam_type__name=row['exam_type'],
+#                 schools__name=row['schools']  # Include school in the filter
+#             )
+
+#             if courses.count() == 1:
+#                 return courses.first()  # Only one match found
+#             elif courses.count() > 1:
+#                 # Handle multiple matches
+#                 raise ValueError(f"Multiple courses found for course: {row['course']}, session: {row['session']}, exam type: {row['exam_type']}, and school: {row['schools']}. Please ensure uniqueness.")
+#             else:
+#                 raise ValueError(f"No course found for course: {row['course']}, session: {row['session']}, exam type: {row['exam_type']}, and school: {row['schools']}.")
+
+#         return None  # Handle case when row does not contain expected data
+
+
+# class QuestionResource(resources.ModelResource):
+#     # Exporting the `course` field with the custom widget
+#     course = fields.Field(
+#         column_name='course',
+#         attribute='course',
+#         widget=CustomCourseWidget(Course, 'course_name__title')  # Adjust according to your Course model
+#     )
+
+#     # Exporting `schools` (Many-to-Many) as comma-separated school names
+#     schools = fields.Field(
+#         column_name='schools',
+#         attribute='schools',
+#         widget=ManyToManyWidget(School, separator=', ', field='school_name')
+#     )
+
+#     # Exporting `session`, `term`, and `exam_type` as Foreign Keys
+#     session = fields.Field(
+#         column_name='session',
+#         attribute='session',
+#         widget=ForeignKeyWidget(Session, 'name')  # Assuming 'name' is the field you want to display for session
+#     )
+
+#     term = fields.Field(
+#         column_name='term',
+#         attribute='term',
+#         widget=ForeignKeyWidget(Term, 'name')  # Assuming 'name' is the field you want to display for term
+#     )
+
+#     exam_type = fields.Field(
+#         column_name='exam_type',
+#         attribute='exam_type',
+#         widget=ForeignKeyWidget(ExamType, 'name')  # Assuming 'name' is the field you want to display for exam_type
+#     )
+
 #     class Meta:
-#         model = Certificate_note
-#         # fields = ('title',)
-               
-# class CertificateAdmin(ImportExportModelAdmin):
-#     list_display = ['id','note']
-    
-#     list_filter =  ['note']
-#     search_fields= ['note']
+#         model = Question
+#         fields = (
+#             'course', 'schools', 'session', 'term', 'exam_type', 
+#             'marks', 'question', 'img_quiz', 'option1', 'option2', 
+#             'option3', 'option4', 'answer', 'created', 'updated', 'id'
+#         )
+
+#     def dehydrate_schools(self, question):
+#         return ', '.join([school.school_name for school in question.schools.all()])
+
+
+# class QuestionAdmin(ImportExportModelAdmin):
+#     list_display = ['id', 'course', 'schools_list', 'session', 'term', 'exam_type', 'marks', 'question', 'answer']
+#     list_filter = ['course', 'schools', 'session', 'term', 'exam_type', 'marks', 'question']
+#     search_fields = ['course__course_name__title', 'schools__name', 'session__name', 'term__name', 'exam_type__name', 'marks', 'question']
 #     ordering = ['id']
-    
-#     resource_class = CertificateResource
+#     resource_class = QuestionResource
 
-# admin.site.register(Certificate_note, CertificateAdmin)
+#     def get_queryset(self, request):
+#         queryset = super().get_queryset(request)
+#         queryset = queryset.select_related('course', 'session', 'term', 'exam_type').prefetch_related('schools')
+#         return queryset
 
+#     def schools_list(self, obj):
+#         return ", ".join([school.school_name for school in obj.schools.all()])
+
+#     schools_list.short_description = 'Schools'
+
+# admin.site.register(Question, QuestionAdmin)
+
+
+# real codes
 
 class QuestionResource(resources.ModelResource):
-    
     course = fields.Field(
-        column_name= 'course',
+        column_name='course',
         attribute='course',
-        widget=ForeignKeyWidget(Course, field='course_name__title'))
-    
+        widget=ForeignKeyWidget(Course, 'course_name__title')
+    )
+
     class Meta:
         model = Question
         fields = ('course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer', 'created', 'updated', 'id')
-       
+   
 class QuestionAdmin(ImportExportModelAdmin):
-    list_display = ['id','course','marks' ,'question', 'answer']
-    # prepopulated_fields = {"slug": ("title",)}
-    list_filter =  ['course','marks' ,'question']
-    search_fields= ['course__course_name__title','marks' ,'question']
-    ordering = ['id']
-    
-    resource_class = QuestionResource
+    list_display = ['course', 'marks', 'question','option1','option2','option3','option4' ,'answer']
+    list_filter = ['course', 'marks', 'question']  
+    search_fields = ['course__course_name__title', 'marks', 'question']
+    ordering = ['id']  
+    resource_class = QuestionResource   
 
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.select_related('course')
+        return queryset
+    
 admin.site.register(Question, QuestionAdmin)
+
+
+# class QuestionResource(resources.ModelResource):
+    
+#     course = fields.Field(
+#         column_name= 'course',
+#         attribute='course',
+#         widget=ForeignKeyWidget(Course, field='course_name__title'))
+    
+#     class Meta:
+#         model = Question
+#         fields = ('course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer', 'created', 'updated', 'id')
+
+# class QuestionAdmin(ImportExportModelAdmin):
+#     list_display = ['id','course','marks' ,'question', 'answer']
+#     # prepopulated_fields = {"slug": ("title",)}
+#     list_filter =  ['course','marks' ,'question']
+#     search_fields= ['course__course_name__title','marks' ,'question']
+#     ordering = ['id']
+    
+#     resource_class = QuestionResource
+
+# admin.site.register(Question, QuestionAdmin)
 
 
 

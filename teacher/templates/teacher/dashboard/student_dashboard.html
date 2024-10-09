@@ -1,74 +1,104 @@
 {% extends 'sms/dashboard/studentbase.html' %}
 
-{% block title %} student dashboard {% endblock %}
+{% block title %} Student Dashboard {% endblock %}
 
-  {% block content %} 
+{% block content %}
 
-  <style>
-
-.container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.left-column-cat {
-    flex: 1;
-    margin: 5px;
-    background-color: #4158D0;
-    color: black;
-    background-image: linear-gradient(#ffff 100%, #ffff 46%, white 100%);
-
-}
-
-</style>
-    
-
-<br> <br>
-<div class="container">
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <div class="card bg-c-green order-card">
-        <div class="card-body">
-          <h4 class="card-title text-center">Examination Rules and Regulations</h4>
-          <hr>
-          <div class="card-text">
-            <p>Welcome to the examination platform. Before you begin the exam, please take a moment to review the following rules and regulations:</p>
-            <ul>
-              <li><strong>Authentication:</strong> You are required to authenticate yourself using your username and password before accessing the exam. Any attempt to impersonate another user or use unauthorized credentials will result in immediate disqualification.</li>
-              <li><strong>Exam Duration:</strong> Each exam has a fixed duration indicated at the beginning. Ensure that you manage your time effectively to complete all questions within the allotted time.</li>
-              <li><strong>No Cheating:</strong> Cheating in any form is strictly prohibited. Do not use unauthorized materials, devices, or external assistance during the exam. Any attempt to cheat will result in disqualification and disciplinary action.</li>
-              <li><strong>No Disturbance:</strong>
-                <ul>
-                  <li>Find a quiet and distraction-free environment to take the exam.</li>
-                  <li>Silence your mobile phone and avoid any disruptions during the exam.</li>
-                </ul>
-              </li>
-              <li><strong>No Unauthorized Devices:</strong> Prohibit the use of any unauthorized electronic devices, including mobile phones, tablets, or calculators, during the exam.</li>
-              <li><strong>No Unauthorized Assistance:</strong> Do not seek or provide assistance from/to others during the exam. Communicating with other candidates or accessing external resources is strictly prohibited.</li>
-              <li><strong>No Tampering:</strong> Do not attempt to tamper with the examination platform or modify exam content in any way. Any unauthorized access or tampering will result in immediate disqualification.</li>
-              <li><strong>Submission Deadline:</strong> Ensure that you submit your exam answers before the deadline expires. The system will automatically submit your exam if the deadline is reached, so plan your time accordingly.</li>
-            </ul>
-          </div>
-          <div class="text-center">
-            <button class="btn btn-primary"><a href="{% url 'student:take-exam' %}" class="text-white">Accept and Start</a></button>
-          </div>
+<!-- Welcome Section -->
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card bg-light shadow mb-4">
+                <div class="card-body">
+                    <h2 class="text-center">Welcome, {% if student_profile %}{{ student_profile.first_name }} {{ student_profile.last_name }}{% else %}Student{% endif %}!</h2>
+                    <p class="text-center">Here are your details and enrolled courses:</p>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </div>
 
+<!-- Student Dashboard Sections -->
+<div class="container mt-4">
+    <div class="row">
+        <!-- Student Details Section -->
+        <div class="col-md-6">
+            <div class="card bg-light shadow mb-4">
+                <div class="card-header">
+                    <h4 class="m-0 font-weight-bold text-primary">Your Profile</h4>
+                </div>
+                <div class="card-body">
+                    {% if student_profile %}
+                    <ul class="list-group">
+                        <li class="list-group-item"><strong>Username:</strong> {{ student_profile.username }}</li>
+                        <li class="list-group-item"><strong>Full Name:</strong> {{ student_profile.first_name }} {{ student_profile.last_name }}</li>
+                        <li class="list-group-item"><strong>Email:</strong> {{ student_profile.email }}</li>
+                        <li class="list-group-item"><strong>Phone Number:</strong> {{ student_profile.phone_number }}</li>
+                        <li class="list-group-item"><strong>Class:</strong> {{ student_profile.student_class }}</li>
+                        <li class="list-group-item"><strong>Country:</strong> {{ student_profile.countries }}</li>
+                        <!-- Add other profile fields as needed -->
+                    </ul>
+                    {% else %}
+                    <p class="text-center">No profile information available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
 
+        <!-- Enrolled Courses Section -->
+        <div class="col-md-6">
+            <div class="card bg-light shadow mb-4">
+                <div class="card-header">
+                    <h4 class="m-0 font-weight-bold text-primary">Enrolled Courses</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% if enrolled_courses %}
+                            {% for course_list in enrolled_courses %}
+                                {% for course in course_list %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><strong>{{ course }}</strong></span>
+                                </li>
+                                {% endfor %}
+                            {% endfor %}
+                            <a href="{% url 'student:take-exam' %}" class="btn btn-primary btn-sm">Take Exam</a>
+                        {% else %}
+                        <li class="list-group-item">You are not enrolled in any courses.</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<!-- End of Main Content -->
+    <!-- Examination Rules and Regulations Section -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card bg-light shadow mb-4">
+                <div class="card-header">
+                    <h4 class="m-0 font-weight-bold text-primary">Examination Rules and Regulations</h4>
+                </div>
+                <div class="card-body">
+                    <p>Welcome to the examination platform. Before you begin the exam, please take a moment to review the following rules and regulations:</p>
+                    <ul>
+                        <li><strong>Authentication:</strong> You are required to authenticate yourself using your username and password before accessing the exam. Any attempt to impersonate another user or use unauthorized credentials will result in immediate disqualification.</li>
+                        <li><strong>Exam Duration:</strong> Each exam has a fixed duration indicated at the beginning. Ensure that you manage your time effectively to complete all questions within the allotted time.</li>
+                        <li><strong>No Cheating:</strong> Cheating in any form is strictly prohibited. Do not use unauthorized materials, devices, or external assistance during the exam. Any attempt to cheat will result in disqualification and disciplinary action.</li>
+                        <li><strong>No Disturbance:</strong>
+                            <ul>
+                                <li>Find a quiet and distraction-free environment to take the exam.</li>
+                                <li>Silence your mobile phone and avoid any disruptions during the exam.</li>
+                            </ul>
+                        </li>
+                        <li><strong>No Unauthorized Devices:</strong> Prohibit the use of any unauthorized electronic devices, including mobile phones, tablets, or calculators, during the exam.</li>
+                        <li><strong>No Unauthorized Assistance:</strong> Do not seek or provide assistance from/to others during the exam. Communicating with other candidates or accessing external resources is strictly prohibited.</li>
+                        <li><strong>No Tampering:</strong> Do not attempt to tamper with the examination platform or modify exam content in any way. Any unauthorized access or tampering will result in immediate disqualification.</li>
+                        <li><strong>Submission Deadline:</strong> Ensure that you submit your exam answers before the deadline expires. The system will automatically submit your exam if the deadline is reached, so plan your time accordingly.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-  {% endblock %} 
- 
-
-
-
-
-
-
-
+{% endblock %}

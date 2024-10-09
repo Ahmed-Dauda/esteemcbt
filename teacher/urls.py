@@ -5,7 +5,26 @@ from django.contrib.auth.views import LoginView
 app_name = 'teacher'
 
 urlpatterns = [
+
+     path('teachers/edit/<int:pk>/', views.teacher_edit_view, name='teacher_edit'),  # Edit URL
+    path('teachers/delete/<int:pk>/', views.teacher_delete_view, name='teacher_delete'), 
+    path('teachers/', views.teacher_list_view, name='teacher_list'),
+    path('create-course/', views.add_course_view, name='create_course_view'),
+    path('exam/delete/<int:course_id>/', views.delete_examiner_exam, name='delete_examiner_exam'),
+    path('exam/create/', views.create_examiner_exam, name='create_examiner_exam'),
+    path('exam/edit/<int:result_id>/', views.edit_result_view, name='edit_result_view'),
+    path('exam/delete/<int:result_id>/', views.delete_result_view, name='delete_result_view'),
+    path('exam-list', views.exam_list_view, name='exam_list'),
+    path('exam/statistics/<int:course_id>/', views.exam_statistics_view, name='exam_statistics'),
+    path('course/edit/<int:course_id>/', views.edit_examiner_exam, name='edit_examiner_exam'),
+    path('manage-exam/', views.examiner_start_exam, name='manage_exam'),
+    path('examiner-dashboard/', views.examiner_dashboard_view, name='examiner_dashboard'),
+    path('coursegrade/edit/<int:pk>/', views.edit_coursegrade_view, name='edit_coursegrade'),
+    path('coursegrade/delete/<int:pk>/', views.delete_coursegrade_view, name='delete_coursegrade'),
     path('download-csv/', views.download_csv, name='download_csv'),
+    
+    path('update-teacher-settings/', views.update_teacher_settings, name='update_teacher_settings'),
+    
     path('generate-csv/', views.generate_csv, name='generate_csv'),
     path('teacher-signup/', views.teacher_signup_view, name='teacher_signup'),
     path('teacher_login/', views.teacher_login_view, name='teacher_login'),

@@ -1,0 +1,118 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}Create New Exam{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 20px auto;">
+    <h3>Create a New Exam</h3>
+    <p>Note: The "Number of Questions" and "Total Marks" fields are disabled because they will be automatically populated once questions are added.</p>
+    <form method="post" style="display: flex; flex-wrap: wrap; gap: 1rem;">
+        {% csrf_token %}
+        
+        <div style="flex: 1 1 48%;">
+            {{ form.room_name|as_crispy_field }}
+        </div>
+        <div style="flex: 1 1 48%;">
+            {{ form.schools|as_crispy_field }}
+        </div>
+    
+        <div style="flex: 1 1 48%;">
+            {{ form.course_name|as_crispy_field }}
+        </div>
+        <div style="flex: 1 1 48%;">
+            {{ form.question_number|as_crispy_field }}
+        </div>
+    
+        <div style="flex: 1 1 48%;">
+            {{ form.course_pay|as_crispy_field }}
+        </div>
+        <div style="flex: 1 1 48%;">
+            {{ form.total_marks|as_crispy_field }}
+        </div>
+    
+        <div style="flex: 1 1 48%;">
+            {{ form.session|as_crispy_field }}
+        </div>
+        <div style="flex: 1 1 48%;">
+            {{ form.term|as_crispy_field }}
+        </div>
+    
+        <div style="flex: 1 1 48%;">
+            {{ form.exam_type|as_crispy_field }}
+        </div>
+        <div style="flex: 1 1 48%;">
+            {{ form.num_attemps|as_crispy_field }}
+        </div>
+    
+        <div style="flex: 1 1 48%;">
+            {{ form.show_questions|as_crispy_field }}
+        </div>
+        <div style="flex: 1 1 48%;">
+            {{ form.duration_minutes|as_crispy_field }}
+        </div>
+    
+        <div style="flex: 1 1 100%; display: flex; justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary">Create Course</button>
+        </div>
+    </form>
+    
+    
+        
+        <!-- <div class="row">
+            <div class="col-md-6">
+                {{ form.room_name|as_crispy_field }}
+            </div>
+            <div class="col-md-6">
+                {{ form.schools|as_crispy_field }}
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                {{ form.course_name|as_crispy_field }}
+            </div>
+            <div class="col-md-6">
+                {{ form.question_number|as_crispy_field }}
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                {{ form.total_marks|as_crispy_field }}
+            </div>
+            <div class="col-md-6">
+                {{ form.num_attemps|as_crispy_field }}
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                {{ form.exam_type|as_crispy_field }}
+            </div>
+            <div class="col-md-6">
+                {{ form.duration_minutes|as_crispy_field }}
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <p>Accepted Format: 2023-2024</p>
+                {{ form.session|as_crispy_field }}
+            </div>
+            <div class="col-md-6">
+                <p>FIRST, SECOND, THIRD</p>
+                {{ form.term|as_crispy_field }}
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-primary">Create Exam</button>
+            </div>
+        </div> -->
+        
+
+</div>
+{% endblock %}

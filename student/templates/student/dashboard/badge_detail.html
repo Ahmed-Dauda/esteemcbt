@@ -1,0 +1,52 @@
+{% extends 'sms/dashboard/studentbase.html' %}
+
+{% block title %} Student Dashboard {% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <h4 class="text-center">Badges Awarded to {{ student.first_name }}</h4>
+    <p class="text-center text-muted">Session: <strong>{{ session }}</strong> | Term: <strong>{{ term }}</strong></p>
+
+    <div class="row badge-wrapper justify-content-center">
+        {% if badges %}
+            {% for badge in badges %}
+                {% if badge.badge_type %}
+                    <!-- Badge Card -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 shadow-sm border-0">
+                            <div class="card-body text-center">
+                                <!-- Badge Type Display -->
+                                <div class="badge-icon mb-3 {{ badge.badge_type|lower }}">
+                                    <i class="fas fa-award fa-3x"></i> <!-- Add an icon representing the badge -->
+                                </div>
+                                
+                                <h5 class="card-title">{{ badge.badge_type }}</h5>
+                                <p class="card-text badge-description text-muted">{{ badge.description }}</p>
+                            </div>
+                            <div class="card-footer bg-transparent text-center">
+                                <!-- Download PDF button -->
+                                <a href="{% url 'student:badge_pdf_view' session term %}" class="btn btn-sm btn-outline-primary">
+                                    Download Badge Report PDF
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="col-12">
+                        <p class="text-center text-warning">No badges awarded for this session and term.You need to get final grade of A or B or C</p>
+                    </div>
+                {% endif %}
+          
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <p class="text-center text-warning">No badges awarded for this session and term.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+

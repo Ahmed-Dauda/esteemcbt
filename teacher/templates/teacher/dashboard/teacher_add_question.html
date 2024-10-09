@@ -1,164 +1,225 @@
 {% extends 'sms/dashboard/teacherbase.html' %}
 {% load crispy_forms_tags %}
 
-{% block title %} Teacher Add Questions {% endblock %}
+{% block title %}Teacher Add Questions{% endblock %}
 
-  {% block content %} 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-    <script type="text/x-mathjax-config">
-        MathJax.Hub.Config({
-            extensions: ["tex2jax.js", "MathML/content-mathml.js"],
-            jax: ["input/TeX", "output/HTML-CSS", "output/Content-MathML"],
-            tex2jax: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                processEscapes: true
-            },
-            "HTML-CSS": { availableFonts: ["TeX"] }
-        });
-    </script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        textarea {
-            width: 80%;
-            padding: 10px;
-            font-size: 16px;
-            height: 50px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-        pre {
-            padding: 10px;
-            background-color: #f4f4f4;
-            border: 1px solid #ddd;
-            margin-top: 10px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            height: 150px;
-        }
-        #rendered {
-            padding: 10px;
-            border: 1px solid #ddd;
-            margin-top: 10px;
-        }
-    </style>
-    
-<br> <br>
-
-
-
-<div class="container">
-  <h1>Math Equation Editor</h1>
-    <textarea id="input" rows="10" placeholder="Enter LaTeX code here...">E=mc^2</textarea>
-    <br>
-    <button onclick="renderEquation()">Render Equation</button>
-    <h2>Rendered Equation:</h2>
-    <div id="rendered"></div>
-    <h2>MathML Output:</h2>
-    <pre id="output"></pre>
-     <button onclick="copyMathML()">Copy MathML</button>
-
-  <h1>Add Question</h1>
-{% for subject in subjects_taught %}
-<p>Subject and school taught: {{subject}}</p>
-{% endfor %}
-<br>
-
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <div id="formset-container">
-      {{ formset|crispy }}      
-      <div id="formset-template" style="display: none;">
-        {{ formset.empty_form|crispy }}
-      </div>
-    </div>
-  
-    <button type="button" class="btn btn-primary" id="add-more">Add More</button>
-    <button type="submit" class="btn btn-primary">Submit</button>
-  </form>
-
-</div>
-
-
-
-
-    <script>
-        function renderEquation() {
-            var input = document.getElementById('input').value;
-            var outputElement = document.getElementById('output');
-            var renderedElement = document.getElementById('rendered');
-
-            // Create a container for the MathJax processing
-            var container = document.createElement('div');
-            container.innerHTML = '$$' + input + '$$';  // Use display math delimiters
-            renderedElement.innerHTML = '';  // Clear previous rendered content
-            renderedElement.appendChild(container);  // Move the container to the renderedElement
-
-            MathJax.Hub.Queue(["Typeset", MathJax.Hub, container, function() {
-                var math = MathJax.Hub.getAllJax(container)[0];
-                if (math) {
-                    // Get MathML output
-                    var mml = math.root.toMathML("");
-                    outputElement.textContent = mml;
-                } else {
-                    outputElement.textContent = "No valid MathJax found.";
-                }
-            }]);
-        }
-        function copyMathML() {
-            var mathml = document.getElementById('output').textContent;
-            navigator.clipboard.writeText(mathml).then(function() {
-                alert("MathML copied to clipboard!");
-            }, function(err) {
-                console.error('Failed to copy MathML: ', err);
-            });
-        }
-    </script>
-
-
-
-
-<!-- End of Main Content -->
-<!-- Make sure jQuery library is included before this script -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-
-<script>
-  $(document).ready(function() {
-    // Get the formset container
-    var formsetContainer = $('#formset-container');
-
-    // Get the formset template
-    var formsetTemplate = $('#formset-template');
-
-    // Add more button click event
-    $('#add-more').click(function() {
-      // Clone the formset template
-      var clonedForm = formsetTemplate.clone();
-
-      // Remove the 'id' attribute from the cloned form
-      clonedForm.removeAttr('id');
-
-      // Make the cloned form visible
-      clonedForm.removeAttr('style');
-
-      // Append the cloned form to the container
-      formsetContainer.append(clonedForm);
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        },
+        "HTML-CSS": { availableFonts: ["TeX"] }
     });
-  });
 </script>
 
-  {% endblock %} 
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+    }
+    .editor-container {
+        position: fixed;
+        top: 80px; /* Adjust the top distance as needed */
+        right: 20px; /* Adjust the right distance as needed */
+        width: 30%;
+        margin-left: 20px; /* Add space between editor and form */
+    }
+    textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        height: 80px;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+    }
+    button {
+        padding: 10px 20px;
+        font-size: 16px;
+        margin-top: 10px;
+    }
+    pre {
+        padding: 15px;
+        background-color: #f4f4f4;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-top: 10px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        height: 150px;
+        overflow-y: scroll;
+    }
+    #rendered {
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-top: 10px;
+        background-color: #f9f9f9;
+    }
+    .questions-container {
+        width: 70%;
+        height: 900px; /* Set a fixed height for scrolling */
+        overflow-y: auto; /* Enable vertical scrolling */
+    }
+</style>
+
+<div class="container">
  
+    <div class="card shadow mb-4 editor-container">
+        <a href="https://docs.google.com/document/d/12vxSEux5wiOwdd-sMLJ4apl9Z0rY8wrt/edit?usp=drive_link&ouid=113278886889002422986&rtpof=true&sd=true" target="_blank">Math Equation Editor Documentation</a>
+
+        <h2 class="mb-4">Math Equation Editor</h2>
+        <div class="card-body">
+            <textarea id="input" rows="10" placeholder="Enter plain text here...">1/2 * 3 + H2O</textarea>
+            <br>
+            <button class="btn btn-success" onclick="renderEquation()">Render Equation</button>
+            <h4 class="mt-4">Rendered Equation:</h4>
+            <div id="rendered"></div>
+ 
+        <!-- Symbol Selector -->
+        <div class="mb-3" style="max-height: 150px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
+            <button class="btn btn-secondary" onclick="insertSymbol('∞')">∞</button>
+            <button class="btn btn-secondary" onclick="insertSymbol('√')">√</button>
+            <button class="btn btn-secondary" onclick="insertSymbol('∑')">∑</button>
+            <button class="btn btn-secondary" onclick="insertSymbol('∏')">∏</button>
+            <button class="btn btn-secondary" onclick="insertSymbol('∫')">∫</button>
+            <button class="btn btn-secondary" onclick="insertSymbol('∂')">∂</button>
+            <button class="btn btn-secondary" onclick="insertSymbol('≈')">≈</button>
+            <button class="btn btn-secondary" onclick="insertSymbol('≠')">≠</button>
+            <button class="btn btn-secondary" onclick="insertSymbol('≡')">≡</button>
+            <button class="btn btn-secondary" onclick="insertSymbol('-')">-</button>
+            <button class="btn btn-secondary" onclick="insertSymbol('+')">+</button>
+            <button class="btn btn-secondary" onclick="insertSymbol('/')">/</button>
+            <button class="btn btn-secondary" onclick="insertSymbol('%')">%</button>
+            <button class="btn btn-secondary" onclick="insertSymbol('*')">*</button>
+            <button class="btn btn-secondary" onclick="insertSymbol('(')">(</button>
+            <button class="btn btn-secondary" onclick="insertSymbol(')')">)</button>
+            
+        </div>
+
+            <h4 class="mt-4">MathML Output:</h4>
+            <pre id="output"></pre>
+            <button class="btn btn-info" onclick="copyMathML()">Copy MathML</button>
+
+           
+        </div>
+    </div>
+    
+    <div class="questions-container">
+        <h2 class="mb-4">Add Question</h2>
+        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div id="formset-container">
+                {{ formset|crispy }}
+                <div id="formset-template" style="display: none;">
+                    {{ formset.empty_form|crispy }}
+                </div>
+            </div>
+            
 
 
+            <button type="button" class="btn btn-secondary mt-3" id="add-more">Add More</button>
+            <button type="submit" class="btn btn-primary mt-3">Submit</button>
+        </form>
+        
+    </div>
+</div>
 
+<script>
+    // Variable to keep track of the active input field
+    var activeField = null;
 
+    // Function to parse plain text to LaTeX
+    function parsePlainText(input) {
+        input = input.replace(/(\d+)\s*\/\s*(\d+)/g, '\\frac{$1}{$2}'); // Convert '1/2' to '\frac{1}{2}'
+        input = input.replace(/(\d+)\s+over\s+(\d+)/g, '\\frac{$1}{$2}'); // Convert '1 over 2' to LaTeX
+        input = input.replace(/\*/g, '\\times'); // Convert '*' to '\times'
+        input = input.replace(/(\w+)\s*\^(\d+)/g, '$1^{ $2 }'); // x^2 -> x^{2}
+        input = input.replace(/([A-Z][a-z]*)(\d+)/g, '$1_{ $2 }'); // H2 -> H_{2}
+        return input;
+    }
 
+    // Function to render the equation and display it in the "Rendered Equation" section
+    function renderEquation() {
+        var input = document.getElementById('input').value;
 
+        // Parse plain text to LaTeX
+        var parsedInput = parsePlainText(input);
 
+        // Create a MathJax container and render the LaTeX in the "Rendered Equation" div
+        var renderedDiv = document.getElementById('rendered');
+        renderedDiv.innerHTML = ''; // Clear previous content
+
+        var equationContainer = document.createElement('div');
+        equationContainer.innerHTML = '\\[' + parsedInput + '\\]'; // Use display math delimiters
+
+        renderedDiv.appendChild(equationContainer);
+
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub, equationContainer]);
+
+        // Clear previous MathML output
+        document.getElementById('output').textContent = '';
+
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub, equationContainer, function() {
+            var math = MathJax.Hub.getAllJax(equationContainer)[0];
+            if (math) {
+                var mml = math.root.toMathML("");
+                document.getElementById('output').textContent = mml;
+
+                // Insert the MathML into the active field (if any)
+                if (activeField) {
+                    activeField.value = mml;
+                }
+            } else {
+                document.getElementById('output').textContent = "No valid MathJax found.";
+            }
+        }]);
+    }
+
+    // Function to track which field is active
+    document.querySelectorAll('textarea').forEach(function(field) {
+        field.addEventListener('focus', function() {
+            activeField = field; // Set the active field when it's focused
+        });
+    });
+
+    // Function to copy MathML to clipboard
+    function copyMathML() {
+        var mathml = document.getElementById('output').textContent;
+        navigator.clipboard.writeText(mathml).then(function() {
+            alert("MathML copied to clipboard!");
+        }, function(err) {
+            console.error('Failed to copy MathML: ', err);
+        });
+    }
+
+    // Function to insert symbols into the active field
+    function insertSymbol(symbol) {
+        if (activeField) {
+            activeField.value += symbol; // Append the symbol to the active field
+            activeField.focus(); // Keep the focus on the active field
+        }
+    }
+
+    $(document).ready(function() {
+        var formsetContainer = $('#formset-container');
+        var formsetTemplate = $('#formset-template');
+
+        $('#add-more').click(function() {
+            var clonedForm = formsetTemplate.clone();
+            clonedForm.removeAttr('id').removeAttr('style');
+            formsetContainer.append(clonedForm);
+
+            // Re-apply focus listener to the new form fields
+            clonedForm.find('textarea').each(function() {
+                $(this).on('focus', function() {
+                    activeField = this; // Track the new active field
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

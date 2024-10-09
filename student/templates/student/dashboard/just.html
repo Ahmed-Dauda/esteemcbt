@@ -1,11 +1,194 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% load crispy_forms_tags %}
 
-    <title>Document</title>
-</head>
-<body>
+{% block title %}Teacher Add Questions{% endblock %}
+
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        },
+        "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+</script>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+    }
+    .editor-container {
+        position: fixed;
+        top: 70px; /* Adjust the top distance as needed */
+        right: 20px; /* Adjust the right distance as needed */
+        width: 30%;
+        margin-left: 20px; /* Add space between editor and form */
+    }
+    textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        height: 80px;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+    }
+    button {
+        padding: 10px 20px;
+        font-size: 16px;
+        margin-top: 10px;
+        border-radius: 5px;
+    }
+    pre {
+        padding: 15px;
+        background-color: #f4f4f4;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-top: 10px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        height: 150px;
+        overflow-y: scroll;
+    }
+    #rendered {
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-top: 10px;
+        background-color: #f9f9f9;
+    }
+    .questions-container {
+        width: 70%;
+        height: 900px; /* Set a fixed height for scrolling */
+        overflow-y: auto; /* Enable vertical scrolling */
+    }
+</style>
+
+<div class="container">
+ 
+    <div class="card shadow mb-4 editor-container">
+        <h2 class="mb-4">Math Equation Editor</h2>
+        <div class="card-body">
+            <textarea id="input" rows="10" placeholder="Enter plain text here...">1/2 * 3 + H2O</textarea>
+            <br>
+            <button class="btn btn-success" onclick="renderEquation()">Render Equation</button>
+            <h4 class="mt-4">Rendered Equation:</h4>
+            <div id="rendered"></div>
+            <h4 class="mt-4">MathML Output:</h4>
+            <pre id="output"></pre>
+            <button class="btn btn-info" onclick="copyMathML()">Copy MathML</button>
+        </div>
+    </div>
     
-</body>
-</html>
+    <div class="questions-container">
+        <h2 class="mb-4">Add Question</h2>
+        <!-- {% for subject in subjects_taught %}
+        <p><strong>Subject and school taught:</strong> {{ subject }}</p>
+        {% endfor %}
+        <br> -->
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div id="formset-container">
+                {{ formset|crispy }}
+                <div id="formset-template" style="display: none;">
+                    {{ formset.empty_form|crispy }}
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-secondary mt-3" id="add-more">Add More</button>
+            <button type="submit" class="btn btn-primary mt-3">Submit</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Variable to keep track of the active input field
+    var activeField = null;
+
+    // Function to parse plain text to LaTeX
+    function parsePlainText(input) {
+        input = input.replace(/(\d+)\s*\/\s*(\d+)/g, '\\frac{$1}{$2}'); // Convert '1/2' to '\frac{1}{2}'
+        input = input.replace(/(\d+)\s+over\s+(\d+)/g, '\\frac{$1}{$2}'); // Convert '1 over 2' to LaTeX
+        input = input.replace(/\*/g, '\\times'); // Convert '*' to '\times'
+        input = input.replace(/(\w+)\s*\^(\d+)/g, '$1^{ $2 }'); // x^2 -> x^{2}
+        input = input.replace(/([A-Z][a-z]*)(\d+)/g, '$1_{ $2 }'); // H2 -> H_{2}
+        return input;
+    }
+
+    // Function to render the equation and insert it into the active field
+   // Function to render the equation and display it in the "Rendered Equation" section
+   function renderEquation() {
+        var input = document.getElementById('input').value;
+
+        // Parse plain text to LaTeX
+        var parsedInput = parsePlainText(input);
+
+        // Create a MathJax container and render the LaTeX in the "Rendered Equation" div
+        var renderedDiv = document.getElementById('rendered');
+        renderedDiv.innerHTML = ''; // Clear previous content
+
+        var equationContainer = document.createElement('div');
+        equationContainer.innerHTML = '\\[' + parsedInput + '\\]'; // Use display math delimiters
+
+        renderedDiv.appendChild(equationContainer);
+
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub, equationContainer]);
+
+        // Clear previous MathML output
+        document.getElementById('output').textContent = '';
+
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub, equationContainer, function() {
+            var math = MathJax.Hub.getAllJax(equationContainer)[0];
+            if (math) {
+                var mml = math.root.toMathML("");
+                document.getElementById('output').textContent = mml;
+
+                // Insert the MathML into the active field (if any)
+                if (activeField) {
+                    activeField.value = mml;
+                }
+            } else {
+                document.getElementById('output').textContent = "No valid MathJax found.";
+            }
+        }]);
+    }
+
+    // Function to track which field is active
+    document.querySelectorAll('textarea').forEach(function(field) {
+        field.addEventListener('focus', function() {
+            activeField = field; // Set the active field when it's focused
+        });
+    });
+
+    // Function to copy MathML to clipboard
+    function copyMathML() {
+        var mathml = document.getElementById('output').textContent;
+        navigator.clipboard.writeText(mathml).then(function() {
+            alert("MathML copied to clipboard!");
+        }, function(err) {
+            console.error('Failed to copy MathML: ', err);
+        });
+    }
+
+    $(document).ready(function() {
+        var formsetContainer = $('#formset-container');
+        var formsetTemplate = $('#formset-template');
+
+        $('#add-more').click(function() {
+            var clonedForm = formsetTemplate.clone();
+            clonedForm.removeAttr('id').removeAttr('style');
+            formsetContainer.append(clonedForm);
+
+            // Re-apply focus listener to the new form fields
+            clonedForm.find('textarea').each(function() {
+                $(this).on('focus', function() {
+                    activeField = this; // Track the new active field
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

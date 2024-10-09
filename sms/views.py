@@ -74,7 +74,7 @@ import logging
 from student.models import ReferrerMentor
 from student.forms import ReferrerMentorUpdateForm
 # views.py
-from django.shortcuts import render, get_object_or_404
+
 
 
 
@@ -105,6 +105,8 @@ class Categorieslistview(LoginRequiredMixin, ListView):
         context['user'] = NewUser.objects.get_queryset().order_by('id')
         
         return context
+    
+
 
 # dashboard view
 class Category(LoginRequiredMixin, ListView):
@@ -134,77 +136,34 @@ class Table(LoginRequiredMixin, ListView):
     
 
 
-# class Paymentdesc(LoginRequiredMixin, HitCountDetailView, DetailView):
-#     model = Courses
-#     template_name = 'sms/dashboard/paymentdesc.html'
-#     count_hit = True
-#     queryset = Categories.objects.all()
-#     def get_queryset(self):
-#         return Courses.objects.all()
    
-#     def get_context_data(self, **kwargs):
-
-#         context = super().get_context_data(**kwargs)
-#         course = get_object_or_404(Courses, pk=self.kwargs["pk"])
-     
-#         context['coursess'] = Courses.objects.all().order_by('created')[:10] 
-#         context['courses_count'] = Courses.objects.filter(categories__pk=self.object.id).count()
-#         # context['payment_course'] = Courses.objects.filter(payment__reference = payment__reference, request.user.profile=request.user.profile)
-#         context['category_sta'] = Categories.objects.annotate(num_course=Count('categories'))
-#         course = Courses.objects.get(pk=self.kwargs["pk"])
-
-#         context['course'] = course
-#         num_students = 'course.student.count()'
-#         context['num_students'] = num_students
-
-#         prerequisites = course.prerequisites.all()
-#         context['prerequisites'] = prerequisites
-#         context['related_courses'] = Courses.objects.filter(categories=course.categories).exclude(id=self.object.id)
-       
-#         context['topics'] = Topics.objects.get_queryset().filter(courses_id=course).order_by('id')
-#         user = self.request.user
-       
-#         # Query the Payment model to get all payments related to the user and course
-#         related_payments = Payment.objects.filter(email=user, courses=course, amount = course.price)
-#         context['related_payments'] = related_payments
-#         context['paystack_public_key']  = settings.PAYSTACK_PUBLIC_KEY
-#         # Get the number of student enrollments for this user and course
-#         enrollment_count = related_payments.count()
-#         # Print or use the enrollment_count as needed
-#         context['enrollment_count'] = enrollment_count + 100
-#         print(enrollment_count)
-        
-        
-#         return context
-    
-
-# class PaymentSucess(LoginRequiredMixin, HitCountDetailView, DetailView):
-#     model = Courses
-#     template_name = 'sms/dashboard/paymentsuccess.html'
-#     count_hit = True
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-
-#         # Fetch the course and related informations
-#         course = get_object_or_404(Courses, pk=self.kwargs["pk"])
-#         context['course'] = course
-       
-
-#         return context
-
-# views.py
 @method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
 class AwardView(ListView):
     model = Awards
     template_name = 'sms/dashboard/awards.html'
     context_object_name = 'awards_list'
+    paginate_by = 10  # Number of awards per page
+
+    def get_queryset(self):
+        return Awards.objects.only('title', 'img_about_us', 'content')  # Only fetch necessary fields
+    
+# # views.py
+# @method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
+# class AwardView(ListView):
+#     model = Awards
+#     template_name = 'sms/dashboard/awards.html'
+#     context_object_name = 'awards_list'
+
 
 @method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
 class AboutUsView(ListView):
     model = AboutUs
     template_name = 'sms/dashboard/about_us.html'
     context_object_name = 'about_us_list'
+
+    def get_queryset(self):
+        return AboutUs.objects.only('title', 'img_about_us', 'content')  # Only fetch necessary fields
+    
 
 # class AboutUsView(ListView):
 #     model = AboutUs
@@ -218,16 +177,20 @@ class ManagementView(ListView):
     template_name = 'sms/dashboard/managements.html'
     success_message = 'TestModel successfully updated!'
     count_hit = True
-   
+
     def get_queryset(self):
-        # return  Courses.objects.all().select_related('categories').distinct()
-         return Management.objects.all().order_by('id') 
+        return Management.objects.only('title','desc','img_ebook')  # Only fetch necessary fields
     
-    def get_context_data(self, **kwargs): 
-        context = super(ManagementView, self).get_context_data(**kwargs)
-        context['alert_homes'] = self.get_queryset()
+   
+    # def get_queryset(self):
+    #     # return  Courses.objects.all().select_related('categories').distinct()
+    #      return Management.objects.all().order_by('id') 
+    
+    # def get_context_data(self, **kwargs): 
+    #     context = super(ManagementView, self).get_context_data(**kwargs)
+    #     context['alert_homes'] = self.get_queryset()
         
-        return context
+    #     return context
     
 
 @method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
@@ -236,16 +199,20 @@ class DirectorsView(ListView):
     template_name = 'sms/dashboard/directors.html'
     success_message = 'TestModel successfully updated!'
     count_hit = True
-   
+
     def get_queryset(self):
-        # return  Courses.objects.all().select_related('categories').distinct()
-         return Directors.objects.all().order_by('id') 
+        return Directors.objects.only('title','desc','img_ebook')  # Only fetch necessary fields
     
-    def get_context_data(self, **kwargs): 
-        context = super(DirectorsView, self).get_context_data(**kwargs)
-        context['alert_homes']  = self.get_queryset()
+   
+    # def get_queryset(self):
+    #     # return  Courses.objects.all().select_related('categories').distinct()
+    #      return Directors.objects.all().order_by('id') 
+    
+    # def get_context_data(self, **kwargs): 
+    #     context = super(DirectorsView, self).get_context_data(**kwargs)
+    #     context['alert_homes']  = self.get_queryset()
         
-        return context
+    #     return context
     
 
 @method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
@@ -254,16 +221,20 @@ class PDFGalleryView(ListView):
     template_name = 'sms/dashboard/pdf_gallery.html'
     success_message = 'TestModel successfully updated!'
     count_hit = True
-   
+
     def get_queryset(self):
-        # return  Courses.objects.all().select_related('categories').distinct()
-         return PDFGallery.objects.all() 
+        return PDFGallery.objects.only('title','desc','img_ebook', 'pdf_url')  # Only fetch necessary fields
     
-    def get_context_data(self, **kwargs): 
-        context = super(PDFGalleryView, self).get_context_data(**kwargs)
-        context['alert_homes']  = PDFGallery.objects.order_by('-created')
+   
+    # def get_queryset(self):
+    #     # return  Courses.objects.all().select_related('categories').distinct()
+    #      return PDFGallery.objects.all() 
+    
+    # def get_context_data(self, **kwargs): 
+    #     context = super(PDFGalleryView, self).get_context_data(**kwargs)
+    #     context['alert_homes']  = PDFGallery.objects.order_by('-created')
         
-        return context
+    #     return context
 
 
 @method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
@@ -273,11 +244,15 @@ class DigitalForm(ListView):
     success_message = 'TestModel successfully updated!'
     count_hit = True
    
+    # def get_queryset(self):
+    #     return PDFDocument.objects.all()
     def get_queryset(self):
-        return PDFDocument.objects.all() 
+        return PDFGallery.objects.only('title','desc','img_ebook','pdf_url')  # Only fetch necessary fields
+    
     
     def get_context_data(self, **kwargs): 
         context = super().get_context_data(**kwargs)
+        # context['alert_homes'] = PDFDocument.objects.order_by('-created')
         context['alert_homes'] = PDFDocument.objects.order_by('-created')
         
         # Cache-Control headers for PDF documents
@@ -288,132 +263,6 @@ class DigitalForm(ListView):
         
         return context
     
-# class DigitalForm(ListView):
-#     models = PDFDocument
-#     template_name = 'sms/dashboard/digital_form.html'
-#     success_message = 'TestModel successfully updated!'
-#     count_hit = True
-   
-#     def get_queryset(self):
-#         # return  Courses.objects.all().select_related('categories').distinct()
-#          return PDFDocument.objects.all() 
-    
-#     def get_context_data(self, **kwargs): 
-#         context = super(DigitalForm, self).get_context_data(**kwargs)
-#         context['alert_homes']  = PDFDocument.objects.order_by('-created')
-        
-#         return context
-
-
-
-# class Homepage1(ListView):
-#     models = Courses
-#     template_name = 'sms/dashboard/homepage1.html'
-#     success_message = 'TestModel successfully updated!'
-#     count_hit = True
-   
-#     def get_queryset(self):
-       
-#         # return  Courses.objects.all().select_related('categories').distinct()
-#          return Courses.objects.annotate(topic_count=Count('topics')) 
-    
-#     def get_context_data(self, **kwargs): 
-#         context = super(Homepage1, self).get_context_data(**kwargs)
-        
-#         context['students'] = NewUser.objects.all().count() + 1000
-#         context['category'] = Categories.objects.count()
-#         context['coursecategory'] = Categories.objects.all()
-#         context['courses'] = Courses.objects.all().count()
-#         context['gallery'] = Gallery.objects.all()
-#         # latest_blogs = Blog.objects.all().order_by('-created')[:3]
-#         context['blogs'] =Blog.objects.all().order_by('-created')[:3]
-#         context['blogs_count'] =Blog.objects.all().count() 
-#         context['faqs'] = FrequentlyAskQuestions.objects.all()
-#         context['partners'] = Partners.objects.all()
-#         context['coursess'] = Courses.objects.all().order_by('created')[:10] 
-#         context['category_sta'] = Categories.objects.annotate(num_courses=Count('categories'))
-#         # course = Courses.objects.get(pk=self.kwargs["pk"])
-#         # context['topics_count'] = Topics.objects.get_queryset().filter(courses_id= course).order_by('id').count()
-
-#         context['beginner'] = Courses.objects.filter(categories__name = "BEGINNER")
-#         context['beginner_count'] = Courses.objects.filter(categories__name = "BEGINNER").count()
-#         beginner_courses = Courses.objects.filter(categories__name="BEGINNER")
-#         for course in beginner_courses:
-#             course.beginner_topic_count = Topics.objects.filter(courses=course).count()
-#         context['beginner'] = beginner_courses[:4]
-
-     
-#         context['intermediate'] = Courses.objects.filter(categories__name = "INTERMEDIATE")
-#         context['intermediate_count'] = Courses.objects.filter(categories__name = "INTERMEDIATE").count()
-#         intermediate_courses = Courses.objects.filter(categories__name="INTERMEDIATE")
-#         for course in intermediate_courses:
-#             course.intermediate_topic_count = Topics.objects.filter(courses=course).count()
-#         context['intermediate'] = intermediate_courses[:4]
-
-
-#         context['advanced'] = Courses.objects.filter(categories__name = "ADVANCED")
-#         context['advanced_count'] = Courses.objects.filter(categories__name = "ADVANCED").count()
-#         advanced_courses = Courses.objects.filter(categories__name="ADVANCED")
-#         for course in advanced_courses:
-#             course.advanced_topic_count = Topics.objects.filter(courses=course).count()
-#         context['advanced'] = advanced_courses[:4]
-
-#         context['Free_courses'] = Courses.objects.filter(status_type = 'Free')
-#         context['Free_courses_count'] = Courses.objects.filter(status_type = 'Free').count()
-#         Free_courses_courses = Courses.objects.filter(status_type = 'Free')
-#         for course in Free_courses_courses:
-#             course.Free_courses_topic_count = Topics.objects.filter(courses=course).count()
-#         context['Free_courses'] = Free_courses_courses
-
-#         context['latest_course'] =   Courses.objects.all().order_by('-created')[:4] 
-#         context['latest_course_count'] =   Courses.objects.all().order_by('-created')[:4].count()
-#         latest_course_courses =  Courses.objects.all().order_by('-created')[:4]
-#         for course in latest_course_courses:
-#             course.latest_course_topic_count = Topics.objects.filter(courses=course).count()
-#         context['latest_course'] = latest_course_courses
-
-#         context['popular_course'] =   Courses.objects.all().order_by('-hit_count_generic__hits')[:4] 
-#         popular_course_courses =  Courses.objects.all().order_by('-hit_count_generic__hits')[:4]
-#         for course in popular_course_courses:
-#             course.popular_course_topic_count = Topics.objects.filter(courses=course).count()
-#         context['popular_course'] = popular_course_courses
-    
-   
-#         context['alert_homes']  = PDFDocument.objects.order_by('-created')[:4] 
-#         context['alerts']  = PDFDocument.objects.order_by('-created')
-#         context['alert_count_homes'] = PDFDocument.objects.order_by('-created')[:4].count() 
-#         context['alert_count'] = PDFDocument.objects.all().count()
-        
-#         context['user'] = NewUser.objects.get_queryset().order_by('id')
-#         context['users']  = self.request.user
-#         messages.success(self.request, 'You have successfully logged in.')
-
-#         # user_newuser = get_object_or_404(NewUser, email=self.request.user)
-#         # if user_newuser.school:
-#         #     context['school_name'] = user_newuser.school.school_name
-#         # if self.request.user.is_authenticated:
-#         #     user_newuser = get_object_or_404(NewUser, email=self.request.user)
-#         #     # rest of your code
-#         # else:
-#         #     pass
-#         #     # handle the case when the user is not authenticated
-#         if self.request.user.is_authenticated:
-#             user_newuser = get_object_or_404(NewUser, email=self.request.user.email)
-#             if user_newuser.school:
-#                 # context['school_name'] = user_newuser.school.school_name
-#                 context['customer'] = user_newuser.school.customer
-#                 print('customer',user_newuser.school.customer)
-
-#             # Rest of your code goes here
-#         else:
-#             # Handle the case when the user is not authenticated
-#             pass
-#         # advert
-#         context['advertisement_images']  = self.request.user= AdvertisementImage.objects.all()
-#         context['paystack_public_key']  = settings.PAYSTACK_PUBLIC_KEY
-        
-#         return context
-
 
 
 @method_decorator(cache_page(60 * 40), name='dispatch')  # Cache for 15 minutes
@@ -445,354 +294,6 @@ class Homepage(ListView):
         return context
     
 
-# class Homepage(ListView):
-#     models = Courses
-#     template_name = 'sms/dashboard/homepage1.html'
-#     success_message = 'TestModel successfully updated!'
-#     count_hit = True
-   
-#     def get_queryset(self):
-       
-#         # return  Courses.objects.all().select_related('categories').distinct()
-#          return Courses.objects.annotate(topic_count=Count('topics')) 
-    
-#     def get_context_data(self, **kwargs): 
-#         context = super(Homepage, self).get_context_data(**kwargs)
-
-#         # Add CarouselImage queryset to the context
-#         context['carousel_images'] = CarouselImage.objects.all()
-#         context['front_page_videos'] = FrontPageVideo.objects.all()
-#         context['faqs'] = FrequentlyAskQuestions.objects.all()
-#         context['alerts']  = PDFDocument.objects.order_by('-created')
-#         context['alert_count_homes'] = PDFDocument.objects.order_by('-created')[:4].count() 
-#         context['alert_count'] = PDFDocument.objects.all().count()
-#         context['advertisement_images']  = self.request.user= AdvertisementImage.objects.all()
-        
-
-#         return context
-
-
-
-
-
-# class Homepage2(SuccessMessageMixin, LoginRequiredMixin,ListView):
-
-#     template_name = 'sms/dashboard/homepage2.html'
-#     success_message = "%(username)s was created successfully"
-#     count_hit = True
-    
-#     def get_queryset(self):
-       
-#         return  Courses.objects.all().select_related('categories').distinct()
-    
-#     def get_context_data(self, **kwargs): 
-#         context = super(Homepage2, self).get_context_data(**kwargs)
-        
-#         context['students'] = NewUser.objects.all().count() + 100
-        
-#         context['category'] = Categories.objects.count()
-#         context['coursecategory'] = Categories.objects.all()
-#         context['courses'] = Courses.objects.all().count()
-#         context['gallery'] = Gallery.objects.all()
-#         context['blogs'] =Blog.objects.all().order_by('created')[:3]
-#         context['blogs_count'] =Blog.objects.all().count() 
-#         context['user_message'] = self.request.user
-#         context['coursess'] = Courses.objects.all().order_by('created')[:10]
-        
-#         context['beginner'] = Courses.objects.filter(categories__name = "BEGINNER")
-#         context['beginner_count'] = Courses.objects.filter(categories__name = "BEGINNER").count()
-
-#         context['intermediate'] = Courses.objects.filter(categories__name = "INTERMEDIATE")
-#         context['intermediate_count'] = Courses.objects.filter(categories__name = "INTERMEDIATE").count()
-
-#         context['advanced'] = Courses.objects.filter(categories__name = "ADVANCED")
-#         context['advanced_count'] = Courses.objects.filter(categories__name = "ADVANCED").count()
-
-#         context['Free_courses'] = Courses.objects.filter(status_type = 'Free')
-#         context['Free_courses_count'] = Courses.objects.filter(status_type = 'Free').count()
-
-      
-#         context['latest_course'] =   Courses.objects.all().order_by('-created')[:8] 
-#         context['latest_course_count'] =   Courses.objects.all().order_by('-created')[:8].count()
-#         context['popular_course'] =   Courses.objects.all().order_by('-hit_count_generic__hits')[:3] 
-    
-
-#         context['alerts'] = Alert.objects.order_by('-created')
-#         context['alert_count'] = Alert.objects.all().count()
-#         context['user'] = NewUser.objects.get_queryset().order_by('id')
-        
-#         return context
-    
-
-# class PhotoGallery(ListView):
-#     models = Categories
-#     template_name = 'sms/dashboard/homepage1.html'
-#     success_message = 'TestModel successfully updated!'
-#     count_hit = True
-   
-#     def get_queryset(self):
-#         return Categories.objects.all()
-    
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         # context['c1'] = Courses.objects.filter(categories__pk = 1)
-#         context['students'] = NewUser.objects.all().count()
-#         context['category'] = Categories.objects.count()
-#         context['courses'] = Courses.objects.all().count()
-       
-#         context['coursess'] = Courses.objects.all()
-#         context['alerts'] = Alert.objects.order_by('-created')
-#         context['alert_count'] = Alert.objects.all().count()
-#         context['user'] = NewUser.objects.get_queryset().order_by('id')
-        
-#         return context
-
-
-
-
-# def logout_view(request):
-#     logout(request)
-#     return redirect('/')
-    
-# class Courseslistview(LoginRequiredMixin, HitCountDetailView, DetailView):
-#     models = Categories
-#     template_name = 'sms/dashboard/courseslistview.html'
-#     count_hit = True
-#     queryset = Categories.objects.all()
-#     def get_queryset(self):
-#         return Categories.objects.all()
-   
-#     def get_context_data(self, **kwargs):
-
-#         context = super().get_context_data(**kwargs)
-#         context['courses'] = Courses.objects.filter(categories__pk = self.object.id)
-#         context['courses_count'] = Courses.objects.filter(categories__pk = self.object.id).count()
-
-#         return context
-
-
-# class Bloglistview(ListView):
-
-#     models = Blog
-#     template_name = 'sms/dashboard/bloglistview.html'
-#     success_message = 'TestModel successfully updated!'
-#     count_hit = True
-#     queryset = Blog.objects.order_by('-created')
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         context['blogs_count'] =Blog.objects.all().count() 
-#         return context
-
-# # admin result view
-
-# class Admin_result(LoginRequiredMixin, ListView):
-#     models = QMODEL.Course
-#     template_name = 'sms/dashboard/admin_result.html'
-#     success_message = 'TestModel successfully updated!'
-#     count_hit = True
-   
-#     def get_queryset(self):
-#         return QMODEL.Course.objects.all()
-
-# from student.models import Certificate
-
-
-# def verify_cert(request):
-#     certificate = get_object_or_404(Certificate, user=request.user)
-#     # Perform any additional verification logic here
-
-#     context = {
-#         'certificate': certificate,
-#     }
-#     return render(request, 'student/verify_certificate.html', context)
-
-# def verify_certificate(request, certificate_code):
-#     certificate = get_object_or_404(Certificate, code=certificate_code, user=request.user)
-#     # Perform any additional verification logic here
-
-#     context = {
-#         'certificate': certificate,
-#     }
-#     return render(request, 'student/verify_certificate.html', context)
-
-# @login_required
-# def Certificates(request,pk):
-#     course=QMODEL.Course.objects.get(id=pk)
-#     courses = QMODEL.Course.objects.all()
-#     cert_note = QMODEL.Certificate_note.objects.all()
-
-#     certificate = get_object_or_404(Certificate, code=pk, user=request.user)
-
-#     student = Profile.objects.get(user_id=request.user.id)
-#     # student = request.user.id  
-#     # m = QMODEL.Result.objects.aggregate(Max('marks'))  
-#     max_q = Result.objects.filter(student_id = OuterRef('student_id'),exam_id = OuterRef('exam_id'),).order_by('-marks').values('id')
-#     results = Result.objects.filter(exam=course, student = student).order_by('-date')[:1]
-#     Result.objects.filter(id__in = Subquery(max_q[1:]), exam=course)
-   
-#     context = {
-#         'results':results,
-#         'course':course,
-#         'st':request.user,
-#         'user_profile':student,
-#         'courses':courses,
-#         'cert_note':cert_note,
-   
-#         # 'message': message,
-#     }
-
-    
-#     return render(request,"sms/dashboard/certificates.html", context)
-
-# from quiz.models import School
-
-# class Certdetaillistview(HitCountDetailView, LoginRequiredMixin,DetailView):
-#     model = QMODEL.Course
-#     template_name = 'sms/dashboard/certificates.html'
-#     success_message = 'TestModel successfully updated!'
-#     count_hit = True
-    
-#     def get_queryset(self):
-#         return QMODEL.Course.objects.all()
-
-#     def get_context_data(self,*args , **kwargs ):
-#         context = super().get_context_data(**kwargs)
-#         zcourse = get_object_or_404(QMODEL.Course, pk=self.kwargs['pk'])
-#         # course=QMODEL.Course.objects.get(id=pk)
-        
-#         courses = QMODEL.Course.objects.all()
-#         cert_note = QMODEL.Certificate_note.objects.all()
-
-#         try:
-#             student = Profile.objects.get(user_id=self.request.user.id) 
-#         except Profile.DoesNotExist:
-#             return HttpResponseRedirect("account_login")
-      
-#         max_q = Result.objects.filter(student_id = OuterRef('student_id'),exam_id = OuterRef('exam_id'),).order_by('-marks').values('id')
-#         results = Result.objects.filter(exam=zcourse, student = student).order_by('-date')[:1]
-#         Result.objects.filter(id__in = Subquery(max_q[1:]), exam=zcourse)
-
-#         try:
-#             user_profile =  Profile.objects.filter(user_id = self.request.user)
-#             print("checking payment user", user_profile)
-#         except Profile.DoesNotExist:
-#             return HttpResponseRedirect("account_login")
-        
-#         # context['certificate'] = get_object_or_404(Certificate, code=self.kwargs['pk'], user=self.request.user)
-#         context['results'] = results
-#         context['course'] = zcourse
-#         context['st'] = self.request.user
-#         context['user_profile'] = user_profile
-#         context['courses'] = courses
-#         context['cert_note'] = cert_note
-        
-#         # user = self.request.user.profile
-#         # maincourses = Courses.objects.get(pk=self.kwargs["pk"])
-
-#         course = QMODEL.Course.objects.get(pk=self.kwargs["pk"])
-#         context['qcourse'] = course
-
-#         user = self.request.user.email
-#         # content_type
-#         # Query the Payment model to get all payments related to the user and course
-#         # user_newuser = get_object_or_404(NewUser, email=self.request.user)
-#         # if user_newuser.school:
-#         #     context['school_name'] = user_newuser.school.school_name
-           
-#         if self.request.user.is_authenticated:
-#             user_newuser = get_object_or_404(NewUser, email=self.request.user.email)
-#             if user_newuser.school:
-#                 # context['school_name'] = user_newuser.school.school_name
-#                 context['course_pay'] = user_newuser.school.course_pay
-#                 print('tttt',user_newuser.school.course_pay)
-
-#             # Rest of your code goes here
-#         else:
-#             # Handle the case when the user is not authenticated
-#             pass
-#         related_payments = CertificatePayment.objects.filter(
-#             email=user, courses=course,
-#             amount=course.course_name.cert_price)
-
-#         course_payments = Payment.objects.filter(email=user, amount=course.course_name.price)
-
-#         context['course_payments'] = course_payments
-#         context['related_payments'] = related_payments
-
-#         context['paystack_public_key']  = settings.PAYSTACK_PUBLIC_KEY
-
-#         return context
-
-
-# class Certdetaillistview(HitCountDetailView, LoginRequiredMixin,DetailView):
-#     model = QMODEL.Course
-#     template_name = 'sms/dashboard/certificates.html'
-#     success_message = 'TestModel successfully updated!'
-#     count_hit = True
-     
-#     def get_queryset(self):
-#         return QMODEL.Course.objects.all()
-
-#     def get_context_data(self,*args , **kwargs ):
-#         context = super().get_context_data(**kwargs)
-#         zcourse = get_object_or_404(QMODEL.Course, pk=self.kwargs['pk'])
-#         print('tessss', zcourse)
-        
-#         courses = Courses.objects.all()
-#         cert_note = QMODEL.Certificate_note.objects.all()
-        
-#         try:
-#             student = Profile.objects.get(user_id=self.request.user.id) 
-#         except Profile.DoesNotExist:
-#             return HttpResponseRedirect("account_login")
-      
-#         max_q = Result.objects.filter(student_id = OuterRef('student_id'),exam_id = OuterRef('exam_id'),).order_by('-marks').values('id')
-#         results = Result.objects.filter(exam=zcourse.course_name.id, student = student).order_by('-date')[:1]
-#         Result.objects.filter(id__in = Subquery(max_q[1:]), exam=zcourse.course_name.id)
-
-#         try:
-#             user_profile =  Profile.objects.filter(user_id = self.request.user)
-#             print("checking payment user", user_profile)
-#         except Profile.DoesNotExist:
-#             return HttpResponseRedirect("account_login")
-        
-#         # context['certificate'] = get_object_or_404(Certificate, code=self.kwargs['pk'], user=self.request.user)
-#         context['results'] = results
-#         context['course'] = zcourse
-#         context['st'] = self.request.user
-#         context['user_profile'] = user_profile
-#         context['courses'] = courses
-#         context['cert_note'] = cert_note
-        
-#         # user = self.request.user.profile
-#         # maincourses = Courses.objects.get(pk=self.kwargs["pk"])
-
-#         course = QMODEL.Course.objects.get(pk=self.kwargs["pk"])
-#         print("course price:", course.course_name.cert_price)
-#         # print("course id:", course.course_name.id)
-#         print("course:", course)
-
-
-#         user = self.request.user.email
-         
-#         # Query the Payment model to get all payments related to the user and course
-#         related_payments = CertificatePayment.objects.filter(
-#             email=user, content_type =course,
-#             amount=course.course_name.cert_price)
-#         # related_payments = CertificatePayment.objects.filter(
-#         #     email=user, content_type =coursew.course_name,
-#         #     amount=coursew.course_name.cert_price)
-
-#         context['related_payments'] = related_payments
-
-    
-       
-#         context['paystack_public_key']  = settings.PAYSTACK_PUBLIC_KEY
-
-        
-
-#         return context
 
 from student.models import DocPayment
 
@@ -815,7 +316,7 @@ class pdfpaymentconfirmation(HitCountDetailView, LoginRequiredMixin, DetailView)
         user = self.request.user.profile
         # Query the Payment model to get all payments related to the user and course
         related_payments = DocPayment.objects.filter(payment_user=user, pdfdocument = document)
-        print(related_payments)
+        # print(related_payments)
         context['related_payments'] = related_payments
         context['refs'] = related_payments.values_list('ref', flat=True)
         
@@ -917,10 +418,8 @@ class Clubs(HitCountDetailView,LoginRequiredMixin,DetailView):
     def get_context_data(self,*args , **kwargs ):
         context = super().get_context_data(**kwargs)
         document = get_object_or_404(Clubs, pk=self.kwargs['pk'])
-        
         course = Clubs.objects.get(pk=self.kwargs["pk"])
         context['document'] = document
-      
         user = self.request.user
         related_payments = EbooksPayment.objects.filter(email=user, content_type=course, amount=course.price)
         # related_payments = Payment.objects.filter(email=user, courses__title=object.title, amount=object.price)
@@ -1394,199 +893,3 @@ class Ebooks(HitCountDetailView,DetailView):
 
 #end
 
-# class UserProfilelistview(LoginRequiredMixin, ListView):
-#     models = Profile
-#     template_name = 'sms/dashboard/myprofile.html'
-#     count_hit = True
-   
-#     def get_queryset(self):
-#         return Profile.objects.all()
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         user_pro = self.request.user
-#         context['user_profile'] = Profile.objects.filter(user = self.request.user)
-#         course=QMODEL.Course.objects.all()
-#         context['courses']=QMODEL.Course.objects.all()
-#         # course= get_object_or_404(QMODEL.Course, pk = kwargs['pk'])
-#         student = Profile.objects.filter(user_id=self.request.user.id)
-#         context['results']= QMODEL.Result.objects.order_by('-marks')
-
-#         #referrer account
-#         referrer_mentor = ReferrerMentor.objects.get(referrer=self.request.user)
-
-#         referred_students_count = referrer_mentor.referred_students_count
-#         f_code_count = referrer_mentor.f_code_count
-#         total_amount = referrer_mentor.total_amount
-
-#         return context
-# # end
-
-
-
-# class Commentlistview(ListView):
-#     models = Comment
-#     template_name = 'sms/commentlistview.html'
-
-#     def get_queryset(self):
-#         return Comment.objects.all()
-    
-        
-#     def get_context_data(self, **kwargs):
-
-#         context = super().get_context_data(**kwargs)
-#         context['comments'] = Comment.objects.all() 
-#         context['user_comment'] = self.request.user
-#         context['comment_count'] = Comment.objects.all().count() 
-#         return context
-
-# class Commentlistviewsuccess( ListView):
-#     models = Comment
-#     template_name = 'sms/commentlistviewsuccess.html'
-    
-#     def get_queryset(self):
-#         return Comment.objects.all()
-   
-        
-# class Feedbackformview(LoginRequiredMixin,CreateView):
-    
-#     form_class = feedbackform
-#     template_name =  'sms/feedbackformview.html'
-#     success_url = reverse_lazy('sms:feedbackformview')
-   
-
-
-# class UserProfileForm(LoginRequiredMixin, CreateView):
-#     models = Profile
-#     fields = '__all__'
-#     template_name = 'sms/userprofileform.html'
-#     success_message = 'TestModel successfully updated!'
-#     count_hit = True
-
-#     def get_queryset(self):
-#         return Profile.objects.all()
-
-# class UserProfileUpdateForm(LoginRequiredMixin, UpdateView):
-#     models = Profile
-#     fields = ['first_name', 'last_name', 'gender', 'phone_number', 'countries', 'pro_img', 'bio']
-#     template_name = 'sms/userprofileupdateform.html'
-#     success_message = 'TestModel successfully updated!'
-#     success_url= reverse_lazy('sms:myprofile')
-#     count_hit = True
-
-#     def get_queryset(self):
-#         return Profile.objects.all()
-
-
-# @login_required
-# def Admin_detail_view(request,pk):
-#     course=QMODEL.Course.objects.get(id=pk)
-#     student = Profile.objects.get(user_id=request.user.id)
-
-#     # m = QMODEL.Result.objects.aggregate(Max('marks'))   
-#     # max_q = QMODEL.Result.objects.filter(student_id = OuterRef('student_id'), exam_id = OuterRef('exam_id') ,).order_by('-marks').values('id')
-#     max_q = Result.objects.filter(student_id = OuterRef('student_id'),exam_id = OuterRef('exam_id'),).order_by('-marks').values('id')
-#     results = Result.objects.filter(id = Subquery(max_q[:1]), exam=course).order_by('-marks')
-#     Result.objects.filter(id__in = Subquery(max_q[1:]), exam=course, marks = 1).delete() 
-    
- 
-#     context = { 
-#         'results':results,
-#         'course':course,
-#         'st':request.user,
-     
-#     }
-#     return render(request,'sms/dashboard/admin_details.html', context)
-
-
-    
-
-    
-# class BlogcommentCreateView( CreateView):
-#     model = Blogcomment
-#     form_class= BlogcommentForm
-#     template_name = 'sms/blogcomment.html'
-#     # fields = ['id','post' ,'author','content']
-#     def get_success_url(self):
-#         return reverse_lazy('sms:blogdetaillistview', kwargs= {'slug':self.kwargs['slug']})
-    
-#     # def form_valid(self, form):
-#     #     form.instance.author_id=self.request.user.id
-#     #     return super().form_valid(form)
-    
-#     def form_valid(self, form):
-#         # form.instance.author_id=self.request.user.id
-#         form.instance.post = Blog.objects.get(slug=self.kwargs["slug"])
-        
-#         return super().form_valid(form)
-    
-    
-    # success_url = reverse_lazy("sms:bloglistview")
-    # def get_context_data(self,**kwargs):
-        
-    #     context = super().get_context_data(**kwargs)
-        # com= comment.comments.all()
-        # comments_connected = Blogcomment.objects.all().order_by('-created')
-        # comments_connected = Blogcomment.objects.all().order_by('-created')
-        
-        # context['blogs'] =Blog.objects.all() 
-        # context['blogs_count'] =Blog.objects.all().count() 
-        # context['comments'] = com
-       
-        # return context
-# arbitrary view
-
-# class Baseblogview(HitCountDetailView,DetailView):
-#     models = Blog
-#     template_name = 'sms/baseblog.html'
-#     success_message = 'TestModel successfully updated!'
-#     count_hit = True
-
-#     def get_queryset(self):
-#         return Blog.objects.order_by('-created')
-
-#     def get_context_data(self, **kwargs):
-
-#         context = super().get_context_data(**kwargs)
-#         context['blogs'] =Blog.objects.order_by('-created')
-#         context['blogs_count'] =Blog.objects.all().count() 
-       
-#         return context
-
-# # alert view
-# class AlertView(ListView):
-#     models = Alert
-#     template_name = 'sms/dashboard/base.html'
- 
-#     def get_queryset(self):
-#         return Alert.objects.order_by('-created')
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         context['alerts'] = Alert.objects.order_by('-created')
-#         context['alert_count'] = Alert.objects.all().count()
-#         context['base'] = Alert.objects.all().count()
-#         context['completed'] = "Alert.objects.all()"
-        
-
-#         # Assuming Courses is a model in your application
-       
-#         return context
-
-# class DashboardCourses(LoginRequiredMixin, HitCountDetailView, DetailView):
-#     model = Courses
-#     template_name = 'sms/dashboard/based.html'
-   
-#     def get_queryset(self):
-#         return Courses.objects.all()
-   
-#     def get_context_data(self, **kwargs):
-
-#         context = super().get_context_data(**kwargs)
-#         course = self.get_object()  # Retrieve the course
-        
-#         context['coursess'] = Courses.objects.all().order_by('created')
-   
-     
-#         return context
-    
