@@ -65,6 +65,7 @@ class CourseGrade(models.Model):
         # Return the class name (JSS1, JSS2, SS1, etc.) instead of subjects
         return self.name if self.name else 'Unnamed Class'
 
+
 # class CourseGrade(models.Model):
 #     schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='coursegrade', blank=True, null=True)
 #     name = models.CharField(max_length=200, blank=True, null=True)
