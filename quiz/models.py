@@ -55,6 +55,7 @@ class CourseGrade(models.Model):
     students = models.ManyToManyField(NewUser, related_name='course_grades', blank=True)
     subjects = models.ManyToManyField(Courses, related_name='course_grade', blank=True)
     is_active = models.BooleanField(default=True)  # Add the checkbox field
+    id = models.AutoField(primary_key=True)
     
     class Meta:
         verbose_name = 'Student class'

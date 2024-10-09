@@ -538,8 +538,14 @@ PAYSTACK_PUBLIC_KEY = 'pk_test_72337ad2f9419ff6eb3204519bb884067c075ed8'
 # COMMIT;  
 
 
-
 # step 4
+# begin;
+# set transaction read write;
+# ALTER TABLE "public"."teacher_teacher_subjects_taught" RENAME COLUMN course_id TO courses_id;
+# COMMIT; 
+
+
+# step 5
 # python manage.py migrate #in the heroku shell
 
 CACHES = {
