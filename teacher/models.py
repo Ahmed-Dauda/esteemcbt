@@ -76,7 +76,7 @@ class Teacher(models.Model):
                         self.subjects_taught.add(new_course)
                 super().save(*args, **kwargs)  # Save the object again after adding the new course
             else:
-                raise e  # Raise the error if it's not related to a foreign key constraint
+                raise e  # Raise the erro if it's not related to a foreign key constraint
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
