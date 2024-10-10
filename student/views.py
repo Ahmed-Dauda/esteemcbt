@@ -81,7 +81,7 @@ def ordinal(n):
         suffix = suffixes.get(n % 10, 'th')
     return f"{n}{suffix}"
 
-@login_required
+@login_required(login_url='teacher:teacher_login')
 def report_card_list(request):
     # Get the currently logged-in student's profile
     student = request.user.profile  # Assuming a OneToOne relationship with Profile

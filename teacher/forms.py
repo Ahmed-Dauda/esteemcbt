@@ -393,7 +393,8 @@ class TeacherSignupForm(UserCreationForm):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email']
         if commit:
-            user.save()
+            user.save()  # Save user first
+            self.save_teacher(user)  # Save the teacher details
         return user
 
     def save_teacher(self, user):
@@ -403,28 +404,25 @@ class TeacherSignupForm(UserCreationForm):
         username = user.username
         school = self.cleaned_data.get('school', None)
 
-        subjects_taught = self.cleaned_data.get('subjects_taught', [])
-        classes_taught = self.cleaned_data.get('classes_taught', [])
-
-        # Create the Teacher object first without setting the many-to-many fields
-        teacher, created = Teacher.objects.update_or_create(
+        # Create the Teacher object
+        teacher = Teacher(
             user=user,
-            defaults={
-                'first_name': first_name,
-                'last_name': last_name,
-                'email': email,
-                'username': username,
-                'school': school,
-            }
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            username=username,
+            school=school,
         )
+
+        # Save the teacher object to ensure it has an ID
+        teacher.save()  # Save the teacher first
 
         # Handle subjects_taught and dynamically create missing courses
         valid_subjects = []
-        for subject in subjects_taught:
-            # Get or create the course
+        for subject in self.cleaned_data.get('subjects_taught', []):
             course, created = Courses.objects.get_or_create(
                 id=subject.id,
-                defaults={'title': f"Auto-created Course {subject.id}"}  # Adjust as necessary
+                defaults={'title': f"Auto-created Course {subject.id}"}
             )
             valid_subjects.append(course)
 
@@ -432,10 +430,10 @@ class TeacherSignupForm(UserCreationForm):
         teacher.subjects_taught.set(valid_subjects)
 
         # Handle classes_taught (direct many-to-many assignment)
-        teacher.classes_taught.set(classes_taught)
+        teacher.classes_taught.set(self.cleaned_data.get('classes_taught', []))
 
         return teacher
-
+    
 
     
 # class TeacherSignupForm(UserCreationForm):
