@@ -407,7 +407,7 @@ class TeacherSignupForm(UserCreationForm):
         classes_taught = self.cleaned_data.get('classes_taught', [])
 
         # Create the Teacher object first without setting the many-to-many fields
-        teacher, created = Teacher.objects.get_or_create(
+        teacher, created = Teacher.objects.update_or_create(
             user=user,
             defaults={
                 'first_name': first_name,
@@ -421,9 +421,10 @@ class TeacherSignupForm(UserCreationForm):
         # Handle subjects_taught and dynamically create missing courses
         valid_subjects = []
         for subject in subjects_taught:
+            # Get or create the course
             course, created = Courses.objects.get_or_create(
                 id=subject.id,
-                defaults={'title': f"Auto-created Course {subject.id}"}
+                defaults={'title': f"Auto-created Course {subject.id}"}  # Adjust as necessary
             )
             valid_subjects.append(course)
 
@@ -434,6 +435,7 @@ class TeacherSignupForm(UserCreationForm):
         teacher.classes_taught.set(classes_taught)
 
         return teacher
+
 
     
 # class TeacherSignupForm(UserCreationForm):
