@@ -116,14 +116,32 @@ def teacher_signup_view(request):
     if request.method == 'POST':
         form = TeacherSignupForm(request.POST, user=request.user)
         if form.is_valid():
-            user = form.save()
-            form.save_teacher(user)
+            user = form.save(commit=True)  # Save user
+            form.save_teacher(user)  # Save the teacher details
             messages.success(request, 'Signup successful!')  # Flash success message
-            return redirect('teacher:teacher_signup')  # Redirect to the same signup page
+            return redirect('teacher:teacher_signup')  # Redirect to a dashboard or other relevant page
+        else:
+            print(form.errors)  # Log form errors for debugging
     else:
         form = TeacherSignupForm(user=request.user)
-        
+
     return render(request, 'teacher/dashboard/teacher_signup.html', {'form': form})
+
+
+# @login_required(login_url='teacher:teacher_login')
+# def teacher_signup_view(request):
+#     if request.method == 'POST':
+#         form = TeacherSignupForm(request.POST, user=request.user)
+#         if form.is_valid():
+#             user = form.save()
+#             form.save_teacher(user)
+#             messages.success(request, 'Signup successful!')  # Flash success message
+#             return redirect('teacher:teacher_signup')  # Redirect to the same signup page
+#     else:
+#         form = TeacherSignupForm(user=request.user)
+        
+#     return render(request, 'teacher/dashboard/teacher_signup.html', {'form': form})
+
 
 # real codes
 # @login_required(login_url='teacher:teacher_login')

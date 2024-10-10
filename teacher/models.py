@@ -32,9 +32,13 @@ from django.core.exceptions import ValidationError
 from quiz.models import Courses  # Make sure to import your Courses model
 from django.utils.translation import gettext_lazy as _
 
+     
 class Teacher(models.Model):
+
+    # Choices for the form_teacher field (if you want specific roles)
     FORM_TEACHER_ROLES = [
-        ('form_teacher', 'Form Teacher'),
+        
+        ('form_teacher', 'form_teacher'),
         ('not_form_teacher', 'Not Form Teacher'),
     ]
 
@@ -50,72 +54,20 @@ class Teacher(models.Model):
     ai_question_num = models.PositiveIntegerField(default=10, blank=True, null=True)
     id = models.AutoField(primary_key=True)
 
+    # Updated fields
     form_teacher_remark = models.CharField(max_length=300, blank=True)
     form_teacher_role = models.CharField(
         max_length=50,
         choices=FORM_TEACHER_ROLES,
         default='not_form_teacher'
-    )
+    )  # Role of the form teacher
 
-    def save(self, *args, **kwargs):
-        try:
-            # Attempt to save the Teacher instance
-            super().save(*args, **kwargs)
-        except IntegrityError as e:
-            if 'foreign key constraint' in str(e):
-                for course in self.subjects_taught.all():
-                    if not Courses.objects.filter(id=course.id).exists():
-                        # Create a new course if it does not exist
-                        new_course = Courses.objects.create(id=course.id, course_name=f"Auto-created Course {course.id}")
-                        self.subjects_taught.add(new_course)
-                # Re-save the Teacher instance after creating the missing courses
-                super().save(*args, **kwargs)
-            else:
-                raise e  # Re-raise the exception if it's not related to foreign keys
 
     def clean(self):
         super().clean()
         if self.ai_question_num is not None and self.ai_question_num > 20:
             raise ValidationError('ai_question_num cannot exceed 20.')
+        
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
-    
-# class Teacher(models.Model):
-
-#     # Choices for the form_teacher field (if you want specific roles)
-#     FORM_TEACHER_ROLES = [
-        
-#         ('form_teacher', 'form_teacher'),
-#         ('not_form_teacher', 'Not Form Teacher'),
-#     ]
-
-#     user = models.OneToOneField(NewUser, on_delete=models.CASCADE, blank=True, null=True)
-#     email = models.EmailField(max_length=254, unique=True, blank=True)
-#     username = models.CharField(max_length=35, blank=True)
-#     first_name = models.CharField(max_length=200, blank=True)
-#     last_name = models.CharField(max_length=200, blank=True)
-#     classes_taught = models.ManyToManyField(CourseGrade, related_name='teachers', blank=True)
-#     subjects_taught = models.ManyToManyField(Courses, related_name='teachers', blank=True)
-#     school = models.ForeignKey(School, on_delete=models.SET_NULL, related_name='teachers', blank=True, null=True)
-#     learning_objectives = models.CharField(max_length=200, blank=True, default='Input your learning objectives')
-#     ai_question_num = models.PositiveIntegerField(default=10, blank=True, null=True)
-#     id = models.AutoField(primary_key=True)
-
-#     # Updated fields
-#     form_teacher_remark = models.CharField(max_length=300, blank=True)
-#     form_teacher_role = models.CharField(
-#         max_length=50,
-#         choices=FORM_TEACHER_ROLES,
-#         default='not_form_teacher'
-#     )  # Role of the form teacher
-
-
-#     def clean(self):
-#         super().clean()
-#         if self.ai_question_num is not None and self.ai_question_num > 20:
-#             raise ValidationError('ai_question_num cannot exceed 20.')
-        
-
-#     def __str__(self):
-#         return f"{self.first_name} {self.last_name}"
