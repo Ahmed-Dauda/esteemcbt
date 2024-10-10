@@ -35,36 +35,81 @@ from quiz.models import CourseGrade
 
 
 
-
 def assign_course_grade(student):
     try:
-        # Find the CourseGrade where the name matches the student_class
-        grade = CourseGrade.objects.get(name=student.student_class)
-        grade.students.add(student)
-        grade.save()
-        
-        
+        # Use filter() to get all CourseGrade objects that match the student's class
+        grades = CourseGrade.objects.filter(name=student.student_class)
+
+        if grades.exists():
+            # If there are multiple CourseGrades, choose one (e.g., the first one)
+            grade = grades.first()  # You can customize this logic based on your requirements
+            grade.students.add(student)
+            grade.save()
+        else:
+            # Handle the case where no matching CourseGrade is found
+            raise CourseGrade.DoesNotExist("No matching CourseGrade found for the student's class.")
+            
     except CourseGrade.DoesNotExist:
         # Handle the case where no matching CourseGrade is found
         pass
 
-
-
+# def assign_course_grade(student):
+#     try:
+#         # Find the CourseGrade where the name matches the student_class
+#         grade = CourseGrade.objects.get(name=student.student_class)
+#         grade.students.add(student)
+#         grade.save()
+        
+        
+#     except CourseGrade.DoesNotExist:
+#         # Handle the case where no matching CourseGrade is found
+#         pass
 
 def SchoolStudentView(request):
     if request.method == 'POST':
         form = SchoolStudentSignupForm(request.POST, request=request)
+        
         if form.is_valid():
-            student = form.save(request)  # form.save() returns the student instance
-            assign_course_grade(student)  # Assign course grade here
-            messages.success(request, 'Student registered successfully and assigned to a course grade!')
+            try:
+                student = form.save(request)  # form.save() returns the student instance
+                assign_course_grade(student)  # Assign course grade here
+                messages.success(request, 'Student registered successfully and assigned to a course grade!')
+                
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'message': 'Form submitted successfully!'})
+
+                return redirect('users:schoolstudentview')  # Redirect to the same page
+                
+            except Exception as e:
+                messages.error(request, f"Error assigning course grade: {e}")
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'error': str(e)}, status=400)
+
+        else:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'message': 'Form submitted successfully!'})
-            return redirect('users:schoolstudentview')  # Redirect to the same page
+                # Return form errors for AJAX requests
+                return JsonResponse({'errors': form.errors}, status=400)
+    
     else:
         form = SchoolStudentSignupForm(request=request)
 
     return render(request, 'users/school_student.html', {'form': form})
+
+
+# def SchoolStudentView(request):
+#     if request.method == 'POST':
+#         form = SchoolStudentSignupForm(request.POST, request=request)
+#         if form.is_valid():
+#             student = form.save(request)  # form.save() returns the student instance
+#             assign_course_grade(student)  # Assign course grade here
+#             messages.success(request, 'Student registered successfully and assigned to a course grade!')
+#             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+#                 return JsonResponse({'message': 'Form submitted successfully!'})
+#             return redirect('users:schoolstudentview')  # Redirect to the same page
+#     else:
+#         form = SchoolStudentSignupForm(request=request)
+
+#     return render(request, 'users/school_student.html', {'form': form})
 
 
 # def SchoolStudentView(request):
