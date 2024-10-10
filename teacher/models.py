@@ -49,7 +49,7 @@ class Teacher(models.Model):
     learning_objectives = models.CharField(max_length=200, blank=True, default='Input your learning objectives')
     ai_question_num = models.PositiveIntegerField(default=10, blank=True, null=True)
     id = models.AutoField(primary_key=True)
-    
+
     form_teacher_remark = models.CharField(max_length=300, blank=True)
     form_teacher_role = models.CharField(
         max_length=50,
@@ -57,30 +57,30 @@ class Teacher(models.Model):
         default='not_form_teacher'
     )
 
+    def save(self, *args, **kwargs):
+        try:
+            # Attempt to save the Teacher instance
+            super().save(*args, **kwargs)
+        except IntegrityError as e:
+            if 'foreign key constraint' in str(e):
+                for course in self.subjects_taught.all():
+                    if not Courses.objects.filter(id=course.id).exists():
+                        # Create a new course if it does not exist
+                        new_course = Courses.objects.create(id=course.id, course_name=f"Auto-created Course {course.id}")
+                        self.subjects_taught.add(new_course)
+                # Re-save the Teacher instance after creating the missing courses
+                super().save(*args, **kwargs)
+            else:
+                raise e  # Re-raise the exception if it's not related to foreign keys
+
     def clean(self):
         super().clean()
         if self.ai_question_num is not None and self.ai_question_num > 20:
-            raise ValidationError(_('ai_question_num cannot exceed 20.'))
-
-    def save(self, *args, **kwargs):
-        try:
-            super().save(*args, **kwargs)  # Attempt to save the object
-        except IntegrityError as e:
-            if 'foreign key constraint' in str(e):
-                # Catch the foreign key constraint error for subjects_taught
-                for subject in self.subjects_taught.all():
-                    if not Courses.objects.filter(id=subject.id).exists():
-                        # Create the missing course
-                        new_course = Courses.objects.create(id=subject.id, course_name=f"Auto-Generated Course {subject.id}")
-                        # Add the new course to subjects_taught
-                        self.subjects_taught.add(new_course)
-                super().save(*args, **kwargs)  # Save the object again after adding the new course
-            else:
-                raise e  # Raise the erro if it's not related to a foreign key constraint
+            raise ValidationError('ai_question_num cannot exceed 20.')
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
-
+    
 # class Teacher(models.Model):
 
 #     # Choices for the form_teacher field (if you want specific roles)
