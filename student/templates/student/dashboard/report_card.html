@@ -63,9 +63,8 @@
     <div class="container">
         <h4>REPORT SHEET FOR {{ term|upper }} TERM, {{ session|upper }} ACADEMIC SESSION</h4>
 
-        <div style="display: flex; align-items: center; gap: 120px;text-align: center;font-size: 14px;">
+        <div style="display: flex;text-align: center;font-size: 14px;margin-top: -20px;margin-left: 20px;">
             <!-- Profile Picture Section -->
-           
             <div>
                 <!-- logo images -->
                 {% if school_logo_url %}
@@ -74,27 +73,21 @@
                 <p>No logo available</p>
             {% endif %}
             
-            <!-- Display the profile picture or a placeholder if none exists -->
-            <!-- {% if profile_picture %}
-                <img src="{{ profile_picture }}" alt="Profile Picture" style="width: 100px; height: 100px; border-radius: 50%;">
-            {% else %}
-                <div style="width: 100px; height: 100px; display: flex; justify-content: center; align-items: center; background-color: #ccc; border-radius: 50%;">
-                    No Image
-                </div>
-            {% endif %} -->
-            </div>
-
-            <!-- School Information Section -->
-            <div>
-                <p><strong></strong> {{ student_school|upper }}</p> <!-- Display the school name -->
-                <p><strong>Motto:</strong> {{ school_motto|upper }}</p> <!-- Display the school motto -->
-                <p><strong></strong> {{ school_address }}</p> <!-- Display the school address -->
             </div>
         </div>
+       <br>
+        <!-- School Information Section -->
+        <div style="text-align: center; margin: 0 auto;margin-top: -100px;">
+            <p><strong></strong> {{ student_school|upper }}</p> <!-- Display the school name -->
+            <p><strong>Motto:</strong> {{ school_motto|upper }}</p> <!-- Display the school motto -->
+            <p><strong></strong> {{ school_address }}</p> <!-- Display the school address -->
+        </div>
+
+      
         <hr>
 
         
-        <table style="width: 100%; border-collapse: collapse; margin: 0 40px; ">
+        <table class="container" style="width: 100%; border-collapse: collapse; margin: 0 40px; ">
             <tr style="text-align: center;">
                 <!-- Student Information Section -->
                 <td style="padding: 2px; border: none; font-size: 12px; text-align: left;">
