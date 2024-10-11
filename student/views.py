@@ -108,6 +108,7 @@ def generate_report_card(request, session, term):
     # Fetch the session and term instances
     session = get_object_or_404(Session, name=session)
     term = get_object_or_404(Term, name=term)
+    
 
     results = Result.objects.filter(
         student=student,
@@ -336,12 +337,17 @@ def generate_report_card(request, session, term):
                 exam_total_marks = exam_total_marks['total_marks'] if exam_total_marks else 0
                  
                 # Calculate total marks
+                e_type = []
                 if not midterm_marks and not exam_marks:
                     total_marks = (ca_marks / ca_total_marks) * 100 if ca_total_marks > 0 else 0
+                    if total_marks:
+                        e_type = 'CA'
                 elif not exam_marks:
                     c_m = midterm_marks + ca_marks
                     t_c_m = ca_total_marks + midterm_total_marks
                     total_marks = round((c_m / t_c_m) * 100, 1) if t_c_m > 0 else 0
+                    if total_marks:
+                        e_type = 'MID TERM'
                 else:
                     # Case: All marks (CA, midterm, and exam) are present
                     # Initialize total_marks and total_weight
@@ -366,6 +372,8 @@ def generate_report_card(request, session, term):
                     # Ensure total_weight is not zero to avoid division by zero
                     if total_weight > 0:
                         total_marks = total_marks / total_weight  # Normalize by total_weight
+                        if total_marks:
+                            e_type = 'EXAM'
                     else:
                         total_marks = 0  # If all sections are zero, set total_marks to 0
 
@@ -540,6 +548,7 @@ def generate_report_card(request, session, term):
         'session': session,
         'term': term,
         'exam_types': exam_types,
+        'e_type':e_type,
         'class_average': round(class_average, 2), 
         'student_name': student_name,
         'student_gender': student_gender,
