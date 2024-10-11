@@ -314,20 +314,41 @@ def generate_report_card(request, session, term):
 
                 exam_total_marks = Course.objects.filter(course_name = subject1,schools = request.user.school,term=term, session=session, exam_type__name='EXAM').values('total_marks').first()
                 exam_total_marks = exam_total_marks['total_marks'] if exam_total_marks else 0
-                 
                 # Calculate total marks
                 if not midterm_marks and not exam_marks:
+                    # Only CA marks are available
                     total_marks = (ca_marks / ca_total_marks) * 100 if ca_total_marks > 0 else 0
                 elif not exam_marks:
+                    # Both CA and midterm marks are available, but no exam marks
                     c_m = midterm_marks + ca_marks
                     t_c_m = ca_total_marks + midterm_total_marks
                     total_marks = round((c_m / t_c_m) * 100, 1) if t_c_m > 0 else 0
                 else:
-                    total_marks = (
-                        (ca_marks / ca_total_marks) * 100 * (ca_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks)) +
-                        (midterm_marks / midterm_total_marks) * 100 * (midterm_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks)) +
-                        (exam_marks / exam_total_marks) * 100 * (exam_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks))
-                    ) if (ca_total_marks + midterm_total_marks + exam_total_marks) > 0 else 0
+                    # All CA, midterm, and exam marks are available
+                    total_weight = ca_total_marks + midterm_total_marks + exam_total_marks
+                    if total_weight > 0:
+                        total_marks = (
+                            (ca_marks / ca_total_marks * 100 * (ca_total_marks / total_weight) if ca_total_marks > 0 else 0) +
+                            (midterm_marks / midterm_total_marks * 100 * (midterm_total_marks / total_weight) if midterm_total_marks > 0 else 0) +
+                            (exam_marks / exam_total_marks * 100 * (exam_total_marks / total_weight) if exam_total_marks > 0 else 0)
+                        )
+                    else:
+                        total_marks = 0
+
+                # # Calculate total marks
+                # if not midterm_marks and not exam_marks:
+                #     total_marks = (ca_marks / ca_total_marks) * 100 if ca_total_marks > 0 else 0
+                # elif not exam_marks:
+                #     c_m = midterm_marks + ca_marks
+                #     t_c_m = ca_total_marks + midterm_total_marks
+                #     total_marks = round((c_m / t_c_m) * 100, 1) if t_c_m > 0 else 0
+                # else:
+                #     total_marks = (
+                #         (ca_marks / ca_total_marks) * 100 * (ca_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks)) +
+                #         (midterm_marks / midterm_total_marks) * 100 * (midterm_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks)) +
+                #         (exam_marks / exam_total_marks) * 100 * (exam_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks))
+                #     ) if (ca_total_marks + midterm_total_marks + exam_total_marks) > 0 else 0
+
 
                 subject_total_marks[subject1].append(total_marks)
 
