@@ -913,13 +913,13 @@ def leaderboard(request, session, term):
             ).aggregate(Sum('marks'))['marks__sum'] or 0
 
             # Calculate total marks logic here
-            ca_total_marks = Course.objects.filter(term=term_instance, session=session_instance, exam_type__name='CA').values('total_marks').first()
+            ca_total_marks = Course.objects.filter(schools = request.user.school ,course_name = subject,term=term_instance, session=session_instance, exam_type__name='CA').values('total_marks').first()
             ca_total_marks = ca_total_marks['total_marks'] if ca_total_marks else 0
             
-            midterm_total_marks = Course.objects.filter(term=term_instance, session=session_instance, exam_type__name='MIDTERM').values('total_marks').first()
+            midterm_total_marks = Course.objects.filter(schools = request.user.school ,course_name = subject,term=term_instance, session=session_instance, exam_type__name='MIDTERM').values('total_marks').first()
             midterm_total_marks = midterm_total_marks['total_marks'] if midterm_total_marks else 0
             
-            exam_total_marks = Course.objects.filter(term=term_instance, session=session_instance, exam_type__name='EXAM').values('total_marks').first()
+            exam_total_marks = Course.objects.filter(schools = request.user.school ,course_name = subject,term=term_instance, session=session_instance, exam_type__name='EXAM').values('total_marks').first()
             exam_total_marks = exam_total_marks['total_marks'] if exam_total_marks else 0
 
             if not midterm_marks and not exam_marks:
@@ -1191,7 +1191,8 @@ def badge_details_view(request, session, term):
             term=term_instance,
             session=session_instance,
             exam_type__name='MIDTERM'
-        ).values('total_marks').first()
+            ).values('total_marks').first()
+
         midterm_total_marks = midterm_total_marks['total_marks'] if midterm_total_marks else 0
 
         exam_total_marks = Course.objects.filter(
