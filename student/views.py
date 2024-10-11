@@ -213,15 +213,22 @@ def generate_report_card(request, session, term):
         else:
             # All marks are present: CA, midterm, and exam
             total_marks = ca_total_marks + midterm_total_marks + exam_total_marks
-           
-            if total_marks > 0:  # Check if the total marks are greater than zero
+            if total_marks > 0 and ca_total_marks > 0 and midterm_total_marks > 0 and exam_total_marks > 0:
+                # Calculate total marks using weighted averages
                 total_marks = (
-                    (ca_marks / ca_total_marks) * 100 * (ca_total_marks / total_marks) +
-                    (midterm_marks / midterm_total_marks) * 100 * (midterm_total_marks / total_marks) +
-                    (exam_marks / exam_total_marks) * 100 * (exam_total_marks / total_marks)
+                    (ca_marks / ca_total_marks) * 100 * (ca_total_marks / total_marks) + (midterm_marks / midterm_total_marks) * 100 * (midterm_total_marks / total_marks) + (exam_marks / exam_total_marks) * 100 * (exam_total_marks / total_marks)
                 )
             else:
-                total_marks = 0  # Set to 0 or handle as needed if all total marks are zero
+                # If any total marks are zero, set total_marks to 0 to avoid division by zero
+                total_marks = 0
+
+           
+            # if total_marks > 0:  # Check if the total marks are greater than zero
+            #     total_marks = (
+            #         (ca_marks / ca_total_marks) * 100 * (ca_total_marks / total_marks) + (midterm_marks / midterm_total_marks) * 100 * (midterm_total_marks / total_marks) + (exam_marks / exam_total_marks) * 100 * (exam_total_marks / total_marks)
+            #     )
+            # else:
+            #     total_marks = 0  # Set to 0 or handle as needed if all total marks are zero
 
         total_marks_obtained += total_marks
         # print(total_marks_obtained, 'tmo')
