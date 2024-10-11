@@ -1,6 +1,6 @@
 {% extends 'sms/dashboard/studentbase.html' %}
 
-{% block title %} Student Dashboard {% endblock %}
+{% block title %} Badge Awarded {% endblock %}
 
 {% block content %}
 
@@ -22,6 +22,7 @@
                                 </div>
                                 
                                 <h5 class="card-title">{{ badge.badge_type }}</h5>
+                                <P>Exam Type: {{exam_types}}</P>
                                 <p class="card-text badge-description text-muted">{{ badge.description }}</p>
                             </div>
                             <div class="card-footer bg-transparent text-center">

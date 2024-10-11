@@ -1204,10 +1204,12 @@ def badge_details_view(request, session, term):
             exam_type__name='EXAM'
         ).values('total_marks').first()
         exam_total_marks = exam_total_marks['total_marks'] if exam_total_marks else 0
-
+        exam_types = []
         if not midterm_marks and not exam_marks:
             if ca_total_marks > 0:
                 total_marks = (ca_marks / ca_total_marks) * 100
+                if total_marks:
+                    exam_types = 'CA'
             else:
                 total_marks = 0
 
@@ -1217,20 +1219,51 @@ def badge_details_view(request, session, term):
             
             if t_c_m > 0:
                 total_marks = round((c_m / t_c_m) * 100, 1)
+                if total_marks:
+                    exam_types = 'MID TERM'
             else:
                 total_marks = 0
 
         else:
-            total_marks = ca_total_marks + midterm_total_marks + exam_total_marks
-            
-            if total_marks > 0:
-                total_marks = (
-                    (ca_marks / ca_total_marks) * 100 * (ca_total_marks / total_marks) +
-                    (midterm_marks / midterm_total_marks) * 100 * (midterm_total_marks / total_marks) +
-                    (exam_marks / exam_total_marks) * 100 * (exam_total_marks / total_marks)
-                )
+            # Initialize total_marks and total_weight
+            total_marks = 0
+            total_weight = 0
+
+            # Add CA marks if ca_total_marks > 0
+            if ca_total_marks > 0:
+                total_marks += (ca_marks / ca_total_marks) * 100 * ca_total_marks
+                total_weight += ca_total_marks
+
+            # Add midterm marks if midterm_total_marks > 0
+            if midterm_total_marks > 0:
+                total_marks += (midterm_marks / midterm_total_marks) * 100 * midterm_total_marks
+                total_weight += midterm_total_marks
+
+            # Add exam marks if exam_total_marks > 0
+            if exam_total_marks > 0:
+                total_marks += (exam_marks / exam_total_marks) * 100 * exam_total_marks
+                total_weight += exam_total_marks
+
+            # Ensure total_weight is not zero to avoid division by zero
+            if total_weight > 0:
+                total_marks = total_marks / total_weight  # Normalize by total_weight
+                if total_marks:
+                    exam_types = 'EXAM'
             else:
-                total_marks = 0
+                total_marks = 0  # If all sections are zero, set total_marks to 0
+
+            # total_marks = ca_total_marks + midterm_total_marks + exam_total_marks
+            
+            # if total_marks > 0:
+            #     total_marks = (
+            #         (ca_marks / ca_total_marks) * 100 * (ca_total_marks / total_marks) +
+            #         (midterm_marks / midterm_total_marks) * 100 * (midterm_total_marks / total_marks) +
+            #         (exam_marks / exam_total_marks) * 100 * (exam_total_marks / total_marks)
+            #     )
+            #     if total_marks:
+            #         exam_types = 'EXAM'
+            # else:
+            #     total_marks = 0
 
         subject_statistics[subject] = {
             'CA': ca_marks,
@@ -1249,12 +1282,15 @@ def badge_details_view(request, session, term):
     if final_grade == 'A':
         badge_type = 'Gold'
         description = 'Awarded for scoring an A'
+        exam_types = exam_types
     elif final_grade == 'B':
         badge_type = 'Silver'
         description = 'Awarded for scoring a B'
+        exam_types = exam_types
     elif final_grade == 'C':
         badge_type = 'Bronze'
         description = 'Awarded for scoring a C'
+        exam_types = exam_types
     else:
         badge_type = None
         description = 'No badge awarded'
@@ -1279,6 +1315,7 @@ def badge_details_view(request, session, term):
         'term': term,
         'final_grade': final_grade,
         'description': description,
+        'exam_types':exam_types,
     }
 
     return render(request, 'student/dashboard/badge_detail.html', context)
@@ -1363,34 +1400,70 @@ def badge_pdf_view(request, session, term):
             term=term_instance, 
             session=session_instance, 
             exam_type__name='CA'
-        ).values('total_marks').first()
+             ).values('total_marks').first()
         ca_total_marks = ca_total_marks['total_marks'] if ca_total_marks else 0
         
         midterm_total_marks = Course.objects.filter(
             term=term_instance, 
             session=session_instance, 
             exam_type__name='MIDTERM'
-        ).values('total_marks').first()
+            ).values('total_marks').first()
         midterm_total_marks = midterm_total_marks['total_marks'] if midterm_total_marks else 0
 
         exam_total_marks = Course.objects.filter(
             term=term_instance, 
             session=session_instance, 
             exam_type__name='EXAM'
-        ).values('total_marks').first()
+            ).values('total_marks').first()
 
         exam_total_marks = exam_total_marks['total_marks'] if exam_total_marks else 0
 
+        exam_types = []
         if not midterm_marks and not exam_marks:
             total_marks = (ca_marks / ca_total_marks) * 100 if ca_total_marks > 0 else 0
+            if total_marks:
+                exam_types = 'CA'
         elif not exam_marks:
             total_marks = ((midterm_marks + ca_marks) / (ca_total_marks + midterm_total_marks)) * 100 if (ca_total_marks + midterm_total_marks) > 0 else 0
+            if total_marks:
+                exam_types = 'MID TERM'
         else:
-            total_marks = (
-                (ca_marks / ca_total_marks) * 100 * (ca_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks)) +
-                (midterm_marks / midterm_total_marks) * 100 * (midterm_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks)) +
-                (exam_marks / exam_total_marks) * 100 * (exam_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks))
-            ) if (ca_total_marks + midterm_total_marks + exam_total_marks) > 0 else 0
+            # total_marks = (
+            #     (ca_marks / ca_total_marks) * 100 * (ca_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks)) +
+            #     (midterm_marks / midterm_total_marks) * 100 * (midterm_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks)) +
+            #     (exam_marks / exam_total_marks) * 100 * (exam_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks))
+            
+            # )  if (ca_total_marks + midterm_total_marks + exam_total_marks) > 0 else 0
+            # Case: All marks (CA, midterm, and exam) are present
+            # Initialize total_marks and total_weight
+            total_marks = 0
+            total_weight = 0
+
+            # Add CA marks if ca_total_marks > 0
+            if ca_total_marks > 0:
+                total_marks += (ca_marks / ca_total_marks) * 100 * ca_total_marks
+                total_weight += ca_total_marks
+
+            # Add midterm marks if midterm_total_marks > 0
+            if midterm_total_marks > 0:
+                total_marks += (midterm_marks / midterm_total_marks) * 100 * midterm_total_marks
+                total_weight += midterm_total_marks
+
+            # Add exam marks if exam_total_marks > 0
+            if exam_total_marks > 0:
+                total_marks += (exam_marks / exam_total_marks) * 100 * exam_total_marks
+                total_weight += exam_total_marks
+
+            # Ensure total_weight is not zero to avoid division by zero
+            if total_weight > 0:
+                total_marks = total_marks / total_weight  # Normalize by total_weight
+                if total_marks:
+                    exam_types = 'Exam'
+            else:
+                total_marks = 0  # If all sections are zero, set total_marks to 0
+
+
+           
 
         subject_statistics[subject] = {
             'CA': ca_marks,
@@ -1409,10 +1482,13 @@ def badge_pdf_view(request, session, term):
     badge_type, description = None, None
     if final_grade == 'A':
         badge_type, description = 'Gold', 'Award for achieving a final grade of A'
+        exam_types = exam_types
     elif final_grade == 'B':
         badge_type, description = 'Silver', 'Award for achieving a final grade of B'
+        exam_types = exam_types
     elif final_grade == 'C':
         badge_type, description = 'Bronze', 'Award for achieving a final grade of C'
+        exam_types = exam_types
     
     # Fetch existing badges (if applicable, based on your logic)
     badges = Badge.objects.filter(student=student, session=session_instance, term=term_instance)
@@ -1451,6 +1527,7 @@ def badge_pdf_view(request, session, term):
         'final_grade': final_grade,
         'badge_type': badge_type,
         'description': description,
+        'exam_types':exam_types,
     }
 
     # Render the PDF
