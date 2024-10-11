@@ -183,8 +183,6 @@
         </li>
             
 
-            
-
             {% else %}
 
             
@@ -236,12 +234,12 @@
                     <span>Add Questions</span>
                 </a>
             </li>
-            <li class="nav-item" style="margin-bottom: -10px;">
+            <!-- <li class="nav-item" style="margin-bottom: -10px;">
                 <a class="nav-link" href="{% url 'teacher:teacher_login' %}">
                     <i class="fas fa-fw fa-sign-in-alt"></i> 
                     <span>Teacher Login</span>
                 </a>
-            </li>
+            </li> -->
         
             {% endif %}
         
@@ -283,14 +281,6 @@
                     </form>
                     
 
-                    <!-- <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages" aria-expanded="true" aria-controls="collapsePages">
-                        <i class="fas fa-fw fa-folder"></i>
-                        
-                        <span style="font-size: 12; padding-right: 20px;">All Courses</span>
-
-                    </a>
-                     -->
-
                     <!-- Topbar Navbar -->
                     <ul class="navbar-nav ml-auto" >
 
@@ -313,43 +303,6 @@
                                 </form>
                             </div>
                         </li>
-
-                        <!-- Nav Item - Alerts -->
-                        <!-- <li class="nav-item dropdown no-arrow mx-1"><h4><a class="nav-link dropdown-toggle" href="{% url 'account_login' %}">Log In</a></h4></li> -->
-                        <!-- <li style="" class=" nav-item dropdown no-arrow mx-2">
-                           
-                            <a class=" d-flex nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <p style="font-weight: bold;color: blue; font-size: 18px; margin: 5px;">Shop</p>
-                           
-                            <i class="fas fa-cart-shopping fa-fw " style="color:black;font-size: 18px;"></i>   
-                                <span class="badge badge-danger badge-counter">{{alert_count}}+</span>
-                            </a>
-
-                            <div style="overflow-y: scroll; height:400px;" class="dropdown-list dropdown-menu dropdown-menu-right card-bod shadow animated--grow-in" aria-labelledby="alertsDropdown">
-                                <h6 class="dropdown-header">
-                                   Shop Digital Products
-                                </h6>
-                             
-
-                                    <div>
-                                        {% for alert in alerts %}
-                                     
-                                    <div style="padding-left: 10px;" class="card-bod">
-                                       <span  class="small text-gray-500">{{alert.created}}</span>
-                                       <h6 style = 'color:black; font-weight: bold'> {{alert.title|safe}} </h6> <hr>
-                                       <p> {{alert.content}} </p>
-                                       <button><a href="{% url 'sms:ebooks' alert.id %}">{{ alert.title }}</a></button>
-                                        </div>
-
-                                     <hr>
-                                        {% endfor %}
-                                    </div>
-                        
-                             
-                                <a class="dropdown-item text-center small text-gray-500" href="#">Show All Alerts</a>
-                            </div>
-                        </li> -->
-
 
                         <!-- Nav Item - User Information -->
                         <li class="nav-item dropdown no-arrow" >

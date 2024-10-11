@@ -501,7 +501,27 @@ def delete_coursegrade_view(request, pk):
 from .forms import CourseSelectionForm
 from django.db.models import Q
 
+from django.shortcuts import redirect
+from django.contrib.auth.decorators import login_required
+from .models import Teacher
+from django.contrib import messages
+
+def teacher_required(function=None, redirect_url='student-dashboard'):
+    @login_required(login_url='teacher:teacher_login')
+    def wrapper(request, *args, **kwargs):
+        try:
+            # Check if the logged-in user is a teacher
+            Teacher.objects.get(user=request.user)
+            return function(request, *args, **kwargs)
+        except Teacher.DoesNotExist:
+            # If not a teacher, redirect to the student dashboard
+            messages.error(request, "You do not have permission to view this page.")
+            return redirect(redirect_url)
+    return wrapper
+
+
 @login_required(login_url='teacher:teacher_login')
+@teacher_required
 def examiner_start_exam(request):
     user = NewUser.objects.select_related('school').get(id=request.user.id)
     user_school = user.school
@@ -520,8 +540,7 @@ def examiner_start_exam(request):
 
 from teacher.forms import SubjectsCreateForm
 
-
-@login_required(login_url='teacher:teacher_login')
+@teacher_required
 def create_examiner_exam(request):
     # Get the current user's school
     user = NewUser.objects.select_related('school').get(id=request.user.id)
@@ -831,7 +850,7 @@ def add_course_view(request):
 
 
 from .forms import ResultForm  
-
+  
 @login_required(login_url='teacher:teacher_login')
 def edit_result_view(request, result_id):
     user = NewUser.objects.select_related('school').get(id=request.user.id)

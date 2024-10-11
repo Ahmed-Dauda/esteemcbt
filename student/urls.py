@@ -7,8 +7,8 @@ from django.urls import re_path
 app_name = 'student'
 
 urlpatterns = [
-     path('exams-conducted-statistics/', views.exams_conducted_statistics_view, name='exams_conducted_statistics'),
-     path('download-statistics/', views.download_statistics_view, name='download_statistics'),
+    path('exams-conducted-statistics/', views.exams_conducted_statistics_view, name='exams_conducted_statistics'),
+    path('download-statistics/', views.download_statistics_view, name='download_statistics'),
     path('badge-list/', views.badge_list_view, name='badge_list_view'),
     path('badge-details/<str:session>/<str:term>/',  views.badge_details_view, name='badge_details_view'),
     path('badge-pdf/<str:session>/<str:term>/', views.badge_pdf_view, name='badge_pdf_view'),
@@ -18,11 +18,9 @@ urlpatterns = [
     path('leaderboard-list/', views.leaderboard_list, name='leaderboard_list'),
     
     path('report-card/<str:session>/<str:term>/', views.generate_report_card, name='generate_report_card'),
-
-    # path('report-card/<str:session>/<str:term>/', views.generate_report_card, name='generate_report_card'),
-
-    # path('report-card/<str:session>/<str:term>/', views.generate_report_card, name='generate_report_card'),
     path('report-cards/', views.report_card_list, name='report_card_list'), 
+    # path('report-card/<str:session>/<str:term>/', views.generate_report_card, name='generate_report_card'),
+   
     # path('report-card/', views.generate_report_card, name='generate_report_card'),
     path('paystack/webhook/', views.paystack_webhook, name='paystack_webhook'),
     path('take-exam', views.take_exams_view,name='take-exam'),
