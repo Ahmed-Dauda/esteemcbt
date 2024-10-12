@@ -407,16 +407,21 @@ class TeacherSignupForm(UserCreationForm):
         # Save the teacher object to ensure it has an ID before assigning many-to-many fields
         teacher.save()
 
-        # Ensure that all courses being assigned to subjects_taught are matched by title
+        # Ensure that all courses being assigned to subjects_taught exist in the database
         subjects = self.cleaned_data.get('subjects_taught', [])
         valid_subjects = []
         for subject in subjects:
-            # Check if the course exists by title
-            course, created = Courses.objects.get_or_create(
-                title=subject.title,  # Use the course title to identify or create the course
-                defaults={'school': school}  # You can add additional default values if needed
-            )
-            valid_subjects.append(course)
+            # Check if the course exists
+            if not Courses.objects.filter(id=subject.id).exists():
+                # If it doesn't exist, create the course
+                course, created = Courses.objects.get_or_create(
+                    id=subject.id,
+                    defaults={'title': f"Auto-created Course {subject.id}"}
+                )
+                valid_subjects.append(course)
+            else:
+                # If it exists, just append it
+                valid_subjects.append(subject)
 
         # Assign valid subjects to the teacher (many-to-many relationship)
         teacher.subjects_taught.set(valid_subjects)
@@ -426,7 +431,6 @@ class TeacherSignupForm(UserCreationForm):
         teacher.classes_taught.set(classes)
 
         return teacher
-
 
     
 

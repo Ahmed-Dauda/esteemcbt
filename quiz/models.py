@@ -51,7 +51,7 @@ from django.core.exceptions import ValidationError
 
 class CourseGrade(models.Model):
     schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='coursegrade', blank=True, null=True)
-    name = models.CharField(max_length=200, blank=True, null=True)  # This is the class name like JSS1, JSS2, etc.
+    name = models.CharField(max_length=140, blank=True, null=True)  # This is the class name like JSS1, JSS2, etc.
     students = models.ManyToManyField(NewUser, related_name='course_grades', blank=True)
     subjects = models.ManyToManyField(Courses, related_name='course_grade', blank=True)
     is_active = models.BooleanField(default=True)  # Add the checkbox field

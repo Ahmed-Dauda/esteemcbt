@@ -470,7 +470,6 @@ PAYSTACK_PUBLIC_KEY = 'pk_test_72337ad2f9419ff6eb3204519bb884067c075ed8'
 # PAYSTACK_PUBLIC_KEY = 'pk_live_010265c77983e11a700678d34d476b1ce1c48fb1'
 
 
-
 # problem of hosting to heroku and solution
 # error: failed to push some refs to 'https://git.heroku.com/codethinkers.git'
 # git checkout -b master
@@ -508,7 +507,6 @@ PAYSTACK_PUBLIC_KEY = 'pk_test_72337ad2f9419ff6eb3204519bb884067c075ed8'
 
 #ALTER TABLE public.quiz_course DROP COLUMN course_name;
 #ALTER TABLE public.quiz_course ADD COLUMN course_name VARCHAR(50) UNIQUE;
-
 
 
 # step 1
