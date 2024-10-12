@@ -417,7 +417,7 @@ class TeacherSignupForm(UserCreationForm):
                 course_name=subject,  # Assuming 'subject' is an instance of the 'Courses' model
                 session=subject.session,
                 term=subject.term,
-                schools=subject.schools,  # Now using the foreign key directly
+                schools=subject.schools.first(),  # Get the first related school for a ForeignKey field
                 defaults={
                     'room_name': f"Auto-created Room {subject.id}",
                     'question_number': 0,  # Set default values as necessary
@@ -433,6 +433,7 @@ class TeacherSignupForm(UserCreationForm):
         teacher.classes_taught.set(classes)
 
         return teacher
+
 
     # def save_teacher(self, user):
     #     first_name = self.cleaned_data['first_name']
