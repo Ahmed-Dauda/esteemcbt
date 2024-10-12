@@ -120,6 +120,12 @@
             </div>
             <!-- Divider -->
             <hr class="sidebar-divider">
+            {% if request.user.is_authenticated and request.user.is_teacher %}
+    <a href="{% url 'teacher:manage_exam' %}">222Manage Exams</a>
+    <a href="{% url 'teacher:create_exam' %}">22222Create New Exam</a>
+    <!-- Add other teacher-specific links here -->
+{% endif %}
+
             {% if request.user.is_authenticated and request.user.is_superuser %}
             <li class="nav-item" style="margin-bottom: -10px;">
                 <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
@@ -145,36 +151,36 @@
                     <span>Manage Exams</span>
                 </a>
              </li>
-             <li class="nav-item">
+             <!-- <li class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:create_examiner_exam' %}">
                     <i class="fas fa-fw fa-book"></i>
                     <span> Create Exams </span>
                 </a>
-             </li>
+             </li> -->
              <li class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:teacher_list' %}">
                     <i class="fas fa-fw fa-book"></i>
-                    <span>Teacher List </span>
+                    <span>Manage Teacher </span>
                 </a>
              </li>
             
-            <li class="nav-item">
+            <!-- <li class="nav-item">
                 <a class="nav-link" href="{% url 'quiz:move_group' %}">
                     <i class="fas fa-fw fa-book"></i>
                     <span>promote students</span></a>
 
-            </li> 
-            <li class="nav-item">
+            </li>  -->
+            <!-- <li class="nav-item">
                     <a class="nav-link" href="{% url 'teacher:teacher_signup' %}">
                         <i class="fas fa-fw fa-book"></i>
-                        <span> teacher signup</span></a>
-            </li>
-            <li class="nav-item">
+                        <span> Teacher Signup</span></a>
+            </li> -->
+            <!-- <li class="nav-item">
                     <a class="nav-link" href="{% url 'users:schoolstudentview' %}">
                         <i class="fas fa-fw fa-book"></i>
                         <span>Registration students</span>
                     </a>
-            </li>
+            </li> -->
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:exam_list' %}">
                     <i class="fas fa-fw fa-book"></i>
@@ -234,12 +240,7 @@
                     <span>Add Questions</span>
                 </a>
             </li>
-            <!-- <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'teacher:teacher_login' %}">
-                    <i class="fas fa-fw fa-sign-in-alt"></i> 
-                    <span>Teacher Login</span>
-                </a>
-            </li> -->
+
         
             {% endif %}
         

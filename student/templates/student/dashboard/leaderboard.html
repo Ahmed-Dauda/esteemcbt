@@ -1,6 +1,6 @@
 {% extends 'sms/dashboard/studentbase.html' %}
 
-{% block title %} Student Dashboard {% endblock %}
+{% block title %} Leaderboard {% endblock %}
 
 {% block content %}
 
@@ -42,7 +42,7 @@
 <div class="container leaderboard-wrapper">
 <h4 style="text-align: center;">Leaderboard for {{ session }} - {{ term }} Term</h4>
 
-<table class="table leaderboard-table">
+<table class="table leaderboard-table" id="leaderboardTable">
     <thead>
         <tr>
             <th>Rank</th>
@@ -57,7 +57,7 @@
         <tr>
             <td>{{ entry.rank }}</td>
             <td>{{ entry.student.user.first_name }} - {{ entry.student.user.last_name }}</td>
-            <td>{{ entry.student.schools}}</td>
+            <td>{{ entry.student.schools }}</td>
             <!-- Show the total marks obtained (Sum of all subject percentages) -->
             <td>{{ entry.total_marks|floatformat:2 }}</td>
             <!-- Show the final average percentage -->
@@ -66,8 +66,22 @@
         {% endfor %}
     </tbody>
 </table>
+
 </div>
 
+
+<!-- Initialize DataTable -->
+<script>
+    $(document).ready(function() {
+        $('#leaderboardTable').DataTable({
+            "paging": true,          // Enable pagination
+            "searching": true,       // Enable search/filter
+            "ordering": true,        // Enable column ordering
+            "info": true,            // Show information about entries
+            "lengthMenu": [5, 10, 25, 50]  // Control how many entries per page
+        });
+    });
+</script>
 {% endblock %}
 
 

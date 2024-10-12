@@ -1,6 +1,6 @@
 {% extends 'sms/dashboard/teacherbase.html' %}
 
-{% block title %} Manage Exam {% endblock %}
+{% block title %} Manage Students {% endblock %}
 
 {% block content %}
 
@@ -71,6 +71,16 @@
 
 
 <div class="card shadow-sm mb-4">
+
+        <a style="padding-left: 130px;" class="nav-link" href="{% url 'quiz:move_group' %}">
+           
+            <button class="btn btn-success">promote students</button>
+        </a>
+
+        <a style="padding-left: 130px;" class="nav-link" href="{% url 'users:schoolstudentview' %}">
+            <button class="btn btn-success">Add students </button>
+        </a>
+    
     <div class=" text-center">
         <h5 class="mb-0">Examiner Dashboard</h5>
         <h6 class="mb-0">Manage students</h6>

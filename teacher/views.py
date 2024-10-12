@@ -506,10 +506,10 @@ from django.contrib.auth.decorators import login_required
 from .models import Teacher
 from django.contrib import messages
 
-def teacher_required(function=None, redirect_url='student-dashboard'):
+def teacher_required(function=None, redirect_url='teacher:student-dashboard'):
     @login_required(login_url='teacher:teacher_login')
     def wrapper(request, *args, **kwargs):
-        try:
+        try:  
             # Check if the logged-in user is a teacher
             Teacher.objects.get(user=request.user)
             return function(request, *args, **kwargs)

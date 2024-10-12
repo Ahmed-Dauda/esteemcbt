@@ -1,6 +1,6 @@
 {% extends 'sms/dashboard/teacherbase.html' %}
 
-{% block title %}Examiner Manage Exams{% endblock %}
+{% block title %} Manage Exams {% endblock %}
 
 {% block content %}
 <style>
@@ -98,10 +98,19 @@
 </style>
 
 <br>
-<h4>Available Exams for {{ user.school.school_name }}</h4>
 
+
+<h4>Available Exams for {{ user.school.school_name }}</h4>
+<div  style="margin: o auto;text-align: center;">
+
+<a class="nav-link" href="{% url 'teacher:create_examiner_exam' %}">
+    <button class="btn btn-success"> Create Exams </button>
+</a>
+</div>
 <div class="container">
+   
     <div class="course-grid">
+        
         {% if courses.exists %}
             {% for course in courses %}
                 <div class="course-item">
@@ -123,6 +132,7 @@
                     <div class="button-group">
                         <a href="{% url 'teacher:edit_examiner_exam' course.id %}" class="update-button">Update Exam</a>
                         <a href="{% url 'teacher:delete_examiner_exam' course.id %}" class="delete-button">Delete</a>
+                        
                     </div>
                 </div>
             {% endfor %}
