@@ -384,7 +384,7 @@ class TeacherSignupForm(UserCreationForm):
         if commit:
             user.save()
         return user
-
+    
     def save_teacher(self, user):
         first_name = self.cleaned_data['first_name']
         last_name = self.cleaned_data['last_name']
@@ -412,27 +412,18 @@ class TeacherSignupForm(UserCreationForm):
         valid_subjects = []
 
         for subject in subjects:
-            # Try to filter by course_name and other fields to ensure uniqueness
-            course_qs = Course.objects.filter(
+            # Use a more specific query to avoid duplicates
+            course, created = Course.objects.get_or_create(
                 course_name=subject,  # Assuming 'subject' is an instance of the 'Courses' model
                 session=subject.session,
-                term=subject.term
+                term=subject.term,
+                schools=subject.schools,  # Now using the foreign key directly
+                defaults={
+                    'room_name': f"Auto-created Room {subject.id}",
+                    'question_number': 0,  # Set default values as necessary
+                }
             )
-
-            if course_qs.exists():
-                # If multiple courses are returned, you can choose the first one or handle this differently
-                course = course_qs.first()  # Pick the first course if there are multiple
-            else:
-                # If no course exists, create a new one
-                course = Course.objects.create(
-                    course_name=subject,
-                    room_name=f"Auto-created Room {subject.id}",
-                    question_number=0,  # Set default values as necessary
-                    session=subject.session,
-                    term=subject.term,
-                )
-
-            valid_subjects.append(course.id)  # Pass the course ID, not the object itself
+            valid_subjects.append(course.id)  # Append the course ID, not the object itself
 
         # Assign valid subjects to the teacher (many-to-many relationship)
         teacher.subjects_taught.set(valid_subjects)
@@ -442,6 +433,64 @@ class TeacherSignupForm(UserCreationForm):
         teacher.classes_taught.set(classes)
 
         return teacher
+
+    # def save_teacher(self, user):
+    #     first_name = self.cleaned_data['first_name']
+    #     last_name = self.cleaned_data['last_name']
+    #     email = user.email
+    #     username = user.username
+    #     school = self.cleaned_data.get('school', None)
+
+    #     # Create or update the Teacher object
+    #     teacher, created = Teacher.objects.update_or_create(
+    #         user=user,
+    #         defaults={
+    #             'first_name': first_name,
+    #             'last_name': last_name,
+    #             'email': email,
+    #             'username': username,
+    #             'school': school,
+    #         }
+    #     )
+
+    #     # Save the teacher object to ensure it has an ID before assigning many-to-many fields
+    #     teacher.save()
+
+    #     # Ensure that all subjects being assigned to subjects_taught are present in the Courses table
+    #     subjects = self.cleaned_data.get('subjects_taught', [])
+    #     valid_subjects = []
+
+    #     for subject in subjects:
+    #         # Try to filter by course_name and other fields to ensure uniqueness
+    #         course_qs = Course.objects.filter(
+    #             course_name=subject,  # Assuming 'subject' is an instance of the 'Courses' model
+    #             session=subject.session,
+    #             term=subject.term
+    #         )
+
+    #         if course_qs.exists():
+    #             # If multiple courses are returned, you can choose the first one or handle this differently
+    #             course = course_qs.first()  # Pick the first course if there are multiple
+    #         else:
+    #             # If no course exists, create a new one
+    #             course = Course.objects.create(
+    #                 course_name=subject,
+    #                 room_name=f"Auto-created Room {subject.id}",
+    #                 question_number=0,  # Set default values as necessary
+    #                 session=subject.session,
+    #                 term=subject.term,
+    #             )
+
+    #         valid_subjects.append(course.id)  # Pass the course ID, not the object itself
+
+    #     # Assign valid subjects to the teacher (many-to-many relationship)
+    #     teacher.subjects_taught.set(valid_subjects)
+
+    #     # Handle classes_taught (many-to-many assignment)
+    #     classes = self.cleaned_data.get('classes_taught', [])
+    #     teacher.classes_taught.set(classes)
+
+    #     return teacher
 
     # def save_teacher(self, user):
     #     first_name = self.cleaned_data['first_name']

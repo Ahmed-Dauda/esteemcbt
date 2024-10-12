@@ -36,8 +36,8 @@ class Course(models.Model):
    id = models.AutoField(primary_key=True)
 
    class Meta:
-        unique_together = ('course_name', 'session', 'term')  # Ensures uniqueness
-        
+       unique_together = ('course_name', 'session', 'term', 'school')  # Ensures uniqueness
+
 
    class Meta:
         verbose_name = 'Exam'
