@@ -407,19 +407,17 @@ class TeacherSignupForm(UserCreationForm):
         # Save the teacher object to ensure it has an ID before assigning many-to-many fields
         teacher.save()
 
-        # Ensure that all courses being assigned to subjects_taught are present in the quiz_course table
+        # Ensure that all subjects being assigned to subjects_taught are present in the Courses table
         subjects = self.cleaned_data.get('subjects_taught', [])
         valid_subjects = []
 
         for subject in subjects:
-            # Check if the course exists by id
+            # Check if the course exists by id in the Course model
             course, created = Course.objects.get_or_create(
-                id=subject.id,  # Check the 'Course' model by its 'id'
+                course_name=subject,  # Assuming 'subject' is an instance of the 'Courses' model
                 defaults={
-                    # Handle foreign key field separately for course_name
-                    'course_name': subject,  # Assuming 'subject' is an instance of the 'Courses' model
                     'room_name': f"Auto-created Room {subject.id}",
-                    'question_number': 0,  # You can set default values here as needed
+                    'question_number': 0,  # Set default values as necessary
                     # Add other fields as needed
                 }
             )
