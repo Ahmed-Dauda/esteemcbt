@@ -411,28 +411,50 @@ class TeacherSignupForm(UserCreationForm):
         subjects = self.cleaned_data.get('subjects_taught', [])
         valid_subjects = []
 
-        for subject in subjects:
-            # Use a more specific query to avoid duplicates
-            course, created = Course.objects.get_or_create(
-                course_name=subject,  # Assuming 'subject' is an instance of the 'Courses' model
-                session=subject.session,
-                term=subject.term,
-                schools=subject.schools.first(),  # Get the first related school for a ForeignKey field
-                defaults={
-                    'room_name': f"Auto-created Room {subject.id}",
-                    'question_number': 0,  # Set default values as necessary
-                }
-            )
-            valid_subjects.append(course.id)  # Append the course ID, not the object itself
+        if not subjects:
+            print("No subjects were selected.")  # Debug: Check if subjects are empty
+        else:
+            for subject in subjects:
+                # Debug: Check if subject is valid and has related school
+                print(f"Processing subject: {subject}, with school: {subject.schools.first() if subject.schools else 'No School'}")
+
+                # Use a more specific query to avoid duplicates
+                course, created = Course.objects.get_or_create(
+                    course_name=subject,  # Assuming 'subject' is an instance of the 'Courses' model
+                    session=subject.session,
+                    term=subject.term,
+                    schools=subject.schools.first(),  # Get the first related school for a ForeignKey field
+                    defaults={
+                        'room_name': f"Auto-created Room {subject.id}",
+                        'question_number': 0,  # Set default values as necessary
+                    }
+                )
+
+                # Add course to valid_subjects
+                valid_subjects.append(course.id)
+                print(f"Added course with ID {course.id} to valid_subjects.")  # Debug: Check which courses are added
+
+        # Debug: Check before assigning the subjects
+        print(f"Assigning {len(valid_subjects)} valid subjects to the teacher.")
 
         # Assign valid subjects to the teacher (many-to-many relationship)
         teacher.subjects_taught.set(valid_subjects)
 
+        # Debug: Check if subjects were assigned
+        print(f"Subjects assigned: {teacher.subjects_taught.all()}")  # Debug: Verify the subjects assigned
+
         # Handle classes_taught (many-to-many assignment)
         classes = self.cleaned_data.get('classes_taught', [])
-        teacher.classes_taught.set(classes)
+        if classes:
+            teacher.classes_taught.set(classes)
+        else:
+            print("No classes were selected.")  # Debug: Check if classes are empty
+
+        # Debug: Check if classes were assigned
+        print(f"Classes assigned: {teacher.classes_taught.all()}")  # Debug: Verify classes assigned
 
         return teacher
+
 
 
     # def save_teacher(self, user):
