@@ -410,12 +410,18 @@ class TeacherSignupForm(UserCreationForm):
         # Ensure that all courses being assigned to subjects_taught are present in the quiz_course table
         subjects = self.cleaned_data.get('subjects_taught', [])
         valid_subjects = []
-        
+
         for subject in subjects:
             # Check if the course exists by id
             course, created = Course.objects.get_or_create(
-                id=subject.id,
-                defaults={'course_name__title': f"Auto-created Course {subject.id}"}
+                id=subject.id,  # Check the 'Course' model by its 'id'
+                defaults={
+                    # Handle foreign key field separately for course_name
+                    'course_name': subject,  # Assuming 'subject' is an instance of the 'Courses' model
+                    'room_name': f"Auto-created Room {subject.id}",
+                    'question_number': 0,  # You can set default values here as needed
+                    # Add other fields as needed
+                }
             )
             valid_subjects.append(course)
 
