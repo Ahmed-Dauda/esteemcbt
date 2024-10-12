@@ -404,35 +404,39 @@ class TeacherSignupForm(UserCreationForm):
         username = user.username
         school = self.cleaned_data.get('school', None)
 
-        # Create the Teacher object
-        teacher = Teacher(
-            user=user,
-            first_name=first_name,
-            last_name=last_name,
+        # Create the Teacher object without setting the many-to-many fields yet
+        teacher, created = Teacher.objects.update_or_create(
             email=email,
-            username=username,
-            school=school,
+            defaults={
+                'user': user,
+                'first_name': first_name,
+                'last_name': last_name,
+                'username': username,
+                'school': school,
+            }
         )
 
         # Save the teacher object to ensure it has an ID
-        teacher.save()  # Save the teacher first
+        teacher.save()
 
         # Handle subjects_taught and dynamically create missing courses
         valid_subjects = []
         for subject in self.cleaned_data.get('subjects_taught', []):
+            # Ensure the course exists before assigning it to the teacher
             course, created = Courses.objects.get_or_create(
                 id=subject.id,
-                defaults={'title': f"Auto-created Course {subject.id}"}
+                defaults={'title': f"Auto-created Course {subject.id}"}  # Adjust as necessary
             )
             valid_subjects.append(course)
 
         # Assign the valid subjects to the teacher (many-to-many)
         teacher.subjects_taught.set(valid_subjects)
 
-        # Handle classes_taught (direct many-to-many assignment)
+        # Handle classes_taught (many-to-many assignment)
         teacher.classes_taught.set(self.cleaned_data.get('classes_taught', []))
 
         return teacher
+
     
 # class TeacherSignupForm(UserCreationForm):
 #     first_name = forms.CharField(max_length=200, label='First Name')
