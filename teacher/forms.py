@@ -415,7 +415,7 @@ class TeacherSignupForm(UserCreationForm):
             # Check if the course exists by id
             course, created = Course.objects.get_or_create(
                 id=subject.id,
-                defaults={'course_name': f"Auto-created Course {subject.id}"}
+                defaults={'course_name__title': f"Auto-created Course {subject.id}"}
             )
             valid_subjects.append(course)
 
