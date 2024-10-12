@@ -412,18 +412,17 @@ class TeacherSignupForm(UserCreationForm):
         valid_subjects = []
 
         for subject in subjects:
-            # Use a more specific query to avoid duplicates
+            # Check if the course exists by id in the Course model
             course, created = Course.objects.get_or_create(
                 course_name=subject,  # Assuming 'subject' is an instance of the 'Courses' model
-                room_name=f"Auto-created Room {subject.id}",
-                session=subject.session,  # Ensure uniqueness with session, term, etc.
-                term=subject.term,
                 defaults={
+                    'room_name': f"Auto-created Room {subject.id}",
                     'question_number': 0,  # Set default values as necessary
-                    # Add other fields as needed
+                    'session': subject.session,
+                    'term': subject.term,
                 }
             )
-            valid_subjects.append(course)
+            valid_subjects.append(course.id)  # Pass the course ID, not the object itself
 
         # Assign valid subjects to the teacher (many-to-many relationship)
         teacher.subjects_taught.set(valid_subjects)
