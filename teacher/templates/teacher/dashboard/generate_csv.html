@@ -7,7 +7,6 @@
 
     <a href="https://drive.google.com/file/d/1sMre2xCkmERW2qSUaektFnh8nSNlW-pA/view?usp=sharing" target="_blank">Questions Sample CSV</a>
 
-
     <div class="row">
         <div class="col-12">
             <h2>Sample of Prompt</h2>
@@ -27,80 +26,76 @@
                     <h5>{{ subject }}</h5>
                     <a href="{% url 'teacher:update_teacher_settings' %}">Edit question number and learning objectives</a>
               
-                    <pre style="width: 80%;"  class="text-left" id="sample{{ forloop.counter }}">
-                     
+                    <pre style="width: 80%;" class="text-left" id="sample{{ forloop.counter }}">
                         <code>
                             {% if 'MATH' in subject|upper or 'MATHEMATICS' in subject|upper or 'MATHS' in subject|upper %}
                             <p>
                                 Give me <strong>{{ ai_question_num }}</strong> MCQs and answers on these objectives:
                                 <strong>{{ learning_objectives }}</strong>.
-                                Questions and answers should be formatted as valid JSON in MathML exactly as <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-                                    <mfrac>
-                                      <mn>1</mn>
-                                      <mn>2</mn>
-                                    </mfrac>
-                                  </math>  following the structure below.
+                                Questions and options should be formatted as MathML's tag structure with http://www.w3.org/1998/Math/MathML as shown below:
                             </p>
-                                <!-- Display MathML statement for Math-related courses -->
+                                <!-- Math-related question and options in MathML format -->    
                                 [
                                 {
                                     "course": "{{ subject }}",
                                     "marks": "1",
-                                    "question": "Sample Math question in MathML... ?",
+                                    "question": "Evaluate: <math xmlns='http://www.w3.org/1998/Math/MathML'><mfrac><mn>3</mn><mn>5</mn></mfrac></math>",
                                     "img_quiz": "",
-                                    "option1": "Option A",
-                                    "option2": "Option B",
-                                    "option3": "Option C",
-                                    "option4": "Option D",
-                                    "answer": "C"
-                                }
-                                ]
-                            {% elif 'CHEM' in subject|upper or 'CHEMISTRY' in subject|upper %}
-                            <p>
-                                Give me <strong>{{ ai_question_num }}</strong> MCQs and answers on these objectives:
-                                <strong>{{ learning_objectives }}</strong>.
-                                Questions and answers should include Chemistry-related content and be formatted as valid JSON.
-                            </p>
-                                <!-- Display Chemistry-specific JSON structure -->
-                                [
-                                {
-                                    "course": "{{ subject }}",
-                                    "marks": "1",
-                                    "question": "What is the molecular formula of water?",
-                                    "img_quiz": "",
-                                    "option1": "H2O",
-                                    "option2": "CO2",
-                                    "option3": "NaCl",
-                                    "option4": "CH4",
+                                    "option1": "<math xmlns='http://www.w3.org/1998/Math/MathML'><mfrac><mn>3</mn><mn>5</mn></mfrac></math>",
+                                    "option2": "<math xmlns='http://www.w3.org/1998/Math/MathML'><mfrac><mn>5</mn><mn>6</mn></mfrac></math>",
+                                    "option3": "<math xmlns='http://www.w3.org/1998/Math/MathML'><mfrac><mn>7</mn><mn>6</mn></mfrac></math>",
+                                    "option4": "<math xmlns='http://www.w3.org/1998/Math/MathML'><mfrac><mn>8</mn><mn>9</mn></mfrac></math>",
                                     "answer": "A"
                                 }
                                 ]
-                            {% elif 'PHYS' in subject|upper or 'PHYSICS' in subject|upper %}
+                            {% elif 'CHEM' in subject|upper or 'CHEMISTRY' in subject|upper or 'CHEMS' in subject|upper %}
                             <p>
                                 Give me <strong>{{ ai_question_num }}</strong> MCQs and answers on these objectives:
                                 <strong>{{ learning_objectives }}</strong>.
-                                Questions and answers should include Physics-related content and be formatted as valid JSON.
+                                Questions and options should be formatted as MathML's tag structure with http://www.w3.org/1998/Math/MathML as shown below:
                             </p>
-                                <!-- Display Physics-specific JSON structure -->
+                                <!-- Chemistry-related question and options in MathML format -->
                                 [
                                 {
                                     "course": "{{ subject }}",
                                     "marks": "1",
-                                    "question": "Which of the following is a scalar quantity?",
+                                    "question": "What is the formula for water?",
                                     "img_quiz": "",
-                                    "option1": "Velocity",
-                                    "option2": "Acceleration",
-                                    "option3": "Energy",
-                                    "option4": "Displacement",
-                                    "answer": "C"
+                                    "option1": "<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><msub><mi>H</mi><mrow class="MJX-TeXAtom-ORD"><mn>2</mn></mrow></msub><mi>O</mi></math>",
+                                    "option2": "<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><msub><mi>H</mi><mrow class="MJX-TeXAtom-ORD"><mn>2</mn></mrow></msub><mi>O</mi></math>",
+                                    "option3": "<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><msub><mi>H</mi><mrow class="MJX-TeXAtom-ORD"><mn>2</mn></mrow></msub><mi>O</mi></math>",
+                                    "option4": "<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><msub><mi>H</mi><mrow class="MJX-TeXAtom-ORD"><mn>2</mn></mrow></msub><mi>O</mi></math>",
+                                    "answer": "A"
                                 }
                                 ]
+                            {% elif 'PHYS' in subject|upper or 'PHYSICS' in subject|upper or 'PHYSIC' in subject|upper %}
+                            <p>
+                                Give me <strong>{{ ai_question_num }}</strong> MCQs and answers on these objectives:
+                                <strong>{{ learning_objectives }}</strong>.
+                                Questions and options should be formatted as MathML's tag structure with http://www.w3.org/1998/Math/MathML as shown below:
+
+                            </p>
+                                <!-- Physics-related question and options in MathML format -->
+                                       
+                                [
+                                {
+                                    "course":"{{ subject }}",
+                                    "marks":"1",
+                                    "question": "<math xmlns='http://www.w3.org/1998/Math/MathML' display='block'><msup><mi>v</mi><mn>2</mn></msup><mo>=</mo><msup><mi>u</mi><mn>2</mn></msup><mo>+</mo><mn>2</mn><mi>a</mi><mi>s</mi></math>",
+                                    "img_quiz": "",
+                                    "option1": "<math xmlns='http://www.w3.org/1998/Math/MathML' display='block'><mi>s</mi><mo>=</mo><mi>u</mi><mi>t</mi><mo>+</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><mi>a</mi><msup><mi>t</mi><mn>2</mn></msup></math>",
+                                    "option2": "<math xmlns='http://www.w3.org/1998/Math/MathML' display='block'><mi>v</mi><mo>=</mo><mi>u</mi><mo>+</mo><mi>a</mi><mi>t</mi></math>",
+                                    "option3": "<math xmlns='http://www.w3.org/1998/Math/MathML' display='block'><msup><mi>v</mi><mn>2</mn></msup><mo>=</mo><msup><mi>u</mi><mn>2</mn></msup><mo>+</mo><mn>2</mn><mi>a</mi><mi>s</mi></math>",
+                                    "option4": "<math xmlns='http://www.w3.org/1998/Math/MathML' display='block'><mi>s</mi><mo>=</mo><mi>vt</mi><mo>-</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><mi>a</mi><msup><mi>t</mi><mn>2</mn></msup></math>",
+                                    "answer": "C"
+                                  }
+                                ]
                             {% else %}
-                                <!-- Display JSON structure for non-math, non-chemistry, and non-physics courses -->
+                                <!-- Default format for non-math, non-chemistry, non-physics courses -->
                                 <p>
                                     Give me <strong>{{ ai_question_num }}</strong> MCQs and answers on these objectives:
                                     <strong>{{ learning_objectives }}</strong>.
-                                    Questions and answers should be formatted as valid JSON.
+                                    Questions and options should be formatted as MathML's tag structure with http://www.w3.org/1998/Math/MathML as shown below:
                                 </p>
                                 [
                                 {
@@ -112,7 +107,7 @@
                                     "option2": "Number of likes on IDE's Facebook page",
                                     "option3": "Language support, feature set, customization options, and performance",
                                     "option4": "The color of the IDE's logo",
-                                    "answer": "C"
+                                    "answer": "A"
                                 }
                                 ]
                             {% endif %}

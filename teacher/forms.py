@@ -423,7 +423,7 @@ class TeacherSignupForm(UserCreationForm):
         valid_subjects = []
         for subject in subjects_taught:
             course, created = Courses.objects.get_or_create(
-                id=subject.id,
+                title=subject.title,  # Use a field other than 'id'
                 defaults={'title': f"Auto-created Course {subject.id}"}
             )
             valid_subjects.append(course)

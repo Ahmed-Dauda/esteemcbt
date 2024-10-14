@@ -1311,266 +1311,6 @@ def import_data(request):
 
     return render(request, 'teacher/dashboard/import.html')
 
-# @login_required(login_url='teacher:teacher_login')
-# def import_data(request):
-#     if request.method == 'POST':
-#         dataset = Dataset()
-#         new_file = request.FILES['myfile']
-
-#         # Check if the uploaded file format is supported
-#         allowed_formats = ['xlsx', 'xls', 'csv', 'docx']
-#         file_extension = new_file.name.split('.')[-1]
-#         if file_extension not in allowed_formats:
-#             messages.error(request, 'File format not supported. Supported formats: XLSX, XLS, CSV, DOCX')
-#             return redirect(request.path_info)
-
-#         imported_data = None
-
-#         try:
-#             if file_extension == 'csv':
-#                 # Handle CSV
-#                 data = io.TextIOWrapper(new_file, encoding='utf-8')
-#                 imported_data = dataset.load(data, format=file_extension)
-#             elif file_extension in ['xlsx', 'xls']:
-#                 # Handle Excel files
-#                 imported_data = dataset.load(new_file.read(), format=file_extension)
-#             elif file_extension == 'docx':
-#                 # Handle Word documents
-#                 document = Document(new_file)
-#                 rows = []
-#                 for table in document.tables:
-#                     for row in table.rows:
-#                         row_data = [tex_to_mathml(cell.text) for cell in row.cells]
-#                         rows.append(row_data)
-#                 csv_data = io.StringIO()
-#                 writer = csv.writer(csv_data)
-#                 writer.writerows(rows)
-#                 csv_data.seek(0)
-#                 imported_data = dataset.load(csv_data, format='csv')
-#             else:
-#                 messages.error(request, 'An error occurred while importing the file.')
-#                 return redirect(request.path_info)
-
-#             # Convert TeX to MathML for imported data
-#             for row in imported_data.dict:
-#                 for key in ['question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer']:
-#                     if key in row:
-#                         original_value = row[key]
-#                         row[key] = tex_to_mathml(row[key])
-#                         logger.debug(f"Converted {key} from {original_value} to {row[key]}")
-
-#             resource = QuestionResource()
-#             result = resource.import_data(imported_data, dry_run=True)  # Dry run first
-#             # print('result',result)
-
-#             if result.has_errors():
-#                 messages.error(request, "Errors occurred during import: {}".format(result.errors))
-#             else:
-#                 result = resource.import_data(imported_data, dry_run=False)
-#                 if result.has_errors():
-#                     messages.error(request, "Errors occurred during saving: {}".format(result.errors))
-#                 else:
-#                     messages.success(request, "Data imported and saved successfully.")
-#                     logger.info("Data saved successfully.")
-
-#             return redirect(request.path_info)
-
-#         except Exception as e:
-#             messages.error(request, "You do not have permission to import this subject, or the subject name does not match your assigned subject. Please check the dashboard for your assigned subjects.")
-#             # messages.error(request, "You have no permission to import this subject or your subject is not the same with your assigned subject name. Check dashboard for your assigned subjects")
-#             logger.error(f"An error occurred while processing the file: {e}")
-#             return redirect(request.path_info)
-
-#     return render(request, 'teacher/dashboard/import.html')
-
-
-
-# @login_required(login_url='teacher:teacher_login')
-# def import_data(request):
-#     if request.method == 'POST':
-#         dataset = Dataset()
-#         new_file = request.FILES['myfile']
-
-#         # Check if the uploaded file format is supported
-#         allowed_formats = ['xlsx', 'xls', 'csv', 'docx']
-#         file_extension = new_file.name.split('.')[-1]
-#         if file_extension not in allowed_formats:
-#             messages.error(request, 'File format not supported. Supported formats: XLSX, XLS, CSV, DOCX')
-#             return redirect(request.path_info)
-
-#         imported_data = None
-
-#         try:
-#             if file_extension == 'csv':
-#                 # Handle CSV
-#                 data = io.TextIOWrapper(new_file, encoding='utf-8')
-#                 imported_data = dataset.load(data, format=file_extension)
-#             elif file_extension in ['xlsx', 'xls']:
-#                 # Handle Excel files
-#                 imported_data = dataset.load(new_file.read(), format=file_extension)
-#             elif file_extension == 'docx':
-#                 # Handle Word documents
-#                 document = Document(new_file)
-#                 rows = []
-#                 for table in document.tables:
-#                     for row in table.rows:
-#                         row_data = [tex_to_mathml(cell.text) for cell in row.cells]
-#                         rows.append(row_data)
-#                 csv_data = io.StringIO()
-#                 writer = csv.writer(csv_data)
-#                 writer.writerows(rows)
-#                 csv_data.seek(0)
-#                 imported_data = dataset.load(csv_data, format='csv')
-#             else:
-#                 messages.error(request, 'An error occurred while importing the file.')
-#                 return redirect(request.path_info)
-
-#             # Convert TeX to MathML for imported data
-#             for row in imported_data.dict:
-#                 for key in ['question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer']:
-#                     if key in row:
-#                         original_value = row[key]
-#                         row[key] = tex_to_mathml(row[key])
-#                         logger.debug(f"Converted {key} from {original_value} to {row[key]}")
-
-#             resource = QuestionResource()
-#             result = resource.import_data(imported_data, dry_run=True)  # Dry run first
-
-#             if result.has_errors():
-#                 messages.error(request, "Errors occurred during import: {}".format(result.errors))
-#             else:
-#                 result = resource.import_data(imported_data, dry_run=False)
-#                 if result.has_errors():
-#                     messages.error(request, "Errors occurred during saving: {}".format(result.errors))
-#                 else:
-#                     messages.success(request, "Data imported and saved successfully.")
-#                     logger.info("Data saved successfully.")
-
-#             return redirect(request.path_info)
-
-#         except Exception as e:
-#             messages.error(request, "You do not have permission to import this subject, or the subject name does not match your assigned subject. Please check the dashboard for your assigned subjects.")
-#             # messages.error(request, "You have no permission to import this subject or your subject is not the same with your assigned subject name. Check dashboard for your assigned subjects")
-#             logger.error(f"An error occurred while processing the file: {e}")
-#             return redirect(request.path_info)
-
-#     return render(request, 'teacher/dashboard/import.html')
-
-
-# def import_data(request):
-#     if request.method == 'POST':
-#         dataset = Dataset()
-#         new_file = request.FILES['myfile']
-
-#         # Check if the uploaded file format is supported
-#         allowed_formats = ['xlsx', 'xls', 'csv', 'docx']
-#         file_extension = new_file.name.split('.')[-1]
-#         if file_extension not in allowed_formats:
-#             return HttpResponse('File format not supported. Supported formats: XLSX, XLS, CSV, DOCX')
-
-#         imported_data = None
-
-#         try:
-#             if file_extension == 'csv':
-#                 # Handle CSV
-#                 data = io.TextIOWrapper(new_file, encoding='utf-8')
-#                 imported_data = dataset.load(data, format=file_extension)
-#                 # Convert TeX to MathML for CSV data
-#                 for row in imported_data.dict:
-#                     for key in ['question','img_quiz' ,'option1', 'option2', 'option3', 'option4', 'answer']:
-#                         if key in row:
-#                             original_value = row[key]
-#                             row[key] = tex_to_mathml(row[key])
-#                             logger.debug(f"Converted {key} from {original_value} to {row[key]}")
-#                 messages.success(request, "Data imported successfully.")
-#             elif file_extension in ['xlsx', 'xls']:
-#                 # Handle Excel files
-#                 imported_data = dataset.load(new_file.read(), format=file_extension)
-#                 # Convert TeX to MathML for Excel data
-#                 for row in imported_data.dict:
-#                     for key in ['question','img_quiz' ,'option1', 'option2', 'option3', 'option4', 'answer']:
-#                         if key in row:
-#                             original_value = row[key]
-#                             row[key] = tex_to_mathml(row[key])
-#                             logger.debug(f"Converted {key} from {original_value} to {row[key]}")
-#                 messages.success(request, "Data imported successfully.")
-#             elif file_extension == 'docx':
-#                 # Handle Word documents
-#                 document = Document(new_file)
-#                 rows = []
-#                 for table in document.tables:
-#                     for row in table.rows:
-#                         row_data = [tex_to_mathml(cell.text) for cell in row.cells]  # Convert TeX to MathML
-#                         rows.append(row_data)
-#                 # Convert to CSV-like format
-#                 csv_data = io.StringIO()
-#                 writer = csv.writer(csv_data)
-#                 writer.writerows(rows)
-#                 csv_data.seek(0)
-#                 imported_data = dataset.load(csv_data, format='csv')
-#                 messages.success(request, "Data imported successfully.")
-#             else:
-#                 messages.error(request, f"An error occurred while importing {file_extension} file.")
-#                 return render(request, 'teacher/dashboard/import.html')
-
-#             # Import data using the resource
-#             resource = QuestionResource()
-#             result = resource.import_data(imported_data, dry_run=True)  # Dry run first
-
-#             if result.has_errors():
-#                 messages.error(request, "Errors occurred during import: {}".format(result.errors))
-#                 logger.error("Errors occurred during import: {}".format(result.errors))
-#             else:
-#                 # Perform the actual import
-#                 result = resource.import_data(imported_data, dry_run=False)
-#                 if result.has_errors():
-#                     messages.error(request, "Errors occurred during saving: {}".format(result.errors))
-#                     logger.error("Errors occurred during saving: {}".format(result.errors))
-#                 else:
-#                     # messages.success(request, "Data saved successfully.")
-#                     logger.info("Data saved successfully.")
-
-#             # Redirect back to the import page after processing
-#             return HttpResponseRedirect(request.path_info)
-
-#         except Exception as e:
-#             messages.error(request, f"You have no permission to import this subject. Check dashboard for your assigned subjects")
-#             # print('resu', result)
-#             # messages.error(request, f"An error occurred: {e}")
-#             logger.error(f"An error occurred while processing the file: {e}")
-#             return render(request, 'teacher/dashboard/import.html')
-
-#     return render(request, 'teacher/dashboard/import.html')
-
-
-# views.py
-# def import_data(request):
-#     if request.method == 'POST':
-#         dataset = Dataset()
-#         new_questions = request.FILES['myfile']
-
-#         # Check if the uploaded file format is supported
-#         allowed_formats = ['xlsx', 'xls', 'csv']
-#         file_extension = new_questions.name.split('.')[-1]
-#         if file_extension not in allowed_formats:
-#             return HttpResponse('File format not supported. Supported formats: XLSX, XLS, CSV')
-
-#         # Load and import data based on the file format
-#         if file_extension == 'csv':
-#             # Open the file in text mode and decode bytes into a string
-#             data = codecs.iterdecode(new_questions, 'utf-8')
-#             imported_data = dataset.load(data, format=file_extension)
-#             messages.success(request, "Questions imported successfully.")
-#         else:
-#             messages.error(request, f"An error occurred")
-#             imported_data = dataset.load(new_questions.read(), format=file_extension)
-
-#         resource = QuestionResource()
-#         result = resource.import_data(imported_data, dry_run=True)  # Dry run first
-#         if not result.has_errors():
-#             resource.import_data(imported_data, dry_run=False)
-
-#     return render(request, 'teacher/dashboard/import.html')
 
 
 
@@ -1597,6 +1337,7 @@ def extract_equations_from_paragraph(paragraph):
         else:
             equations.append(run.text.strip())
     return equations
+
 
 def import_word(request):
     if request.method == 'POST':
@@ -1670,48 +1411,48 @@ def import_word(request):
 
 
 
-def import_word(request):
-    if request.method == 'POST':
-        # Check if the uploaded file format is supported
-        allowed_formats = ['docx']
-        uploaded_file = request.FILES.get('myfile')
-        if not uploaded_file:
-            return HttpResponse('No file uploaded.')
+# def import_word(request):
+#     if request.method == 'POST':
+#         # Check if the uploaded file format is supported
+#         allowed_formats = ['docx']
+#         uploaded_file = request.FILES.get('myfile')
+#         if not uploaded_file:
+#             return HttpResponse('No file uploaded.')
 
-        file_extension = uploaded_file.name.split('.')[-1]
-        if file_extension not in allowed_formats:
-            return HttpResponse('File format not supported. Supported format: DOCX')
+#         file_extension = uploaded_file.name.split('.')[-1]
+#         if file_extension not in allowed_formats:
+#             return HttpResponse('File format not supported. Supported format: DOCX')
 
-        # Handle Word document file
-        document = Document(uploaded_file)
-        questions = []
+#         # Handle Word document file
+#         document = Document(uploaded_file)
+#         questions = []
 
-        for table_idx, table in enumerate(document.tables):
-            for row_idx, row in enumerate(table.rows):
-                question = [cell.text.strip() for cell in row.cells]
-                if len(question) == 9:  # Assuming answer is included
-                    questions.append(question)
-                else:
-                    messages.warning(request, f"Ignored invalid line in table {table_idx + 1}, row {row_idx + 1}: {', '.join(question)}")
+#         for table_idx, table in enumerate(document.tables):
+#             for row_idx, row in enumerate(table.rows):
+#                 question = [cell.text.strip() for cell in row.cells]
+#                 if len(question) == 9:  # Assuming answer is included
+#                     questions.append(question)
+#                 else:
+#                     messages.warning(request, f"Ignored invalid line in table {table_idx + 1}, row {row_idx + 1}: {', '.join(question)}")
 
-        if questions:
-            # Create CSV content
-            response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = 'attachment; filename="imported_questions.csv"'
+#         if questions:
+#             # Create CSV content
+#             response = HttpResponse(content_type='text/csv')
+#             response['Content-Disposition'] = 'attachment; filename="imported_questions.csv"'
 
-            writer = csv.writer(response)
-            # writer.writerow(['course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer'])
+#             writer = csv.writer(response)
+#             # writer.writerow(['course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer'])
 
-            for question in questions:
-                writer.writerow(question)
+#             for question in questions:
+#                 writer.writerow(question)
 
-            messages.success(request, "Data imported successfully.")
+#             messages.success(request, "Data imported successfully.")
             
-            return response
-        else:
-            messages.warning(request, "No valid data found in the document.")
+#             return response
+#         else:
+#             messages.warning(request, "No valid data found in the document.")
 
-    return render(request, 'teacher/dashboard/importdocs.html')
+#     return render(request, 'teacher/dashboard/importdocs.html')
 
 
 from .forms import TeacherUpdateForm
@@ -1777,42 +1518,6 @@ import json
 #             writer.writerow(row)
 
 
-import csv
-import html
-
-
-# Example usage:
-# json_data = '''
-# [
-#     {
-#         "course": "MATH JSS2",
-#         "marks": "1",
-#         "question": "Which of the following factors should developers consider when selecting an IDE?",
-#         "img_quiz": "",
-#         "option1": "Coffee quality in the office",
-#         "option2": "Number of likes on IDE's Facebook page",
-#         "option3": "Language support, feature set, customization options, and performance",
-#         "option4": "The color of the IDE's logo",
-#         "answer": "C"
-#     },
-#     {
-#         "course": "MATH JSS2",
-#         "marks": "1",
-#         "question": "What is one of the benefits of using IDEs?",
-#         "img_quiz": "",
-#         "option1": "Access to free snacks in the break room",
-#         "option2": "Increased productivity due to streamlined development workflows",
-#         "option3": "Chance to win a vacation package",
-#         "option4": "Ability to pet the office dog",
-#         "answer": "B"
-#     }
-# ]
-# '''
-
-# # Parse JSON string into a list of dictionaries
-# questions_data = json.loads(json_data)
-# # Write generated data to CSV file
-# write_to_csv(questions_data, 'generated_questions8.csv')
 
 from django.utils.timezone import now
 

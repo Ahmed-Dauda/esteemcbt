@@ -4,6 +4,7 @@
 
 {% block content %}
     <style>
+        /* Styling remains the same as you've provided */
         .container-fluid {
             padding: 20px;
         }
@@ -108,9 +109,19 @@
             }
         }
     </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        },
+        "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+</script>
 
     <!-- Include MathJax script -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
     <script type="text/x-mathjax-config">
         MathJax.Hub.Config({
             tex2jax: {
@@ -119,7 +130,7 @@
             },
             "HTML-CSS": { availableFonts: ["TeX"] }
         });
-    </script>
+    </script> -->
     
     <!-- Begin Page Content -->
     <div class="container-fluid">
@@ -159,7 +170,7 @@
                                     {% endif %}
                                 </td>
                                 <td>{{ question.marks }}</td>
-                                
+                                  
                                 <td>{{ question.option1|safe }}</td>
                                 <td>{{ question.option2|safe }}</td> <!-- Render MathML -->
                                 <td>{{ question.option3|safe }}</td> <!-- Render MathML -->
@@ -178,8 +189,6 @@
                 </div>
             </div>
         </div>
-
     </div>
     <!-- End of Main Content -->
-
 {% endblock %}
