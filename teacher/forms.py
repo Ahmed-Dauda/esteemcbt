@@ -342,16 +342,15 @@ class TeacherSignupForm(UserCreationForm):
     username = forms.CharField(max_length=35, label='Username')
     school = forms.ModelChoiceField(queryset=School.objects.none(), label='School', required=False)
 
-    # Update this to ModelMultipleChoiceField to allow multiple subjects to be selected
     subjects_taught = forms.ModelMultipleChoiceField(
-        queryset=Courses.objects.none(),
+        queryset=Courses.objects.all(),  # Ensure courses are properly loaded
         label='Subjects Taught',
         required=False,
-        widget=forms.CheckboxSelectMultiple  # Allows multiple selections using checkboxes
+        widget=forms.CheckboxSelectMultiple
     )
 
     classes_taught = forms.ModelMultipleChoiceField(
-        queryset=CourseGrade.objects.none(),
+        queryset=CourseGrade.objects.all(),  # Ensure classes are properly loaded
         label='Classes Taught',
         required=False,
         widget=forms.CheckboxSelectMultiple
@@ -365,6 +364,7 @@ class TeacherSignupForm(UserCreationForm):
         user = kwargs.pop('user', None)
         super(TeacherSignupForm, self).__init__(*args, **kwargs)
 
+        # Populate dropdowns with data related to the user's school
         if user and user.school:
             self.fields['school'].queryset = School.objects.filter(name=user.school.name)
             self.fields['subjects_taught'].queryset = Courses.objects.filter(schools=user.school)
@@ -372,21 +372,10 @@ class TeacherSignupForm(UserCreationForm):
 
         self.fields['school'].initial = user.school if user else None
 
-        # If editing, initialize subjects and classes taught
-        if self.instance.pk:
-            self.fields['subjects_taught'].initial = self.instance.subjects_taught.all()
-            self.fields['classes_taught'].initial = self.instance.classes_taught.all()
-
-    def clean_username(self):
-        username = self.cleaned_data.get('username')
-        if NewUser.objects.filter(username=username).exists():
-            raise ValidationError("A user with this Username already exists.")
-        return username
-
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        if NewUser.objects.filter(email=email).exists():
-            raise ValidationError("A user with this email already exists.")
+        if Teacher.objects.filter(email=email).exists():
+            raise ValidationError("A teacher with this email already exists.")
         return email
 
     def save(self, commit=True):
@@ -395,46 +384,47 @@ class TeacherSignupForm(UserCreationForm):
         if commit:
             user.save()
         return user
-
+    
     def save_teacher(self, user):
+        
         first_name = self.cleaned_data['first_name']
         last_name = self.cleaned_data['last_name']
         email = user.email
         username = user.username
         school = self.cleaned_data.get('school', None)
 
-        subjects_taught = self.cleaned_data.get('subjects_taught', [])
-        classes_taught = self.cleaned_data.get('classes_taught', [])
-
-        # Create the Teacher object first without setting the many-to-many fields
-        teacher = Teacher(
+        # Create or update the Teacher object
+        teacher, created = Teacher.objects.update_or_create(
             user=user,
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            username=username,
-            school=school,
+            defaults={
+                'first_name': first_name,
+                'last_name': last_name,
+                'email': email,
+                'username': username,
+                'school': school,
+            }
         )
 
-        # Save the teacher object to ensure it has an ID
+        # Save the teacher object to ensure it has an ID before assigning many-to-many fields
         teacher.save()
 
-        # Handle subjects_taught and dynamically create missing courses
+        # Process subjects taught (assumes input is MathML)
+        subjects = self.cleaned_data.get('subjects_taught', [])
         valid_subjects = []
-        for subject in subjects_taught:
-            if not subject.pk:
-                # If the subject (course) doesn't exist yet, create it
-                subject.save()  # Ensure the course is saved in the database
-            valid_subjects.append(subject)
 
-        # Assign valid subjects to the teacher (many-to-many relationship)
+        for subject in subjects:
+            course, created = Course.objects.get_or_create(
+                id=subject.id, 
+                defaults={'course_name': subject, 
+                        'room_name': f"Auto-created Room {subject.id}",
+                        'question_number': 0}
+            )
+            valid_subjects.append(course)
+
         teacher.subjects_taught.set(valid_subjects)
-
-        # Handle classes_taught (direct many-to-many assignment)
-        teacher.classes_taught.set(classes_taught)
+        teacher.classes_taught.set(self.cleaned_data.get('classes_taught', []))
 
         return teacher
-
 
 
 
