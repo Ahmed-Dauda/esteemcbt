@@ -414,7 +414,7 @@ class TeacherSignupForm(UserCreationForm):
 
         for subject in subjects:
             course, created = Course.objects.get_or_create(
-                id=subject.id, 
+                course_name=subject.title, 
                 defaults={'course_name': subject, 
                         'room_name': f"Auto-created Room {subject.id}",
                         'question_number': 0}
