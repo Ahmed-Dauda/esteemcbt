@@ -386,7 +386,6 @@ class TeacherSignupForm(UserCreationForm):
         return user
     
     def save_teacher(self, user):
-        
         first_name = self.cleaned_data['first_name']
         last_name = self.cleaned_data['last_name']
         email = user.email
@@ -408,23 +407,26 @@ class TeacherSignupForm(UserCreationForm):
         # Save the teacher object to ensure it has an ID before assigning many-to-many fields
         teacher.save()
 
-        # Process subjects taught (assumes input is MathML)
+        # Process subjects taught based on the course title
         subjects = self.cleaned_data.get('subjects_taught', [])
         valid_subjects = []
 
         for subject in subjects:
-            course, created = Course.objects.get_or_create(
-                course_name=subject.title, 
-                defaults={'course_name': subject.title, 
-                        'room_name': f"Auto-created Room {subject.title}",
-                        'question_number': 0}
+            # Use title to fetch or create Courses
+            course, created = Courses.objects.get_or_create(
+                title=subject.title,  # Fetch by course title
+                defaults={'title': subject.title}
             )
             valid_subjects.append(course)
 
+        # Assign the valid subjects (many-to-many relationship)
         teacher.subjects_taught.set(valid_subjects)
+
+        # Process classes taught (many-to-many relationship)
         teacher.classes_taught.set(self.cleaned_data.get('classes_taught', []))
 
         return teacher
+
 
 
 
