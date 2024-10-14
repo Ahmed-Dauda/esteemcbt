@@ -422,11 +422,10 @@ class TeacherSignupForm(UserCreationForm):
         # Handle subjects_taught and dynamically create missing courses
         valid_subjects = []
         for subject in subjects_taught:
-            course, created = Courses.objects.get_or_create(
-                title=subject.title,  # Use a field other than 'id'
-                defaults={'title': f"Auto-created Course {subject.id}"}
-            )
-            valid_subjects.append(course)
+            if not subject.pk:
+                # If the subject (course) doesn't exist yet, create it
+                subject.save()  # Ensure the course is saved in the database
+            valid_subjects.append(subject)
 
         # Assign valid subjects to the teacher (many-to-many relationship)
         teacher.subjects_taught.set(valid_subjects)
@@ -435,6 +434,7 @@ class TeacherSignupForm(UserCreationForm):
         teacher.classes_taught.set(classes_taught)
 
         return teacher
+
 
 
 
