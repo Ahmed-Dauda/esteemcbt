@@ -832,7 +832,7 @@ class TeacherEditForm(forms.ModelForm):
 
         if user and user.school:
             self.fields['school'].queryset = School.objects.filter(name=user.school.name)
-            self.fields['subjects_taught'].queryset = Courses.objects.filter(schools=user.school)
+            self.fields['subjects_taught'].queryset = Course.objects.filter(schools=user.school)
             self.fields['classes_taught'].queryset = CourseGrade.objects.filter(schools=user.school).distinct()
 
         self.fields['school'].initial = user.school if user else None
