@@ -391,40 +391,19 @@ class TeacherSignupForm(UserCreationForm):
         email = user.email
         username = user.username
         school = self.cleaned_data.get('school', None)
+        subjects_taught = self.cleaned_data.get('subjects_taught', [])
+        classes_taught = self.cleaned_data.get('classes_taught', [])
 
-        # Create or update the Teacher object
-        teacher, created = Teacher.objects.update_or_create(
+        teacher = Teacher.objects.create(
             user=user,
-            defaults={
-                'first_name': first_name,
-                'last_name': last_name,
-                'email': email,
-                'username': username,
-                'school': school,
-            }
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            username=username,
+            school=school,
         )
-
-        # Save the teacher object to ensure it has an ID before assigning many-to-many fields
-        teacher.save()
-
-        # Process subjects taught based on the course title
-        subjects = self.cleaned_data.get('subjects_taught', [])
-        valid_subjects = []
-
-        for subject in subjects:
-            # Use title to fetch or create Courses
-            course, created = Courses.objects.get_or_create(
-                title=subject.title,  # Fetch by course title
-                defaults={'title': subject.title}
-            )
-            valid_subjects.append(course)
-
-        # Assign the valid subjects (many-to-many relationship)
-        teacher.subjects_taught.set(valid_subjects)
-
-        # Process classes taught (many-to-many relationship)
-        teacher.classes_taught.set(self.cleaned_data.get('classes_taught', []))
-
+        teacher.subjects_taught.add(*subjects_taught)
+        teacher.classes_taught.add(*classes_taught)
         return teacher
 
 
