@@ -367,7 +367,7 @@ class TeacherSignupForm(UserCreationForm):
         # Populate dropdowns with data related to the user's school
         if user and user.school:
             self.fields['school'].queryset = School.objects.filter(name=user.school.name)
-            self.fields['subjects_taught'].queryset = Courses.objects.filter(schools=user.school)
+            self.fields['subjects_taught'].queryset = Course.objects.filter(schools=user.school)
             self.fields['classes_taught'].queryset = CourseGrade.objects.filter(schools=user.school).distinct()
 
         self.fields['school'].initial = user.school if user else None
@@ -413,9 +413,9 @@ class TeacherSignupForm(UserCreationForm):
 
         for subject in subjects:
             # Use title to fetch or create Courses
-            course, created = Course.objects.get_or_create(
-                course_name=subject.course_name,  # Fetch by course title
-                defaults={'course_name': subject.course_name}
+            course, created = Courses.objects.get_or_create(
+                title=subject.title,  # Fetch by course title
+                defaults={'title': subject.title}
             )
             valid_subjects.append(course)
 
