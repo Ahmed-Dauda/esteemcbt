@@ -68,6 +68,5 @@ class Teacher(models.Model):
         if self.ai_question_num is not None and self.ai_question_num > 20:
             raise ValidationError('ai_question_num cannot exceed 20.')
         
-
     def __str__(self):
         return f"{self.first_name} {self.last_name}"

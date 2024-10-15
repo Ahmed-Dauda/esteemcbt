@@ -802,29 +802,24 @@ class TeacherSignupForm(UserCreationForm):
 
 #         return teacher 
 
-
 class TeacherEditForm(forms.ModelForm):
-    first_name = forms.CharField(max_length=200, label='First Name')
-    last_name = forms.CharField(max_length=200, label='Last Name')
-    school = forms.ModelChoiceField(queryset=School.objects.none(), label='School', required=False)
-
     subjects_taught = forms.ModelMultipleChoiceField(
-        queryset=Courses.objects.none(),
+        queryset=Course.objects.none(),
         label='Subjects Taught',
-        required=False,
-        widget=forms.CheckboxSelectMultiple
+        widget=forms.CheckboxSelectMultiple,
+        required=False
     )
 
     classes_taught = forms.ModelMultipleChoiceField(
         queryset=CourseGrade.objects.none(),
         label='Classes Taught',
-        required=False,
-        widget=forms.CheckboxSelectMultiple
+        widget=forms.CheckboxSelectMultiple,
+        required=False
     )
 
     class Meta:
-        model = Teacher  # Use Teacher model for editing subjects and classes
-        fields = ['first_name', 'last_name', 'school', 'subjects_taught', 'classes_taught']
+        model = Teacher
+        fields = ['first_name', 'last_name', 'school', 'subjects_taught', 'classes_taught', 'form_teacher_role', 'learning_objectives', 'ai_question_num']
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -839,8 +834,53 @@ class TeacherEditForm(forms.ModelForm):
 
         # Pre-fill the form fields with the teacher's current subjects and classes
         if self.instance.pk:
+            print("Subjects taught (from init):", self.instance.subjects_taught.all())
+            print("Classes taught (from init):", self.instance.classes_taught.all())
             self.fields['subjects_taught'].initial = self.instance.subjects_taught.all()
             self.fields['classes_taught'].initial = self.instance.classes_taught.all()
+       
+
+
+  
+
+# class TeacherEditForm(forms.ModelForm):
+#     first_name = forms.CharField(max_length=200, label='First Name')
+#     last_name = forms.CharField(max_length=200, label='Last Name')
+#     school = forms.ModelChoiceField(queryset=School.objects.none(), label='School', required=False)
+
+#     subjects_taught = forms.ModelMultipleChoiceField(
+#         queryset=Course.objects.none(),
+#         label='Subjects Taught',
+#         required=False,
+#         widget=forms.CheckboxSelectMultiple
+#     )
+
+#     classes_taught = forms.ModelMultipleChoiceField(
+#         queryset=CourseGrade.objects.none(),
+#         label='Classes Taught',
+#         required=False,
+#         widget=forms.CheckboxSelectMultiple
+#     )
+
+#     class Meta:
+#         model = Teacher  # Use Teacher model for editing subjects and classes
+#         fields = ['first_name', 'last_name', 'school', 'subjects_taught', 'classes_taught']
+
+#     def __init__(self, *args, **kwargs):
+#         user = kwargs.pop('user', None)
+#         super(TeacherEditForm, self).__init__(*args, **kwargs)
+
+#         if user and user.school:
+#             self.fields['school'].queryset = School.objects.filter(name=user.school.name)
+#             self.fields['subjects_taught'].queryset = Course.objects.filter(schools=user.school)
+#             self.fields['classes_taught'].queryset = CourseGrade.objects.filter(schools=user.school).distinct()
+
+#         self.fields['school'].initial = user.school if user else None
+
+#         # Pre-fill the form fields with the teacher's current subjects and classes
+#         if self.instance.pk:
+#             self.fields['subjects_taught'].initial = self.instance.subjects_taught.all()
+#             self.fields['classes_taught'].initial = self.instance.classes_taught.all()
 
 
 # real code2

@@ -44,30 +44,56 @@ from django.contrib import messages
 
 @login_required(login_url='teacher:teacher_login')
 def teacher_list_view(request):
-    user_school = request.user.school  # Get the school of the logged-in user
-    teachers = Teacher.objects.filter(school=user_school)  # Filter teachers by school
+    # Get the school of the logged-in user
+    user_school = request.user.school
 
+    # Filter teachers by school and prefetch related subjects and classes for optimization
+    teachers = Teacher.objects.filter(school=user_school).prefetch_related('subjects_taught', 'classes_taught')
+
+    # Print subjects taught for each teacher
+    for teacher in teachers:
+        print(f"Teacher: {teacher.first_name} {teacher.last_name}")
+        subjects = teacher.subjects_taught.all()
+        for subject in subjects:
+            print(f"Subject Taught3: {subject.course_name}")
+    
     context = {
-        'teachers': teachers,
+        'subject_taught':subjects,
+        'teachers': teachers,  # Pass the filtered teachers to the template
     }
+
+    # Render the template and pass the context with teachers data
     return render(request, 'teacher/dashboard/teacher_list.html', context)
+
+
+# @login_required(login_url='teacher:teacher_login')
+# def teacher_list_view(request):
+#     user_school = request.user.school  # Get the school of the logged-in user
+#     teachers = Teacher.objects.filter(school=user_school)  # Filter teachers by school
+
+#     context = {
+#         'teachers': teachers,
+#     }
+#     return render(request, 'teacher/dashboard/teacher_list.html', context)
 
 
 from teacher.forms import TeacherEditForm 
 
-@login_required(login_url='teacher:teacher_login')
+
 def teacher_edit_view(request, pk):
-    teacher = get_object_or_404(Teacher, pk=pk)  # Get the Teacher instance
+    teacher = get_object_or_404(Teacher, pk=pk)
 
     if request.method == 'POST':
-        # Use the TeacherEditForm for editing the teacher
         form = TeacherEditForm(request.POST, instance=teacher, user=request.user)
         if form.is_valid():
             form.save()
-
             return redirect('teacher:teacher_list')
     else:
         form = TeacherEditForm(instance=teacher, user=request.user)
+
+    # Check if the form is initialized with correct data
+    print("Subjects Taught1:", form.initial['subjects_taught'])
+    print("Classes Taught1:", form.initial['classes_taught'])
 
     context = {
         'form': form,

@@ -46,7 +46,7 @@
                 <td>{{ teacher.school }}</td>
                 <td>
                     {% for subject in teacher.subjects_taught.all %}
-                        {{ subject.title }}{% if not forloop.last %}, {% endif %}
+                        {{ subject.course_name }}{% if not forloop.last %}, {% endif %}
                     {% endfor %}
                 </td>
                 <td>
@@ -66,6 +66,7 @@
         </tbody>
     </table>
 </div>
+
 
 
 <!-- Initialize DataTables -->
