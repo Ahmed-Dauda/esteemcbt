@@ -723,22 +723,40 @@ def exam_list_view(request):
             elif not exam_marks:
                 result.total_marks = ((midterm_marks + ca_marks) / (ca_total_marks + midterm_total_marks)) * 100 if (ca_total_marks + midterm_total_marks) > 0 else 0
             else:
-                result.total_marks = (
-                    (ca_marks / ca_total_marks) * 100 * (ca_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks)) +
-                    (midterm_marks / midterm_total_marks) * 100 * (midterm_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks)) +
-                    (exam_marks / exam_total_marks) * 100 * (exam_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks))
-                ) if (ca_total_marks + midterm_total_marks + exam_total_marks) > 0 else 0
+                total_weight = ca_total_marks + midterm_total_marks + exam_total_marks
+
+                if total_weight > 0:
+                    ca_weight = (ca_total_marks / total_weight) if ca_total_marks > 0 else 0
+                    midterm_weight = (midterm_total_marks / total_weight) if midterm_total_marks > 0 else 0
+                    exam_weight = (exam_total_marks / total_weight) if exam_total_marks > 0 else 0
+                    
+                    ca_percentage = ((ca_marks / ca_total_marks) * 100) if ca_total_marks > 0 else 0
+                    midterm_percentage = ((midterm_marks / midterm_total_marks) * 100) if midterm_total_marks > 0 else 0
+                    exam_percentage = ((exam_marks / exam_total_marks) * 100) if exam_total_marks > 0 else 0
+                    
+                    result.total_marks = (ca_percentage * ca_weight + midterm_percentage * midterm_weight + exam_percentage * exam_weight)
+                else:
+                    result.total_marks = 0
+
+                # result.total_marks = (
+                #     (ca_marks / ca_total_marks) * 100 * (ca_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks)) +
+                #     (midterm_marks / midterm_total_marks) * 100 * (midterm_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks)) +
+                #     (exam_marks / exam_total_marks) * 100 * (exam_total_marks / (ca_total_marks + midterm_total_marks + exam_total_marks))
+                # ) if (ca_total_marks + midterm_total_marks + exam_total_marks) > 0 else 0
+
 
     # Data for visualization
     student_names = [f"{result.student.user.first_name} {result.student.user.last_name}" for result in filtered_courses_results]
     marks = [result.total_marks for result in filtered_courses_results]  # Use total_marks
-    print(filtered_courses_results, 'tot')
+    # print(filtered_courses_results, 'tot')
 
     context = {
         'courses': courses,
         'selected_course': selected_course,
         'total_students': len(filtered_courses_results),
-        'average_score': sum(marks) / len(marks) if marks else None,  # Average of total marks
+        'average_score': round(sum(marks) / len(marks), 1) if marks else None,  # Rounded average of total marks
+
+        # 'average_score': sum(marks) / len(marks) if marks else None,  # Average of total marks
         'highest_score': max(marks) if marks else None,  # Highest of total marks
         'lowest_score': min(marks) if marks else None,  # Lowest of total marks
         'courses_results': filtered_courses_results,
