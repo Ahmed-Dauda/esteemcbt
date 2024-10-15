@@ -413,9 +413,9 @@ class TeacherSignupForm(UserCreationForm):
 
         for subject in subjects:
             # Use title to fetch or create Courses
-            course, created = Courses.objects.get_or_create(
-                title=subject.title,  # Fetch by course title
-                defaults={'title': subject.title}
+            course, created = Course.objects.get_or_create(
+                course_name=subject.course_name,  # Fetch by course title
+                defaults={'course_name': subject.course_name}
             )
             valid_subjects.append(course)
 

@@ -15,40 +15,67 @@ class ExamType(models.Model):
         return self.name
 
 
-
 class Course(models.Model):
-
-   room_name = models.CharField(max_length=100,blank=True, null= True)
-   schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='course', blank=True, null=True)
-   course_name = models.ForeignKey(Courses,on_delete=models.CASCADE, blank=True, null= True)
-   question_number = models.PositiveIntegerField(blank=True, null= True)
-   course_pay = models.BooleanField(default=False)
-   total_marks = models.PositiveIntegerField(blank=True, null= True)
-   session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True)  # ForeignKey to Session model
-   term = models.ForeignKey(Term, on_delete=models.SET_NULL, blank=True, null=True)
-   exam_type = models.ForeignKey(ExamType, on_delete=models.CASCADE, blank=True, null=True)
-   num_attemps = models.PositiveIntegerField(default=4)
-#    pass_mark = models.PositiveIntegerField(null=True)
-   show_questions = models.PositiveIntegerField(default=10)
-   duration_minutes = models.PositiveIntegerField(default=10)  # Add this field for quiz duration
-   created = models.DateTimeField(auto_now_add=True,blank=True, null= True)
-   updated = models.DateTimeField(auto_now=True, blank=True, null= True)
-   id = models.AutoField(primary_key=True)
-
-   class Meta:
-       unique_together = ('course_name', 'session', 'term', 'school')  # Ensures uniqueness
-
-
-   class Meta:
+    room_name = models.CharField(max_length=100, blank=True, null=True)
+    schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='course', blank=True, null=True)
+    course_name = models.ForeignKey(Courses, on_delete=models.CASCADE, blank=True, null=True)  # Ensure this is referencing the correct model
+    question_number = models.PositiveIntegerField(blank=True, null=True)
+    course_pay = models.BooleanField(default=False)
+    total_marks = models.PositiveIntegerField(blank=True, null=True)
+    session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True)
+    term = models.ForeignKey(Term, on_delete=models.SET_NULL, blank=True, null=True)
+    exam_type = models.ForeignKey(ExamType, on_delete=models.CASCADE, blank=True, null=True)
+    num_attemps = models.PositiveIntegerField(default=4)  # Fixed typo
+    show_questions = models.PositiveIntegerField(default=10)
+    duration_minutes = models.PositiveIntegerField(default=10)
+    created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    updated = models.DateTimeField(auto_now=True, blank=True, null=True)
+    id = models.AutoField(primary_key=True)
+ 
+    class Meta:
+        unique_together = ('course_name', 'session', 'term', 'schools')  # Combined Meta classes
         verbose_name = 'Exam'
         verbose_name_plural = 'Exams'
 
-   def __str__(self):
-        # Ensure this method returns a string
+    def __str__(self):
         return f'{self.course_name or "No Course Name"}'
-   
-   def get_questions(self):
+
+    def get_questions(self):
         return self.question_set.all()[:self.show_questions]
+
+# class Course(models.Model):
+
+#    room_name = models.CharField(max_length=100,blank=True, null= True)
+#    schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='course', blank=True, null=True)
+#    course_name = models.ForeignKey(Courses,on_delete=models.CASCADE, blank=True, null= True)
+#    question_number = models.PositiveIntegerField(blank=True, null= True)
+#    course_pay = models.BooleanField(default=False)
+#    total_marks = models.PositiveIntegerField(blank=True, null= True)
+#    session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True)  # ForeignKey to Session model
+#    term = models.ForeignKey(Term, on_delete=models.SET_NULL, blank=True, null=True)
+#    exam_type = models.ForeignKey(ExamType, on_delete=models.CASCADE, blank=True, null=True)
+#    num_attemps = models.PositiveIntegerField(default=4)
+# #    pass_mark = models.PositiveIntegerField(null=True)
+#    show_questions = models.PositiveIntegerField(default=10)
+#    duration_minutes = models.PositiveIntegerField(default=10)  # Add this field for quiz duration
+#    created = models.DateTimeField(auto_now_add=True,blank=True, null= True)
+#    updated = models.DateTimeField(auto_now=True, blank=True, null= True)
+#    id = models.AutoField(primary_key=True)
+
+#    class Meta:
+#        unique_together = ('course_name', 'session', 'term', 'school')  # Ensures uniqueness
+
+
+#    class Meta:
+#         verbose_name = 'Exam'
+#         verbose_name_plural = 'Exams'
+
+#    def __str__(self):
+#         # Ensure this method returns a string
+#         return f'{self.course_name or "No Course Name"}'
+   
+#    def get_questions(self):
+#         return self.question_set.all()[:self.show_questions]
 
 
 from django.core.exceptions import ValidationError
