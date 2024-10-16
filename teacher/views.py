@@ -52,10 +52,10 @@ def teacher_list_view(request):
 
     # Print subjects taught for each teacher
     for teacher in teachers:
-        print(f"Teacher: {teacher.first_name} {teacher.last_name}")
+        # print(f"Teacher: {teacher.first_name} {teacher.last_name}")
         subjects = teacher.subjects_taught.all()
-        for subject in subjects:
-            print(f"Subject Taught3: {subject.course_name}")
+        # for subject in subjects:
+        #     print(f"Subject Taught3: {subject.course_name}")
     
     context = {
         'subject_taught':subjects,

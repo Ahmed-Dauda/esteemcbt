@@ -43,6 +43,7 @@ class Course(models.Model):
     def get_questions(self):
         return self.question_set.all()[:self.show_questions]
 
+
 # class Course(models.Model):
 
 #    room_name = models.CharField(max_length=100,blank=True, null= True)

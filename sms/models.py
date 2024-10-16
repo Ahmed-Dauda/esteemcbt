@@ -91,7 +91,6 @@ class Term(models.Model):
 
 class Courses(models.Model):
 
-    
     title = models.CharField(max_length=225, blank=True, null=True)
     schools = models.ManyToManyField("quiz.School" , related_name='courses', blank=True)
     session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True)  # ForeignKey to Session model
@@ -112,6 +111,24 @@ class Courses(models.Model):
         # return f'{self.title} - {self.session} - {self.term} - {self.exam_type}'
         return f'{self.title}'
 
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from quiz.models import Course
+   
+# Signal to automatically create a Course instance when a Courses (subject) is created
+@receiver(post_save, sender=Courses)
+def create_course_for_subject(sender, instance, created, **kwargs):
+    if created:
+        # Automatically create a Course instance
+        course = Course.objects.create(
+            course_name=instance,  # Link the Courses instance as the course_name
+            schools=instance.schools.first() if instance.schools.exists() else None,  # Assuming first school is used
+            session=instance.session,
+            term=instance.term,
+            exam_type=instance.exam_type
+        )
+        course.save()
 
 # payment models and logics 
 
