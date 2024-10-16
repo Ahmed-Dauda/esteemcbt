@@ -3,7 +3,85 @@
 {% block title %} Start the Quiz {% endblock %}
 
   {% block content %} 
+  <style>
+    /* Animation for the Start text */
+    .animated-start {
+        animation: pulse 2s infinite; /* Animation name, duration, and infinite looping */
+        border-radius: 10px; /* Optional: make the edges round */
+        transition: transform 0.3s ease-in-out;
+    }
+    
+    /* Keyframes for pulse effect */
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+        50% {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 123, 255, 0.8);
+        }
+        100% {
+            transform: scale(1);
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+    }
+    
+    /* Optional hover effect */
+    .animated-start:hover {
+        transform: scale(1.2);
+        box-shadow: 0 0 30px rgba(0, 123, 255, 1);
+    }
 
+    /* Note area css */
+    .alert-slide {
+        position: relative;
+        animation: slide-in 1s ease-out forwards, pulse-effect 2s infinite, fade-in 1s ease-in forwards;
+        opacity: 0;
+        border-left: 5px solid #007bff; /* Add a blue border to make it stand out */
+        background-color: #e9f7fe; /* Softer background color */
+    }
+
+    /* Slide in from the top */
+    @keyframes slide-in {
+        from {
+            transform: translateY(-100%);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    /* Fading in animation */
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* Pulse effect to draw attention */
+    /* @keyframes pulse-effect {
+        0% {
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.6);
+        }
+        50% {
+            box-shadow: 0 0 20px rgba(0, 123, 255, 0.9);
+        }
+        100% {
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.6);
+        }
+    } */
+
+    /* Text emphasis styles */
+    .alert-slide strong {
+        font-size: 1.2rem;
+        color: #007bff;
+    }
+    </style>
+    
     <!--Products-->
     <div class="d-flex mb-3 container">
         <a class="btn btn-primary d-flex align-items-center" href="{% url 'teacher:student-logout' %}">
@@ -15,19 +93,20 @@
     <div class="text-center mt-5 mb-4">
         <h3 class="mb-3">
             <i class="fas fa-book fa-2x text-primary"></i>
-            <span class="ml-2">Welcome, {{ request.user.profile.first_name }}!</span>
+            <!-- <span class="ml-2">Welcome, {{ request.user.profile.first_name }}!</span> -->
         </h3>
-        <div class="alert alert-info" role="alert">
-            <i class="fas fa-info-circle"></i> Note: You can start with any exam.
+        <div style="width: 50%; text-align: center;margin: 0 auto;" class=" alert-info alert-slide" role="alert">
+            <span class="ml-2">Welcome, {{ request.user.profile.first_name|title }}!</span> <br>
+            <strong>Note:</strong>
+            <p>You can begin with any exam.</p>  
+            <p>Ensure you answer all questions before submitting.</p>
+            <p class="mt-2 text-muted">Good luck!</p>
         </div>
         <div class="my-4">
             <i class="fas fa-play-circle fa-3x text-success"></i>
-            <p class="mt-2 text-muted">Start the Quiz</p>
+     
         </div>
-        <div>
-            <i class="fas fa-thumbs-up fa-2x text-warning"></i>
-            <p class="mt-2 text-muted">Good luck!</p>
-        </div>
+      
     </div>
     
     
@@ -50,13 +129,14 @@
                 
                 <a href="{% url 'student:start-exam' item.id %}" class="text-decoration-none text-dark d-block mb-4">
                     <div class="d-flex border border-light rounded shadow-sm overflow-hidden">
-                        <div class="bg-primary text-white d-flex align-items-center justify-content-center font-weight-bold" style="width: 100px; font-size: 24px;">
-                            {{ item|make_list|first }}
+                        <div class="bg-primary text-white d-flex align-items-center justify-content-center font-weight-bold animated-start" style="width: 100px; font-size: 24px;">
+                            Start   <!-- {{ item|make_list|first }} -->
                         </div>
+                        
                         <div class="flex-grow-1 p-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="text-primary font-weight-bold">
-                                  {{ item }} 
+                                 {{ item }} 
                                 </div>
                                 {% for result in user_results %}
 
