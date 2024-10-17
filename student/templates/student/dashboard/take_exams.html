@@ -1,4 +1,4 @@
-{% extends 'sms/dashboard/startexambase.html' %}
+{% extends 'sms/dashboard/studentbase.html' %}
 
 {% block title %} Start the Quiz {% endblock %}
 
@@ -91,10 +91,6 @@
     </div>
     
     <div class="text-center mt-5 mb-4">
-        <h3 class="mb-3">
-            <i class="fas fa-book fa-2x text-primary"></i>
-            <!-- <span class="ml-2">Welcome, {{ request.user.profile.first_name }}!</span> -->
-        </h3>
         <div style="width: 50%; text-align: center;margin: 0 auto;" class=" alert-info alert-slide" role="alert">
             <span class="ml-2">Welcome, {{ request.user.profile.first_name|title }}!</span> <br>
             <strong>Note:</strong>
@@ -102,11 +98,7 @@
             <p>Ensure you answer all questions before submitting.</p>
             <p class="mt-2 text-muted">Good luck!</p>
         </div>
-        <div class="my-4">
-            <i class="fas fa-play-circle fa-3x text-success"></i>
-     
-        </div>
-      
+
     </div>
     
     

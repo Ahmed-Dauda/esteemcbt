@@ -113,7 +113,12 @@
             <!-- Nav Item - Pages Collapse Menu -->
             <!-- Divider -->
             <hr class="sidebar-divider">
-
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'teacher:student-dashboard' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'student:take-exam' %}">
                     <i class="fas fa-fw fa-book"></i>

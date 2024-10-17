@@ -36,53 +36,79 @@
         color: #CD7F32;
         font-weight: bold;
     }
+
+    /* Custom styling for DataTables pagination */
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+    .dataTables_wrapper .dataTables_paginate .paginate_button:active,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.selected {
+        background-color: #007bff !important; /* Active button background color */
+        color: white !important; /* Active button text color */
+        border: 1px solid #007bff !important; /* Border for the active button */
+    }
+
+    /* Optional: Styling for hover */
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background-color: #0056b3 !important; /* Button color on hover */
+        color: white !important; /* Text color on hover */
+    }
+
+    /* Optionally, style pagination buttons when they are disabled */
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+        background-color: #e9ecef;
+        border-color: #ddd;
+        color: #6c757d;
+    }
 </style>
 
-
 <div class="container leaderboard-wrapper">
-<h4 style="text-align: center;">Leaderboard for {{ session }} - {{ term }} Term</h4>
+    <h4 style="text-align: center;">Leaderboard for {{ session }} - {{ term }} Term</h4>
 
-<table class="table leaderboard-table" id="leaderboardTable">
-    <thead>
-        <tr>
-            <th>Rank</th>
-            <th>Student</th>
-            <th>School Name</th>
-            <th>Total Marks (Sum of Percentages)</th>
-            <th>Final Average (%)</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for entry in leaderboard %}
-        <tr>
-            <td>{{ entry.rank }}</td>
-            <td>{{ entry.student.user.first_name }} - {{ entry.student.user.last_name }}</td>
-            <td>{{ entry.student.schools }}</td>
-            <!-- Show the total marks obtained (Sum of all subject percentages) -->
-            <td>{{ entry.total_marks|floatformat:2 }}</td>
-            <!-- Show the final average percentage -->
-            <td>{{ entry.final_average|floatformat:2 }}%</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
+    <table class="table leaderboard-table" id="leaderboardTable">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Student</th>
+                <th>School Name</th>
+                <th>Total Marks (Sum of Percentages)</th>
+                <th>Final Average (%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in leaderboard %}
+            <tr>
+                <td>{{ entry.rank }}</td>
+                <td>{{ entry.student.user.first_name }} - {{ entry.student.user.last_name }}</td>
+                <td>{{ entry.student.schools }}</td>
+                <!-- Show the total marks obtained (Sum of all subject percentages) -->
+                <td>{{ entry.total_marks|floatformat:2 }}</td>
+                <!-- Show the final average percentage -->
+                <td>{{ entry.final_average|floatformat:2 }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
-
 
 <!-- Initialize DataTable -->
 <script>
     $(document).ready(function() {
-        $('#leaderboardTable').DataTable({
+        var table = $('#leaderboardTable').DataTable({
             "paging": true,          // Enable pagination
             "searching": true,       // Enable search/filter
             "ordering": true,        // Enable column ordering
             "info": true,            // Show information about entries
             "lengthMenu": [20, 40, 60]  // Control how many entries per page
         });
+
+        // Custom JavaScript to keep the selected page button highlighted
+        $('#leaderboardTable').on('click', '.paginate_button', function() {
+            // Remove the 'selected' class from all pagination buttons
+            $('.paginate_button').removeClass('selected');
+            
+            // Add the 'selected' class to the clicked pagination button
+            $(this).addClass('selected');
+        });
     });
 </script>
+
 {% endblock %}
-
-
-

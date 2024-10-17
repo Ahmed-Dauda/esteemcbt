@@ -4,6 +4,12 @@
 
 {% block content %}
 
+<div class="d-flex mb-3 container">
+    <a class="btn btn-primary d-flex align-items-center" href="{% url 'teacher:student-logout' %}">
+        <i class="fas fa-sign-out-alt fa-lg text-light mr-2"></i>
+        <span class="text-light">Logout</span>
+    </a>
+</div>
 <!-- Welcome Section -->
 <div class="container mt-5">
     <div class="row justify-content-center">

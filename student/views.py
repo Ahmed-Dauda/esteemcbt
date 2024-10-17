@@ -2906,10 +2906,10 @@ def exam_warning_view(request):
 
 #     return render(request,'student/dashboard/view_result.html', context = context)
 
-@cache_page(60 * 15)
+@cache_page(60 * 60 * 24)
 @login_required
 def view_result_view(request):
-    qcourses = Course.objects.order_by('id')
+    qcourses = Course.objects.only('id').order_by('id')
     context = {
         'courses': qcourses
     }
