@@ -16,7 +16,9 @@ from sms.models import Courses
 from quiz.models import Result
 
 
-
+class UploadFileForm(forms.Form):
+    file = forms.FileField(label="Select a file to upload")
+    
 
 class DocumentUploadForm(forms.Form):
     file = forms.FileField()

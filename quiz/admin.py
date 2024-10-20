@@ -65,14 +65,17 @@ class CourseGradeAdmin(admin.ModelAdmin):
 admin.site.register(CourseGrade, CourseGradeAdmin)
 
 
-
 # ResultResource
+from .models import Result, Course, Profile, ExamType
+from import_export import resources, fields, widgets  # Importing widgets
+
+
 class ResultResource(resources.ModelResource):
     exam_course_name = fields.Field(
-        column_name='exam',
-        attribute='exam__course_name__title'  
+        column_name='exam_course_name',
+        attribute='exam__course_name',
     )
-    
+       
     student_username = fields.Field(
         column_name='student_username',
         attribute='student__user__username',
@@ -90,17 +93,64 @@ class ResultResource(resources.ModelResource):
     
     class Meta:
         model = Result
-        fields = ('id', 'exam_course_name','result_class','session','term','exam_type_name', 'student_username', 'student_first_name', 'student_last_name', 'marks', 'created')
+        fields = (
+            'exam', 'student_username', 'marks', 
+            'result_class', 'session', 'term', 'exam_type', 
+            'created', 'id')
+        export_order = ('exam_course_name', 'student_username', 'marks', 'result_class', 'session', 'term', 'exam_type', 'created', 'id')
+        
+        # fields = (
+        #     'id', 'exam', 'result_class', 'session', 'term', 
+        #     'exam_type', 'student_username', 'student_first_name', 
+        #     'student_last_name', 'marks', 'created'
+        # )
+        
 
-               
+
 class ResultAdmin(ImportExportModelAdmin):    
-    list_display = ['student', 'exam', 'marks','exam_type', 'result_class', 'session', 'term', 'created']
-    list_filter = ['exam', 'student', 'exam_type']
-    search_fields = ['student__first_name', 'student__last_name', 'exam__course_name__title', 'marks', 'exam_type__name', 'created']
-    ordering = ['id']
     resource_class = ResultResource
+    list_display = ['student', 'exam', 'marks', 'exam_type', 'result_class', 'session', 'term', 'created']
+    list_filter = ['exam', 'student', 'exam_type', 'session', 'term']
+    search_fields = ['student__first_name', 'student__last_name', 'exam__course_name__title', 'marks']
+    ordering = ['id']
 
 admin.site.register(Result, ResultAdmin)
+
+# # ResultResource
+# class ResultResource(resources.ModelResource):
+#     exam_course_name = fields.Field(
+#         column_name='exam',
+#         attribute='exam__course_name__title'  
+#     )
+    
+#     student_username = fields.Field(
+#         column_name='student_username',
+#         attribute='student__user__username',
+#     )
+
+#     student_first_name = fields.Field(
+#         column_name='student_first_name',
+#         attribute='student__first_name',
+#     )
+
+#     student_last_name = fields.Field(
+#         column_name='student_last_name',
+#         attribute='student__last_name',
+#     )
+    
+#     class Meta:
+#         model = Result
+#         fields = ('id', 'exam_course_name','result_class','session','term','exam_type_name', 'student_username', 'student_first_name', 'student_last_name', 'marks', 'created')
+
+               
+# class ResultAdmin(ImportExportModelAdmin):    
+#     list_display = ['student', 'exam', 'marks','exam_type', 'result_class', 'session', 'term', 'created']
+#     list_filter = ['exam', 'student', 'exam_type']
+#     search_fields = ['student__first_name', 'student__last_name', 'exam__course_name__title', 'marks', 'exam_type__name', 'created']
+#     ordering = ['id']
+#     resource_class = ResultResource
+
+# admin.site.register(Result, ResultAdmin)
 
 
 # end of ResultResource

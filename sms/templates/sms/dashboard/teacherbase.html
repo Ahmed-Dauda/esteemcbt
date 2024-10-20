@@ -229,6 +229,12 @@
                 </a>
             </li>
             <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:import-results' %}">
+                    <i class="fas fa-fw fa-file-csv"></i> <!-- Icon for export results as CSV -->
+                    <span>Import Result</span>
+                </a>
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
                 <a class="nav-link" href="{% url 'teacher:teacher_results' %}">
                     <i class="fas fa-fw fa-poll"></i> <!-- Icon for teacher results -->
                     <span>Teacher Result</span>

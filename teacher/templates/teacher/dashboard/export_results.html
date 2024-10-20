@@ -1,17 +1,18 @@
 {% extends 'sms/dashboard/teacherbase.html' %}
 
-{% block title %}Export Results{% endblock %}
+{% block title %}Export & Import Results{% endblock %}
 
-{% block content %}  
+{% block content %}
   <div class="container mt-5">
     <div class="row justify-content-center">
       <div class="col-md-6">
-        <div class="card shadow-sm">
+        <!-- Export Results Card -->
+        <div class="card shadow-sm mb-4">
           <div class="card-header bg-primary text-white text-center">
             <h4 class="mb-0">Export Results</h4>
           </div>
           <div class="card-body">
-            <form method="post">
+            <form method="post" action="{% url 'teacher:export_results_csv' %}">
               {% csrf_token %}
               <div class="form-group">
                 <label for="file-type" class="font-weight-bold">Select File Type:</label>
@@ -36,7 +37,39 @@
             </form>
           </div>
         </div>
+
+<!--        
+        <div class="card shadow-sm">
+          <div class="card-header bg-success text-white text-center">
+            <h4 class="mb-0">Import Results</h4>
+          </div>
+          <div class="card-body">
+            <form method="post" enctype="multipart/form-data" action="{% url 'teacher:import-results' %}">
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="csv_file" class="font-weight-bold">Upload CSV File:</label>
+                <input type="file" class="form-control-file" id="csv_file" name="csv_file" accept=".csv">
+              </div>
+              <div class="form-group">
+                <label for="course" class="font-weight-bold">Select Subject:</label>
+                <select class="form-control" name="course" id="course">
+                  {% for subject in subjects_taught %}
+                    <option value="{{ subject.id }}">{{ subject }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success">
+                  <i class="fas fa-upload"></i> Import
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-{% endblock %} 
+  </div> -->
+
+  <!-- Message Alerts -->
+
+{% endblock %}

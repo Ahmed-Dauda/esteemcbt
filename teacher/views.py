@@ -969,7 +969,6 @@ def exam_statistics_view(request, course_id):
     }
     return render(request, 'teacher/dashboard/exam_statistics.html', context)
 
-
 @login_required
 def teacher_results_view(request):
     user = request.user
@@ -980,7 +979,6 @@ def teacher_results_view(request):
 
     # Get the teacher instance associated with the user
     try:
-        # teacher = Teacher.objects.get(user=user)
         teacher = Teacher.objects.select_related('user').get(user=user)
     except Teacher.DoesNotExist:
         # Handle the case where the user is not a teacher
@@ -989,22 +987,21 @@ def teacher_results_view(request):
     # Cache key for the teacher's results
     cache_key = f"teacher_results_{teacher.id}"
     results = cache.get(cache_key)
-    
+
     if not results:
-        # Get the subjects taught by the teacher
-        subjects_taught = teacher.subjects_taught.all()
-        subjects_taught_titles = [course for course in subjects_taught]
-        
-        # Retrieve the results associated with the subjects taught by the teacher
-        # results = Result.objects.filter(exam__course_name__in=subjects_taught_titles)
-        # Optimize the query with select_related and only for Result
+        # Get the subjects (Courses) taught by the teacher
+        subjects_taught = teacher.subjects_taught.all()  # This should be related to the "Course" model
+
+        # If you want to filter by `course_name`, extract the names:
+        subjects_taught_titles = [course.course_name for course in subjects_taught]
+
+        # Use actual Course instances in the filter
         results = Result.objects.select_related('exam', 'student').only(
-                'id', 'marks','exam__id', 'exam__course_name','student__id',
+                'id', 'marks', 'exam__id', 'exam__course_name', 'student__id'
             ).filter(exam__course_name__in=subjects_taught_titles)
-            
         
-        # Cache the results for 15 minutes
-        cache.set(cache_key, results, 60 * 5)
+        # Cache the results for 5 minutes
+        cache.set(cache_key, results, 60 * 1)
         logger.info(f"Results cached for teacher {teacher.id}")
     else:
         logger.info(f"Results fetched from cache for teacher {teacher.id}")
@@ -1014,6 +1011,52 @@ def teacher_results_view(request):
         'results': results,
     }
     return render(request, 'teacher/dashboard/teacher_results.html', context)
+
+
+# @login_required
+# def teacher_results_view(request):
+#     user = request.user
+
+#     # Check if the user is authenticated
+#     if not user.is_authenticated:
+#         return redirect('login')  # Redirect to login if user is not authenticated
+
+#     # Get the teacher instance associated with the user
+#     try:
+#         # teacher = Teacher.objects.get(user=user)
+#         teacher = Teacher.objects.select_related('user').get(user=user)
+#     except Teacher.DoesNotExist:
+#         # Handle the case where the user is not a teacher
+#         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
+
+#     # Cache key for the teacher's results
+#     cache_key = f"teacher_results_{teacher.id}"
+#     results = cache.get(cache_key)
+    
+#     if not results:
+#         # Get the subjects taught by the teacher
+#         subjects_taught = teacher.subjects_taught.all()
+#         subjects_taught_titles = [course for course in subjects_taught]
+        
+#         # Retrieve the results associated with the subjects taught by the teacher
+#         # results = Result.objects.filter(exam__course_name__in=subjects_taught_titles)
+#         # Optimize the query with select_related and only for Result
+#         results = Result.objects.select_related('exam', 'student').only(
+#                 'id', 'marks','exam__id', 'exam__course_name','student__id',
+#             ).filter(exam__course_name__in=subjects_taught_titles)
+            
+        
+#         # Cache the results for 15 minutes
+#         cache.set(cache_key, results, 60 * 5)
+#         logger.info(f"Results cached for teacher {teacher.id}")
+#     else:
+#         logger.info(f"Results fetched from cache for teacher {teacher.id}")
+
+#     context = {
+#         'teacher': teacher,
+#         'results': results,
+#     }
+#     return render(request, 'teacher/dashboard/teacher_results.html', context)
 
 
 # @login_required
@@ -1078,34 +1121,34 @@ def teacher_results_view(request):
 
 
 
-# @cache_page(60 * 15)
+from quiz.admin import ResultResource
+import csv
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+
+
+  
 def export_results_csv(request):
     if request.method == 'POST':
         file_type = request.POST.get('file-type')
         selected_course_id = request.POST.get('course')
 
-        # Debugging: Print the selected course ID
-        # print(f"Selected Course ID: {selected_course_id}")
-
         try:
             # Attempt to retrieve the selected course
-            selected_course = Course.objects.get(course_name__id=selected_course_id)
-            # print(f"Retrieved Course: {selected_course}")  # Debugging print
+            selected_course = Course.objects.get(id=selected_course_id)
 
             # Fetch results associated with the selected course
-            results = Result.objects.filter(exam=selected_course)
+            results = Result.objects.filter(exam__course_name=selected_course.course_name)
+   
+            # Use django-import-export for CSV
+            result_resource = ResultResource()
 
             if file_type == 'csv':
-                # Export to CSV
-                response = HttpResponse(content_type='text/csv')
+                dataset = result_resource.export(results)
+                response = HttpResponse(dataset.csv, content_type='text/csv')
                 response['Content-Disposition'] = 'attachment; filename="exam_results.csv"'
-
-                writer = csv.writer(response)
-                writer.writerow(['Student Name', 'Exam Score', 'Exam Subject'])
-
-                for result in results:
-                    writer.writerow([result.student, result.marks, result.exam.course_name])
-
                 return response
 
             elif file_type == 'pdf':
@@ -1143,19 +1186,137 @@ def export_results_csv(request):
                 return response
 
         except Course.DoesNotExist:
-            print("Course does not exist.")  # Debugging print
             return HttpResponse("Course does not exist.", status=404)
 
     else:
         user = request.user
-        # Get the teacher instance associated with the user
         teacher = Teacher.objects.get(user=user)
-        # Get the subjects taught by the teacher
         subjects_taught = teacher.subjects_taught.all()
 
         return render(request, 'teacher/dashboard/export_results.html', {'subjects_taught': subjects_taught})
 
     return redirect('export_results_csv')
+
+
+from quiz.models import Session, Term  # Import your models
+from .forms import UploadFileForm  
+from tablib import Dataset
+
+# Import logic  
+def import_results(request):
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            uploaded_file = request.FILES['file']
+            result_resource = ResultResource()
+            dataset = Dataset()
+            try:
+                dataset.load(uploaded_file.read().decode('utf-8'), format='csv')
+
+                # Check if 'exam_course_name' is present and rename it to 'exam'
+                if 'exam_course_name' in dataset.headers:
+                    dataset.headers[dataset.headers.index('exam_course_name')] = 'exam'
+
+                # Perform a dry run to test the import
+                result = result_resource.import_data(dataset, dry_run=True)
+
+                if not result.has_errors():
+                    result_resource.import_data(dataset, dry_run=False)
+                    return HttpResponse("Import successful!")
+                else:
+                    # Handle errors as before
+                    error_messages = []
+                    for row_num, error_details in result.row_errors():
+                        for err in error_details:
+                            field_name = getattr(err, 'field_name', 'Unknown field')
+                            error_messages.append(f"Row {row_num}: {err} in field {field_name}")
+                    
+                    return HttpResponse(f"Import failed due to errors: {', '.join(error_messages)}")
+            except Exception as e:
+                return HttpResponse(f"An error occurred during import: {str(e)}")
+        else:
+            return HttpResponse("Form is not valid.")
+    else:
+        form = UploadFileForm()
+
+    return render(request, 'teacher/dashboard/import_results.html', {'form': form})
+
+
+# @cache_page(60 * 15)
+# def export_results_csv(request):
+#     if request.method == 'POST':
+#         file_type = request.POST.get('file-type')
+#         selected_course_id = request.POST.get('course')
+
+#         try:
+#             # Attempt to retrieve the selected course
+#             selected_course = Course.objects.get(course_name__id=selected_course_id)
+#             # print(f"Retrieved Course: {selected_course}")  # Debugging print
+
+#             # Fetch results associated with the selected course
+#             results = Result.objects.filter(exam=selected_course)
+
+#             if file_type == 'csv':
+#                 # Export to CSV
+#                 response = HttpResponse(content_type='text/csv')
+#                 response['Content-Disposition'] = 'attachment; filename="exam_results.csv"'
+
+#                 writer = csv.writer(response)
+#                 writer.writerow(['Student Name', 'Exam Score', 'Exam Subject'])
+
+#                 for result in results:
+#                     writer.writerow([result.student, result.marks, result.exam.course_name])
+
+#                 return response
+
+#             elif file_type == 'pdf':
+#                 # Export to PDF
+#                 response = HttpResponse(content_type='application/pdf')
+#                 response['Content-Disposition'] = 'attachment; filename="exam_results.pdf"'
+
+#                 buffer = BytesIO()
+#                 doc = SimpleDocTemplate(buffer, pagesize=letter)
+#                 elements = []
+
+#                 # Create table data
+#                 data = [['Student Name', 'Exam Score', 'Exam Subject']]
+#                 for result in results:
+#                     data.append([result.student, result.marks, result.exam.course_name])
+
+#                 # Create table and add style
+#                 table = Table(data)
+#                 style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+#                                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+#                                     ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+#                                     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+#                                     ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+#                                     ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+#                                     ('GRID', (0, 0), (-1, -1), 1, colors.black)])
+#                 table.setStyle(style)
+
+#                 elements.append(table)
+
+#                 # Build PDF
+#                 doc.build(elements)
+#                 pdf = buffer.getvalue()
+#                 buffer.close()
+#                 response.write(pdf)
+#                 return response
+
+#         except Course.DoesNotExist:
+            
+#             return HttpResponse("Course does not exist.", status=404)
+
+#     else:
+#         user = request.user
+#         # Get the teacher instance associated with the user
+#         teacher = Teacher.objects.get(user=user)
+#         # Get the subjects taught by the teacher
+#         subjects_taught = teacher.subjects_taught.all()
+
+#         return render(request, 'teacher/dashboard/export_results.html', {'subjects_taught': subjects_taught})
+
+#     return redirect('export_results_csv')
 
 
 
@@ -1674,42 +1835,46 @@ def download_csv(request):
         response = HttpResponse(csv_file.read(), content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename=' + filename
         return response
-    
+       
 
 @login_required
 def export_data(request):
     if request.method == 'POST':
         try:
             selected_courses_ids = request.POST.getlist('courses')
-            print(f"Selected course IDs: {selected_courses_ids}")  # Print selected course IDs for debugging
+            # print(f"Selected course IDs: {selected_courses_ids}")  # Debug selected course IDs
         except MultiValueDictKeyError:
             selected_courses_ids = []
-            print("No courses selected.")
+            # print("No courses selected.")
 
         resource = QuestionResource()
-        # Query questions using the selected course IDs
+
+        # Filter questions based on the selected course IDs
         queryset = Question.objects.filter(course__id__in=selected_courses_ids)
-        print(queryset)  # Print the queryset for debugging
+        print(queryset)  # Debug the queryset
+
         dataset = resource.export(request=request, queryset=queryset)
         response = HttpResponse(dataset.csv, content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="questions.csv"'
         return response
+
     else:
         user = request.user
         # Get the teacher instance associated with the user
         teacher = Teacher.objects.get(user=user)
-        print(f"Teacher: {teacher}")  # Print the teacher instance for debugging
+        # print(f"Teacher: {teacher}")  # Debug teacher instance
 
-        # Get the subjects taught by the teacher
+        # Fetch subjects taught by the teacher
         subjects_taught = teacher.subjects_taught.all()
-        print(f"Subjects taught: {subjects_taught}")  # Print the subjects taught for debugging
-        
-        # Get the courses associated with the subjects taught
-        courses = Course.objects.filter(course_name__in=subjects_taught).distinct()
-        print(f"Courses fetched: {courses}")  # Print the courses fetched for debugging
+        # print(f"Subjects taught: {subjects_taught}")  # Debug subjects taught
 
+        # Fetch the courses that the teacher teaches (based on the subjects_taught)
+        courses = Course.objects.filter(id__in=subjects_taught.values_list('id', flat=True)).distinct()
+        print(f"Courses fetched: {courses}")  # Debug courses
+        
+        # Render the export template with the courses
         return render(request, 'teacher/dashboard/export_questions.html', {'courses': courses})
-    
+      
 
 # def export_data(request):
 #     if request.method == 'POST':

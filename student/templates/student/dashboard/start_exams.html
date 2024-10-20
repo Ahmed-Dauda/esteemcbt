@@ -92,7 +92,7 @@ div.quiz p {
 /* desktop view of fixed header */
   .question-table {
             margin-top: 10px;
-            padding-top: 150px;
+            padding-top: 80px;
         }
 
     /* small screen view */
@@ -112,17 +112,18 @@ div.quiz p {
         /* phone height setting */
         .question-table {
             margin-top: 0px;
-            padding-top: 380px;
+            padding-top: 170px;
         }
-    }
-
-    /* Mobile styles */
-    @media (max-width: 768px) {
         .container {
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
+        }
+  
+        .examinfo {
+            color: red;
+            display: none;
         }
 
         .pagination-boxes {
@@ -134,6 +135,15 @@ div.quiz p {
             width: 100%;
             margin: 0;
         }
+    /* pagination center  */
+    div.dataTables_info {
+        position:absolute
+    }
+    div.dataTables_wrapper div.dataTables_paginate {
+        float:none; 
+        text-align:center;
+        padding: 30px;
+    }
     }
 
     /* Default styles */
@@ -171,9 +181,12 @@ div.quiz p {
         transform: scale(0.98);
     }
     /* pagination center  */
-
-    div.dataTables_info {position:absolute}
-    div.dataTables_wrapper div.dataTables_paginate {float:none; text-align:center}
+    div.dataTables_info {
+        position:absolute
+    }
+    div.dataTables_wrapper div.dataTables_paginate {
+        float:none; text-align:center
+    }
     
 /* new css  */
 
@@ -187,7 +200,7 @@ div.quiz p {
     <div class="sticky-top" style="position: fixed; top: 0; width: 100%; z-index: 1000; background-color: #dfe8f2; border-bottom: 1px solid #dee2e6; padding: -10px;">
         <div class="row justify-content-left" style="margin: 0;">
             <div class="col-12">
-                <div class="alert alert-success" role="alert" style="padding: 20px; display: flex; flex-wrap: wrap; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                <div class="alert alert-success" role="alert" style="padding: 5px; display: flex; flex-wrap: wrap; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                     <!-- Camera Frame -->
                     <div class="col-12 col-md-4" style="padding: 0px;">
                         <div style="position: relative; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
@@ -204,7 +217,7 @@ div.quiz p {
                         </div>
                     </div>
                     <!-- Exam Information -->
-                    <div class="col-12 col-md-4" style="padding: 10px;">
+                    <div class="examinfo col-12 col-md-4" style="padding: 10px;">
                         <h6 style="font-size: 18px; font-weight: bold;">{{ course.course_name }} -- {{course.exam_type}}</h6>
                         <p style="margin: 5px 0;">Number of Questions: {{ q_count }} -- {{course.session }} -- {{course.term }}</p>
                         <p style="margin: 5px 0;">Student Info: {{ request.user.first_name }} {{ request.user.last_name }} </p>
@@ -303,8 +316,8 @@ div.quiz p {
 
 
 <!-- Button with inline CSS -->
-<hr>
-<div class="container" style="display: flex; justify-content: center; align-items: center; padding: 20px;">
+
+<div class="container buttonheight" style="display: flex; justify-content: center; align-items: center; padding: 20px;">
     <button class="submit-button" id="submit" type="submit" 
         style="background-color: #28a745; max-height: 50px; border-radius: 10px; border: none; color: white; font-size: 16px; padding: 10px 20px; margin: 0 5px; cursor: pointer; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); transition: background-color 0.3s ease, transform 0.2s ease;"
         onmouseover="this.style.backgroundColor='#218838';"
@@ -324,7 +337,58 @@ div.quiz p {
 
 <!-- new js -->
 
-<script> 
+<script>
+    $.fn.dataTable.ext.errMode = 'none';
+    
+    function isMobileView() {
+        return window.innerWidth <= 768; // Adjust this value as needed for mobile devices
+    }
+    
+    var table = $('#example').DataTable({
+        pageLength: 1,
+        order: [[3, 'desc']],
+        lengthChange: false, 
+        stateSave: true,
+        sDom: 'lrtip',
+        "ordering": false,
+        "dom": 'rtp',
+        
+        // Set pagingType dynamically based on screen size
+        "pagingType": isMobileView() ? "simple" : "full_numbers",  // "simple" for mobile, "full_numbers" for desktop
+    
+        columnDefs: [
+            {
+                orderable: false,
+                targets: [1, 2, 3]
+            }
+        ]
+    });
+    
+    // Adjust pagination type when the window is resized
+    $(window).resize(function() {
+        var table = $('#example').DataTable();
+        table.destroy();  // Destroy existing DataTable instance
+        $('#example').DataTable({
+            pageLength: 1,
+            order: [[3, 'desc']],
+            lengthChange: false, 
+            stateSave: true,
+            sDom: 'lrtip',
+            "ordering": false,
+            "dom": 'rtp',
+            "pagingType": isMobileView() ? "simple" : "full_numbers",  // Reapply based on new window size
+    
+            columnDefs: [
+                {
+                    orderable: false,
+                    targets: [1, 2, 3]
+                }
+            ]
+        });
+    });
+    </script>
+    
+<!-- <script> 
 
 $.fn.dataTable.ext.errMode = 'none';
 
@@ -348,7 +412,7 @@ var table = $('#example').DataTable({
  
 });
 
-  </script>
+  </script> -->
 
 
 
@@ -380,7 +444,7 @@ $(document).ready(function() {
             let displayMinutes = minutes < 10 ? '0' + minutes : minutes;
             let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
 
-            timerElement.innerHTML = `<b>Time Left: ${displayMinutes}:${displaySeconds}</b>`;
+            timerElement.innerHTML = `<span>Time Left: ${displayMinutes}:${displaySeconds}</span>`;
 
             if (remainingTime <= 0) {
                 clearInterval(timer);
@@ -464,48 +528,89 @@ document.addEventListener('DOMContentLoaded', function() {
     var quizForm = document.getElementById('quizf');
 
     // Function to update the time
-    
-    function updateTimer(time, timerElement) {
-        let storedTime = localStorage.getItem('remainingTime');
-        let remainingTime;
+function updateTimer(time, timerElement) {
+    let storedTime = localStorage.getItem('remainingTime');
+    let remainingTime;
 
-        if (storedTime !== null) {
-            remainingTime = parseInt(storedTime);
-        } else {
-            remainingTime = time * 60; // Convert minutes to seconds
-            localStorage.setItem('remainingTime', remainingTime);
+    // If there's a stored time, use it; otherwise, initialize remainingTime
+    if (storedTime !== null) {
+        remainingTime = parseInt(storedTime);
+    } else {
+        remainingTime = time * 60; // Convert minutes to seconds
+        localStorage.setItem('remainingTime', remainingTime);
+    }
+
+    // Clear any existing timer to avoid duplicates
+    if (window.timerInterval) {
+        clearInterval(window.timerInterval);
+    }
+
+    // Start the timer
+    window.timerInterval = setInterval(() => {
+        let minutes = Math.floor(remainingTime / 60);
+        let seconds = remainingTime % 60;
+
+        let displayMinutes = minutes < 10 ? '0' + minutes : minutes;
+        let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
+
+        timerElement.innerHTML = `<b>Time Left: ${displayMinutes}:${displaySeconds}</b>`;
+
+        // When the time runs out, stop the timer, clear localStorage, and submit
+        if (remainingTime <= 0) {
+            clearInterval(window.timerInterval);
+            localStorage.removeItem('remainingTime');
+            submitQuiz(); // Call the function to submit the quiz when time is over
+            return;
         }
 
-        const timer = setInterval(() => {
-            let minutes = Math.floor(remainingTime / 60);
-            let seconds = remainingTime % 60;
+        remainingTime--;
+        localStorage.setItem('remainingTime', remainingTime); // Update stored remaining time
+    }, 1000);
+}
 
-            let displayMinutes = minutes < 10 ? '0' + minutes : minutes;
-            let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
+    // // Function to update the time
+    
+    // function updateTimer(time, timerElement) {
+    //     let storedTime = localStorage.getItem('remainingTime');
+    //     let remainingTime;
 
-            timerElement.innerHTML = `<b>Time Left: ${displayMinutes}:${displaySeconds}</b>`;
+    //     if (storedTime !== null) {
+    //         remainingTime = parseInt(storedTime);
+    //     } else {
+    //         remainingTime = time * 60; // Convert minutes to seconds
+    //         localStorage.setItem('remainingTime', remainingTime);
+    //     }
 
-            if (remainingTime <= 0) {
-                clearInterval(timer);
-                localStorage.clear()
-                localStorage.removeItem('remainingTime');
-                // submitQuiz(); // Call the function to submit the quiz when time is over
-                return;
-            }
-            if (minutes <= 0 && seconds <= 0) {
-                clearInterval(timer);
-                localStorage.clear()
-                localStorage.removeItem('remainingTime');
-                submitQuiz(); // Call the function to submit the quiz when time is over
-            }
+    //     const timer = setInterval(() => {
+    //         let minutes = Math.floor(remainingTime / 60);
+    //         let seconds = remainingTime % 60;
 
-            remainingTime--;
-            localStorage.setItem('remainingTime', remainingTime); // Update stored remaining time
-        }, 1000);
+    //         let displayMinutes = minutes < 10 ? '0' + minutes : minutes;
+    //         let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
 
-        // Store the timer interval ID
-        window.timerInterval = timer; // Assigning to a global variable
-    }
+    //         timerElement.innerHTML = `<b>Time Left: ${displayMinutes}:${displaySeconds}</b>`;
+
+    //         if (remainingTime <= 0) {
+    //             clearInterval(timer);
+    //             localStorage.clear()
+    //             localStorage.removeItem('remainingTime');
+    //             // submitQuiz(); // Call the function to submit the quiz when time is over
+    //             return;
+    //         }
+    //         if (minutes <= 0 && seconds <= 0) {
+    //             clearInterval(timer);
+    //             localStorage.clear()
+    //             localStorage.removeItem('remainingTime');
+    //             submitQuiz(); // Call the function to submit the quiz when time is over
+    //         }
+
+    //         remainingTime--;
+    //         localStorage.setItem('remainingTime', remainingTime); // Update stored remaining time
+    //     }, 1000);
+
+    //     // Store the timer interval ID
+    //     window.timerInterval = timer; // Assigning to a global variable
+    // }
 
     // Call the updateTimer function
     updateTimer({{ course.duration_minutes }}, timerElement); // Pass timerElement

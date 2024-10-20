@@ -44,4 +44,5 @@ urlpatterns = [
     path('delete-question/<int:question_id>/', views.delete_question_view, name='delete_question'),
     path('teacher-results/', views.teacher_results_view, name='teacher_results'),
     path('export-results-csv/', views.export_results_csv, name='export_results_csv'),
+     path('import-results/', views.import_results, name='import-results'),
 ]
