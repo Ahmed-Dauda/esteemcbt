@@ -32,15 +32,16 @@ class Course(models.Model):
     updated = models.DateTimeField(auto_now=True, blank=True, null=True)
     id = models.AutoField(primary_key=True)
  
-    class Meta:  
+    class Meta:
+        # unique_together = ('course_name', 'session', 'term', 'schools')  # Combined Meta classes  
         unique_together = ('course_name', 'session', 'term', 'schools', 'exam_type')  # Combined Meta classes
         verbose_name = 'Exam'
         verbose_name_plural = 'Exams'
 
-    def __str__(self):
-        return f'{self.course_name or "No Course Name" }'
     # def __str__(self):
-    #     return f'{self.course_name} - {self.exam_type}'
+    #     return f'{self.course_name or "No Course Name" }'
+    def __str__(self):
+        return f'{self.course_name} - {self.exam_type}'
 
     def get_questions(self):
         return self.question_set.all()[:self.show_questions]
