@@ -1,0 +1,83 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %} Imput Results {% endblock %}
+
+{% block content %}
+<div class="container mt-4"> <!-- Add a Bootstrap container -->
+    <h6>Results for {{ result_class }} - {{ subject }} - {{ session.name }} - {{ term.name }} - {{ school_name }}</h6>
+    <form method="POST" action="{% url 'teacher:save-results' %}">
+        {% csrf_token %}
+        <input type="hidden" name="result_class" value="{{ result_class }}">
+        <input type="hidden" name="subject" value="{{ subject }}">
+        <input type="hidden" name="session" value="{{ session.name }}">
+        <input type="hidden" name="term" value="{{ term.name }}">
+
+        <table id="resultsTable" class="display table table-bordered"> <!-- Added Bootstrap table classes -->
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>CA</th>
+                    <th>Total CA (10%)</th>
+                    <th>Midterm</th>
+                    <th>Total Midterm (20%)</th>
+                    <th>Exams</th>
+                    <th>Total Exam (70%)</th>
+                    <th>Total/100</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in student_results %}
+                <tr>
+                    <td>{{ student.student }}</td>
+                    
+                    <td>
+                        <input type="number" name="marks_ca_{{ student.student.id }}" value="{{ student.ca_marks }}" min="0" {% if lock_status.ca_locked %}disabled{% endif %} style="border: 1px solid #007bff;" 
+                            oninput="checkWarning(this, 10, 'ca_warning_{{ student.student.id }}');">
+                        <span id="ca_warning_{{ student.student.id }}" class="warning" style="color: red; display: none;">Warning: Must not exceed 10!</span>
+                    </td>
+                    <td style="background-color: #f0f8ff;">{{ student.ca_total }}</td>
+                    
+                    <td>
+                        <input type="number" name="marks_midterm_{{ student.student.id }}" value="{{ student.midterm_marks }}" min="0" {% if lock_status.midterm_locked %}disabled{% endif %} style="border: 1px solid #007bff;" 
+                            oninput="checkWarning(this, 20, 'midterm_warning_{{ student.student.id }}');">
+                        <span id="midterm_warning_{{ student.student.id }}" class="warning" style="color: red; display: none;">Warning: Must not exceed 20!</span>
+                    </td>
+                    <td style="background-color: #f0f8ff;">{{ student.midterm_total }}</td>
+                    
+                    <td>
+                        <input type="number" name="marks_exam_{{ student.student.id }}" value="{{ student.exam_marks }}" min="0" {% if lock_status.exam_locked %}disabled{% endif %} style="border: 1px solid #007bff;" 
+                            oninput="checkWarning(this, 70, 'exam_warning_{{ student.student.id }}');">
+                        <span id="exam_warning_{{ student.student.id }}" class="warning" style="color: red; display: none;">Warning: Must not exceed 70!</span>
+                    </td>
+                    <td style="background-color: #f0f8ff;">{{ student.exam_total }}</td>
+                    
+                    <td style="background-color: #f0f8ff;">{{ student.final_total }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button type="submit" class="btn btn-primary">Save</button> <!-- Added Bootstrap button class -->
+    </form>
+</div> <!-- End of container -->
+
+<script>
+    $(document).ready(function() {
+        $('#resultsTable').DataTable(); // Initialize DataTable
+
+        document.querySelector('form').addEventListener('submit', function() {
+            document.querySelector('input[type="submit"]').disabled = true; // Disable the submit button
+        });
+    });
+
+    function checkWarning(input, maxMark, warningId) {
+        const warningSpan = document.getElementById(warningId);
+        if (parseInt(input.value) > maxMark) {
+            warningSpan.style.display = 'inline'; // Show warning
+        } else {
+            warningSpan.style.display = 'none'; // Hide warning
+        }
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,104 @@
+{% load static %}
+{% load custom_filters %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ class_name }} - Report Cards for {{ session }} {{ term }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .report-card { border: 1px solid #000; margin-bottom: 20px; padding: 15px; }
+        .header { text-align: center; }
+        .student-details, .subject-scores { margin: 15px 0; }
+        .subject-table { width: 100%; border-collapse: collapse; }
+        .subject-table th, .subject-table td { border: 1px solid #000; padding: 8px; text-align: center; }
+        .subject-table th { background-color: #f2f2f2; }
+        .footer { text-align: right; margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+     
+    <h1>{{ class_name }} - Report Cards for {{ session }} {{ term }}</h1>
+
+    {% for report_card in class_report_cards %}
+
+ 
+    <div class="report-card">
+        <div class="header">
+            {% if report_card.school_logo_url %}
+                <img src="{{ report_card.school_logo_url }}" alt="School Logo" height="80">
+            {% endif %}
+            <h2>{{ report_card.student_name }}</h2>
+            <p>{{ report_card.student_class }} | Admission No: {{ report_card.student_admission_no }}</p>
+            <p>{{ report_card.school_motto }}</p>
+            <p>{{ report_card.school_address }}</p>
+            <p><strong>Gender:</strong> {{ report_card.student_gender }}</p>
+            
+            <p>Final Position: {{report_card.final_position}} out of {{num_students_in_class}} </p>  
+            <h5>No. In Class: {{num_students_in_class}}</h5> 
+          
+            
+        </div>
+
+        <div class="subject-scores">
+            <h3>Subjects and Scores</h3>
+            <table class="subject-table">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>CA Marks</th>
+                        <th>Midterm Marks</th>
+                        <th>Exam Marks</th>
+                        <th>Total Marks</th>
+                        <th>OUT OF</th>
+                        <th>Subject Ave</th>
+                        <th>Low in Class</th>
+                        <th>High in Class</th>
+                        <th>Grade</th>
+                        <th>POS</th>
+                        <th>Comments</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subject in report_card.subjects %}
+                 
+                    <tr>
+                        <td>{{ subject.subject }}</td>
+                        <td>{{ subject.CA_marks }}</td>
+                        <td>{{ subject.Midterm_marks }}</td>
+                        <td>{{ subject.Exam_marks }}</td>
+                        <td>{{ subject.Total_marks }}</td>
+                        <td>{{ subject.subject_student_count }}</td>
+                        <td>{{ subject.subject_averages }}</td>
+                        <td>{{ subject.low_in_class }}</td>
+                        <td>{{ subject.high_in_class }}</td>
+                        <td>{{ subject.Grade }}</td>
+                        <td>{{ subject.subject_positions }}</td>
+                       
+                        <td>{{ subject.Comments }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="student-details">
+            <p><strong>Grading System:</strong></p>
+            <ul>
+                <li>A: {{ report_card.grading_system.A }} (Excellent)</li>
+                <li>B: {{ report_card.grading_system.B }} (Good)</li>
+                <li>C: {{ report_card.grading_system.C }} (Average)</li>
+                <li>P: {{ report_card.grading_system.P }} (Pass)</li>
+                <li>F: {{ report_card.grading_system.F }} (Fail)</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>Total Marks Obtained: {{ report_card.total_marks_obtained }}</p>
+            <p>Maximum Marks Possible: {{ report_card.total_max_marks }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</body>
+</html>

@@ -2,6 +2,15 @@ from django.db import models
 from quiz.models import Course,CourseGrade, School
 from users.models import NewUser
 
+class ColumnLock(models.Model):
+    subject = models.ForeignKey(Course, on_delete=models.CASCADE)
+    ca_locked = models.BooleanField(default=False)
+    midterm_locked = models.BooleanField(default=False)
+    exam_locked = models.BooleanField(default=False)
+  
+    def __str__(self):
+        return f'{self.subject}'
+    
 # from django.contrib.auth.models import User
 
 # class Teacher(models.Model):

@@ -16,11 +16,18 @@ urlpatterns = [
     path('award-badges/<str:session>/<str:term>/', views.award_student_badges, name='award_student_badges'),
     path('leaderboard/<str:session>/<str:term>/', views.leaderboard, name='leaderboard'),
     path('leaderboard-list/', views.leaderboard_list, name='leaderboard_list'),
-    
+      
+    path('report-card-class/<str:session>/<str:term>/', views.generate_report_card_class, name='generate_report_card_class'),
+
     path('report-card/<str:session>/<str:term>/', views.generate_report_card, name='generate_report_card'),
+    path('generate-report-card-pdf/<str:session>/<str:term>/', views.generate_report_card_pdf, name='generate-report-card-pdf'),
     path('report-cards/', views.report_card_list, name='report_card_list'), 
+    path('report-card-pdf-list/', views.report_card_pdf_list, name='report-card-pdf-list'),
+    path('list-student-results/', views.list_student_results, name='list-student-results'),
+    path('class-results/<int:session_id>/<int:term_id>/<str:result_class>/',  views.view_class_results, name='view-class-results'),  
+    
     # path('report-card/<str:session>/<str:term>/', views.generate_report_card, name='generate_report_card'),
-   
+      
     # path('report-card/', views.generate_report_card, name='generate_report_card'),
     path('paystack/webhook/', views.paystack_webhook, name='paystack_webhook'),
     path('take-exam', views.take_exams_view,name='take-exam'),

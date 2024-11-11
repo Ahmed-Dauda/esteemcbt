@@ -2,6 +2,16 @@
 
 {% block title %}Import Results{% endblock %}
 
+{% if messages %}
+    <div id="message-container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
 {% block content %}
   <div class="container mt-5">
     <div class="row justify-content-center">
@@ -28,4 +38,14 @@
       </div>
     </div>
   </div>
+
+  <script>
+    setTimeout(function() {
+        var messageContainer = document.getElementById('message-container');
+        if (messageContainer) {
+            messageContainer.style.display = 'none';
+        }
+    }, 5000);  // Message disappears after 5 seconds (5000 milliseconds)
+  </script>
+
 {% endblock %}

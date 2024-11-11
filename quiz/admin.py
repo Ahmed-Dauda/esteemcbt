@@ -9,6 +9,7 @@ from import_export import fields, resources
 from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from .models import Question, Course, Session, Term, ExamType  # Import required models
 from import_export.fields import Field
+from django.db.models import Prefetch
 
 
 class SchoolAdmin(admin.ModelAdmin):
@@ -18,9 +19,7 @@ class SchoolAdmin(admin.ModelAdmin):
 
 admin.site.register(School, SchoolAdmin)
 
-from django.contrib import admin
 
-from django.db.models import Prefetch
 
 class CourseAdmin(admin.ModelAdmin):
     list_display = ['get_school_name', 'show_questions', 'course_name', 'session','term','exam_type','question_number', 'total_marks', 'num_attemps', 'duration_minutes', 'created']
@@ -71,9 +70,9 @@ from import_export import resources, fields, widgets  # Importing widgets
 
 
 class ResultResource(resources.ModelResource):
-    exam_course_name = fields.Field(
+    exam__course_name = fields.Field(
         column_name='exam_course_name',
-        attribute='exam__course_name',
+        attribute='exam__course_name__title',
     )
        
     student_username = fields.Field(
@@ -93,23 +92,38 @@ class ResultResource(resources.ModelResource):
     
     class Meta:
         model = Result
-        fields = (
-            'exam', 'student_username', 'marks', 
-            'result_class', 'session', 'term', 'exam_type', 
-            'created', 'id')
-        export_order = ('exam_course_name', 'student_username', 'marks', 'result_class', 'session', 'term', 'exam_type', 'created', 'id')
-        
         # fields = (
-        #     'id', 'exam', 'result_class', 'session', 'term', 
-        #     'exam_type', 'student_username', 'student_first_name', 
-        #     'student_last_name', 'marks', 'created'
-        # )
+        #     'exam', 'student_username', 'marks', 
+        #     'result_class', 'session', 'term', 'exam_type', 
+        #     'created', 'id')
+        # export_order = ('exam_course_name', 'student_username', 'marks', 'result_class', 'session', 'term', 'exam_type', 'created', 'id')
+        
+        fields = (
+             
+            'id', 'exam_course_name', 'result_class', 'session__name', 'term__name', 
+            'exam_type__name', 'student_username', 'student_first_name', 
+            'student_last_name', 'marks', 'created'
+        )
+        export_order = (
+            'exam__course_name',
+            'student_username',
+            'student_first_name',  # First name of the student
+            'student_last_name',  # Last name of the student
+             'marks',  # Marks or score
+            'result_class',  # Class associated with the result
+            'session__name',  # Session name
+            'term__name',  # Term name
+            'exam_type__name',  # Exam type name
+           
+            'created',  # Created timestamp
+            'id',  # The unique ID of the result (optional to be at the end)
+        )
         
 
 
 class ResultAdmin(ImportExportModelAdmin):    
     resource_class = ResultResource
-    list_display = ['student', 'exam', 'marks', 'exam_type', 'result_class', 'session', 'term', 'created']
+    list_display = ['student', 'exam','schools', 'marks', 'exam_type', 'result_class', 'session', 'term', 'created']
     list_filter = ['exam', 'student', 'exam_type', 'session', 'term']
     search_fields = ['student__first_name', 'student__last_name', 'exam__course_name__title', 'marks']
     ordering = ['id']

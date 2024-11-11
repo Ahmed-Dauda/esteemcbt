@@ -1,0 +1,27 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %} Subject list for results {% endblock %}
+
+
+
+{% block content %}
+<ul>
+    {% for result in filtered_results %}
+        {% if result.session__name and result.term__name %}
+            <h5>{{ result.result_class }} - {{ result.schools__school_name }}</h5>
+           
+            <li>
+                <a href="{% url 'teacher:result_column_view' result.result_class result.exam__course_name__title result.session__name result.term__name %}">
+                    {{ result.exam__course_name__title }} - {{ result.session__name }} - {{ result.term__name }} 
+                </a>
+            </li>
+        {% endif %}
+    {% empty %}
+        <li>No results found for the selected criteria.</li>
+    {% endfor %}
+</ul>
+
+
+{% endblock %}
+
+

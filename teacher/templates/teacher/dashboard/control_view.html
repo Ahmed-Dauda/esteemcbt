@@ -1,0 +1,80 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %}Control Exams{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Control Marks for {{ course.course_name.title }} - {{ result_class }}</h2>
+
+    <form method="POST" class="form-group">
+        {% csrf_token %}
+        
+        <div class="form-check">
+            <input type="checkbox" name="ca_locked" class="form-check-input" id="ca_locked" {% if lock_status.ca_locked %}checked{% endif %}>
+            <label class="form-check-label" for="ca_locked">Lock CA Marks</label>
+        </div>
+        
+        <div class="form-check">
+            <input type="checkbox" name="midterm_locked" class="form-check-input" id="midterm_locked" {% if lock_status.midterm_locked %}checked{% endif %}>
+            <label class="form-check-label" for="midterm_locked">Lock Midterm Marks</label>
+        </div>
+        
+        <div class="form-check">
+            <input type="checkbox" name="exam_locked" class="form-check-input" id="exam_locked" {% if lock_status.exam_locked %}checked{% endif %}>
+            <label class="form-check-label" for="exam_locked">Lock Exam Marks</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+    </form>
+
+    <div class="mt-4 text-center">
+        {% if subject %}
+            <a href="{% url 'teacher:result_column_view' result_class=result_class subject=course.course_name.title session=session.name term=term.name %}" class="btn btn-secondary">Back to Results</a>
+        {% else %}
+            <p class="text-danger">Subject not available</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    /* Customize the appearance of the checkboxes */
+    .form-check-input {
+        appearance: none; /* Remove default checkbox styling */
+        width: 1.2rem; /* Reduced size of the checkbox */
+        height: 1.2rem; /* Reduced size of the checkbox */
+        border: 2px solid #007bff; /* Border color */
+        border-radius: 4px; /* Rounded corners */
+        background-color: #fff; /* Background color */
+        position: relative; /* Position for the checkmark */
+        cursor: pointer; /* Change cursor to pointer */
+    }
+
+    .form-check-input:checked {
+        background-color: #007bff; /* Checked background color */
+        border: 2px solid #0056b3; /* Darker border when checked */
+    }
+
+    .form-check-input:checked::after {
+        content: ''; /* Create a checkmark */
+        position: absolute;
+        left: 3px; /* Adjust position */
+        top: 1px; /* Adjust position */
+        width: 0.4rem; /* Checkmark width */
+        height: 0.8rem; /* Checkmark height */
+        border: solid white; /* Checkmark color */
+        border-width: 0 0.15rem 0.15rem 0; /* Checkmark shape */
+        transform: rotate(45deg); /* Rotate to form a checkmark */
+    }
+
+    .form-check-label {
+        font-size: 0.9rem; /* Reduced font size for the label */
+        color: #333; /* Label color */
+        margin-left: 0.4rem; /* Spacing between checkbox and label */
+    }
+
+    .form-check {
+        margin-bottom: 0.8rem; /* Spacing between checkbox items */
+    }
+</style>
+
+{% endblock %}

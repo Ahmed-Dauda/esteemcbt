@@ -3,9 +3,10 @@ from django.contrib import admin
 # Register your models here.
 
 from django.contrib import admin
-from .models import Teacher, SampleCodes
+from .models import Teacher, SampleCodes, ColumnLock
 
 admin.site.register(SampleCodes)
+admin.site.register(ColumnLock)
 
 class AdminTeacher(admin.ModelAdmin):
     list_display = ['id', 'first_name', 'last_name', 'email', 'username', 'display_subjects_taught', 'display_classes_taught', 'school']

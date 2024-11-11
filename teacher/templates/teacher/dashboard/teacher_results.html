@@ -6,12 +6,29 @@
 
 <!-- Begin Page Content -->
 <div class="container-fluid">
-    <!-- Export Button -->
-    <form action="{% url 'teacher:export_results_csv' %}" method="get">
-        <button type="submit" class="btn btn-primary mb-4">
-            <i class="fas fa-file-csv"></i> Export to CSV
-        </button>
-    </form>
+
+    <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+        <!-- Export Button -->
+        <form action="{% url 'teacher:export_results_csv' %}" method="get">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-file-csv"></i> Export to CSV
+            </button>
+        </form>
+    
+        <!-- Import Button -->
+        <form action="{% url 'teacher:import-results' %}" method="get">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-file-csv"></i> Import to CSV
+            </button>
+        </form>
+         <!-- input result-->
+         <form action="{% url 'teacher:class-list' %}" method="get">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-file-csv"></i> Input Result
+            </button>
+        </form>
+       
+    </div>
     
     <!-- Card -->
     <div class="card shadow">
@@ -29,6 +46,11 @@
                             <th>Student Name</th>
                             <th>Exam Score</th>
                             <th>Exam Subject</th>
+                            <th>Exam type</th>
+                            <th>Session</th>
+                            <th>Term</th>
+                            
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -38,7 +60,24 @@
                             <td>
                                 <span class="badge badge-success">{{ result.marks }}</span>
                             </td>
-                            <td>{{ result.exam }}</td>
+                            <td>{{ result.exam.course_name }}</td>
+                            <td>{{ result.exam.exam_type.name }}</td>
+                            <td>{{ result.exam.session }}</td>
+                            <td>{{ result.exam.term }}</td>
+                            <td>
+                                <!-- Edit Button -->
+                                <a href="{% url 'teacher:edit_teacher_results' result.id %}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+
+                                <!-- Delete Button -->
+                                <form action="{% url 'teacher:delete_teacher_result' result.id %}" method="post" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete this result?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

@@ -1,0 +1,68 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %}Preview Import{% endblock %}
+
+{% block content %}
+  <div class="container mt-5">
+    <!-- Display messages if any -->
+    {% if messages %}
+      <div id="message-container">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <h4>Below is a preview of the data to be imported. If you are satisfied, click 'Confirm import'.</h4>
+
+    <table class="table table-bordered mt-3">
+      <thead>
+        <tr>
+          {% for header in preview_data.0.keys %}
+            <th>{{ header }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in preview_data %}
+          <tr>
+            {% for value in row.values %}
+              <td>{{ value }}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <form id="import-form" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="confirm" value="1">
+      <input type="hidden" name="file" value="{{ file }}">  <!-- Pass the file back -->
+
+      <div class="text-center mt-4">
+        <button type="submit" class="btn btn-success">
+          <i class="fas fa-check"></i> Confirm Import
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- JavaScript to show success alert and then redirect -->
+  <script>
+    const form = document.getElementById('import-form');
+    form.addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevent the form from submitting immediately
+
+      // Show success alert
+      alert('Results imported successfully! Redirecting...');
+
+      // Wait for a short time (1.5 seconds) to allow the user to see the message
+      setTimeout(function() {
+        form.submit();  // Now submit the form to perform the import and redirect
+      }, 1500);  // 1.5 seconds delay
+    });
+  </script>
+
+{% endblock %}

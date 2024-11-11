@@ -32,51 +32,17 @@ class Course(models.Model):
     updated = models.DateTimeField(auto_now=True, blank=True, null=True)
     id = models.AutoField(primary_key=True)
  
-    class Meta:
-        unique_together = ('course_name', 'session', 'term', 'schools')  # Combined Meta classes
+    class Meta:  
+        unique_together = ('course_name', 'session', 'term', 'schools', 'exam_type')  # Combined Meta classes
         verbose_name = 'Exam'
         verbose_name_plural = 'Exams'
 
     def __str__(self):
-        return f'{self.course_name or "No Course Name"}'
+        return f'{self.course_name} - {self.exam_type}'
 
     def get_questions(self):
         return self.question_set.all()[:self.show_questions]
 
-
-# class Course(models.Model):
-
-#    room_name = models.CharField(max_length=100,blank=True, null= True)
-#    schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='course', blank=True, null=True)
-#    course_name = models.ForeignKey(Courses,on_delete=models.CASCADE, blank=True, null= True)
-#    question_number = models.PositiveIntegerField(blank=True, null= True)
-#    course_pay = models.BooleanField(default=False)
-#    total_marks = models.PositiveIntegerField(blank=True, null= True)
-#    session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True)  # ForeignKey to Session model
-#    term = models.ForeignKey(Term, on_delete=models.SET_NULL, blank=True, null=True)
-#    exam_type = models.ForeignKey(ExamType, on_delete=models.CASCADE, blank=True, null=True)
-#    num_attemps = models.PositiveIntegerField(default=4)
-# #    pass_mark = models.PositiveIntegerField(null=True)
-#    show_questions = models.PositiveIntegerField(default=10)
-#    duration_minutes = models.PositiveIntegerField(default=10)  # Add this field for quiz duration
-#    created = models.DateTimeField(auto_now_add=True,blank=True, null= True)
-#    updated = models.DateTimeField(auto_now=True, blank=True, null= True)
-#    id = models.AutoField(primary_key=True)
-
-#    class Meta:
-#        unique_together = ('course_name', 'session', 'term', 'school')  # Ensures uniqueness
-
-
-#    class Meta:
-#         verbose_name = 'Exam'
-#         verbose_name_plural = 'Exams'
-
-#    def __str__(self):
-#         # Ensure this method returns a string
-#         return f'{self.course_name or "No Course Name"}'
-   
-#    def get_questions(self):
-#         return self.question_set.all()[:self.show_questions]
 
 
 from django.core.exceptions import ValidationError
@@ -96,36 +62,6 @@ class CourseGrade(models.Model):
     def __str__(self):
         # Return the class name (JSS1, JSS2, SS1, etc.) instead of subjects
         return self.name if self.name else 'Unnamed Class'
-
-
-# class CourseGrade(models.Model):
-#     schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='coursegrade', blank=True, null=True)
-#     name = models.CharField(max_length=200, blank=True, null=True)
-#     students = models.ManyToManyField(NewUser, related_name='course_grades', blank=True)
-#     subjects = models.ManyToManyField(Courses, related_name='course_grade', blank=True)
-#     is_active = models.BooleanField(default=True)  # Add the checkbox field
-    
-#     class Meta:
-#         verbose_name = 'Student class'
-#         verbose_name_plural = 'student classes'
-
-#     def __str__(self):
-#         course_names = '\n'.join(str(course) for course in self.subjects.all())
-#         return f'{course_names}'
-
-# class CourseGrade(models.Model):
-#     name = models.CharField(max_length=200, blank=True, null=True)
-#     students = models.ManyToManyField(NewUser, related_name='course_grades', blank= True)  # Change to ManyToManyField for multiple students
-#     subjects = models.ManyToManyField(Courses, related_name='course_grade', blank= True)
-    
-        
-#     class Meta:
-#         verbose_name = 'Student class'
-#         verbose_name_plural = 'student classes'
-        
-#     def __str__(self):
-#         course_names = '\n'.join(str(course) for course in self.subjects.all())
-#         return f'{course_names}'
     
 
 class School(models.Model):
@@ -174,55 +110,6 @@ from django.db.models import Sum
            
 from django.core.validators import MaxValueValidator, MinValueValidator
 
-# class Question(models.Model):
-#     # Adding the new fields
-#     schools = models.ManyToManyField("quiz.School", related_name='questions', blank=True)  # Multiple schools can have this question
-#     session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True)  # ForeignKey to Session model
-#     term = models.ForeignKey(Term, on_delete=models.SET_NULL, blank=True, null=True)
-#     exam_type = models.ForeignKey('quiz.ExamType', on_delete=models.SET_NULL, blank=True, null=True)
-
-#     # Existing fields
-#     course = models.ForeignKey(Course, on_delete=models.CASCADE, blank=True, null=True)
-#     marks = models.PositiveIntegerField(blank=True, null=True)
-#     question = HTMLField(blank=True, null=True)
-#     img_quiz = CloudinaryField('image', blank=True, null=True)
-#     option1 = HTMLField(max_length=500, blank=True, null=True)
-#     option2 = HTMLField(max_length=500, blank=True, null=True)
-#     option3 = HTMLField(max_length=500, blank=True, null=True)
-#     option4 = HTMLField(max_length=500, blank=True, null=True)
-
-#     # Answer choices
-#     cat = (('Option1', 'Option1'), ('Option2', 'Option2'), ('Option3', 'Option3'), ('Option4', 'Option4'))
-#     answer = models.CharField(max_length=200, choices=cat, blank=True, null=True)
-
-#     # Timestamps
-#     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-#     updated = models.DateTimeField(auto_now=True, blank=True, null=True)
-
-#     # Primary key
-#     id = models.AutoField(primary_key=True)
-
-#     def __str__(self):
-#         return f"{self.course} | {self.question}"
-
-#     # Save method to update total marks and question count in related Course
-#     def save(self, *args, **kwargs):
-#         super().save(*args, **kwargs)
-#         if self.course:
-#             total_marks = Question.objects.filter(course=self.course).aggregate(Sum('marks'))['marks__sum'] or 0
-#             self.course.total_marks = total_marks
-#             self.course.question_number = Question.objects.filter(course=self.course).count()
-#             self.course.save()
-
-#     # Delete method to update the related Course upon question deletion
-#     def delete(self, *args, **kwargs):
-#         course = self.course
-#         super().delete(*args, **kwargs)
-#         if course:
-#             total_marks = Question.objects.filter(course=course).aggregate(Sum('marks'))['marks__sum'] or 0
-#             course.total_marks = total_marks
-#             course.question_number = Question.objects.filter(course=course).count()
-#             course.save()
 
 # real codes
 
@@ -267,33 +154,12 @@ class Question(models.Model):
             course.save()
 
 
-
-# class Question(models.Model):
-
-#     course=models.ForeignKey(Course,on_delete=models.CASCADE,blank=True, null= True)
-#     marks=models.PositiveIntegerField(blank=True, null= True)
-#     # question= models.TextField( blank=True, null= True)
-#     question= HTMLField( blank=True, null= True)
-#     img_quiz = CloudinaryField('image', blank=True, null= True)
-#     option1 = HTMLField(max_length=500, blank=True, null= True)
-#     option2 = HTMLField(max_length=500, blank=True, null= True)
-#     option3 = HTMLField(max_length=500, blank=True, null= True)
-#     option4 = HTMLField(max_length=500, blank=True, null= True)
-
-#     cat=(('Option1','Option1'),('Option2','Option2'),('Option3','Option3'),('Option4','Option4'))
-#     answer=models.CharField(max_length=200,choices=cat,blank=True, null= True)
-#     created = models.DateTimeField(auto_now_add=True,blank=True, null= True)
-#     updated = models.DateTimeField(auto_now=True, blank=True, null= True)
-#     id = models.AutoField(primary_key=True)
-
-#     def __str__(self):
-#         return f"{self.course} | {self.question}"
-
 from django.db import models
 
 class Result(models.Model):
     student = models.ForeignKey(Profile, on_delete=models.CASCADE, db_index=True)  # Adding index
     exam = models.ForeignKey(Course, on_delete=models.CASCADE, db_index=True)  # Adding index
+    schools = models.ForeignKey(School, on_delete=models.SET_NULL, related_name='courseschool', blank=True, null=True)
     marks = models.PositiveIntegerField()
     date = models.DateTimeField(auto_now=True)
     result_class = models.CharField(max_length=200, blank=True, null=True, db_index=True)  # Adding index
@@ -302,6 +168,7 @@ class Result(models.Model):
     exam_type = models.ForeignKey(ExamType, on_delete=models.CASCADE, blank=True, null=True, db_index=True)  # Adding index
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     updated = models.DateTimeField(auto_now=True, blank=True, null=True)
+    is_locked = models.BooleanField(default=False)  # Add this field
     id = models.AutoField(primary_key=True)
 
     class Meta:
@@ -309,52 +176,4 @@ class Result(models.Model):
 
     def __str__(self):
         return f"{self.student}---{self.exam.course_name}---{self.exam_type}---{self.marks}"
-
-
-
-# class Result(models.Model):
-#     student = models.ForeignKey(Profile, on_delete=models.CASCADE)
-#     exam = models.ForeignKey(Course, on_delete=models.CASCADE)
-#     marks = models.PositiveIntegerField()
-#     date = models.DateTimeField(auto_now=True)
-#     result_class = models.CharField(max_length=200, blank=True, null=True)
-#     session = models.CharField(max_length=20, blank=True, null=True)  # Field for session
-#     term = models.CharField(max_length=20, blank=True, null=True)     # Field for term
-#     exam_type = models.ForeignKey(ExamType, on_delete=models.CASCADE, blank=True, null=True)  # Dynamic exam type
-#     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-#     updated = models.DateTimeField(auto_now=True, blank=True, null=True)
-#     id = models.AutoField(primary_key=True)
-    
-#     def __str__(self):
-#         return f"{self.student}---{self.exam.course_name}---{self.exam_type}---{self.marks}"
-
-# class Result(models.Model):
-#     student = models.ForeignKey(Profile, on_delete=models.CASCADE)
-#     exam = models.ForeignKey(Course, on_delete=models.CASCADE)
-#     marks = models.PositiveIntegerField()
-#     date = models.DateTimeField(auto_now=True)
-#     result_class = models.CharField(max_length=200, blank=True, null=True)
-#     session = models.CharField(max_length=20, blank=True, null=True)  # Field for session
-#     term = models.CharField(max_length=20, blank=True, null=True)     # Field for term
-#     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-#     updated = models.DateTimeField(auto_now=True, blank=True, null=True)
-#     id = models.AutoField(primary_key=True)
-    
-#     def __str__(self):
-#         return f"{self.student}---{self.exam.course_name}----{self.marks}"
-
-
-# class Result(models.Model):
-
-#     student = models.ForeignKey(Profile,on_delete=models.CASCADE)
-#     exam = models.ForeignKey(Course,on_delete=models.CASCADE)
-#     # smscourses = models.ForeignKey(smscourses,on_delete=models.CASCADE, blank=True, null= True)
-#     marks = models.PositiveIntegerField()
-#     date = models.DateTimeField(auto_now=True)
-#     # pass_mark = models.PositiveIntegerField(null=True)
-#     created = models.DateTimeField(auto_now_add=True,blank=True, null= True)
-#     updated = models.DateTimeField(auto_now=True, blank=True, null= True)
-#     id = models.AutoField(primary_key=True)
-#     def __str__(self):
-#         return f"{self.student}---{self.exam.course_name}----{self.marks}"
 

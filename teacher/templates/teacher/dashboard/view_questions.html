@@ -133,7 +133,33 @@
     </script> -->
     
     <!-- Begin Page Content -->
-    <div class="container-fluid">
+
+    <div style="display: flex; gap: 6px; justify-content: center; align-items: center; margin-bottom: 20px;">
+        <!-- Add Questions -->
+        <a class="nav-link btn btn-primary" href="{% url 'teacher:add_question' %}" style="display: flex; align-items: center; padding: 10px;">
+            <i class="fas fa-fw fa-plus"></i>
+            <span style="margin-left: 8px;">Add Questions</span>
+        </a>
+    
+        <!-- Generate Questions with AI -->
+        <a class="nav-link btn btn-info" href="{% url 'teacher:generate_csv' %}" style="display: flex; align-items: center; padding: 10px;">
+            <i class="fas fa-fw fa-eye"></i>
+            <span style="margin-left: 8px;">Generate Questions with AI</span>
+        </a>
+    
+        <!-- Export Questions -->
+        <a class="nav-link btn btn-success" href="{% url 'teacher:export_data' %}" style="display: flex; align-items: center; padding: 10px;">
+            <i class="fas fa-fw fa-file-export"></i>
+            <span style="margin-left: 8px;">Export Questions</span>
+        </a>
+    
+        <!-- Import Questions -->
+        <a class="nav-link btn btn-warning" href="{% url 'teacher:import_data' %}" style="display: flex; align-items: center; padding: 10px;">
+            <i class="fas fa-fw fa-file-import"></i>
+            <span style="margin-left: 8px;">Import Questions</span>
+        </a>
+    </div>
+      
         <!-- DataTables Example -->
         <div class="card shadow mb-4">
             <div class="card-header py-3">

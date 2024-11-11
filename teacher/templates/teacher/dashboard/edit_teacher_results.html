@@ -1,0 +1,21 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %}Edit Result{% endblock %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h4>Edit Result for {{ result.student }} in {{ result.exam.course_name }}</h4>
+
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div class="text-center mt-4">
+        <button type="submit" class="btn btn-success">
+          <i class="fas fa-check"></i> Update Result
+        </button>
+      </div>
+    </form>
+
+    <a href="{% url 'teacher:teacher_results' %}" class="btn btn-secondary mt-3">Cancel</a>
+  </div>
+{% endblock %}

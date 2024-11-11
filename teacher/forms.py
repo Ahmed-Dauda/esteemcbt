@@ -15,10 +15,17 @@ from django.contrib.auth.forms import AuthenticationForm
 from sms.models import Courses
 from quiz.models import Result
 
+class ResultEditForm(forms.ModelForm):
+    class Meta:
+        model = Result
+        fields = ['marks']  # Add any other fields you want to allow editing
+        widgets = {
+            'marks': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
 
 class UploadFileForm(forms.Form):
     file = forms.FileField(label="Select a file to upload")
-    
+
 
 class DocumentUploadForm(forms.Form):
     file = forms.FileField()

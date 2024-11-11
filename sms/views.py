@@ -237,17 +237,17 @@ class PDFGalleryView(ListView):
     #     return context
 
 
-@method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
+# @method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
 class DigitalForm(ListView):
     model = PDFDocument
     template_name = 'sms/dashboard/digital_form.html'
     success_message = 'TestModel successfully updated!'
     count_hit = True
    
-    # def get_queryset(self):
-    #     return PDFDocument.objects.all()
     def get_queryset(self):
-        return PDFGallery.objects.only('title','desc','img_ebook','pdf_url')  # Only fetch necessary fields
+        return PDFDocument.objects.all()
+    # def get_queryset(self):
+    #     return PDFGallery.objects.only('title','desc','img_ebook','pdf_url')  # Only fetch necessary fields
     
     
     def get_context_data(self, **kwargs): 

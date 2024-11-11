@@ -1,0 +1,25 @@
+<tbody>
+    {% for result_entry in result_entries %}
+        <tr>
+            <td class="text-center">{{ result_entry.session__name }}</td>
+            <td class="text-center">{{ result_entry.term__name }}</td>
+            <td class="text-center">{{ result_entry.result_class }}</td>
+            <td class="text-center">
+      
+                    <a href="{% url 'student:generate_report_card_class' result_entry.session__name result_entry.term__name %}" 
+                       class="btn btn-info btn-sm" style="text-decoration: none;">
+                        View Class Results
+                    </a>
+                    <hr>
+                    <a href="{% url 'student:view-class-results' result_entry.session__id result_entry.term__id result_entry.result_class %}?download=true">
+                        Download PDF
+                    </a>
+          
+            </td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td colspan="4" class="text-center">No results available.</td>
+        </tr>
+    {% endfor %}
+</tbody>

@@ -340,6 +340,986 @@ def student_dashboard_view(request):
 
 from django.db.models import Prefetch
 
+from django.db.models import Q
+
+from quiz.models import Session, Term  # Import your models
+
+
+def class_list_view(request):
+    # Get the teacher and related information
+    teacher = Teacher.objects.select_related('school').prefetch_related('subjects_taught', 'classes_taught').get(user=request.user)
+    
+    teacher_school = teacher.school
+    # Get the subjects and classes taught by this teacher
+    subjects_taught = teacher.subjects_taught.all()
+    classes_taught = teacher.classes_taught.all()
+    print(f"subjects_taught: {subjects_taught}")
+    print(f"Teacher School: {teacher.school}")
+    print(f"classes_taught: {classes_taught}")
+    print(f"class: {classes_taught.values_list('name', flat=True)}")
+
+    # Get all unique result_class and corresponding subjects from the Result model
+    subject_tughts = subjects_taught.values_list('course_name__title', flat=True)
+    results = Result.objects.select_related('exam', 'exam__course_name__schools').filter(
+        schools=teacher.school,  # Filter by the teacher's school
+        result_class__in=classes_taught.values_list('name', flat=True),
+        exam__course_name__title__in=subject_tughts  # Filter by the subjects taught by the teacher
+    ).values(
+        'result_class', 'exam__course_name__title', 'schools__school_name', 'session__name', 'term__name'
+    ).distinct()
+
+    print(results, 'yyyy')
+
+    # Organize results into a dictionary for easier access in the template
+    class_subjects = {}
+    for result in results:
+        result_class = result['result_class']
+        exam_name = result['exam__course_name__title']  # Get the subject name from the exam field
+        school_name = result['schools__school_name']  # Get the school name
+
+        if result_class not in class_subjects:
+            class_subjects[result_class] = []
+
+        if exam_name and exam_name not in class_subjects[result_class]:  # Ensure uniqueness
+            class_subjects[result_class].append((exam_name, school_name))  # Store a tuple of (exam_name, school_name)
+
+    # Get sessions and terms for dropdowns
+    sessions = Session.objects.all().distinct()
+    terms = Term.objects.all().distinct()
+
+    # Get selected filters from request
+    selected_class = request.GET.get('result_class')
+    selected_subject = request.GET.get('subject')
+    selected_session = request.GET.get('session')
+    selected_term = request.GET.get('term')
+
+    # Prepare subjects for the selected class
+    subjects_for_selected_class = class_subjects.get(selected_class, [])
+
+    # Filter Results based on selected criteria
+    filtered_results = results  # Start with the results filtered by school
+
+    if selected_class:
+        filtered_results = filtered_results.filter(result_class=selected_class)
+
+    if selected_subject and selected_subject in subject_tughts:
+        filtered_results = filtered_results.filter(exam__course_name__title=selected_subject)
+
+    if selected_session:
+        filtered_results = filtered_results.filter(session__name=selected_session)
+
+    if selected_term:
+        filtered_results = filtered_results.filter(term__name=selected_term)
+
+    # Apply distinct to ensure unique combinations of the filtered results
+    filtered_results = filtered_results.values(
+        'result_class', 'exam__course_name__title', 'schools__school_name', 'session__name', 'term__name'
+    ).distinct()
+
+    for result in filtered_results:
+        print(result['schools__school_name'], 'uuuu')
+
+    # Prepare context    
+    context = {
+        'class_subjects': class_subjects,
+        'sessions': sessions,
+        'terms': terms,   
+        'selected_class': selected_class,
+        'selected_subject': selected_subject,
+        'selected_session': selected_session,
+        'selected_term': selected_term,
+        'subjects_for_selected_class': subjects_for_selected_class,
+        'filtered_results': filtered_results,
+        'subject_tughts': subject_tughts,  # Add this for displaying the subjects taught by the teacher
+    }  
+
+    return render(request, 'teacher/dashboard/class_list.html', context)
+
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from quiz.models import ExamType
+from django.db import transaction
+from teacher.models import ColumnLock
+
+  
+def control_list_view(request):
+    # Get the teacher and related information
+    teacher = Teacher.objects.select_related('school').prefetch_related('subjects_taught', 'classes_taught').get(user=request.user)
+    
+    teacher_school = teacher.school
+    # Get the subjects and classes taught by this teacher
+    subjects_taught = teacher.subjects_taught.all()
+    classes_taught = teacher.classes_taught.all()
+    # print(f"subjects_taught: {subjects_taught}")
+    # print(f"Teacher School: {teacher.school}")
+    # print(f"classes_taught: {classes_taught}")
+    # print(f"class: {classes_taught.values_list('name', flat=True)}")
+
+    # Get all unique result_class and corresponding subjects from the Result model
+    subject_tughts = subjects_taught.values_list('course_name__title', flat=True)
+    results = Result.objects.select_related('exam', 'exam__course_name__schools').filter(
+        schools=teacher.school,  # Filter by the teacher's school
+        result_class__in=classes_taught.values_list('name', flat=True),
+        exam__course_name__title__in=subject_tughts  # Filter by the subjects taught by the teacher
+    ).values(
+        'result_class', 'exam__course_name__title', 'schools__school_name', 'session__name', 'term__name'
+    ).distinct()
+
+    # print(results, 'yyyy')
+
+    # Organize results into a dictionary for easier access in the template
+    class_subjects = {}
+    for result in results:
+        result_class = result['result_class']
+        exam_name = result['exam__course_name__title']  # Get the subject name from the exam field
+        school_name = result['schools__school_name']  # Get the school name
+
+        if result_class not in class_subjects:
+            class_subjects[result_class] = []
+
+        if exam_name and exam_name not in class_subjects[result_class]:  # Ensure uniqueness
+            class_subjects[result_class].append((exam_name, school_name))  # Store a tuple of (exam_name, school_name)
+
+    # Get sessions and terms for dropdowns
+    sessions = Session.objects.all().distinct()
+    terms = Term.objects.all().distinct()
+
+    # Get selected filters from request
+    selected_class = request.GET.get('result_class')
+    selected_subject = request.GET.get('subject')
+    selected_session = request.GET.get('session')
+    selected_term = request.GET.get('term')
+
+    # Prepare subjects for the selected class
+    subjects_for_selected_class = class_subjects.get(selected_class, [])
+
+    # Filter Results based on selected criteria
+    filtered_results = results  # Start with the results filtered by school
+
+    if selected_class:
+        filtered_results = filtered_results.filter(result_class=selected_class)
+
+    if selected_subject and selected_subject in subject_tughts:
+        filtered_results = filtered_results.filter(exam__course_name__title=selected_subject)
+
+    if selected_session:
+        filtered_results = filtered_results.filter(session__name=selected_session)
+
+    if selected_term:
+        filtered_results = filtered_results.filter(term__name=selected_term)
+
+    # Apply distinct to ensure unique combinations of the filtered results
+    filtered_results = filtered_results.values(
+        'result_class', 'exam__course_name__title', 'schools__school_name', 'session__name', 'term__name'
+    ).distinct()
+
+    for result in filtered_results:
+        print(result['schools__school_name'], 'uuuu')
+
+    # Prepare context    
+    context = {
+        'class_subjects': class_subjects,
+        'sessions': sessions,
+        'terms': terms,   
+        'selected_class': selected_class,
+        'selected_subject': selected_subject,
+        'selected_session': selected_session,
+        'selected_term': selected_term,
+        'subjects_for_selected_class': subjects_for_selected_class,
+        'filtered_results': filtered_results,
+        'subject_tughts': subject_tughts,  # Add this for displaying the subjects taught by the teacher
+    }  
+
+
+    return render(request, 'teacher/dashboard/control_list_view.html', context)
+
+
+def control_view(request, result_class, subject, session_name, term_name):
+    # Fetch the course based on the 'subject'
+    course = get_object_or_404(Course, course_name__title__iexact=subject)
+    # Fetch the session and term
+    session = get_object_or_404(Session, name=session_name)
+    term = get_object_or_404(Term, name=term_name)
+
+    # Fetch the column lock object for the course
+    column_lock, created = ColumnLock.objects.get_or_create(subject=course)
+
+    # Fetch the students in the specified class
+    all_students = Profile.objects.filter(student_class=result_class)
+
+    if request.method == 'POST':
+        # Update the locking status based on form submission
+        column_lock.ca_locked = 'ca_locked' in request.POST
+        column_lock.midterm_locked = 'midterm_locked' in request.POST
+        column_lock.exam_locked = 'exam_locked' in request.POST
+        column_lock.save()  # Save the updated locking status
+
+        # Handle form submission for updating results
+        for student in all_students:
+            ca_marks = request.POST.get(f'ca_marks_{student.id}')
+            midterm_marks = request.POST.get(f'midterm_marks_{student.id}')
+            exam_marks = request.POST.get(f'exam_marks_{student.id}')
+
+            # Handle CA Marks (only if CA is not locked)
+            if ca_marks is not None and not column_lock.ca_locked:
+                ca_exam_type = get_object_or_404(ExamType, name__iexact='CA')
+                Result.objects.update_or_create(
+                    student=student,
+                    exam_type=ca_exam_type,
+                    exam=course,
+                    session=session,
+                    term=term,
+                    defaults={'marks': int(ca_marks) if ca_marks else 0}
+                )
+
+            # Handle Midterm Marks (only if Midterm is not locked)
+            if midterm_marks is not None and not column_lock.midterm_locked:
+                midterm_exam_type = get_object_or_404(ExamType, name__iexact='MIDTERM')
+                Result.objects.update_or_create(
+                    student=student,
+                    exam_type=midterm_exam_type,
+                    exam=course,
+                    session=session,
+                    term=term,
+                    defaults={'marks': int(midterm_marks) if midterm_marks else 0}
+                )
+
+            # Handle Exam Marks (only if Exam is not locked)
+            if exam_marks is not None and not column_lock.exam_locked:
+                exam_exam_type = get_object_or_404(ExamType, name__iexact='EXAM')
+                Result.objects.update_or_create(
+                    student=student,
+                    exam_type=exam_exam_type,
+                    exam=course,
+                    session=session,
+                    term=term,
+                    defaults={'marks': int(exam_marks) if exam_marks else 0}
+                )
+
+        # Redirect to the results view after updating
+        return redirect('teacher:result_column_view', result_class=result_class, subject=course.course_name.title, session=session_name, term=term_name)
+
+    else:
+        # Retrieve existing results for the specified course, session, and term
+        results = Result.objects.filter(
+            student__student_class=result_class,
+            exam__course_name__title=course,
+            session=session,
+            term=term
+        ).select_related('student', 'exam_type')
+
+        # Initialize a dictionary to hold student results
+        student_results = {
+            student: {
+                'student': student,
+                'admission_no': student.admission_no if hasattr(student, 'admission_no') else None,
+                'ca_marks': 0,
+                'midterm_marks': 0,
+                'exam_marks': 0,
+                'ca_total': 0,
+                'midterm_total': 0,
+                'exam_total': 0,
+                'final_total': 0
+            }
+            for student in all_students
+        }
+
+        # Populate student results from existing records
+        for result in results:
+            student = result.student
+            if student in student_results:
+                if result.exam_type.name.lower() == 'ca':
+                    student_results[student]['ca_marks'] = result.marks
+                    student_results[student]['ca_total'] += result.marks
+                elif result.exam_type.name.lower() == 'midterm':
+                    student_results[student]['midterm_marks'] = result.marks
+                    student_results[student]['midterm_total'] += result.marks
+                elif result.exam_type.name.lower() == 'exam':
+                    student_results[student]['exam_marks'] = result.marks
+                    student_results[student]['exam_total'] += result.marks
+
+                # Calculate the final total
+                student_results[student]['final_total'] = (
+                    student_results[student]['ca_total'] +
+                    student_results[student]['midterm_total'] +
+                    student_results[student]['exam_total']
+                )
+
+        context = {
+            'student_results': student_results.values(),
+            'result_class': result_class,
+            'subject': subject,
+            'session': session,
+            'term': term,
+            'course': course,  # Add 'course' to the context
+            'lock_status': column_lock  # Pass lock status to the context
+        }
+
+        return render(request, 'teacher/dashboard/control_view.html', context)
+    
+
+# real
+# def control_view(request, result_class, subject, session_name, term_name):
+#     # Fetch the course based on the 'subject'
+#     course = get_object_or_404(Course, course_name__title__iexact=subject)
+#     print(course.course_name.title)          
+#     # Fetch the session and term
+#     session = get_object_or_404(Session, name=session_name)
+#     term = get_object_or_404(Term, name=term_name)
+    
+#     # Fetch the students in the specified class
+#     all_students = Profile.objects.filter(student_class=result_class)
+
+#     if request.method == 'POST':
+#         # Handle form submission for updating results
+#         for student in all_students:
+#             ca_marks = request.POST.get(f'ca_marks_{student.id}')
+#             midterm_marks = request.POST.get(f'midterm_marks_{student.id}')
+#             exam_marks = request.POST.get(f'exam_marks_{student.id}')
+
+#             # Handle CA Marks
+#             if ca_marks:
+#                 ca_exam_type = get_object_or_404(ExamType, name__iexact='CA')
+#                 Result.objects.update_or_create(
+#                     student=student,
+#                     exam_type=ca_exam_type,
+#                     course=course,
+#                     session=session,
+#                     term=term,
+#                     defaults={'marks': ca_marks}
+#                 )
+
+#             # Handle Midterm Marks
+#             if midterm_marks:
+#                 midterm_exam_type = get_object_or_404(ExamType, name__iexact='Midterm')
+#                 Result.objects.update_or_create(
+#                     student=student,
+#                     exam_type=midterm_exam_type,
+#                     course=course,
+#                     session=session,
+#                     term=term,
+#                     defaults={'marks': midterm_marks}
+#                 )
+
+#             # Handle Exam Marks
+#             if exam_marks:
+#                 exam_exam_type = get_object_or_404(ExamType, name__iexact='Exam')
+#                 Result.objects.update_or_create(
+#                     student=student,
+#                     exam_type=exam_exam_type,
+#                     course=course,
+#                     session=session,
+#                     term=term,
+#                     defaults={'marks': exam_marks}
+#                 )
+
+#         # Redirect to the results view after updating
+#         return redirect('teacher:result_column_view', result_class=result_class, subject=course.course_name.title, session=session_name, term=term_name)
+
+#     else:
+#         # Retrieve existing results for the specified course, session, and term
+#         results = Result.objects.filter(
+#             student__student_class=result_class,
+#             exam__course_name__title=course,
+#             session=session,
+#             term=term
+#         ).select_related('student', 'exam_type')
+
+#         # Initialize a dictionary to hold student results
+#         student_results = {}
+#         for student in all_students:
+#             student_results[student] = {
+#                 'student': student,
+#                 'admission_no': student.admission_no if hasattr(student, 'admission_no') else None,
+#                 'ca_marks': 0,
+#                 'midterm_marks': 0,
+#                 'exam_marks': 0,
+#                 'ca_total': 0,
+#                 'midterm_total': 0,
+#                 'exam_total': 0,
+#                 'final_total': 0
+#             }
+
+#         # Populate student results from existing records
+#         for result in results:
+#             student = result.student
+#             if student in student_results:
+#                 if result.exam_type.name.lower() == 'ca':
+#                     student_results[student]['ca_marks'] = result.marks
+#                     student_results[student]['ca_total'] += result.marks
+#                 elif result.exam_type.name.lower() == 'midterm':
+#                     student_results[student]['midterm_marks'] = result.marks
+#                     student_results[student]['midterm_total'] += result.marks
+#                 elif result.exam_type.name.lower() == 'exam':
+#                     student_results[student]['exam_marks'] = result.marks
+#                     student_results[student]['exam_total'] += result.marks
+
+#                 # Calculate the final total
+#                 student_results[student]['final_total'] = (
+#                     student_results[student]['ca_total'] +
+#                     student_results[student]['midterm_total'] +
+#                     student_results[student]['exam_total']
+#                 )
+
+#         print(student_results)
+#         print(result_class)
+#         print(subject)
+#         print(session)
+#         print(term)
+
+#         context = {
+#             'student_results': student_results.values(),
+#             'result_class': result_class,
+#             'subject': subject,
+#             'session': session,
+#             'term': term,
+#             'course': course,  # Add 'course' to the context
+#         }
+
+#         return render(request, 'teacher/dashboard/control_view.html', context)
+
+        
+def result_column_view(request, result_class, subject, session, term):
+    # Fetch the course based on the 'subject'
+    course = get_object_or_404(Course, course_name__title__iexact=subject)
+    student = get_object_or_404(Profile, id=request.user.school.id)
+    school_name = student.schools
+
+    if request.method == 'POST':
+        session_name = request.POST.get('session')
+        term_name = request.POST.get('term')
+        session = get_object_or_404(Session, name=session_name)
+        term = get_object_or_404(Term, name=term_name)
+
+        # Get lock status for the subject
+        ca_locked = ColumnLock.objects.filter(subject__id=course.id, ca_locked=True).exists()
+
+        # Iterate through each student to capture their marks
+        for student in Profile.objects.filter(student_class=result_class):
+            ca_marks = request.POST.get(f'ca_marks_{student.id}')
+            midterm_marks = request.POST.get(f'midterm_marks_{student.id}')
+            exam_marks = request.POST.get(f'exam_marks_{student.id}')
+
+            # Handle CA Marks
+            if ca_marks and not ca_locked:  # Only save CA marks if not locked
+                ca_exam_type = get_object_or_404(ExamType, name__iexact='CA')
+                Result.objects.update_or_create(
+                    student=student,
+                    exam_type=ca_exam_type,
+                    course=course,
+                    session=session,
+                    term=term,
+                    defaults={'marks': ca_marks}
+                )
+
+            # Handle Midterm Marks
+            if midterm_marks:
+                midterm_exam_type = get_object_or_404(ExamType, name__iexact='MIDTERM')
+                Result.objects.update_or_create(
+                    student=student,
+                    exam_type=midterm_exam_type,
+                    course=course,
+                    session=session,
+                    term=term,
+                    defaults={'marks': midterm_marks}
+                )
+
+            # Handle Exam Marks
+            if exam_marks:
+                exam_exam_type = get_object_or_404(ExamType, name__iexact='EXAM')
+                Result.objects.update_or_create(
+                    student=student,
+                    exam_type=exam_exam_type,
+                    course=course,
+                    session=session,
+                    term=term,
+                    defaults={'marks': exam_marks}
+                )
+
+        return redirect('teacher:result-column', result_class=result_class, subject=subject)
+
+    else:
+        all_students = Profile.objects.filter(student_class=result_class)
+
+        # Fetch existing results for the specified course
+        results = Result.objects.filter(student__student_class=result_class, exam__course_name__title=course).select_related('student', 'exam_type', 'session', 'term')
+
+        student_results = {}
+        session = results.first().session if results.exists() else None
+        term = results.first().term if results.exists() else None
+
+        # Initialize student results dictionary
+        for student in all_students:
+            student_results[student] = {
+                'student': student,
+                'admission_no': student.admission_no if hasattr(student, 'admission_no') else None,
+                'ca_marks': 0,
+                'midterm_marks': 0,
+                'exam_marks': 0,
+                'ca_total': 0,
+                'midterm_total': 0,
+                'exam_total': 0,
+                'final_total': 0
+            }
+
+        # Populate student results from existing records
+        for result in results:
+            student = result.student
+            if student in student_results:
+                if result.exam_type.name.lower() == 'ca':
+                    student_results[student]['ca_marks'] = result.marks
+                    student_results[student]['ca_total'] = result.marks
+                elif result.exam_type.name.lower() == 'midterm':
+                    student_results[student]['midterm_marks'] = result.marks
+                    student_results[student]['midterm_total'] = result.marks
+                elif result.exam_type.name.lower() == 'exam':
+                    student_results[student]['exam_marks'] = result.marks
+                    student_results[student]['exam_total'] = result.marks
+
+                # Calculate the final total
+                student_results[student]['final_total'] = (
+                    student_results[student]['ca_total'] +
+                    student_results[student]['midterm_total'] +
+                    student_results[student]['exam_total']
+                )
+
+        # Get lock status for the subject
+        lock_status = {
+            'ca_locked': ColumnLock.objects.filter(subject__id=course.id, ca_locked=True).exists(),
+            'midterm_locked': ColumnLock.objects.filter(subject__id=course.id, midterm_locked=True).exists(),
+            'exam_locked': ColumnLock.objects.filter(subject__id=course.id, exam_locked=True).exists(),
+        }
+
+        context = {
+            'student_results': student_results.values(),
+            'result_class': result_class,
+            'subject': subject,
+            'session': session,
+            'term': term,
+            'school_name': school_name,
+            'lock_status': lock_status,
+        }
+
+        return render(request, 'teacher/dashboard/results_table.html', context)
+   
+
+
+from django.db import IntegrityError
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+
+def save_results(request):
+    if request.method == 'POST':
+        result_class = request.POST.get('result_class')
+        subject = request.POST.get('subject')
+        session_name = request.POST.get('session')
+        term_name = request.POST.get('term')
+
+        # Fetch the course related to the subject
+        course = get_object_or_404(Course, course_name__title__iexact=subject)
+
+        # Fetch the session and term based on the provided names (case-insensitive)
+        session = get_object_or_404(Session, name__iexact=session_name)
+        term = get_object_or_404(Term, name__iexact=term_name)
+
+        # Fetch the lock status for the columns of this subject/course
+        column_lock = get_object_or_404(ColumnLock, subject=course)
+
+        for key, value in request.POST.items():
+            if key.startswith('marks_'):
+                student_id = key.split('_')[2]  # Extract the student ID from the input name
+
+                # Fetch the student
+                student = get_object_or_404(Profile, id=student_id)
+
+                # Get the student's school
+                student_school = student.schools
+
+                # Initialize marks
+                ca_marks = request.POST.get(f'marks_ca_{student_id}', 0)
+                midterm_marks = request.POST.get(f'marks_midterm_{student_id}', 0)
+                exam_marks = request.POST.get(f'marks_exam_{student_id}', 0)
+
+                try:
+                    # Handle CA Marks (only if CA is not locked)
+                    if ca_marks is not None and not column_lock.ca_locked:
+                        ca_marks = min(int(ca_marks), 10)  # Ensure CA marks do not exceed 10
+                        ca_exam_type = get_object_or_404(ExamType, name__iexact='CA')
+                        Result.objects.update_or_create(
+                            result_class=result_class,
+                            schools=student_school,
+                            student=student,
+                            exam_type=ca_exam_type,
+                            exam=course,
+                            session=session,
+                            term=term,
+                            defaults={'marks': ca_marks}
+                        )
+
+                    # Handle Midterm Marks (only if Midterm is not locked)
+                    if midterm_marks is not None and not column_lock.midterm_locked:
+                        midterm_marks = min(int(midterm_marks), 20)  # Ensure Midterm marks do not exceed 20
+                        midterm_exam_type = get_object_or_404(ExamType, name__iexact='MIDTERM')
+                        Result.objects.update_or_create(
+                            result_class=result_class,
+                            schools=student_school,
+                            student=student,
+                            exam_type=midterm_exam_type,
+                            exam=course,
+                            session=session,
+                            term=term,
+                            defaults={'marks': midterm_marks}
+                        )
+
+                    # Handle Exam Marks (only if Exam is not locked)
+                    if exam_marks is not None and not column_lock.exam_locked:
+                        exam_marks = min(int(exam_marks), 70)  # Ensure Exam marks do not exceed 70
+                        exam_exam_type = get_object_or_404(ExamType, name__iexact='EXAM')
+                        Result.objects.update_or_create(
+                            result_class=result_class,
+                            schools=student_school,
+                            student=student,
+                            exam_type=exam_exam_type,
+                            exam=course,
+                            session=session,
+                            term=term,
+                            defaults={'marks': exam_marks}
+                        )
+                except IntegrityError:
+                    pass  # Handle any integrity issues (like duplicate entries)
+
+        return redirect('teacher:result_column_view', result_class=result_class, subject=subject, session=session.name, term=term.name)
+
+    return redirect('teacher:result_column_view', result_class='default_class', subject='YourDefaultSubject', session='DefaultSession', term='DefaultTerm')
+
+
+# real 2
+# def save_results(request):
+#     if request.method == 'POST':
+#         result_class = request.POST.get('result_class')
+#         subject = request.POST.get('subject')
+#         session_name = request.POST.get('session')
+#         term_name = request.POST.get('term')
+
+#         # Fetch the course related to the subject
+#         course = get_object_or_404(Course, course_name__title__iexact=subject)
+
+#         # Fetch the session and term based on the provided names (case-insensitive)
+#         session = get_object_or_404(Session, name__iexact=session_name)
+#         term = get_object_or_404(Term, name__iexact=term_name)
+
+#         # Fetch the lock status for the columns of this subject/course
+#         column_lock = get_object_or_404(ColumnLock, subject=course)
+
+#         for key, value in request.POST.items():
+#             if key.startswith('marks_'):
+#                 student_id = key.split('_')[2]  # Extract the student ID from the input name
+
+#                 # Fetch the student
+#                 student = get_object_or_404(Profile, id=student_id)
+
+#                 # Get the student's school
+#                 student_school = student.schools
+
+#                 # Initialize marks as None
+#                 ca_marks = request.POST.get(f'marks_ca_{student_id}', None)
+#                 midterm_marks = request.POST.get(f'marks_midterm_{student_id}', None)
+#                 exam_marks = request.POST.get(f'marks_exam_{student_id}', None)
+
+#                 try:
+#                     # Handle CA Marks (only if CA is not locked)
+#                     if ca_marks is not None and not column_lock.ca_locked:
+#                         ca_exam_type = get_object_or_404(ExamType, name__iexact='CA')
+#                         Result.objects.update_or_create(
+#                             result_class=result_class,
+#                             schools=student_school,
+#                             student=student,
+#                             exam_type=ca_exam_type,
+#                             exam=course,
+#                             session=session,
+#                             term=term,
+#                             defaults={'marks': ca_marks or 0}  # Ensure non-null marks
+#                         )
+
+#                     # Handle Midterm Marks (only if Midterm is not locked)
+#                     if midterm_marks is not None and not column_lock.midterm_locked:
+#                         midterm_exam_type = get_object_or_404(ExamType, name__iexact='MIDTERM')
+#                         Result.objects.update_or_create(
+#                             result_class=result_class,
+#                             schools=student_school,
+#                             student=student,
+#                             exam_type=midterm_exam_type,
+#                             exam=course,
+#                             session=session,
+#                             term=term,
+#                             defaults={'marks': midterm_marks or 0}
+#                         )
+
+#                     # Handle Exam Marks (only if Exam is not locked)
+#                     if exam_marks is not None and not column_lock.exam_locked:
+#                         exam_exam_type = get_object_or_404(ExamType, name__iexact='EXAM')
+#                         Result.objects.update_or_create(
+#                             result_class=result_class,
+#                             schools=student_school,
+#                             student=student,
+#                             exam_type=exam_exam_type,
+#                             exam=course,
+#                             session=session,
+#                             term=term,
+#                             defaults={'marks': exam_marks or 0}
+#                         )
+#                 except IntegrityError:
+#                     pass  # Handle any integrity issues (like duplicate entries)
+
+#         return redirect('teacher:result_column_view', result_class=result_class, subject=subject, session=session.name, term=term.name)
+
+#     return redirect('teacher:result_column_view', result_class='default_class', subject='YourDefaultSubject', session='DefaultSession', term='DefaultTerm')
+
+
+# real
+# def save_results(request):
+#     if request.method == 'POST':
+#         result_class = request.POST.get('result_class')  # Get result_class from the form
+#         subject = request.POST.get('subject')  # Get subject from the form
+#         session_name = request.POST.get('session')  # Get session from the form
+#         term_name = request.POST.get('term')  # Get term from the form
+
+#         # Fetch the course related to the subject
+#         course = get_object_or_404(Course, course_name__title__iexact=subject)
+
+#         # Fetch the session and term based on the provided names (case-insensitive)
+#         session = get_object_or_404(Session, name__iexact=session_name)
+#         term = get_object_or_404(Term, name__iexact=term_name)
+
+#         for key, value in request.POST.items():
+#             if key.startswith('ca_marks_'):
+#                 student_id = key.split('_')[2]  # Extract the student ID from the input name
+
+#                 ca_marks = request.POST.get(f'ca_marks_{student_id}')
+#                 midterm_marks = request.POST.get(f'midterm_marks_{student_id}')
+#                 exam_marks = request.POST.get(f'exam_marks_{student_id}')
+
+#                 # Fetch the student
+#                 student = get_object_or_404(Profile, id=student_id)
+
+#                 # Get the student's school
+#                 student_school = student.schools
+
+#                 try:
+#                     # Handle CA Marks
+#                     if ca_marks is not None:
+#                         ca_exam_type = get_object_or_404(ExamType, name__iexact='CA')
+#                         Result.objects.update_or_create(
+#                             result_class=result_class,
+#                             schools=student_school,  # Save the student's school
+#                             student=student,
+#                             exam_type=ca_exam_type,
+#                             exam=course,  # Include the course here
+#                             session=session,  # Include the session here
+#                             term=term,  # Include the term here
+#                             defaults={'marks': ca_marks}
+#                         )
+
+#                     # Handle Midterm Marks
+#                     if midterm_marks is not None:
+#                         midterm_exam_type = get_object_or_404(ExamType, name__iexact='MIDTERM')
+#                         Result.objects.update_or_create(
+#                             result_class=result_class,
+#                             schools=student_school,  # Save the student's school
+#                             student=student,
+#                             exam_type=midterm_exam_type,
+#                             exam=course,  # Include the course here
+#                             session=session,  # Include the session here
+#                             term=term,  # Include the term here
+#                             defaults={'marks': midterm_marks}
+#                         )
+
+#                     # Handle Exam Marks
+                    
+#                     if exam_marks is not None:
+#                         exam_exam_type = get_object_or_404(ExamType, name__iexact='EXAM')
+#                         Result.objects.update_or_create(
+#                             result_class=result_class,
+#                             schools=student_school,  # Save the student's school
+#                             student=student,
+#                             exam_type=exam_exam_type,
+#                             exam=course,  # Include the course here
+#                             session=session,  # Include the session here
+#                             term=term,  # Include the term here
+#                             defaults={'marks': exam_marks}
+#                         )
+#                 except IntegrityError:
+#                     # Handle the case where a record with this combination already exists
+#                     # You can either update the existing record or handle the error as necessary
+#                     pass
+
+#         # Redirect to result_column_view with all necessary parameters
+#         return redirect('teacher:result_column_view', result_class=result_class, subject=subject, session=session.name, term=term.name)
+
+#     # Redirect to a default view if the request method is not POST
+#     return redirect('teacher:result_column_view', result_class='default_class', subject='YourDefaultSubject', session='DefaultSession', term='DefaultTerm')
+   
+
+# def save_results(request):
+
+#     if request.method == 'POST':
+#         result_class = request.POST.get('result_class')  # Get result_class from the form
+#         subject = request.POST.get('subject')  # Get subject from the form
+#         session_name = request.POST.get('session')  # Get session from the form
+#         term_name = request.POST.get('term')  # Get term from the form
+
+#         # Fetch the course related to the subject
+#         course = get_object_or_404(Course, course_name__title__iexact=subject)
+
+#         # Fetch the session and term based on the provided names (case-insensitive)
+#         session = get_object_or_404(Session, name__iexact=session_name)
+#         term = get_object_or_404(Term, name__iexact=term_name)
+
+#         for key, value in request.POST.items():
+#             if key.startswith('ca_marks_'):
+#                 student_id = key.split('_')[2]  # Extract the student ID from the input name
+                
+#                 ca_marks = request.POST.get(f'ca_marks_{student_id}')
+#                 midterm_marks = request.POST.get(f'midterm_marks_{student_id}')
+#                 exam_marks = request.POST.get(f'exam_marks_{student_id}')
+                
+#                 # Fetch the student
+#                 student = get_object_or_404(Profile, id= student_id)
+
+#                 # Handle CA Marks
+#                 if ca_marks is not None:
+#                     ca_exam_type = get_object_or_404(ExamType, name__iexact='CA')
+#                     Result.objects.update_or_create(
+#                         result_class=result_class,
+#                         schools = student.schools ,
+#                         student=student,
+#                         exam_type=ca_exam_type,
+#                         exam=course,  # Include the course here
+#                         session=session,  # Include the session here
+#                         term=term,  # Include the term here
+#                         defaults={'marks': ca_marks}
+#                     )
+
+#                 # Handle Midterm Marks
+#                 if midterm_marks is not None:
+#                     midterm_exam_type = get_object_or_404(ExamType, name__iexact='Midterm')
+#                     Result.objects.update_or_create(
+#                         student=student,
+#                         result_class=result_class,
+#                         exam_type=midterm_exam_type,
+#                         exam=course,  # Include the course here
+#                         session=session,  # Include the session here
+#                         term=term,  # Include the term here
+#                         defaults={'marks': midterm_marks}
+#                     )
+
+#                 # Handle Exam Marks
+#                 if exam_marks is not None:
+#                     exam_exam_type = get_object_or_404(ExamType, name__iexact='Exam')
+#                     Result.objects.update_or_create(
+#                         result_class=result_class,
+#                         student=student,
+#                         exam_type=exam_exam_type,
+#                         exam=course,  # Include the course here
+#                         session=session,  # Include the session here
+#                         term=term,  # Include the term here
+#                         defaults={'marks': exam_marks}
+#                     )
+       
+#         # Redirect to result_column_view with all necessary parameters
+#         return redirect('teacher:result_column_view', result_class=result_class, subject=subject, session=session.name, term=term.name)
+
+#     # Redirect to a default view if the request method is not POST
+#     return redirect('teacher:result_column_view', result_class='default_class', subject='YourDefaultSubject', session='DefaultSession', term='DefaultTerm')
+
+
+# def save_results(request):
+#     if request.method == 'POST':
+#         result_class = request.POST.get('result_class')  # Get result_class from the form
+#         subject = request.POST.get('subject')  # Get subject from the form
+
+#         for key, value in request.POST.items():
+#             if key.startswith('ca_marks_'):
+#                 student_id = key.split('_')[2]  # Extract the student ID from the input name
+#                 ca_marks = request.POST.get(f'ca_marks_{student_id}')
+#                 midterm_marks = request.POST.get(f'midterm_marks_{student_id}')
+#                 exam_marks = request.POST.get(f'exam_marks_{student_id}')
+                
+#                 # Fetch the student's result and update their marks
+#                 results = Result.objects.filter(student_id=student_id, result_class=result_class)
+#                 for result in results:
+#                     if result.exam_type.name.lower() == 'ca':
+#                         result.marks = ca_marks or 0
+#                     elif result.exam_type.name.lower() == 'midterm':
+#                         result.marks = midterm_marks or 0
+#                     elif result.exam_type.name.lower() == 'exam':
+#                         result.marks = exam_marks or 0
+#                     result.save()
+       
+#         return redirect('teacher:result_column_view', result_class=result_class, subject=subject)
+
+#     return redirect('teacher:result_column_view', result_class='default_class', subject='YourDefaultSubject')
+
+
+
+# def result_column_view(request):
+
+#     # Fetch all students and their results
+#     results = Result.objects.all().select_related('student', 'exam', 'exam_type')
+
+#     # Dictionary to store data for each student
+#     student_results = {}
+
+#     # Process each result entry and calculate totals
+#     for result in results:
+#         student = result.student
+
+#         if student not in student_results:
+#             student_results[student] = {
+#                 'student': student,
+#                 'admission_no': student.admission_no if hasattr(student, 'admission_no') else None,
+#                 'ca_marks': 0,
+#                 'midterm_marks': 0,
+#                 'exam_marks': 0,
+#                 'ca_total': 0,
+#                 'midterm_total': 0,
+#                 'exam_total': 0,
+#                 'final_total': 0
+#             }
+
+#         # Log the current exam type to debug the issue
+#         print(f"Exam type for {student}: {result.exam_type.name}")
+
+#         # Identify the exam type (CA, Midterm, or Exam) and add the marks
+#         if result.exam_type.name.lower() == 'ca':  # Case-insensitive comparison
+#             student_results[student]['ca_marks'] = result.marks
+#             student_results[student]['ca_total'] = result.marks * 10 / 10
+#         elif result.exam_type.name.lower() == 'midterm':
+#             student_results[student]['midterm_marks'] = result.marks
+#             student_results[student]['midterm_total'] = result.marks * 20 / 20
+#         elif result.exam_type.name.lower() == 'exam':
+#             student_results[student]['exam_marks'] = result.marks
+#             student_results[student]['exam_total'] = result.marks * 70 / 70
+
+#         # Calculate the final total (CA + Midterm + Exam)
+#         student_results[student]['final_total'] = (
+#             student_results[student]['ca_total'] +
+#             student_results[student]['midterm_total'] +
+#             student_results[student]['exam_total']
+#         )
+
+#     # Pass the processed student results to the template
+#     context = {
+#         'student_results': student_results.values()
+#     }
+
+#     return render(request, 'teacher/dashboard/results_table.html', context)
+
+
 # @cache_page(60 * 15)
 @login_required(login_url='teacher:teacher_login')
 def add_question_view(request):
@@ -355,7 +1335,7 @@ def add_question_view(request):
     subjects_taught = teacher.subjects_taught.all()
 
     # Get the course names associated with the subjects taught by the teacher
-    subjects_taught_titles = [course.title for course in subjects_taught]
+    subjects_taught_titles = [course for course in subjects_taught]
 
     # Filter the courses based on the subjects taught
     courses = Course.objects.filter(course_name__title__in=subjects_taught_titles).prefetch_related('schools')
@@ -969,6 +1949,8 @@ def exam_statistics_view(request, course_id):
     }
     return render(request, 'teacher/dashboard/exam_statistics.html', context)
 
+
+
 @login_required
 def teacher_results_view(request):
     user = request.user
@@ -1011,6 +1993,81 @@ def teacher_results_view(request):
         'results': results,
     }
     return render(request, 'teacher/dashboard/teacher_results.html', context)
+
+
+from .forms import ResultEditForm
+
+@login_required
+def edit_teacher_results_view(request, result_id):
+    user = request.user
+
+    # Ensure the user is a teacher
+    try:
+        teacher = Teacher.objects.get(user=user)
+    except Teacher.DoesNotExist:
+        return render(request, 'error_page.html', {'message': 'You are not a teacher'})
+
+    # Fetch the specific result to be edited
+    result = get_object_or_404(Result, id=result_id)
+
+    # Check if the teacher is allowed to edit this result (e.g., if the result is for one of the teacher's subjects)
+    if result.exam.course_name not in [course.course_name for course in teacher.subjects_taught.all()]:
+        return render(request, 'error_page.html', {'message': 'You are not authorized to edit this result.'})
+
+    # Initialize the form with the current data if it's a GET request
+    if request.method == 'GET':
+        form = ResultEditForm(instance=result)
+
+    # Handle form submission
+    if request.method == 'POST':
+        form = ResultEditForm(request.POST, instance=result)
+        if form.is_valid():
+            # Save the updated result
+            form.save()
+
+            # Show success message
+            messages.success(request, f"Result for {result.student} updated successfully!")
+
+            # Clear the cache for the teacher's results to refresh the data
+            cache_key = f"teacher_results_{teacher.id}"
+            cache.delete(cache_key)
+
+            # Redirect back to the teacher's result page after updating
+            return redirect('teacher:teacher_results')
+
+    # Render the edit result page with the form
+    context = {
+        'teacher': teacher,
+        'form': form,
+        'result': result,
+    }
+    return render(request, 'teacher/dashboard/edit_teacher_results.html', context)
+
+
+def delete_teacher_result_view(request, result_id):
+    user = request.user
+
+    # Ensure the user is a teacher
+    try:
+        teacher = Teacher.objects.get(user=user)
+    except Teacher.DoesNotExist:
+        return render(request, 'error_page.html', {'message': 'You are not a teacher'})
+
+    # Get the result to be deleted
+    result_to_delete = get_object_or_404(Result, id=result_id)
+
+  
+    # Delete the result
+    result_to_delete.delete()
+
+    # Cache key for the teacher's results
+    cache_key = f"teacher_results_{teacher.id}"
+
+    # Delete the cached results
+    cache.delete(cache_key)
+
+    # Redirect back to the results page
+    return redirect(reverse('teacher:teacher_results'))  # Use the correct view name
 
 
 # @login_required
@@ -1203,26 +2260,104 @@ from .forms import UploadFileForm
 from tablib import Dataset
 
 # Import logic  
+from django.contrib import messages
+
+# def import_results(request):
+#     if request.method == 'POST':
+#         form = UploadFileForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             uploaded_file = request.FILES['file']
+#             result_resource = ResultResource()
+#             dataset = Dataset()
+#             try:
+#                 dataset.load(uploaded_file.read().decode('utf-8'), format='csv')
+
+#                 # Check if 'exam_course_name' is present and rename it to 'exam'
+#                 if 'exam_course_name' in dataset.headers:
+#                     dataset.headers[dataset.headers.index('exam_course_name')] = 'exam'
+
+#                 # Perform a dry run to test the import
+#                 result = result_resource.import_data(dataset, dry_run=True)
+
+#                 if not result.has_errors():
+#                     result_resource.import_data(dataset, dry_run=False)
+                    
+#                     # Add success message
+#                     messages.success(request, 'Results imported successfully!')
+                    
+#                     return redirect("teacher:import-results")
+#                 else:
+#                     # Handle errors as before
+#                     error_messages = []
+#                     for row_num, error_details in result.row_errors():
+#                         for err in error_details:
+#                             field_name = getattr(err, 'field_name', 'Unknown field')
+#                             error_messages.append(f"Row {row_num}: {err} in field {field_name}")
+                    
+#                     return HttpResponse(f"Import failed due to errors: {', '.join(error_messages)}")
+#             except Exception as e:
+#                 return HttpResponse(f"An error occurred during import: {str(e)}")
+#         else:
+#             return HttpResponse("Form is not valid.")
+#     else:
+#         form = UploadFileForm()
+
+#     return render(request, 'teacher/dashboard/import_results.html', {'form': form})
+
 def import_results(request):
     if request.method == 'POST':
+        # Check if it's a confirmation request (if 'confirm' is in POST)
+        if 'confirm' in request.POST:
+            # Retrieve the data from session
+            preview_data = request.session.get('import_data')
+            uploaded_file_content = request.session.get('uploaded_file')
+
+            if preview_data and uploaded_file_content:
+                dataset = Dataset()
+                dataset.load(uploaded_file_content, format='csv')
+
+                # Proceed with actual import now
+                result_resource = ResultResource()
+
+                try:
+                    # Perform the import (no dry_run)
+                    result = result_resource.import_data(dataset, dry_run=False)
+                    return redirect('teacher:import-results')
+                except Exception as e:
+                    return HttpResponse(f"An error occurred during import: {str(e)}")
+            else:
+                return HttpResponse("No data to confirm import.")
+        
+        # Handle the first upload (preview step)
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             uploaded_file = request.FILES['file']
             result_resource = ResultResource()
             dataset = Dataset()
+
             try:
-                dataset.load(uploaded_file.read().decode('utf-8'), format='csv')
+                # Load the dataset from the uploaded CSV file
+                uploaded_file_content = uploaded_file.read().decode('utf-8')
+                dataset.load(uploaded_file_content, format='csv')
 
                 # Check if 'exam_course_name' is present and rename it to 'exam'
                 if 'exam_course_name' in dataset.headers:
                     dataset.headers[dataset.headers.index('exam_course_name')] = 'exam'
 
-                # Perform a dry run to test the import
+                # Perform a dry run to test the import (no database changes yet)
                 result = result_resource.import_data(dataset, dry_run=True)
 
                 if not result.has_errors():
-                    result_resource.import_data(dataset, dry_run=False)
-                    return HttpResponse("Import successful!")
+                    # Show a preview of the data before confirming import
+                    preview_data = dataset.dict  # Convert dataset to list of dicts for preview
+
+                    # Store the data and file in the session for confirmation later
+                    request.session['import_data'] = preview_data
+                    request.session['uploaded_file'] = uploaded_file_content
+
+                    return render(request, 'teacher/dashboard/preview_import.html', {
+                        'preview_data': preview_data
+                    })
                 else:
                     # Handle errors as before
                     error_messages = []
@@ -1230,8 +2365,9 @@ def import_results(request):
                         for err in error_details:
                             field_name = getattr(err, 'field_name', 'Unknown field')
                             error_messages.append(f"Row {row_num}: {err} in field {field_name}")
-                    
+
                     return HttpResponse(f"Import failed due to errors: {', '.join(error_messages)}")
+
             except Exception as e:
                 return HttpResponse(f"An error occurred during import: {str(e)}")
         else:
@@ -1240,7 +2376,30 @@ def import_results(request):
         form = UploadFileForm()
 
     return render(request, 'teacher/dashboard/import_results.html', {'form': form})
+                  
 
+
+def confirm_import(request):
+    if request.method == 'POST':
+        # Retrieve the stored data from session
+        import_data = request.session.get('import_data', None)
+
+        if import_data:
+            dataset = Dataset()
+            dataset.dict = import_data  # Load session data into the dataset
+
+            # Perform the actual import (commit to database)
+            result_resource = ResultResource()
+            result = result_resource.import_data(dataset, dry_run=False)  # Now commit the data
+
+            if not result.has_errors():
+                # Clear session data after successful import
+                del request.session['import_data']
+                # Show a success message
+                messages.success(request, "Results imported successfully.")
+                return redirect('teacher:import-results')
+
+    return redirect('teacher:import-results')
 
 # @cache_page(60 * 15)
 # def export_results_csv(request):
@@ -2163,7 +3322,7 @@ def view_questions(request):
     # Filter questions based on the subjects taught by the teacher
     # questions = Question.objects.filter(course__in=teacher.subjects_taught.all())
   
-    questions = Question.objects.filter(course__course_name__in=teacher.subjects_taught.all()).select_related('course').order_by('id')
+    questions = Question.objects.filter(course__in=teacher.subjects_taught.all()).select_related('course').order_by('id')
 
     # print('q',questions)
     context = {

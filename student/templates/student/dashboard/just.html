@@ -1,194 +1,214 @@
-{% extends 'sms/dashboard/teacherbase.html' %}
-{% load crispy_forms_tags %}
+{% load custom_filters %}
 
-{% block title %}Teacher Add Questions{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Card</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h4 {
+            text-align: center;
+            color: black;
+        }
+        .container {
+            max-width: 70%;
+            height: 100%;
+            margin: 0 auto;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            font-size: 12px;
+        }
+        .profile-picture {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #007bff;
+        }
+        .no-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1em;
+            border: 3px solid #007bff;
+        }
+        .profile-info {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .profile-info p {
+            margin: 5px 0;
+        }
 
-{% block content %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [['$', '$'], ['\\(', '\\)']],
-            displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        },
-        "HTML-CSS": { availableFonts: ["TeX"] }
-    });
-</script>
+    </style>
 
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-    }
-    .editor-container {
-        position: fixed;
-        top: 70px; /* Adjust the top distance as needed */
-        right: 20px; /* Adjust the right distance as needed */
-        width: 30%;
-        margin-left: 20px; /* Add space between editor and form */
-    }
-    textarea {
-        width: 100%;
-        padding: 10px;
-        font-size: 16px;
-        height: 80px;
-        border-radius: 5px;
-        border: 1px solid #ced4da;
-    }
-    button {
-        padding: 10px 20px;
-        font-size: 16px;
-        margin-top: 10px;
-        border-radius: 5px;
-    }
-    pre {
-        padding: 15px;
-        background-color: #f4f4f4;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        margin-top: 10px;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        height: 150px;
-        overflow-y: scroll;
-    }
-    #rendered {
-        padding: 15px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        margin-top: 10px;
-        background-color: #f9f9f9;
-    }
-    .questions-container {
-        width: 70%;
-        height: 900px; /* Set a fixed height for scrolling */
-        overflow-y: auto; /* Enable vertical scrolling */
-    }
-</style>
+</head>
+<body>
+    <div class="container">
+        <h4>REPORT SHEET FOR {{ term|upper }} TERM, {{ session|upper }} ACADEMIC SESSION</h4>
 
-<div class="container">
- 
-    <div class="card shadow mb-4 editor-container">
-        <h2 class="mb-4">Math Equation Editor</h2>
-        <div class="card-body">
-            <textarea id="input" rows="10" placeholder="Enter plain text here...">1/2 * 3 + H2O</textarea>
-            <br>
-            <button class="btn btn-success" onclick="renderEquation()">Render Equation</button>
-            <h4 class="mt-4">Rendered Equation:</h4>
-            <div id="rendered"></div>
-            <h4 class="mt-4">MathML Output:</h4>
-            <pre id="output"></pre>
-            <button class="btn btn-info" onclick="copyMathML()">Copy MathML</button>
+        <div style="display: flex;text-align: center;font-size: 14px;margin-top: -20px;margin-left: 20px;">
+            <!-- Profile Picture Section -->
+            <div>
+                <!-- logo images -->
+                {% if school_logo_url %}
+                <img src="{{ school_logo_url }}" alt="School Logo"  style="width: 100px; height: 100px; border-radius:60%;">
+            {% else %}
+                <p>No logo available</p>
+            {% endif %}
+            
+            </div>
+        </div>
+    
+        <!-- School Information Section -->
+        <div style="text-align: center; margin: 0 auto;margin-top: -100px;">
+            <p><strong></strong> {{ student_school|upper }}</p> <!-- Display the school name -->
+            <p><strong>Motto:</strong> {{ school_motto|upper }}</p> <!-- Display the school motto -->
+            <p><strong></strong> {{ school_address }}</p> <!-- Display the school address -->
+        </div>
+
+   
+        <hr>
+
+        
+        <table class="container" style="width: 100%; border-collapse: collapse; margin: 0 40px; ">
+            <tr style="text-align: center;">
+                <!-- Student Information Section -->
+                <td style="padding: 2px; border: none; font-size: 12px; text-align: left;">
+                    <p><strong style="color: black;">Name:</strong> {{ student_name }}</p>
+                    <p><strong style="color: black;">Gender:</strong> {{ student_gender }}</p>
+                    <p><strong style="color: black;">Class:</strong> {{ student_class }}</p>
+                    <p><strong style="color: black;">Admission No:</strong> {{ student_admission_no }}</p>
+                    <p><strong style="color: black;">No. In Class:</strong> {{ student_class_count }}</p>
+                </td>
+        
+                <!-- Academic Performance Section -->
+                <td style="padding: 2px; border: none; font-size: 12px; text-align: left;">
+                    <p><strong style="color: black;">Class Average:</strong> {{ class_average }}</p>
+                    <p><strong style="color: black;">Highest Ave. In Class:</strong> {{ highest_average_in_class|floatformat:1 }}</p>
+                    <p><strong style="color: black;">Lowest Ave. In Class:</strong> {{ lowest_average_in_class|floatformat:1 }}</p>
+                    <p><strong style="color: black;">Final Grade:</strong> {{ final_grade }}</p>
+                    <p><strong style="color: black;">Total Marks:</strong> {{ total_marks_obtaine|floatformat:1 }}</p>
+                </td>
+        
+                <!-- Additional Information Section -->
+                <td style="padding: 2px; border: none; font-size: 12px; text-align: left;">
+                    <p><strong style="color: black;">Final Position:</strong> {{ final_position2 }} out of {{ student_class_count }}</p>
+                    <p><strong style="color: black;">Student's Average:</strong> {{ student_averages1 }}</p>
+                    <p><strong style="color: black;">Term:</strong> {{ term }}</p>
+                    <p><strong style="color: black;">Exam Type: </strong>{{e_type}}</p>
+                
+                </td>
+            </tr>
+        </table>
+<hr>        
+        
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead style="font-size: 11px;">
+                <tr>
+                    <th style="padding: 3px; text-align: left; border: 1px solid #ddd;">SUBJECTS</th>
+                    <th style="padding: 3px; border: 1px solid #ddd;">CA ({{ ca_total_marks }}%)</th>
+                    <th style="padding: 3px; border: 1px solid #ddd;">MID-TERM ({{ midterm_total_marks }}%)</th>
+                    <th style="padding: 3px; border: 1px solid #ddd;">EXAM ({{ exam_total_marks }}%)</th>
+                    <th style="padding: 3px; border: 1px solid #ddd;">TOTAL (100%)</th>
+                    <th style="padding: 3px; border: 1px solid #ddd;">GRADE</th>
+                    <th style="padding: 3px; border: 1px solid #ddd;">POS</th>
+                    <th style="padding: 3px; border: 1px solid #ddd;">OUT OF</th>
+                    <th style="padding: 3px; border: 1px solid #ddd;">SUBJECT AVE</th>
+                    <th style="padding: 3px; border: 1px solid #ddd;">LOW IN CLASS</th>
+                    <th style="padding: 3px; border: 1px solid #ddd;">HIGH IN CLASS</th>
+                    <th style="padding: 3px; border: 1px solid #ddd;">COMMENTS</th>
+                </tr>
+            </thead>
+            <tbody style="font-size: 10px;">
+                {% if subject_statistics %}
+                    {% for subject, stats in subject_statistics.items %}
+                        <tr>
+                            <td style="text-align: left; padding: 3px; border: 1px solid #ddd;">{{ subject }}</td>
+                            <td style="padding: 3px; border: 1px solid #ddd;">{{ stats.CA|default:"N/A" }}</td>
+                            <td style="padding: 3px; border: 1px solid #ddd;">{{ stats.MIDTERM|default:"N/A" }}</td>
+                            <td style="padding: 3px; border: 1px solid #ddd;">{{ stats.EXAM|default:"N/A" }}</td>
+                            <td style="padding: 3px; border: 1px solid #ddd;">{{ stats.total_score|floatformat:1|default:"N/A" }}</td>
+                            <td style="padding: 3px; border: 1px solid #ddd;">{{ subject_grades|get_item:subject|get_item:'grade'|default:"N/A" }}</td>
+                            <td style="padding: 3px; border: 1px solid #ddd;">{{ subject_positions|get_item:subject|default:"N/A" }}</td>
+                            <td style="padding: 3px; border: 1px solid #ddd;">{{ subject_student_count|get_item:subject|default:"N/A" }}</td>
+                            <td style="padding: 3px; border: 1px solid #ddd;">{{ subject_statistics2|get_item:subject|get_item:'average'|floatformat:1|default:"N/A" }}</td>
+                            <td style="padding: 3px; border: 1px solid #ddd;">{{ subject_statistics2|get_item:subject|get_item:'lowest'|default:"N/A"|floatformat:1 }}</td>
+                            <td style="padding: 3px; border: 1px solid #ddd;">{{ subject_statistics2|get_item:subject|get_item:'highest'|default:"N/A"|floatformat:1 }}</td>
+                            <td style="padding: 3px; border: 1px solid #ddd;">{{ subject_comments|get_item:subject|default:"No comment available" }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="12" style="padding: 3px; text-align: center; border: 1px solid #ddd;">No data available</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+                        
+        <h4 style="text-align: right;">No. Of Subjects: {{ subject_count_statistics }}</h4>
+        <div class="results-summary">
+            <h6>Grading System</h6>
+            <!-- <ul>
+                <li>A: {{ grading_system.A }}</li>
+                <li>B: {{ grading_system.B }}</li>
+                <li>C: {{ grading_system.C }}</li>
+                <li>P: {{ grading_system.P }}</li>
+                <li>F: {{ grading_system.F }}</li>
+            </ul>
+ -->
+ <table style="width: 20%; border-collapse: collapse; font-size: 10px;">
+    <thead>
+        <tr>
+            <th style="padding: 2px; text-align: left; border: 1px solid #ddd;">Grade</th>
+            <th style="padding: 2px; text-align: left; border: 1px solid #ddd;">Marks Range</th>
+            <th style="padding: 2px; text-align: left; border: 1px solid #ddd;">Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for grade, range in grading_system.items %}
+        <tr>
+            <td style="padding: 2px; border: 1px solid #ddd;">{{ grade }}</td>
+            <td style="padding: 2px; border: 1px solid #ddd;">{{ range }}</td>
+            <td style="padding: 2px; border: 1px solid #ddd;">{{ grade_comments|get_item:grade }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+      
+
+            <h2>Teachers for Your Class</h2>
+            {% if teacher_info %}
+                <ul>
+                    {% for teacher in teacher_info %}
+                        <li>
+                            <strong>Form Teacher:</strong> {{ teacher.first_name }} {{ teacher.last_name }}<br>
+                            <strong>Form Teacher Remarks:</strong> {{ teacher.form_teacher_remark }} <br>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No teachers found for this class.</p>
+            {% endif %}
         </div>
     </div>
-    
-    <div class="questions-container">
-        <h2 class="mb-4">Add Question</h2>
-        <!-- {% for subject in subjects_taught %}
-        <p><strong>Subject and school taught:</strong> {{ subject }}</p>
-        {% endfor %}
-        <br> -->
 
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div id="formset-container">
-                {{ formset|crispy }}
-                <div id="formset-template" style="display: none;">
-                    {{ formset.empty_form|crispy }}
-                </div>
-            </div>
-
-            <button type="button" class="btn btn-secondary mt-3" id="add-more">Add More</button>
-            <button type="submit" class="btn btn-primary mt-3">Submit</button>
-        </form>
-    </div>
-</div>
-
-<script>
-    // Variable to keep track of the active input field
-    var activeField = null;
-
-    // Function to parse plain text to LaTeX
-    function parsePlainText(input) {
-        input = input.replace(/(\d+)\s*\/\s*(\d+)/g, '\\frac{$1}{$2}'); // Convert '1/2' to '\frac{1}{2}'
-        input = input.replace(/(\d+)\s+over\s+(\d+)/g, '\\frac{$1}{$2}'); // Convert '1 over 2' to LaTeX
-        input = input.replace(/\*/g, '\\times'); // Convert '*' to '\times'
-        input = input.replace(/(\w+)\s*\^(\d+)/g, '$1^{ $2 }'); // x^2 -> x^{2}
-        input = input.replace(/([A-Z][a-z]*)(\d+)/g, '$1_{ $2 }'); // H2 -> H_{2}
-        return input;
-    }
-
-    // Function to render the equation and insert it into the active field
-   // Function to render the equation and display it in the "Rendered Equation" section
-   function renderEquation() {
-        var input = document.getElementById('input').value;
-
-        // Parse plain text to LaTeX
-        var parsedInput = parsePlainText(input);
-
-        // Create a MathJax container and render the LaTeX in the "Rendered Equation" div
-        var renderedDiv = document.getElementById('rendered');
-        renderedDiv.innerHTML = ''; // Clear previous content
-
-        var equationContainer = document.createElement('div');
-        equationContainer.innerHTML = '\\[' + parsedInput + '\\]'; // Use display math delimiters
-
-        renderedDiv.appendChild(equationContainer);
-
-        MathJax.Hub.Queue(["Typeset", MathJax.Hub, equationContainer]);
-
-        // Clear previous MathML output
-        document.getElementById('output').textContent = '';
-
-        MathJax.Hub.Queue(["Typeset", MathJax.Hub, equationContainer, function() {
-            var math = MathJax.Hub.getAllJax(equationContainer)[0];
-            if (math) {
-                var mml = math.root.toMathML("");
-                document.getElementById('output').textContent = mml;
-
-                // Insert the MathML into the active field (if any)
-                if (activeField) {
-                    activeField.value = mml;
-                }
-            } else {
-                document.getElementById('output').textContent = "No valid MathJax found.";
-            }
-        }]);
-    }
-
-    // Function to track which field is active
-    document.querySelectorAll('textarea').forEach(function(field) {
-        field.addEventListener('focus', function() {
-            activeField = field; // Set the active field when it's focused
-        });
-    });
-
-    // Function to copy MathML to clipboard
-    function copyMathML() {
-        var mathml = document.getElementById('output').textContent;
-        navigator.clipboard.writeText(mathml).then(function() {
-            alert("MathML copied to clipboard!");
-        }, function(err) {
-            console.error('Failed to copy MathML: ', err);
-        });
-    }
-
-    $(document).ready(function() {
-        var formsetContainer = $('#formset-container');
-        var formsetTemplate = $('#formset-template');
-
-        $('#add-more').click(function() {
-            var clonedForm = formsetTemplate.clone();
-            clonedForm.removeAttr('id').removeAttr('style');
-            formsetContainer.append(clonedForm);
-
-            // Re-apply focus listener to the new form fields
-            clonedForm.find('textarea').each(function() {
-                $(this).on('focus', function() {
-                    activeField = this; // Track the new active field
-                });
-            });
-        });
-    });
-</script>
-{% endblock %}
+</body>
+</html>
