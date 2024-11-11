@@ -34,7 +34,8 @@
             <p>{{ report_card.school_motto }}</p>
             <p>{{ report_card.school_address }}</p>
             <p><strong>Gender:</strong> {{ report_card.student_gender }}</p>
-            
+            <p>session:{{session}}</p>
+            <p>Term:{{term}}</p>
             <p>Final Position: {{report_card.final_position}} out of {{num_students_in_class}} </p>  
             <h5>No. In Class: {{num_students_in_class}}</h5> 
           
@@ -62,7 +63,6 @@
                 </thead>
                 <tbody>
                     {% for subject in report_card.subjects %}
-                 
                     <tr>
                         <td>{{ subject.subject }}</td>
                         <td>{{ subject.CA_marks }}</td>
@@ -70,12 +70,11 @@
                         <td>{{ subject.Exam_marks }}</td>
                         <td>{{ subject.Total_marks }}</td>
                         <td>{{ subject.subject_student_count }}</td>
-                        <td>{{ subject.subject_averages }}</td>
-                        <td>{{ subject.low_in_class }}</td>
-                        <td>{{ subject.high_in_class }}</td>
+                        <td>{{ subject.Statistics.average }}</td>
+                        <td>{{ subject.Statistics.lowest }}</td>
+                        <td>{{ subject.Statistics.highest }}</td>
                         <td>{{ subject.Grade }}</td>
                         <td>{{ subject.subject_positions }}</td>
-                       
                         <td>{{ subject.Comments }}</td>
                     </tr>
                     {% endfor %}

@@ -38,7 +38,9 @@ class Course(models.Model):
         verbose_name_plural = 'Exams'
 
     def __str__(self):
-        return f'{self.course_name} - {self.exam_type}'
+        return f'{self.course_name or "No Course Name" }'
+    # def __str__(self):
+    #     return f'{self.course_name} - {self.exam_type}'
 
     def get_questions(self):
         return self.question_set.all()[:self.show_questions]

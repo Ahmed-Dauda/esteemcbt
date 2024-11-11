@@ -308,7 +308,7 @@ def generate_report_card_class(request, session, term):
                 exam_type__name='CA',
                 student=student
             ).aggregate(Sum('marks'))['marks__sum'] or 0
-            print(ca_marks, 'ca_marks')
+            # print(ca_marks, 'ca_marks')
             midterm_marks = Result.objects.filter(
                 exam__course_name=subject,
                 term=term_instance,
@@ -316,7 +316,7 @@ def generate_report_card_class(request, session, term):
                 exam_type__name='MIDTERM',
                 student=student
             ).aggregate(Sum('marks'))['marks__sum'] or 0
-            print(midterm_marks, 'midterm_marks')
+            # print(midterm_marks, 'midterm_marks')
             exam_marks = Result.objects.filter(
                 exam__course_name=subject,
                 term=term_instance,
@@ -334,7 +334,7 @@ def generate_report_card_class(request, session, term):
                 exam_type__name='CA'
             ).values('show_questions').first()
             ca_total_marks = ca_total_marks['show_questions'] if ca_total_marks else 0
-            print(ca_total_marks, 'ca_total_marks')
+            # print(ca_total_marks, 'ca_total_marks')
 
             midterm_total_marks = Course.objects.filter(
                 schools=request.user.school,
@@ -344,7 +344,7 @@ def generate_report_card_class(request, session, term):
                 exam_type__name='MIDTERM'
             ).values('show_questions').first()
             midterm_total_marks = midterm_total_marks['show_questions'] if midterm_total_marks else 0
-            print(midterm_total_marks, 'midterm_total_marks')
+            # print(midterm_total_marks, 'midterm_total_marks')
             
             exam_total_marks = Course.objects.filter(
                 schools=request.user.school,
@@ -529,7 +529,7 @@ def generate_report_card_class(request, session, term):
                         'lowest': lowest_marks_in_class_per_subject.get(subject2, 'N/A'),
                         'highest': highest_marks_in_class_per_subject.get(subject2, 'N/A'),
                     }
-
+        
                 # Update overall totals for class average calculation
                 total_marks_all_subjects += sum(subject_total_marks[subject1])
                 total_students_all_subjects += subject_student_count[subject1]
@@ -553,7 +553,7 @@ def generate_report_card_class(request, session, term):
 
                 # print(lowest_average_in_class, 'lav')
                 # print(highest_average_in_class, 'hav')
-
+ 
             # end 
 
             # subject position
@@ -632,6 +632,13 @@ def generate_report_card_class(request, session, term):
                 'Comments': comment,
                 'subject_positions': subject_positions.get(subject, None),
                 'subject_student_count': subject_student_count[subject],  # Add the count here
+                # Include the statistics for the subject
+                'Statistics': {
+                    'average': subject_statistics2.get(subject1, {}).get('average', 'N/A'),
+                    'lowest': subject_statistics2.get(subject1, {}).get('lowest', 'N/A'),
+                    'highest': subject_statistics2.get(subject1, {}).get('highest', 'N/A'),
+                }
+                
                
             })
 
