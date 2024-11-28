@@ -236,6 +236,23 @@ class PDFGalleryView(ListView):
         
     #     return context
 
+from teacher.models import Teacher
+
+def some_view(request):
+    # Assuming the user is logged in and has a school attribute
+    username = request.user.username
+    user_school = request.user.school
+
+    teacher = Teacher.objects.select_related('user', 'school').prefetch_related('subjects_taught', 'classes_taught').get(username=username)
+    teacher_school = teacher.school
+    print(teacher.school, 'sc')
+    context = {
+        'user_school':user_school,
+        'teacher_school':teacher_school
+
+    }
+
+    return render(request, 'sms/dashboard/teacherbase.html', context= context)
 
 # @method_decorator(cache_page(60 * 15), name='dispatch')  # Cache for 15 minutes
 class DigitalForm(ListView):

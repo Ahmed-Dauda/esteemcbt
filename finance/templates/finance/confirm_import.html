@@ -1,0 +1,32 @@
+
+
+{% block content %}
+<h2>Import Successful!</h2>
+<p>{{ total_rows }} records were processed.</p>
+
+<h3>Imported Records:</h3>
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Names</th>
+            <th>Student Class</th>
+            <th>Initial Deposit</th>
+            <th>Total Deposit</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in new_records %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ record.names }}</td>
+            <td>{{ record.student_class }}</td>
+            <td>{{ record.initial_total_deposit }}</td>
+            <td>{{ record.total_deposit }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'finance:finance_record_view' %}" class="btn btn-primary">Back to Records</a>
+{% endblock %}

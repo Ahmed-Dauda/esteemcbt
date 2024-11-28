@@ -269,7 +269,7 @@ def teacher_dashboard_view(request):
         teacher_subjects = teacher.subjects_taught.all()
         teacher_class = teacher.classes_taught.all()
         teacher_name = teacher.first_name
-        print(teacher_name)
+        # print(teacher_name)
 
         context = {
             'school': user_school,
@@ -281,7 +281,13 @@ def teacher_dashboard_view(request):
     except Teacher.DoesNotExist:
         # Handle case where Teacher instance does not exist
         return redirect('account_login')
-    
+
+
+def some_view(request):
+    # Assuming the user is logged in and has a school attribute
+    school = request.user.school  # Replace with your actual relationship
+
+    return render(request, 'sms/dashboard/teacherbase.html', {'school': school})  
 
 # @login_required(login_url='teacher:teacher_login')
 # def teacher_dashboard_view(request):
@@ -1445,8 +1451,8 @@ def examiner_dashboard_view(request):
         course_grades = CourseGrade.objects.filter(
                 students__school=user_school
             ).distinct().prefetch_related('students', 'subjects')
-
-        context = {
+        
+        context = {     
             'course_grades': course_grades,
         }
 
@@ -1464,7 +1470,9 @@ def edit_coursegrade_view(request, pk):
     course_grade = get_object_or_404(
         CourseGrade.objects.prefetch_related('students', 'subjects'), 
         pk=pk)
-
+        
+  
+    print(course_grade.subjects, 'ttt')
     if request.method == 'POST':
         form = CourseGradeForm(request.POST, instance=course_grade, user_school=user_school)
         if form.is_valid():

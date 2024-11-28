@@ -128,11 +128,12 @@
                         <div class="flex-grow-1 p-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="text-primary font-weight-bold">
-                                 {{ item }} 
+                                
+                        {{ item }} 
                                 </div>
                                 {% for result in user_results %}
 
-                                {% if result.exam.course_name|lower == item|lower %}
+                                {% if result.exam|lower == item|lower  %}
                                 <span class="badge badge-danger">Exam Taken</span>
                                 {% endif %}
                                 {% endfor %}
@@ -146,7 +147,9 @@
                 
                 <div class="card shadow-sm border-light rounded mb-4 text-center">
                     <div class="card-body">
-                        <h5 class="card-title text-primary font-weight-bold mb-2">{{ item }}</h5>
+                        <h5 class="card-title text-primary font-weight-bold mb-2">
+                            {{ item }}
+                        </h5>
                         <p class="card-text text-muted mb-0">
                             <span class="badge badge-warning">Exam not started</span>
                         </p>
@@ -162,13 +165,6 @@
     
             {% endif %}
            
-            <!-- {% if forloop.first %}
-            <div style="width: 100%; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden;">
-                <div style="padding: 20px; text-align: center;">
-                    <small>No exam assign to you. Ask the instructor for assistance</small>
-                </div>
-            </div>
-            {% endif  %} -->
             {% empty %}
             {% if forloop.first %}
             <div style="width: 100%; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden;">
@@ -190,7 +186,7 @@
         {% for subject in subjects %}
             {% if subject|lower %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ subject }} - {{ subject.session }} - {{ subject.term }} TERM - {{ subject.exam_type }}
+                    {{ subject }} 
                     <span class="badge badge-primary badge-pill">Enrolled</span>
                 </li>
             {% else %}

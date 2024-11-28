@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Finance Records</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid #28a745;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            padding: 20px;
+            text-align: center;
+        }
+        .card-header {
+            background: rgb(70, 118, 239);
+            color: white;
+            font-size: 1.25rem;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 8px 8px 0 0;
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        .btn-success {
+            background-color: rgb(70, 118, 239);
+        }
+        .btn-success:hover {
+            background-color: rgb(70, 118, 239);
+        }
+        .btn-success .icon {
+            margin-right: 8px;
+        }
+        .alert {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 4px;
+            text-align: left;
+        }
+        .alert ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .alert li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="card">
+        <!-- <div class="card-header">Import Finance Records</div> -->
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-success">
+                    <span class="icon">📤</span> Import Finance Records
+                </button>
+                <a href="{% url 'finance:finance_record_view' %}" style="background-color: rgb(70, 118, 239);color: white;" class="btn">Back</a>
+            </form>
+            {% if errors %}
+                <div class="alert">
+                    <strong>Error(s) occurred:</strong>
+                    <ul>
+                    {% for row, error in errors %}
+                        <li>Error on row {{ row }}: {{ error }}</li>
+                    {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

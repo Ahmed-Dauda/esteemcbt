@@ -1,6 +1,6 @@
 from django.contrib import admin
 from import_export import resources
-from import_export.admin import ImportExportModelAdmin
+from import_export.admin import ImportExportModelAdmin, ExportActionMixin
 from import_export import fields,resources
 from import_export.widgets import ForeignKeyWidget
   
@@ -84,7 +84,7 @@ class CoursesResource(resources.ModelResource):
         prepopulated_fields = {"slug": ("course_name",)}
         # fields = ('title',)
                
-class CoursesAdmin(ImportExportModelAdmin):
+class CoursesAdmin(ImportExportModelAdmin, ExportActionMixin):
 
     list_display = ['title','session','term','exam_type','display_subjects_school', 'created']
     list_filter =  ['title']

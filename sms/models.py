@@ -83,10 +83,23 @@ class Session(models.Model):
         return self.name
 
 class Term(models.Model):
-    name = models.CharField(max_length=20, unique=True)  # E.g., 'First Term', 'Second Term', 'Third Term'
+    name = models.CharField(max_length=20, unique=True)
+    order = models.PositiveIntegerField(default=1)  # e.g., 1 for "FIRST," 2 for "SECOND," 3 for "THIRD"
+
+    class Meta:
+        ordering = ['order']  # Orders by the custom order field
 
     def __str__(self):
         return self.name
+
+# class Term(models.Model):
+#     name = models.CharField(max_length=20, unique=True)  # E.g., 'First Term', 'Second Term', 'Third Term'
+
+#     class Meta:
+#         ordering = ['name']  #
+
+#     def __str__(self):
+#         return self.name
 
 
 class Courses(models.Model):
@@ -111,7 +124,6 @@ class Courses(models.Model):
         # return f'{self.title} - {self.session} - {self.term} - {self.exam_type}'
         return f'{self.title}'
 
-
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from quiz.models import Course
@@ -125,8 +137,11 @@ def create_course_for_subject(sender, instance, created, **kwargs):
             course_name=instance,  # Link the Courses instance as the course_name
             schools=instance.schools.first() if instance.schools.exists() else None,  # Assuming first school is used
             session=instance.session,
-            term=instance.term,
-            exam_type=instance.exam_type
+            term=instance.term,  
+            exam_type=instance.exam_type,
+            question_number = 0,
+            total_marks = 0
+
         )
         course.save()
 

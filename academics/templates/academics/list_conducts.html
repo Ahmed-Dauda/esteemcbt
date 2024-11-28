@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Conducts</title>
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
+
+    <!-- Font Awesome for Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+    <!-- jQuery and DataTables JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+    <h1>Student Conduct Records</h1>
+
+    <div  style="padding-left: 10px;padding-right: 10px;">
+        <a class="nav-link" href="{% url 'add_conduct' %}">
+            <i class="fas fa-plus-circle"></i>  <!-- Add the plus-circle icon -->
+            <span>Add Conduct</span>
+        </a>
+        
+        <hr>
+        <table id="conducts-table" class="display">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Class</th>
+                    <th>Session</th>
+                    <th>Term</th>
+                    <th>Category</th>
+                    <th>Remarks</th>
+                    <th>Date</th>
+                    <th>Edit</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for conduct in conducts %}
+                <tr>
+                    <td>{{ conduct.student.first_name }} {{ conduct.student.last_name }}</td>
+                    <td>{{ conduct.student_class }}</td>
+                    <td>{{ conduct.session }}</td>
+                    <td>{{ conduct.term }}</td>
+                    <td>{{ conduct.category }}</td>
+                    <td>{{ conduct.remarks }}</td>
+                    <td>{{ conduct.date }}</td>
+                    <td>
+                        <a href="{% url 'edit_conduct' conduct.pk %}">
+                            <i class="fas fa-edit"></i>
+                        </a> |
+                       
+                    </td>
+                    <td>
+                        <a href="{% url 'delete_conduct' conduct.pk %}">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    
+    </div>
+    
+    <script>
+        // Initialize DataTable
+        $(document).ready(function() {
+            $('#conducts-table').DataTable({
+                "paging": true,
+                "searching": true,
+                "info": true,
+                "ordering": true
+            });
+        });
+    </script>
+</body>
+</html>

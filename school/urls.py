@@ -31,8 +31,9 @@ urlpatterns = [
     path('quiz/', include('quiz.urls')),
     path('teacher/', include('teacher.urls')),
     path('users/', include('users.urls')),
+    path('finance/', include('finance.urls')),  
     path('accounts/', include('allauth.urls')),
-    # path('tinymce/', include('tinymce.urls')),
+    path('academics/', include('academics.urls')),
     
     # path('verify', include('student.urls')),
  

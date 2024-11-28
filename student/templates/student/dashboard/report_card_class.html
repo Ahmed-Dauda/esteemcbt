@@ -7,97 +7,172 @@
     <meta charset="UTF-8">
     <title>{{ class_name }} - Report Cards for {{ session }} {{ term }}</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .report-card { border: 1px solid #000; margin-bottom: 20px; padding: 15px; }
-        .header { text-align: center; }
-        .student-details, .subject-scores { margin: 15px 0; }
-        .subject-table { width: 100%; border-collapse: collapse; }
-        .subject-table th, .subject-table td { border: 1px solid #000; padding: 8px; text-align: center; }
-        .subject-table th { background-color: #f2f2f2; }
-        .footer { text-align: right; margin-top: 20px; font-weight: bold; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+        }
+        .report-card { 
+            margin-bottom: 20px; 
+            padding: 15px; 
+        }
+        .header { 
+            text-align: center; 
+        }
+        .student-details, .subject-scores { 
+            margin: 15px 0; 
+        }
+        .subject-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+        }
+        .subject-table th, .subject-table td { 
+            border: 1px solid #000; 
+            padding: 8px; 
+            text-align: center; 
+        }
+        .subject-table th { 
+            background-color: #f2f2f2; 
+        }
+        .footer { 
+            text-align: right; 
+            margin-top: 20px; 
+            font-weight: bold; 
+        }
+        @media print {
+            .report-card {
+                page-break-after: always;
+            }
+        }
     </style>
 </head>
 <body>
-     
-    <h1>{{ class_name }} - Report Cards for {{ session }} {{ term }}</h1>
-
     {% for report_card in class_report_cards %}
-
- 
-    <div class="report-card">
-        <div class="header">
-            {% if report_card.school_logo_url %}
-                <img src="{{ report_card.school_logo_url }}" alt="School Logo" height="80">
-            {% endif %}
-            <h2>{{ report_card.student_name }}</h2>
-            <p>{{ report_card.student_class }} | Admission No: {{ report_card.student_admission_no }}</p>
-            <p>{{ report_card.school_motto }}</p>
-            <p>{{ report_card.school_address }}</p>
-            <p><strong>Gender:</strong> {{ report_card.student_gender }}</p>
-            <p>session:{{session}}</p>
-            <p>Term:{{term}}</p>
-            <p>Final Position: {{report_card.final_position}} out of {{num_students_in_class}} </p>  
-            <h5>No. In Class: {{num_students_in_class}}</h5> 
-          
-            
-        </div>
-
-        <div class="subject-scores">
-            <h3>Subjects and Scores</h3>
-            <table class="subject-table">
-                <thead>
-                    <tr>
-                        <th>Subject</th>
-                        <th>CA Marks</th>
-                        <th>Midterm Marks</th>
-                        <th>Exam Marks</th>
-                        <th>Total Marks</th>
-                        <th>OUT OF</th>
-                        <th>Subject Ave</th>
-                        <th>Low in Class</th>
-                        <th>High in Class</th>
-                        <th>Grade</th>
-                        <th>POS</th>
-                        <th>Comments</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for subject in report_card.subjects %}
-                    <tr>
-                        <td>{{ subject.subject }}</td>
-                        <td>{{ subject.CA_marks }}</td>
-                        <td>{{ subject.Midterm_marks }}</td>
-                        <td>{{ subject.Exam_marks }}</td>
-                        <td>{{ subject.Total_marks }}</td>
-                        <td>{{ subject.subject_student_count }}</td>
-                        <td>{{ subject.Statistics.average }}</td>
-                        <td>{{ subject.Statistics.lowest }}</td>
-                        <td>{{ subject.Statistics.highest }}</td>
-                        <td>{{ subject.Grade }}</td>
-                        <td>{{ subject.subject_positions }}</td>
-                        <td>{{ subject.Comments }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+        <div class="report-card">
+            <!-- Header Section -->
+            <table style="width: 100%; font-size: 14px; margin-top: -20px; margin-left: 2px; border-collapse: collapse; border: none;">
+                <tr style="border: none;">
+                    <!-- Profile Picture Section -->
+                    <td style="width: 100px; padding-left: 50px; vertical-align: top; border: none;">
+                        {% if report_card.school_logo_url %}
+                            <img src="{{ report_card.school_logo_url }}" alt="School Logo" height="80">
+                        {% else %}
+                            <p>No logo available</p>
+                        {% endif %}
+                    </td>
+        
+                    <!-- Text Content Section -->
+                    <td style="vertical-align: top; text-align: center; padding-right: 60px; border: none;">
+                        <h1 style="margin: 0;">{{ report_card.school_name|upper }}</h1><br>
+                        <p style="margin: 2px 0;"><strong>Motto:</strong> {{ report_card.school_motto|upper }}</p>
+                        <p style="margin: 2px 0;"><strong>Address:</strong> {{ report_card.school_address }}</p>
+                        <h4 style="margin: 0;">REPORT SHEET FOR {{ term|upper }} TERM, {{ session|upper }} ACADEMIC SESSION</h4>
+                    </td>
+                </tr>
             </table>
-        </div>
+        
+            <!-- Student Information -->
+            <table style="width: 100%; border-collapse: collapse; margin: 0 40px;">
+                <tr style="text-align: center;">
+                    <!-- Student Information -->
+                    <td style="padding: 2px; border: none; font-size: 12px; text-align: left;">
+                        <p><strong style="color: black;">Name:</strong> {{ report_card.student_name }}</p>
+                        <p><strong style="color: black;">Gender:</strong> {{ report_card.student_gender }}</p>
+                        <p><strong style="color: black;">Class:</strong> {{ report_card.student_class }}</p>
+                        <p><strong style="color: black;">Admission No:</strong> {{ report_card.student_admission_no }}</p>
+                        <p><strong style="color: black;">No. In Class:</strong> {{ num_students_in_class }}</p>
+                    </td>
+        
+                    <!-- Academic Performance -->
+                    <td style="padding: 2px; border: none; font-size: 12px; text-align: left;">
+                        <p><strong style="color: black;">Class Average:</strong> {{ report_card.overall_class_average|floatformat:1|default:"N/A" }}</p>
+                        <p><strong style="color: black;">Highest Ave. In Class:</strong> {{ report_card.highest_average_in_class|floatformat:1 }}</p>
+                        <p><strong style="color: black;">Lowest Ave. In Class:</strong> {{ report_card.lowest_average_in_class|floatformat:1 }}</p>
+                        <p><strong style="color: black;">Final Grade:</strong> {{ report_card.final_grade }}</p>
+                        <p><strong style="color: black;">Total Marks:</strong> {{ report_card.total_marks_obtaine|floatformat:1|default:"N/A" }}</p>
+                    </td>
+        
+                    <!-- Additional Information -->
+                    <td style="padding: 2px; border: none; font-size: 12px; text-align: left;">
+                        <p><strong style="color: black;">Final Position:</strong> {{ report_card.final_position }} out of {{ num_students_in_class }}</p>
+                        <p><strong style="color: black;">Student's Average:</strong> {{ report_card.student_averages }}</p>
+                        <p><strong style="color: black;">Term:</strong> {{ term }}</p>
+                    </td>
+                </tr>
+            </table>
 
-        <div class="student-details">
-            <p><strong>Grading System:</strong></p>
-            <ul>
-                <li>A: {{ report_card.grading_system.A }} (Excellent)</li>
-                <li>B: {{ report_card.grading_system.B }} (Good)</li>
-                <li>C: {{ report_card.grading_system.C }} (Average)</li>
-                <li>P: {{ report_card.grading_system.P }} (Pass)</li>
-                <li>F: {{ report_card.grading_system.F }} (Fail)</li>
-            </ul>
-        </div>
 
-        <div class="footer">
-            <p>Total Marks Obtained: {{ report_card.total_marks_obtained }}</p>
-            <p>Maximum Marks Possible: {{ report_card.total_max_marks }}</p>
+    <!-- {% if report_card.total_marks_obtaine == 0 %}
+      <h1 style="color: red;">No exam for {{ report_card.student_class }} - {{ term|upper }}-{{ session|upper }}</h1>
+    {% else %}
+    {% endif %} -->
+      
+        
+            <!-- Subject Scores -->
+            <div class="subject-scores">
+               <h1>tttttttt {{report_card.subject_statistics2}}</h1>
+                <table class="subject-table" style="font-size: 12px;">
+                    <thead>
+                        <tr>
+                           
+                            <th>Subject</th>
+                            <th>CA ({{ca_total_marks.show_questions }}%)</th>
+                            <th>MID-TERM ({{ midterm_total_marks.show_questions }}%)</th>
+                            <th>EXAM ({{ exam_total_marks.show_questions }}%)</th>
+                            <th>Total Marks</th>
+                            <th>GRD</th>
+                            <th>POS</th>
+                            <th>OUT OF</th>
+                            <th>Subject Ave</th>
+                            <th>Low in Class</th>
+                            <th>High in Class</th>  
+                            <th>Comments</th>
+                            <th>subject_statistics2</th> 
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in report_card.subjects %}
+                        <tr>
+                            <td>{{ subject.subject }}</td>
+                            <td>{{ subject.CA_marks }}</td>
+                            <td>{{ subject.Midterm_marks }}</td>
+                            <td>{{ subject.Exam_marks }}</td>
+                            <td>{{ subject.Total_marks|floatformat:1|default:"N/A" }}</td>
+                            <td>{{ subject.Grade }}</td>
+                            <td>{{ subject.subject_positions|floatformat:0|default:"N/A" }}</td>
+                            <td>{{ subject.subject_student_count }}</td>
+                            <td>{{ subject.Statistics.average|floatformat:1|default:"N/A" }}</td>
+                            <td>{{ subject.Statistics.lowest|floatformat:1|default:"N/A" }}</td>
+                            <td>{{ subject.Statistics.highest|floatformat:1|default:"N/A" }}</td>
+                            <td>{{ subject.Comments }}</td>
+                            <td>{{ subject.Statistics }}</td>
+                        
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+           
+        
+            <!-- Grading System -->
+            <div class="student-details">
+                <h4 style="text-align: right;">No. Of Subjects: {{ report_card.subject_count_statistics }}</h4>
+                <p><strong>Grading System:</strong></p>
+                <span style="font-weight: bolder;">
+                    A: {{ report_card.grading_system.A }} (Excellent),
+                    B: {{ report_card.grading_system.B }} (Good),
+                    C: {{ report_card.grading_system.C }} (Average),
+                    P: {{ report_card.grading_system.P }} (Pass),
+                    F: {{ report_card.grading_system.F }} (Fail)
+                </span>
+            </div>
         </div>
-    </div>
     {% endfor %}
+
+    <hr>
+ 
+ 
+
+
 </body>
 </html>

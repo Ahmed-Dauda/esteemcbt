@@ -40,10 +40,11 @@ class Course(models.Model):
 
     # def __str__(self):
     #     return f'{self.course_name or "No Course Name" }'
+    
     def __str__(self):
-        return f'{self.course_name} - {self.exam_type}'
+        return f'{self.course_name} - {self.session} - {self.term} - {self.exam_type}'
 
-    def get_questions(self):
+    def get_questions(self):    
         return self.question_set.all()[:self.show_questions]
 
 
@@ -54,7 +55,8 @@ class CourseGrade(models.Model):
     schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='coursegrade', blank=True, null=True)
     name = models.CharField(max_length=140, blank=True, null=True)  # This is the class name like JSS1, JSS2, etc.
     students = models.ManyToManyField(NewUser, related_name='course_grades', blank=True)
-    subjects = models.ManyToManyField(Courses, related_name='course_grade', blank=True)
+    # subjects = models.ManyToManyField(Courses, related_name='course_grade')
+    subjects = models.ManyToManyField(Course, related_name='course_grade')
     is_active = models.BooleanField(default=True)  # Add the checkbox field
     id = models.AutoField(primary_key=True)
     

@@ -103,12 +103,12 @@
                             <td class="align-middle">{{ course_grade.name }}</td>
                             <td class="align-middle">
                                 {% for student in course_grade.students.all %}
-                                    {{ student.first_name }} {{ student.last_name }}<br>
+                              {{ student.first_name }} {{ student.last_name }}<br>
                                 {% endfor %}
                             </td>
                             <td class="align-middle">
                                 {% for subject in course_grade.subjects.all %}
-                                    {{ subject.title }}<br>
+                                {{ subject}}<br>
                                 {% endfor %}
                             </td>
                             <td class="align-middle text-center">

@@ -110,84 +110,102 @@
     <div id="wrapper" class="bg-white">
         <!-- Sidebar -->
 
- 
+       
         <ul style="background-color: rgb(25, 26, 26); margin-bottom: 0;" class="navbar-nav sidebar sidebar-dark accordion toggled" id="accordionSidebar">
             <!-- Nav Item - Pages Collapse Menu -->
 <br>
+         
              <!-- Sidebar Toggler (Sidebar) -->
              <div class="text-center d-none d-md-inline">
                 <button class="rounded-circle border-0" id="sidebarToggle"></button>
             </div>
+        
             <!-- Divider -->
             <hr class="sidebar-divider">
             {% if request.user.is_authenticated and request.user.is_teacher %}
-    <a href="{% url 'teacher:manage_exam' %}">222Manage Exams</a>
-    <a href="{% url 'teacher:create_exam' %}">22222Create New Exam</a>
+            {% if teacher_school|lower == user_school|lower %}
+ 
+            <a href="{% url 'teacher:manage_exam' %}">Manage Exams</a>
+            <a href="{% url 'teacher:create_exam' %}">Create New Exam</a>
     <!-- Add other teacher-specific links here -->
-{% endif %}
+            {% endif %}
+            {% endif %}
 
+    {% if request.user.is_authenticated and request.user.is_superuser %}
+    {% if teacher_school|lower == user_school|lower %}
+    <li class="nav-item" style="margin-bottom: -10px;">
+        <a class="nav-link" href="{% url 'finance:finance_record_view' %}">
+            <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
+            <span>Finance</span>
+        </a>
+    </li>
+    {% endif %}
+    {% endif %}
+           
             {% if request.user.is_authenticated and request.user.is_superuser %}
+            {% if teacher_school|lower == user_school|lower %}
             <li class="nav-item" style="margin-bottom: -10px;">
                 <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
                     <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
                     <span>Teacher Dashboard</span>
                 </a>
             </li>
+            {% endif %}
+            {% endif %} 
+
+            {% if request.user.is_authenticated and request.user.is_superuser %}
+            {% if teacher_school|lower == user_school|lower %}
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:create_course_view' %}">
                     <i class="fas fa-fw fa-book"></i>
                     <span>Add subject</span>
                 </a>
              </li>
+             {% endif %}
+             {% endif %} 
+
+             {% if request.user.is_authenticated and request.user.is_superuser %}
+             {% if teacher_school|lower == user_school|lower %}
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:examiner_dashboard' %}">
                     <i class="fas fa-fw fa-book"></i>
                     <span>Manage Students</span>
                 </a>
              </li>
+             {% endif %}
+             {% endif %} 
+
+             {% if request.user.is_authenticated and request.user.is_superuser %}
+             {% if teacher_school|lower == user_school|lower %}
              <li class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:manage_exam' %}">
                     <i class="fas fa-fw fa-book"></i>
                     <span>Manage Exams</span>
                 </a>
              </li>
-             <!-- <li class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:create_examiner_exam' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span> Create Exams </span>
-                </a>
-             </li> -->
+            {% endif %}
+            {% endif %} 
+
+            {% if request.user.is_authenticated and request.user.is_superuser %}
+            {% if teacher_school|lower == user_school|lower %}
              <li class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:teacher_list' %}">
                     <i class="fas fa-fw fa-book"></i>
                     <span>Manage Teacher </span>
                 </a>
              </li>
-            
-            <!-- <li class="nav-item">
-                <a class="nav-link" href="{% url 'quiz:move_group' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>promote students</span></a>
-
-            </li>  -->
-            <!-- <li class="nav-item">
-                    <a class="nav-link" href="{% url 'teacher:teacher_signup' %}">
-                        <i class="fas fa-fw fa-book"></i>
-                        <span> Teacher Signup</span></a>
-            </li> -->
-            <!-- <li class="nav-item">
-                    <a class="nav-link" href="{% url 'users:schoolstudentview' %}">
-                        <i class="fas fa-fw fa-book"></i>
-                        <span>Registration students</span>
-                    </a>
-            </li> -->
+             {% endif %}
+             {% endif %}   
+             
+        {% if request.user.is_authenticated and request.user.is_superuser %}
+        {% if teacher_school|lower == user_school|lower %}
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:exam_list' %}">
                     <i class="fas fa-fw fa-book"></i>
                     <span>Result statistics</span>
                 </a>
-        </li>
-            
+            </li>
+            {% endif %} 
 
             {% else %}
 
@@ -198,54 +216,31 @@
                     <span>Teacher Dashboard</span>
                 </a>
             </li>
-            <!-- <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'teacher:generate_csv' %}">
+           <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'add_conduct' %}">
                     <i class="fas fa-fw fa-eye"></i> 
-                    <span>Generate Questions with AI</span>
+                    <span>Add Conduct</span>
                 </a>
-            </li> -->
+            </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'list_conducts' %}">
+                    <i class="fas fa-fw fa-eye"></i> 
+                    <span>Conduct List</span>
+                </a>
+            </li>
             <li class="nav-item" style="margin-bottom: -10px;">
                 <a class="nav-link" href="{% url 'teacher:view_questions' %}">
                     <i class="fas fa-fw fa-eye"></i> <!-- Icon for view questions -->
                     <span>Manage Questions</span>
                 </a>
             </li>
-            <!-- <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'teacher:import_data' %}">
-                    <i class="fas fa-fw fa-file-import"></i>
-                    <span>Import Questions</span>
-                </a>
-            </li> -->
-            <!-- <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'teacher:export_data' %}">
-                    <i class="fas fa-fw fa-file-export"></i>
-                    <span>Export Questions</span>
-                </a>
-            </li> -->
-            <!-- <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'teacher:export_results_csv' %}">
-                    <i class="fas fa-fw fa-file-csv"></i> 
-                    <span>Export Result</span>
-                </a>
-            </li> -->
-            <!-- <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'teacher:import-results' %}">
-                    <i class="fas fa-fw fa-file-csv"></i>
-                    <span>Import Result</span>
-                </a>
-            </li> -->
+
             <li class="nav-item" style="margin-bottom: -10px;">
                 <a class="nav-link" href="{% url 'teacher:teacher_results' %}">
                     <i class="fas fa-fw fa-poll"></i> <!-- Icon for teacher results -->
                     <span>Manage Results</span>
                 </a>
             </li>
-            <!-- <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'teacher:add_question' %}">
-                    <i class="fas fa-fw fa-plus"></i> 
-                    <span>Add Questions</span>
-                </a>
-            </li> -->
 
         
             {% endif %}
@@ -253,9 +248,10 @@
            
         <br> <br> <br> <br> <br>
             <!-- Sidebar Message -->
+
         </ul>
         
-
+       
         
 
         <!-- End of Sidebar -->

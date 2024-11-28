@@ -1,12 +1,10 @@
 
 from django import forms
-from .models import CourseGrade
+from .models import CourseGrade, Course
 from users.models import NewUser
 from .models import School
-
-
 from django.contrib import admin
-from .models import CourseGrade, NewUser, Courses
+
 
 class CourseGradeForm(forms.ModelForm):
     class Meta:
@@ -21,7 +19,7 @@ class CourseGradeForm(forms.ModelForm):
     )
     
     subjects = forms.ModelMultipleChoiceField(
-        queryset=Courses.objects.all(),
+        queryset=Course.objects.all(),
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'checkbox-multiple'}),  # Add custom class
         required=False
     )
