@@ -1,5 +1,6 @@
 {% load static %}
 {% load custom_filters %}
+{% load my_filters %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -109,7 +110,7 @@
         
             <!-- Subject Scores -->
             <div class="subject-scores">
-               <h1>tttttttt {{report_card.subject_statistics2}}</h1>
+               
                 <table class="subject-table" style="font-size: 12px;">
                     <thead>
                         <tr>
@@ -126,7 +127,7 @@
                             <th>Low in Class</th>
                             <th>High in Class</th>  
                             <th>Comments</th>
-                            <th>subject_statistics2</th> 
+                        
                             
                         </tr>
                     </thead>
@@ -141,18 +142,19 @@
                             <td>{{ subject.Grade }}</td>
                             <td>{{ subject.subject_positions|floatformat:0|default:"N/A" }}</td>
                             <td>{{ subject.subject_student_count }}</td>
-                            <td>{{ subject.Statistics.average|floatformat:1|default:"N/A" }}</td>
-                            <td>{{ subject.Statistics.lowest|floatformat:1|default:"N/A" }}</td>
-                            <td>{{ subject.Statistics.highest|floatformat:1|default:"N/A" }}</td>
+                            <td>{{ subject.average|floatformat:1|default:"N/A" }}</td>
+                            <td>{{ subject.lowest|floatformat:1|default:"N/A" }}</td>
+                            <td>{{ subject.highest|floatformat:1|default:"N/A" }}</td>
+                            
                             <td>{{ subject.Comments }}</td>
-                            <td>{{ subject.Statistics }}</td>
-                        
+                       
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
            
+            <h1>{{subject_statistics2}}</h1>
         
             <!-- Grading System -->
             <div class="student-details">

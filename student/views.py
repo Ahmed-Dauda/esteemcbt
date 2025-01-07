@@ -71,6 +71,517 @@ def ordinal(n):
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 
+from django.db.models import F
+
+@login_required
+def examiner_report_card_list(request):
+    # Fetch all results and organize unique students in Python
+    results = (
+        Result.objects.select_related('session', 'term', 'student')
+        .values(
+            'student__id',
+            'student__first_name',
+            'student__last_name',
+            'student__student_class',
+            'session__name',
+            'term__name'
+        )
+    )
+    
+    # Use a dictionary to filter unique students
+    unique_students = {}
+    for result in results:
+        student_id = result['student__id']
+        if student_id not in unique_students:
+            unique_students[student_id] = result
+
+    context = {
+        'report_cards': unique_students.values(),
+    }
+
+    return render(request, 'student/dashboard/examiner_report_card_list.html', context)
+
+
+
+@login_required
+def examiner_report_card_details(request, student_id ,session, term):
+    
+    # student = Profile.objects.select_related('user', 'user__school').get(user=request.user)
+    student = get_object_or_404(Profile, id=student_id)
+    # Fetch the session and term instances
+    session = get_object_or_404(Session, name=session)
+    term = get_object_or_404(Term, name=term)
+    
+
+    results = Result.objects.filter(
+        student=student,
+        result_class=student.student_class,
+        session=session,
+        term=term,
+    ).select_related('student').distinct()
+  
+    subject_total_scores = results.values('student').annotate(total_marks=Sum('marks')).order_by('-total_marks')
+    student_name = f"{student.first_name} {student.last_name}"
+    # student_gender = newusers.gender
+    student_gender = student.gender
+   
+    # student_admission_no = newusers.admission_no
+    student_admission_no = student.admission_no
+    student_class = student.user.student_class
+    student_school = student.user.school
+
+    profile_picture_url = student.user.pro_img.url if student.user.pro_img and hasattr(student.user.pro_img, 'url') else None
+    # Get school logo URL
+    school_logo_url = student_school.logo.url if student_school and student_school.logo and hasattr(student_school.logo, 'url') else None
+    school_motto = student_school.school_motto if student_school else None
+    
+    school_address = student_school.school_address if student_school else None
+    student_class_count = NewUser.objects.filter(student_class=student_class).count()
+    
+    grading_system = {
+        'A': f"{student_school.A_min}-{student_school.A_max}",
+        'B': f"{student_school.B_min}-{student_school.B_max}",
+        'C': f"{student_school.C_min}-{student_school.C_max}",
+        'P': f"{student_school.P_min}-{student_school.P_max}",
+        'F': f"{student_school.F_min}-{student_school.F_max}",
+    }
+    
+    grade_comments = {
+        'A': student_school.A_comment,
+        'B': student_school.B_comment,
+        'C': student_school.C_comment,
+        'P': student_school.P_comment,
+        'F': student_school.F_comment
+    }
+
+    subject_grades = {}
+    subject_comments = {}
+    subject_positions = {}
+    subject_statistics = {}
+    # Initialize total marks and maximum possible marks
+    total_marks_obtained = 0
+    total_max_marks = 0
+
+
+    for result in results:
+        subject = result.exam.course_name
+        # Calculate marks for CA, MIDTERM, and EXAM
+        ca_marks = Result.objects.filter(exam__course_name=subject,term=term,session=session, student=student, exam_type__name='CA').aggregate(Sum('marks'))['marks__sum'] or 0
+        midterm_marks = Result.objects.filter(exam__course_name=subject,term=term,session=session ,student=student, exam_type__name='MIDTERM').aggregate(Sum('marks'))['marks__sum'] or 0
+        exam_marks = Result.objects.filter(exam__course_name=subject,term=term,session=session, student=student, exam_type__name='EXAM').aggregate(Sum('marks'))['marks__sum'] or 0
+        # print(ca_marks, 'ca_marks')
+        # print(midterm_marks, 'midterm_marks')
+     
+        ca_total_marks = Course.objects.filter(
+            schools = request.user.school,
+            course_name = subject,
+            term=term,
+            session=session,
+            exam_type__name='CA'
+            ).values('show_questions').first()
+        ca_total_marks = ca_total_marks['show_questions'] if ca_total_marks else 0  # Total possible marks for CA exam
+       
+        # Retrieve the first non-zero 'show_questions' value, or None if no non-zero value exists
+        midterm_total_marks = Course.objects.filter(
+            schools=request.user.school,
+            course_name=subject,
+            term=term,
+            session=session,
+            show_questions__isnull=False,
+            exam_type__name='MIDTERM'  
+        ).values('show_questions').first()
+        midterm_total_marks = midterm_total_marks['show_questions'] if midterm_total_marks else 0
+        # print(midterm_total_marks)
+
+        exam_total_marks = Course.objects.filter(
+            schools = request.user.school,
+            course_name = subject,
+            term=term,
+            session=session,
+            exam_type__name='EXAM'
+            ).values('show_questions').first()
+        exam_total_marks = exam_total_marks['show_questions'] if exam_total_marks else 0  # Total possible marks for EXAM
+            
+        if not midterm_marks and not exam_marks:
+            # Only CA marks are present   
+            if ca_total_marks > 0:  # Check if ca_total_marks is greater than zero
+                total_marks = (ca_marks / ca_total_marks) * 100
+            else:
+                total_marks = 0  # Set to 0 or handle as needed if ca_total_marks is zero
+
+        elif not exam_marks:
+            # print(midterm_total_marks, 'midterm_total_marks')
+            # Only CA marks and midterm marks are present
+            c_m = midterm_marks + ca_marks
+            t_c_m = ca_total_marks + midterm_total_marks
+
+            if t_c_m > 0:
+                total_marks = round((c_m / t_c_m) * 100, 1)
+            else:
+                total_marks = 0  # Set to 0 if total CA and midterm marks is zero
+
+        else:
+           # Case: All marks (CA, midterm, and exam) are present
+            total_weight = ca_total_marks + midterm_total_marks + exam_total_marks  # Total weight of all assessments
+
+            if total_weight > 0:  # Ensure total weight is not zero to avoid division by zero
+                total_marks = 0  # Initialize total_marks
+
+                # Only add CA marks if ca_total_marks is greater than zero
+                if ca_total_marks > 0:
+                    total_marks += (ca_marks / ca_total_marks) * 100 * (ca_total_marks / total_weight)
+
+                # Only add midterm marks if midterm_total_marks is greater than zero
+                if midterm_total_marks > 0:
+                    total_marks += (midterm_marks / midterm_total_marks) * 100 * (midterm_total_marks / total_weight)
+
+                # Only add exam marks if exam_total_marks is greater than zero
+                if exam_total_marks > 0:
+                    total_marks += (exam_marks / exam_total_marks) * 100 * (exam_total_marks / total_weight)
+
+            else:
+                # If total_weight is zero, set total_marks to 0 to avoid division by zero
+                total_marks = 0
+
+
+        # Safeguard total_marks and result.exam.total_marks to handle None values
+        total_marks = total_marks or 0
+        total_marks_obtained += total_marks
+
+        # Handle result.exam.total_marks, ensuring it isn't None
+        max_marks = result.exam.total_marks or 0
+        total_max_marks += max_marks
+
+        # Rest of your code
+        grade = calculate_grade(total_marks, student.user.school)
+
+        subject_statistics[subject] = {
+            'CA': ca_marks,
+            'MIDTERM': midterm_marks,
+            'EXAM': exam_marks,
+            'total_score': total_marks,
+        }
+  
+        subject_grades[subject] = {
+            'grade': grade,  # Assuming `grade` is calculated elsewhere
+        }
+
+        # Calculate the count of subjects from various dictionaries
+        subject_count_statistics = len(subject_statistics)
+        subject_inf = subject_statistics
+        # Initialize the total marks obtained
+        total_marks_obtaine = 0
+        # Loop through the subjects in subject_inf and add the total score for each subject
+        for student_subjects, stats in subject_inf.items():
+            # print(stats, 'stats')
+            total_marks_obtaine += stats['total_score']  # Add the 'total_score' for each subject
+           
+
+        subject_student_count = {}  # Dictionary to store the number of students offering each subject
+        subject_total_marks = {}
+        # Initialize a set to store unique total marks for all students across all subjects
+        all_students_total_marks_set = []
+        # Initialize variables to calculate the overall class average
+        total_marks_all_subjects = 0
+        total_students_all_subjects = 0
+        # Dictionary to store each student's overall total marks and number of subjects they took
+        student_total_marks = {}
+        student_subject_count = {}
+        # Dictionaries to store the highest and lowest marks per subject in the class
+        highest_marks_in_class_per_subject = {}
+        lowest_marks_in_class_per_subject = {}
+        subject_statistics2 = {}
+        
+
+        for result in results:
+            subject1 = result.exam.course_name
+            # print(subject1, 'subject1')
+            # Calculate total marks for each student in the class for the specific subject
+            students_total_marks = Result.objects.filter(
+                exam__course_name=subject1,
+                session=session,
+                term=term,
+                student__user__student_class=student_class
+            ).values('student').annotate(
+                ca_marks=Sum('marks', filter=Q(exam_type__name='CA')),
+                midterm_marks=Sum('marks', filter=Q(exam_type__name='MIDTERM')),
+                exam_marks=Sum('marks', filter=Q(exam_type__name='EXAM'))
+            ) 
+
+            # Count the number of students offering this subject
+            subject_student_count[subject1] = students_total_marks.count()
+
+            # Initialize a list for this subject
+            subject_total_marks[subject1] = []
+
+            for student_marks in students_total_marks:
+                student_id = student_marks['student']
+                
+                # Get the marks for CA, Midterm, and Exam
+                ca_marks = student_marks.get('ca_marks', 0) or 0
+                midterm_marks = student_marks.get('midterm_marks', 0) or 0
+                exam_marks = student_marks.get('exam_marks', 0) or 0
+                
+                # Fetch total possible marks
+                ca_total_marks = Course.objects.filter(course_name = subject1,schools = request.user.school,term=term, session=session, exam_type__name='CA').values('show_questions').first()
+                ca_total_marks = ca_total_marks['show_questions'] if ca_total_marks else 0
+
+                midterm_total_marks = Course.objects.filter(course_name = subject1,schools = request.user.school,term=term, session=session, exam_type__name='MIDTERM').values('show_questions').first()
+                midterm_total_marks = midterm_total_marks['show_questions'] if midterm_total_marks else 0
+
+                exam_total_marks = Course.objects.filter(course_name = subject1,schools = request.user.school,term=term, session=session, exam_type__name='EXAM').values('show_questions').first()
+                exam_total_marks = exam_total_marks['show_questions'] if exam_total_marks else 0
+                 
+                # Calculate total marks
+                e_type = None  # Default to None
+ 
+                if not midterm_marks and not exam_marks:
+                    e_type = 'CA'
+                elif ca_marks and midterm_marks:
+                    e_type = 'MID TERM'
+                elif exam_marks:
+                    e_type = 'EXAM'
+
+                # print(e_type)
+
+                if not midterm_marks and not exam_marks:
+                    total_marks = (ca_marks / ca_total_marks) * 100 if ca_total_marks > 0 else 0
+                  
+                elif not exam_marks: 
+                    c_m = midterm_marks + ca_marks
+                    t_c_m = ca_total_marks + midterm_total_marks
+                    total_marks = round((c_m / t_c_m) * 100, 1) if t_c_m > 0 else 0
+                  
+                else:
+                    # Case: All marks (CA, midterm, and exam) are present
+                    # Initialize total_marks and total_weight
+                    total_marks = 0
+                    total_weight = 0
+
+                    # Add CA marks if ca_total_marks > 0
+                    if ca_total_marks > 0:
+                        total_marks += (ca_marks / ca_total_marks) * 100 * ca_total_marks
+                        total_weight += ca_total_marks
+
+                    # Add midterm marks if midterm_total_marks > 0
+                    if midterm_total_marks > 0:
+                        total_marks += (midterm_marks / midterm_total_marks) * 100 * midterm_total_marks
+                        total_weight += midterm_total_marks
+
+                    # Add exam marks if exam_total_marks > 0
+                    if exam_total_marks > 0:
+                        total_marks += (exam_marks / exam_total_marks) * 100 * exam_total_marks
+                        total_weight += exam_total_marks
+
+                    # Ensure total_weight is not zero to avoid division by zero
+                    if total_weight > 0:
+                        total_marks = total_marks / total_weight  # Normalize by total_weight
+
+                    else:
+                        total_marks = 0  # If all sections are zero, set total_marks to 0
+
+                subject_total_marks[subject1].append(total_marks)
+
+                # Update the highest and lowest marks for the subject in the class
+                if subject1 not in highest_marks_in_class_per_subject:
+                    highest_marks_in_class_per_subject[subject1] = total_marks
+                    lowest_marks_in_class_per_subject[subject1] = total_marks
+                    # print(lowest_marks_in_class_per_subject, 'ca')
+                else:
+                    highest_marks_in_class_per_subject[subject1] = max(highest_marks_in_class_per_subject[subject1], total_marks)
+                    lowest_marks_in_class_per_subject[subject1] = min(lowest_marks_in_class_per_subject[subject1], total_marks)
+
+                # Add total marks to the global set for all students across all subjects
+                
+                all_students_total_marks_set.append(total_marks)
+
+                # Add the calculated total_marks to the student_marks dictionary
+                student_marks['total_marks'] = total_marks
+               
+                # Update the student's overall total marks and subject count
+                if student_id not in student_total_marks:
+                    student_total_marks[student_id] = total_marks
+                    student_subject_count[student_id] = 1
+
+                else:
+                    student_total_marks[student_id] += total_marks
+                    student_subject_count[student_id] += 1
+
+                # Calculate the average marks for each subject
+                subject_averages2 = {}
+
+                for subject2, marks in subject_total_marks.items():
+                    if len(marks) > 0:
+                        subject_averages2[subject2] = sum(marks) / len(marks)
+                    else:
+                        subject_averages2[subject2] = 'N/A'
+
+                # Populate the subject_statistics2 dictionary
+                for subject2, marks in subject_total_marks.items(): 
+                    subject_statistics2[subject2] = {
+                        'average': subject_averages2.get(subject2, 'N/A'),
+                        'lowest': lowest_marks_in_class_per_subject.get(subject2, 'N/A'),
+                        'highest': highest_marks_in_class_per_subject.get(subject2, 'N/A'),
+            
+                    }
+
+
+            # Update overall totals for class average calculation
+            total_marks_all_subjects += sum(subject_total_marks[subject1])
+            total_students_all_subjects += subject_student_count[subject1]
+           
+        # Convert the set back to a list
+        all_students_total_marks = list(all_students_total_marks_set)
+        sum_of_total_marks = sum(all_students_total_marks) / 2
+        
+        # Calculate the overall class average across all subjects
+        if total_students_all_subjects > 0:
+            overall_class_average = total_marks_all_subjects / total_students_all_subjects
+            # print(f"Overall class average: {overall_class_average}")
+        else:
+            overall_class_average = 0
+ 
+        student_averages = []
+        for student_id, total_marks in student_total_marks.items():
+            if student_subject_count[student_id] > 0:
+                student_average = total_marks / student_subject_count[student_id]
+                student_averages.append(student_average)
+
+        # Find the highest and lowest averages
+        if student_averages:
+            highest_average_in_class = max(student_averages)
+            lowest_average_in_class = min(student_averages)
+            highest_average_in_class = highest_average_in_class
+            lowest_average_in_class = lowest_average_in_class
+
+        else:
+            highest_average_in_class = 0
+            lowest_average_in_class = 0
+
+        all_students_total_marks_subj = Result.objects.filter(
+            exam__course_name=subject, 
+            session=session,
+            term=term,
+            student__user__student_class=student_class
+        ).values('student').annotate(total_marks=Sum('marks'))
+
+        # Sort the students by total marks in descending order
+        sorted_marks = sorted(all_students_total_marks_subj, key=lambda x: x['total_marks'], reverse=True)
+
+        # Initialize variables for ranking
+        rank = 1
+        last_total_marks = None
+        rank_map = {}
+
+        # Iterate over sorted marks and assign dense ranks
+        for index, marks in enumerate(sorted_marks):
+            if marks['total_marks'] != last_total_marks:
+                rank = index + 1  # Update rank if the total marks are different
+                last_total_marks = marks['total_marks']
+            rank_map[marks['student']] = rank  # Assign dense rank to the student
+
+        # Get the current student's subject position based on their rank
+        subject_positions[subject] = rank_map.get(student.id, None)  
+  
+        # students_total_marks = sum(total_result.marks for total_result in total_results)
+        class_average = sum_of_total_marks / student_class_count if student_class_count > 0 else 0
+        final_grade = calculate_grade(total_marks_obtaine / subject_count_statistics, student.user.school)
+        # print(class_average, 'class_average')   
+        comment = grade_comments.get(grade, 'No comment available')
+        subject_comments[subject] = comment
+    
+            # Calculate total marks for all students in the class
+        all_students_total_marks = Result.objects.filter(
+            session=session,
+            term=term,
+            student__user__student_class=student.student_class
+        ).values('student').annotate(total_marks=Sum('marks')).order_by('-total_marks')
+
+        # Calculate dense ranking
+        sorted_marks = sorted(all_students_total_marks, key=lambda x: x['total_marks'], reverse=True)
+        rank = 1
+        last_total_marks = None
+        rank_map = {}
+
+        for index, marks in enumerate(sorted_marks):
+            if marks['total_marks'] != last_total_marks:
+                rank = index + 1  # Move to the next rank
+                last_total_marks = marks['total_marks']
+            rank_map[marks['student']] = rank  # Assign dense rank
+            
+         # Get the current student's final position
+        final_position = rank_map.get(student.id, None)
+
+
+    context = {
+    
+        'grade_comments': grade_comments,
+        'subject_statistics2': subject_statistics2,
+         'highest_marks_in_class_per_subject': highest_marks_in_class_per_subject,
+         'lowest_marks_in_class_per_subject': lowest_marks_in_class_per_subject,
+        'overall_class_average':overall_class_average,
+        'sum_of_total_marks': sum_of_total_marks,
+        'subject_student_count':subject_student_count,
+        # 'subject_grades1': subject_grades1,
+        'ca_total_marks':ca_total_marks,      
+        'midterm_total_marks': midterm_total_marks,    
+        'exam_total_marks':exam_total_marks,
+        'student': student,
+        'session': session,
+        'term': term,
+        # 'exam_types': exam_types,
+        'e_type':e_type,
+        'class_average': round(class_average, 2), 
+        'student_name': student_name,
+        'student_gender': student_gender,
+        'student_admission_no': student_admission_no,
+        'student_class': student_class,
+        'student_school': student_school,
+        'profile_picture': profile_picture_url,
+        'school_logo_url': school_logo_url,  # Pass the logo URL to the templat
+        'results': results,
+        'subject_count_statistics': subject_count_statistics,
+        # 'total_marks_obtained': total_marks_obtained,
+        'total_marks_obtaine': total_marks_obtaine,
+        'total_max_marks': total_max_marks,
+        'school_motto': school_motto,
+        'school_address': school_address,
+        'student_averages1':round(total_marks_obtaine / subject_count_statistics, 1),
+        'student_class_count': student_class_count,
+        'grading_system': grading_system,
+        'subject_statistics': subject_statistics,
+        'subject_grades': subject_grades,
+        'subject_positions': subject_positions,
+        'subject_comments': subject_comments,
+        # 'subj_class_averages': sub_class_averages,
+        'final_position2': final_position,
+        'final_grade': final_grade, 
+        'highest_average_in_class': highest_average_in_class,
+        'lowest_average_in_class': lowest_average_in_class,
+        'subject_total_scores': subject_total_scores,
+    }
+
+    return render(request, 'student/dashboard/examiner_report_card_details.html', context)
+
+
+# @login_required
+# def view_report_card(request, student_id, session_name, term_name):
+#     # Fetch the specific report card for the student, session, and term
+#     report_card = Result.objects.filter(
+#         student_id=student_id,
+#         session__name=session_name,
+#         term__name=term_name,
+#     ).select_related('session', 'term', 'student').first()
+
+#     if not report_card:
+#         return render(request, 'error.html', {'message': 'Report card not found.'})
+    
+#     context = {
+#         'report_card': report_card,
+#     }
+
+#     return render(request, 'student/dashboard/view_report_card.html', context)
+
 
 @login_required
 def report_card_list(request):
@@ -78,7 +589,6 @@ def report_card_list(request):
     student = request.user.profile  # Assuming a OneToOne relationship with Profile
     # student = Profile.objects.select_related('user', 'user__school').get(user=request.user)
 
-  
     # Fetch distinct sessions and terms where the student has results
     report_cards = Result.objects.filter(student=student).select_related('session','term').values('session__name', 'term__name').distinct()
       
@@ -268,7 +778,7 @@ def generate_report_card_class(request, session, term):
     # Dictionaries to store the highest and lowest marks per subject in the class
     highest_marks_in_class_per_subject = {}
     lowest_marks_in_class_per_subject = {}
-    subject_statistics2 = {}
+
 
     num_students_in_class = students_in_class.count()
 
@@ -425,14 +935,55 @@ def generate_report_card_class(request, session, term):
             # print(total_marks_obtaine, 'total_marks_obtaine')
             student_data['total_marks_obtaine'] = total_marks_obtaine
             student_data['subject_count_statistics'] = subject_count_statistics
+            
+            # stu_avegerag = total_marks_obtaine / subject_count_statistics
+            # student_averages = {
+            #     student.id: stu_avegerag  # Store student average with their ID as key
+            # }
+            # student_data['student_averages'] = round(student_averages.get(student.id, 0), 2)
+            # # print(stu_avegerag, 'stu_avegerag')
+
+            # # Fix: Ensure stu_avegerag values are aggregated before summing
+            # stu_avegerag_values = list(student_averages.values())  # Extract values from the dictionary
+            # sclass_average = sum(stu_avegerag_values) / len(stu_avegerag_values) if stu_avegerag_values else 0
+            # # Round for display
+            # sclass_average = round(sclass_average, 2)
+            # print(f"Class Average11: {sclass_average}")
+            # Calculate individual student average
+            stu_avegerag = total_marks_obtaine / subject_count_statistics
+            student_averages = {
+                student.id: stu_avegerag  # Store student average with their ID as key
+            }
+            student_data['student_averages'] = round(student_averages.get(student.id, 0), 2)
+
+            # Debugging: Check the student's average
+            # print(stu_avegerag, 'stu_avegerag')
+
+            # Fix: Ensure stu_avegerag values are aggregated before summing
+            stu_avegerag_values = list(student_averages.values())  # Extract values from the dictionary
+            sclass_average = sum(stu_avegerag_values) / len(stu_avegerag_values) if stu_avegerag_values else 0
+
+            # Debugging: Output class average
+            print(f"Class Average: {sclass_average}")
+
+    
+            # # Calculate overall statistics
+            # highest_average_in_class = max(student_averages.values(), default=0)
+            # lowest_average_in_class = min(student_averages.values(), default=0)
+            # overall_class_average = sum(student_total_marks.values()) / sum(student_subject_count.values()) if student_subject_count else 0
+
+            # # Update student data dictionary
+            # student_data['highest_average_in_class'] = highest_average_in_class
+            # student_data['lowest_average_in_class'] = lowest_average_in_class
+            # student_data['overall_class_average'] = sclass_average
 
             # new line 
+            # Initialize subject_total_marks
+            subject_total_marks = {}
+
+            # Process each result to calculate statistics per subject
             for result in results:
                 subject1 = result.exam.course_name
-
-                # Initialize dictionaries for subject totals and statistics
-                subject_total_marks = {}
-                subject_statistics2 = {}
 
                 # Fetch total marks for each student for this subject
                 students_total_marks = Result.objects.filter(
@@ -447,91 +998,71 @@ def generate_report_card_class(request, session, term):
                     exam_marks1=Sum('marks', filter=Q(exam_type__name='EXAM'))
                 )
 
-                # Initialize for current subject
+                # Initialize subject marks list
                 subject_total_marks[subject1] = []
 
-                # Fetch total possible marks for CA, MIDTERM, and EXAM
-                ca_total_marks = Course.objects.filter(
-                    course_name=subject1,
-                    schools=request.user.school,
-                    term=term_instance,
-                    session=session_instance,
-                    exam_type__name='CA'
-                ).values('show_questions').first() or {'show_questions': 0}
-
-                midterm_total_marks = Course.objects.filter(
-                    course_name=subject1,
-                    schools=request.user.school,
-                    term=term_instance,
-                    session=session_instance,
-                    exam_type__name='MIDTERM'
-                ).values('show_questions').first() or {'show_questions': 0}
-
-                exam_total_marks = Course.objects.filter(
-                    course_name=subject1,
-                    schools=request.user.school,
-                    term=term_instance,
-                    session=session_instance,
-                    exam_type__name='EXAM'
-                ).values('show_questions').first() or {'show_questions': 0}
-
-                # Extract total possible marks
-                ca_total = ca_total_marks['show_questions'] or 0
-                midterm_total = midterm_total_marks['show_questions'] or 0
-                exam_total = exam_total_marks['show_questions'] or 0
-
-                # Loop through each student's marks
+                # Calculate total marks for each student
                 for student_marks in students_total_marks:
-                    student_id = student_marks['student']
                     ca_marks1 = student_marks.get('ca_marks1', 0) or 0
                     midterm_marks1 = student_marks.get('midterm_marks1', 0) or 0
                     exam_marks1 = student_marks.get('exam_marks1', 0) or 0
 
-                    # Calculate total marks depending on the availability of midterm and exam
-                    # total_marks = 0
-                    if exam_total > 0:  # If exam exists
-                        total_marks = ((ca_marks1 + midterm_marks1 + exam_marks1) / (ca_total + midterm_total + exam_total)) * 100
-                        
-                    elif midterm_total > 0:  # If midterm exists but not exam
-                        total_marks = ((ca_marks1 + midterm_marks1) / (ca_total + midterm_total)) * 100
-                    else:  # Only CA exists
-                        total_marks = (ca_marks1 / ca_total) * 100 if ca_total > 0 else 0
-                        # print(total_marks, 'total_marks')
+                    # Fetch total possible marks for CA, MIDTERM, and EXAM
+                    # Fetch total possible marks for CA
+                    ca_total_data = Course.objects.filter(
+                        course_name=subject1,
+                        schools=request.user.school,
+                        term=term_instance,
+                        session=session_instance,
+                        exam_type__name='CA'
+                    ).values('show_questions').first()
 
-                    # Append total marks to the subject's list
+                    # Use 0 if no data is found
+                    ca_total = ca_total_data['show_questions'] if ca_total_data and 'show_questions' in ca_total_data else 0
+
+                    # Fetch total possible marks for MIDTERM
+                    midterm_total_data = Course.objects.filter(
+                        course_name=subject1,
+                        schools=request.user.school,
+                        term=term_instance,
+                        session=session_instance,
+                        exam_type__name='MIDTERM'
+                    ).values('show_questions').first()
+
+                    # Use 0 if no data is found
+                    midterm_total = midterm_total_data['show_questions'] if midterm_total_data and 'show_questions' in midterm_total_data else 0
+
+                    # Fetch total possible marks for EXAM
+                    exam_total_data = Course.objects.filter(
+                        course_name=subject1,
+                        schools=request.user.school,
+                        term=term_instance,
+                        session=session_instance,
+                        exam_type__name='EXAM'
+                    ).values('show_questions').first()
+
+                    # Use 0 if no data is found
+                    exam_total = exam_total_data['show_questions'] if exam_total_data and 'show_questions' in exam_total_data else 0
+
+                    # Calculate total percentage marks for the student in this subject
+                    if exam_total > 0:
+                        total_marks = ((ca_marks1 + midterm_marks1 + exam_marks1) / (ca_total + midterm_total + exam_total)) * 100
+                    elif midterm_total > 0:
+                        total_marks = ((ca_marks1 + midterm_marks1) / (ca_total + midterm_total)) * 100
+                    else:
+                        total_marks = (ca_marks1 / ca_total) * 100 if ca_total > 0 else 0
+
+                    # Append total marks to subject list
                     subject_total_marks[subject1].append(total_marks)
 
-                    # Calculate averages, high, and low for the subject
-                   # Assuming subject_total_marks is a dictionary containing the marks for each subject
+                # Calculate statistics per subject
+                subject_statistics2 = {}
                 for subject1, marks_list in subject_total_marks.items():
-                    # Calculate subject statistics (average, lowest, highest)
                     subject_statistics2[subject1] = {
                         'average': sum(marks_list) / len(marks_list) if marks_list else 0,
                         'lowest': min(marks_list) if marks_list else 0,
                         'highest': max(marks_list) if marks_list else 0,
                     }
-
-                    # Print to check the values
-                    # print(subject_statistics2, 'marks_list')
-
-                # Assign subject statistics for a specific subject (subject1)
-                # You can set student_data['subject_statistics2'] for a specific subject like so
-     
-           
-                stu_avegerag = total_marks_obtaine / subject_count_statistics
-                student_averages = {
-                    student.id: stu_avegerag  # Store student average with their ID as key
-                }
-
-                # Calculate overall statistics
-                highest_average_in_class = max(student_averages.values(), default=0)
-                lowest_average_in_class = min(student_averages.values(), default=0)
-                overall_class_average = sum(student_total_marks.values()) / sum(student_subject_count.values()) if student_subject_count else 0
-
-                # Update student data dictionary
-                student_data['highest_average_in_class'] = highest_average_in_class
-                student_data['lowest_average_in_class'] = lowest_average_in_class
-                student_data['student_averages'] = round(student_averages.get(student.id, 0), 2)
 
             # end 
 
@@ -575,7 +1106,7 @@ def generate_report_card_class(request, session, term):
                 term=term_instance,
                 student__student_class=student_class
             ).values('student').annotate(total_marks=Sum('marks')).order_by('-total_marks')
-              
+            
             # Calculate dense ranking once for all students
             sorted_marks = sorted(all_students_total_marks, key=lambda x: x['total_marks'], reverse=True)
             rank = 1
@@ -610,26 +1141,23 @@ def generate_report_card_class(request, session, term):
             )
             subject_student_count[subject] = students_total_marks.count()
             # end Count the number of students offering the subject
-
+            # print(all_students_total_marks_subj, 'bbbbb')
             # Append subject result to student's data, including student count
             student_data['subjects'].append({
-                'subject': subject,
-                'CA_marks': ca_marks,
-                'Midterm_marks': midterm_marks,   
-                'Exam_marks': exam_marks,
-                'Total_marks': total_marks_value,  
-                'Grade': grade,
-                'Comments': comment,
-                'subject_positions': subject_positions.get(subject, None),
-                'subject_student_count': subject_student_count[subject],  # Add the count here
-                # Include the statistics for the subject
-                'Statistics': {
-                    'average': subject_statistics2.get(subject1, {}).get('average', 'N/A'),
-                    'lowest': subject_statistics2.get(subject1, {}).get('lowest', 'N/A'),
-                    'highest': subject_statistics2.get(subject1, {}).get('highest', 'N/A'),
-                },
-            
-            })
+            'subject': subject,
+            'average': subject_statistics2.get(subject, {}).get('average', 'N/A'),
+            'lowest': subject_statistics2.get(subject, {}).get('lowest', 'N/A'),
+            'highest': subject_statistics2.get(subject, {}).get('highest', 'N/A'),
+            'CA_marks': ca_marks,
+            'Midterm_marks': midterm_marks,
+            'Exam_marks': exam_marks,
+            'Total_marks': total_marks_value,
+            'Grade': grade,
+            'Comments': comment,
+            'subject_positions': subject_positions.get(subject, None),
+            'subject_student_count': subject_student_count[subject],  # Add the count here
+        })
+
             
         class_report_cards.append(student_data)
         #end Append subject result to student's data, including student count
@@ -652,9 +1180,10 @@ def generate_report_card_class(request, session, term):
 
 
 @login_required
-def generate_report_card(request, session, term):
+def generate_report_card(request,session, term):
     
     student = Profile.objects.select_related('user', 'user__school').get(user=request.user)
+    # student = get_object_or_404(Profile, id=student_id)
     # Fetch the session and term instances
     session = get_object_or_404(Session, name=session)
     term = get_object_or_404(Term, name=term)

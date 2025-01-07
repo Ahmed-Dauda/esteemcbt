@@ -18,10 +18,13 @@ urlpatterns = [
     path('leaderboard-list/', views.leaderboard_list, name='leaderboard_list'),
       
     path('report-card-class/<str:session>/<str:term>/', views.generate_report_card_class, name='generate_report_card_class'),
+    path('examiner-report-card-details/<int:student_id>/<str:session>/<str:term>/', views.examiner_report_card_details, name='examiner_report_card_details'),
 
     path('report-card/<str:session>/<str:term>/', views.generate_report_card, name='generate_report_card'),
     path('generate-report-card-pdf/<str:session>/<str:term>/', views.generate_report_card_pdf, name='generate-report-card-pdf'),
     path('report-cards/', views.report_card_list, name='report_card_list'), 
+    path('examiner-report-card-list/', views.examiner_report_card_list, name='examiner-report-card-list'),
+
     path('report-card-pdf-list/', views.report_card_pdf_list, name='report-card-pdf-list'),
     path('list-student-results/', views.list_student_results, name='list-student-results'),
     path('class-results/<int:session_id>/<int:term_id>/<str:result_class>/',  views.view_class_results, name='view-class-results'),  

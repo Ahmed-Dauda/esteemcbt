@@ -59,7 +59,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'cloudinary',
-    
+    'django_select2',
     'embed_video',
     'xhtml2pdf',
     'tinymce',
@@ -334,20 +334,20 @@ USE_TZ = True
 
 # ADDITIONAL SITE SECURITies
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
-SECURE_BROWSER_XSS_FILTER = True
-X_FRAME_OPTIONS = 'DENY'
-SECURE_SSL_REDIDERECT = True
-SECURE_HSTS_SECONDS = 3600
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SESSION_COOKIES_SECURE = True
-SECURE_FRAME_DENY = True
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIES_HTTPONLY = True
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_SSL_REDIRECT = True
+# SECURE_BROWSER_XSS_FILTER = True
+# X_FRAME_OPTIONS = 'DENY'
+# SECURE_SSL_REDIDERECT = True
+# SECURE_HSTS_SECONDS = 3600
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
+# SECURE_CONTENT_TYPE_NOSNIFF = True
+# SESSION_COOKIES_SECURE = True
+# SECURE_FRAME_DENY = True
+# CSRF_COOKIE_SECURE = True
+# SESSION_COOKIES_HTTPONLY = True
+# SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # end of security
 
@@ -545,6 +545,35 @@ PAYSTACK_PUBLIC_KEY = 'pk_test_72337ad2f9419ff6eb3204519bb884067c075ed8'
 # set transaction read write;
 # ALTER TABLE "public"."teacher_teacher_subjects_taught" RENAME COLUMN course_id TO courses_id;
 # COMMIT; 
+
+
+# example 5
+# BEGIN;
+# SET TRANSACTION READ WRITE;
+
+# CREATE TABLE finance_financerecord (
+#     sn SERIAL PRIMARY KEY,
+#     names VARCHAR(100) NOT NULL,
+#     student_class VARCHAR(100) DEFAULT 'NA',
+#     initial_total_deposit DECIMAL(10,1) NOT NULL,
+#     total_deposit DECIMAL(10,1) NOT NULL,
+#     school_id INTEGER REFERENCES quiz_school(id) ON DELETE SET NULL,
+#     session_id INTEGER REFERENCES sms_session(id) ON DELETE SET NULL,
+#     term_id INTEGER REFERENCES sms_term(id) ON DELETE SET NULL,
+#     school_shop DECIMAL(10,1) DEFAULT 0,
+#     caps DECIMAL(10,1) DEFAULT 0,
+#     haircut DECIMAL(10,1) DEFAULT 0,
+#     others DECIMAL(10,1) DEFAULT 0,
+#     total_expense DECIMAL(10,1) DEFAULT 0 NOT NULL,
+#     current_balance DECIMAL(10,1) DEFAULT 0 NOT NULL,
+#     balance_brought_forward DECIMAL(10,1),
+#     note TEXT,
+#     status VARCHAR(10) DEFAULT 'remaining' CHECK (status IN ('exhausted', 'remaining')),
+#     CONSTRAINT finance_record_balance_check CHECK (current_balance >= 0)
+# );
+
+
+# COMMIT;
 
 
 # step 5

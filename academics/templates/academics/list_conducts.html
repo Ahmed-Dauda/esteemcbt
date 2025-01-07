@@ -19,7 +19,7 @@
     <h1>Student Conduct Records</h1>
 
     <div  style="padding-left: 10px;padding-right: 10px;">
-        <a class="nav-link" href="{% url 'add_conduct' %}">
+        <a class="nav-link" href="{% url 'academics:add_conduct' %}">
             <i class="fas fa-plus-circle"></i>  <!-- Add the plus-circle icon -->
             <span>Add Conduct</span>
         </a>
@@ -33,6 +33,7 @@
                     <th>Session</th>
                     <th>Term</th>
                     <th>Category</th>
+                    <th>Count</th>
                     <th>Remarks</th>
                     <th>Date</th>
                     <th>Edit</th>
@@ -46,17 +47,19 @@
                     <td>{{ conduct.student_class }}</td>
                     <td>{{ conduct.session }}</td>
                     <td>{{ conduct.term }}</td>
+                    
                     <td>{{ conduct.category }}</td>
+                    <td>{{ conduct.score }}</td>
                     <td>{{ conduct.remarks }}</td>
                     <td>{{ conduct.date }}</td>
                     <td>
-                        <a href="{% url 'edit_conduct' conduct.pk %}">
+                        <a href="{% url 'academics:edit_conduct' conduct.pk %}">
                             <i class="fas fa-edit"></i>
                         </a> |
                        
                     </td>
                     <td>
-                        <a href="{% url 'delete_conduct' conduct.pk %}">
+                        <a href="{% url 'academics:delete_conduct' conduct.pk %}">
                             <i class="fas fa-trash-alt"></i>
                         </a>
                     </td>

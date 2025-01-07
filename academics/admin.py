@@ -9,7 +9,7 @@ class ConductCategoryAdmin(admin.ModelAdmin):
 @admin.register(StudentConduct)
 class StudentConductAdmin(admin.ModelAdmin):
     autocomplete_fields = ['student']
-    list_display = ('student', 'school', 'student_class', 'session', 'term', 'category', 'date', 'score', 'conduct_count')
+    list_display = ('student', 'school', 'student_class', 'session', 'term', 'category','remarks', 'date', 'score', 'conduct_count')
     list_filter = ('school', 'student_class', 'session', 'term', 'category', 'date')
     search_fields = ('student__first_name', 'student__last_name', 'category__name')
     readonly_fields = ['date']

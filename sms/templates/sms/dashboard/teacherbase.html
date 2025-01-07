@@ -131,17 +131,7 @@
             {% endif %}
             {% endif %}
 
-    {% if request.user.is_authenticated and request.user.is_superuser %}
-    {% if teacher_school|lower == user_school|lower %}
-    <li class="nav-item" style="margin-bottom: -10px;">
-        <a class="nav-link" href="{% url 'finance:finance_record_view' %}">
-            <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
-            <span>Finance</span>
-        </a>
-    </li>
-    {% endif %}
-    {% endif %}
-           
+
             {% if request.user.is_authenticated and request.user.is_superuser %}
             {% if teacher_school|lower == user_school|lower %}
             <li class="nav-item" style="margin-bottom: -10px;">
@@ -152,6 +142,17 @@
             </li>
             {% endif %}
             {% endif %} 
+           
+            {% if request.user.is_authenticated and request.user.is_superuser %}
+            {% if teacher_school|lower == user_school|lower %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'student:examiner-report-card-list' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Report Card List</span>
+                </a>
+             </li>
+             {% endif %}
+             {% endif %} 
 
             {% if request.user.is_authenticated and request.user.is_superuser %}
             {% if teacher_school|lower == user_school|lower %}
@@ -209,7 +210,28 @@
 
             {% else %}
 
-            
+            {% if request.user.is_authenticated %}
+            {% if teacher_school|lower == user_school|lower %}
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'finance:finance_record_view' %}">
+                    <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
+                    <span>Finance</span>
+                </a>
+            </li>
+            {% endif %}
+            {% endif %}
+                   
+
+            {% if request.user.is_authenticated  %}
+            {% if teacher_school|lower == user_school|lower %}
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'academics:list_conducts' %}">
+                    <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
+                    <span>Conduct View</span>
+                </a>
+            </li>
+            {% endif %}
+            {% endif %}
             <li class="nav-item" style="margin-bottom: -10px;">
                 <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
                     <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
@@ -217,13 +239,13 @@
                 </a>
             </li>
            <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'add_conduct' %}">
+                <a class="nav-link" href="{% url 'academics:add_conduct' %}">
                     <i class="fas fa-fw fa-eye"></i> 
                     <span>Add Conduct</span>
                 </a>
             </li>
             <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'list_conducts' %}">
+                <a class="nav-link" href="{% url 'academics:list_conducts' %}">
                     <i class="fas fa-fw fa-eye"></i> 
                     <span>Conduct List</span>
                 </a>
