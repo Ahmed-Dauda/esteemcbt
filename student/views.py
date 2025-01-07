@@ -964,7 +964,7 @@ def generate_report_card_class(request, session, term):
             sclass_average = sum(stu_avegerag_values) / len(stu_avegerag_values) if stu_avegerag_values else 0
 
             # Debugging: Output class average
-            print(f"Class Average: {sclass_average}")
+            # print(f"Class Average: {sclass_average}")
 
     
             # # Calculate overall statistics
