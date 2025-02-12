@@ -130,7 +130,7 @@ def finance_record_view(request):
     
     # Apply additional filters based on user input  
     finance_school = FinanceRecord.objects.filter(school_id=user_school.id).values_list('school__school_name', flat=True).first()
-    print(finance_school, 'sc')
+    # print(finance_school, 'sc')
 
  
     if school_filter:
@@ -158,40 +158,6 @@ def finance_record_view(request):
 
     return render(request, 'finance/finance_record_list.html', context)
 
-# def finance_record_view(request):
-#     # Get all the available schools, sessions, and terms for filtering
-#     schools = School.objects.filter(school_name = request.user.school)
-#     sessions = Session.objects.all()
-#     terms = Term.objects.all()
-
-#     # Get filter parameters from the GET request (user selects them)
-#     school_filter = request.GET.get('school')
-#     session_filter = request.GET.get('session')
-#     term_filter = request.GET.get('term')
-      
-#     # Filter FinanceRecord objects based on user input, if any
-#     records = FinanceRecord.objects.filter(school = request.user.school).order_by('pk')
-  
-#     if school_filter:
-#         records = records.filter(school_id=school_filter)
-#     if session_filter:
-#         records = records.filter(session_id=session_filter)
-#     if term_filter:
-#         records = records.filter(term_id=term_filter)
-
-#     # Render the template with filtered records and dropdowns for filtering
-#     context = {
-#         'records': records,
-#         'schools': schools,
-#         'sessions': sessions,
-#         'terms': terms,
-#         'school_filter': school_filter,
-#         'session_filter': session_filter,
-#         'term_filter': term_filter,
-#     } 
-
-#     return render(request, 'finance/finance_record_list.html', context)
-
 
 
 class FinanceRecordUpdateView(UpdateView):
@@ -217,14 +183,6 @@ class FinanceRecordUpdateView(UpdateView):
         messages.success(self.request, "Finance record updated successfully!")
         return super().form_valid(form)
     
-# class FinanceRecordUpdateView(UpdateView):
-#     model = FinanceRecord
-#     fields = [
-#         'names','student_class','initial_total_deposit', 'school', 'session', 'term',
-#         'school_shop', 'caps', 'haircut', 'others', 'note'
-#     ]
-#     template_name = 'finance/edit_record_form.html'
-#     success_url = reverse_lazy('finance:finance_record_view')  # Redirect to the list view after edit
 
 
 class FinanceRecordDeleteView(DeleteView):
@@ -245,17 +203,4 @@ class FinanceRecordCreateView(CreateView):
         # You can add any additional logic before saving the form (if needed)
         return super().form_valid(form)
     
-# class FinanceRecordCreateView(CreateView):
-#     model = FinanceRecord
-#     fields = [
-#         'names', 'student_class', 'initial_total_deposit', 'total_deposit', 'school', 'session', 'term',
-#         'school_shop', 'caps', 'haircut', 'others', 'note', 
-#         # 'balance_brought_forward', 'status'
-#     ]
-#     template_name = 'finance/add_record_form.html'
-#     success_url = reverse_lazy('finance:finance_record_view')  # Redirect to the list view after adding a new record
-
-#     def form_valid(self, form):
-#         # Customize any additional logic for a new record creation here if necessary
-#         return super().form_valid(form)
     
