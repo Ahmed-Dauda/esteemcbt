@@ -56,52 +56,7 @@ def finance_record_import_view(request):
         form = UploadFileForm()
     return render(request, 'finance/import_records.html', {'form': form})
   
- 
-
-
-# def finance_record_import_preview(request):
-#     if request.method == "POST":
-#         form = UploadFileForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             file = form.cleaned_data['file']
-#             dataset = Dataset()
-#             imported_data = dataset.load(file.read(), format='xlsx')
-
-#             resource = FinanceRecordResource()
-#             preview_data = []
-#             for row in imported_data.dict:
-#                 resource.before_import_row(row)  # Add 'is_update' field to each row
-#                 preview_data.append(row)
-
-#             # Store dataset in session to use in confirm view
-#             request.session['import_data'] = preview_data
-
-#             return render(request, 'finance/finance_record_import_preview.html', {
-#                 'data': preview_data,
-#                 'form': form,
-#             })
-#     else:
-#         form = UploadFileForm()
-#     return render(request, 'finance/finance_record_import_preview.html', {'form': form})
-
-# def confirm_import(request):
-#     if 'import_data' in request.session:
-#         import_data = request.session['import_data']
-
-#         resource = FinanceRecordResource()
-#         dataset = Dataset(headers=[field.column_name for field in resource.get_fields()])
-#         for row in import_data:
-#             dataset.append(row)
-
-#         result = resource.import_data(dataset, dry_run=False)  # Perform actual import
-
-#         # Clear session data after import
-#         del request.session['import_data'] 
-
-#         return redirect(reverse_lazy('finance:finance_record_view'))
-#     else:
-#         return redirect(reverse_lazy('finance:finance_record_import_preview'))
-    
+     
   
 from teacher.models import Teacher
 
@@ -110,10 +65,6 @@ def finance_record_view(request):
     # Get the current user's school for filtering
     # username = request.user.username
     user_school = request.user.school
-
-    # teacher = Teacher.objects.select_related('user', 'school').prefetch_related('subjects_taught', 'classes_taught').get(username=username)
-    # teacher_school = teacher.school
-    
 
     # Prefetch related data to reduce database hits
     schools = School.objects.filter(id=user_school.id)
