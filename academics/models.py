@@ -2,6 +2,8 @@ from django.db import models
 from quiz.models import School, NewUser  # Update these based on your project structure
 from quiz.models import CourseGrade
 from sms.models import  Session, Term  # Assuming `CourseGrade` is the model for student classes
+from django.db.models import Count
+
 
 class ConductCategory(models.Model):
     """Categories of student conduct (e.g., Punctuality, Behavior, etc.)."""
@@ -11,8 +13,6 @@ class ConductCategory(models.Model):
     def __str__(self):
         return self.name
 
-from django.db import models
-from django.db.models import Count
 
 class StudentConduct(models.Model):
     """Daily conduct records for students."""
