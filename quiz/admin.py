@@ -125,7 +125,7 @@ class ResultAdmin(ImportExportModelAdmin, ExportActionMixin):
     resource_class = ResultResource
     list_display = ['student', 'exam','schools', 'marks', 'exam_type', 'result_class', 'session', 'term', 'created']
     list_filter = ['exam', 'student', 'exam_type', 'session', 'term']
-    search_fields = ['student__first_name', 'student__last_name', 'exam__course_name__title', 'marks']
+    search_fields = ['student__first_name', 'student__last_name', 'exam__course_name__title', 'created']
     ordering = ['id']
 
 admin.site.register(Result, ResultAdmin)
