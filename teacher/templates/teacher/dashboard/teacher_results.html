@@ -47,6 +47,7 @@
                             <th>School</th>
                             <th>Exam Score</th>
                             <th>Exam Subject</th>
+                            <th>Date</th>
                             <th>Exam type</th>
                             <th>Session</th>
                             <th>Term</th>
@@ -63,6 +64,7 @@
                                 <span class="badge badge-success">{{ result.marks }}</span>
                             </td>
                             <td>{{ result.exam.course_name }}</td>
+                            <td>{{ result.exam.created }}</td>
                             <td>{{ result.exam.exam_type.name }}</td>
                             <td>{{ result.exam.session }}</td>
                             <td>{{ result.exam.term }}</td>
