@@ -44,6 +44,7 @@
                     <thead class="thead-dark">
                         <tr>
                             <th>Student Name</th>
+                            <th>School</th>
                             <th>Exam Score</th>
                             <th>Exam Subject</th>
                             <th>Exam type</th>
@@ -57,6 +58,7 @@
                         {% for result in results %}
                         <tr>
                             <td>{{ result.student.first_name }} {{ result.student.last_name }}</td>
+                            <td>{{ result.schools }}</td>
                             <td>
                                 <span class="badge badge-success">{{ result.marks }}</span>
                             </td>

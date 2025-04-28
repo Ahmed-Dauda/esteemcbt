@@ -1987,7 +1987,7 @@ def teacher_results_view(request):
 
         # Use actual Course instances in the filter
         results = Result.objects.select_related('exam', 'student').only(
-                'id', 'marks', 'exam__id', 'exam__course_name', 'student__id'
+                'id', 'marks', 'schools','exam__id', 'exam__course_name', 'student__id'
             ).filter(exam__course_name__in=subjects_taught_titles)
         
         # Cache the results for 5 minutes
