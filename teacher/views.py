@@ -139,7 +139,6 @@ def teacher_delete_view(request, pk):
 from django.core.exceptions import ValidationError
 
 
-
 @login_required(login_url='teacher:teacher_login')
 def teacher_signup_view(request):
     if request.method == 'POST':
@@ -289,30 +288,7 @@ def some_view(request):
 
     return render(request, 'sms/dashboard/teacherbase.html', {'school': school})  
 
-# @login_required(login_url='teacher:teacher_login')
-# def teacher_dashboard_view(request):
 
-#     username = request.user.username
-#     # print('user',username)
-#     try:
-#         teacher = Teacher.objects.get(username=username)
-#         teacher_subjects = teacher.subjects_taught.all()
-#         teacher_class = teacher.classes_taught.all()
-
-#         # Your further logic here
-#         dict = {
-#             'username': username,
-#             'teacher_class': teacher_class,
-#              'teacher_subjects': teacher_subjects,
-
-#             }
-#         return render(request, 'teacher/dashboard/teacher_dashboard.html', context=dict)
-#     except Teacher.DoesNotExist:
-#         # Handle case where Teacher instance does not exist
-#         return redirect('account_login')
-       
-
-    
 
 @login_required(login_url='teacher:teacher_login')
 @user_passes_test(lambda u: u.is_superuser)

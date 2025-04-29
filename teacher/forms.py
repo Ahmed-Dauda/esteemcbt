@@ -207,11 +207,10 @@ from .models import NewUser, Teacher, Course, School, CourseGrade
 
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-
-
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class TeacherSignupForm(UserCreationForm):
     first_name = forms.CharField(max_length=200, label='First Name')
@@ -244,11 +243,16 @@ class TeacherSignupForm(UserCreationForm):
 
         # Populate dropdowns with data related to the user's school
         if user and user.school:
-            self.fields['school'].queryset = School.objects.filter(name=user.school.name)
+            # Show only the user's school in the school field
+            self.fields['school'].queryset = School.objects.filter(id=user.school.id)
+            self.fields['school'].initial = user.school  # Set the initial value to the user's school
+            # Populate subjects and classes based on the user's school
             self.fields['subjects_taught'].queryset = Course.objects.filter(schools=user.school)
             self.fields['classes_taught'].queryset = CourseGrade.objects.filter(schools=user.school).distinct()
 
-        self.fields['school'].initial = user.school if user else None
+        # Make the 'school' field read-only (disabled in the form)
+        self.fields['school'].widget.attrs['readonly'] = True
+        self.fields['school'].disabled = True
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -284,7 +288,7 @@ class TeacherSignupForm(UserCreationForm):
         teacher.classes_taught.add(*classes_taught)
         return teacher
 
-  
+
 # class TeacherSignupForm(UserCreationForm):
 #     first_name = forms.CharField(max_length=200, label='First Name')
 #     last_name = forms.CharField(max_length=200, label='Last Name')
@@ -293,14 +297,14 @@ class TeacherSignupForm(UserCreationForm):
 #     school = forms.ModelChoiceField(queryset=School.objects.none(), label='School', required=False)
 
 #     subjects_taught = forms.ModelMultipleChoiceField(
-#         queryset=Courses.objects.none(),
+#         queryset=Courses.objects.all(),  # Ensure courses are properly loaded
 #         label='Subjects Taught',
 #         required=False,
 #         widget=forms.CheckboxSelectMultiple
 #     )
 
 #     classes_taught = forms.ModelMultipleChoiceField(
-#         queryset=CourseGrade.objects.none(),
+#         queryset=CourseGrade.objects.all(),  # Ensure classes are properly loaded
 #         label='Classes Taught',
 #         required=False,
 #         widget=forms.CheckboxSelectMultiple
@@ -314,23 +318,20 @@ class TeacherSignupForm(UserCreationForm):
 #         user = kwargs.pop('user', None)
 #         super(TeacherSignupForm, self).__init__(*args, **kwargs)
 
+
+#         # Populate dropdowns with data related to the user's school
 #         if user and user.school:
 #             self.fields['school'].queryset = School.objects.filter(name=user.school.name)
-#             self.fields['subjects_taught'].queryset = Courses.objects.filter(schools=user.school)
+#             self.fields['subjects_taught'].queryset = Course.objects.filter(schools=user.school)
 #             self.fields['classes_taught'].queryset = CourseGrade.objects.filter(schools=user.school).distinct()
 
 #         self.fields['school'].initial = user.school if user else None
 
-#         # If editing, initialize subjects and classes taught
-#         if self.instance.pk:
-#             self.fields['subjects_taught'].initial = self.instance.subjects_taught.all()
-#             self.fields['classes_taught'].initial = self.instance.classes_taught.all()
-
-#     def clean_username(self):
-#         username = self.cleaned_data.get('username')
-#         if NewUser.objects.filter(username=username).exists():
-#             raise ValidationError("A user with this Username already exists.")
-#         return username
+#     def clean_email(self):
+#         email = self.cleaned_data.get('email')
+#         if Teacher.objects.filter(email=email).exists():
+#             raise ValidationError("A teacher with this email already exists.")
+#         return email
 
 #     def save(self, commit=True):
 #         user = super().save(commit=False)
@@ -338,14 +339,13 @@ class TeacherSignupForm(UserCreationForm):
 #         if commit:
 #             user.save()
 #         return user
-
+    
 #     def save_teacher(self, user):
 #         first_name = self.cleaned_data['first_name']
 #         last_name = self.cleaned_data['last_name']
 #         email = user.email
 #         username = user.username
 #         school = self.cleaned_data.get('school', None)
-
 #         subjects_taught = self.cleaned_data.get('subjects_taught', [])
 #         classes_taught = self.cleaned_data.get('classes_taught', [])
 
@@ -357,14 +357,11 @@ class TeacherSignupForm(UserCreationForm):
 #             username=username,
 #             school=school,
 #         )
+#         teacher.subjects_taught.add(*subjects_taught)
+#         teacher.classes_taught.add(*classes_taught)
+#         return teacher
 
-#         if subjects_taught:
-#             teacher.subjects_taught.set(subjects_taught.values_list('id', flat=True))
-
-#         if classes_taught:
-#             teacher.classes_taught.set(classes_taught.values_list('id', flat=True))
-
-#         return teacher 
+  
 
 class TeacherEditForm(forms.ModelForm):
     subjects_taught = forms.ModelMultipleChoiceField(
@@ -398,8 +395,7 @@ class TeacherEditForm(forms.ModelForm):
 
         # Pre-fill the form fields with the teacher's current subjects and classes
         if self.instance.pk:
-            # print("Subjects taught (from init):", self.instance.subjects_taught.all())
-            # print("Classes taught (from init):", self.instance.classes_taught.all())
+
             self.fields['subjects_taught'].initial = self.instance.subjects_taught.all()
             self.fields['classes_taught'].initial = self.instance.classes_taught.all()
        

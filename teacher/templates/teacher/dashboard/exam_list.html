@@ -49,11 +49,11 @@
                 </div>
                 <div class="col-md-3">
                     <h3 class="text-warning">Highest Score</h3>
-                    <p class="lead">{{ highest_score|default:"N/A" }}</p>
+                    <p class="lead">{{ highest_score|floatformat:1|default:"N/A" }}</p>
                 </div>
                 <div class="col-md-3">
                     <h3 class="text-danger">Lowest Score</h3>
-                    <p class="lead">{{ lowest_score|default:"N/A" }}</p>
+                    <p class="lead">{{ lowest_score|floatformat:1|default:"N/A" }}</p>
                 </div>
             </div>
         {% else %}
@@ -141,7 +141,9 @@
                 <td>{{ result.student }}</td>
                 <td>{{ result.exam.course_name }}</td>
                 <!-- Display calculated total marks instead of result.marks -->
-                <td>{{ result.total_marks }}</td>
+                <!-- <td>{{ result.total_marks }}</td> -->
+                <td>{{ result.total_marks|floatformat:1 }}</td>
+
                 <td>
                     <a href="{% url 'teacher:edit_result_view' result.id %}" class="btn btn-warning btn-sm">Edit</a>
                 </td>
