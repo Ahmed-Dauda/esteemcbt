@@ -67,7 +67,7 @@ class CourseGrade(models.Model):
     def __str__(self):
         # Return the class name (JSS1, JSS2, SS1, etc.) instead of subjects
         return self.name if self.name else 'Unnamed Class'
-    
+ 
 
 class School(models.Model):
     name = models.CharField(max_length=255)
