@@ -24,7 +24,8 @@ admin.site.register(School, SchoolAdmin)
 class CourseAdmin(admin.ModelAdmin):    
     list_display = ['get_school_name', 'show_questions', 'course_name', 'session','term','exam_type','question_number', 'total_marks', 'num_attemps', 'duration_minutes', 'created']
     search_fields = ['course_name__title', 'schools__school_name','term__name', 'exam_type__name']  # Add search field for course name and school name
-
+    autocomplete_fields = ['schools']
+    
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         return queryset.select_related('schools', 'course_name')
@@ -40,15 +41,17 @@ admin.site.register(Course, CourseAdmin)
 from .models import CourseGrade
 from quiz.forms import CourseGradeForm
 
-class CourseGradeAdmin(admin.ModelAdmin):
-    form = CourseGradeForm
-    list_display = ['name','schools', 'get_students_details', 'get_subject_names']
-    search_fields = ['name', 'students__email', 'subjects__name']
+from django.contrib import admin
+from .models import CourseGrade
 
-    class Media:
-        css = {
-            'all': ('sms/css/admin_custom.css',)  # Load the custom CSS file
-        }
+class CourseGradeAdmin(admin.ModelAdmin):
+    form = CourseGradeForm  # ✅ This must be a ModelForm
+    list_display = ['name', 'schools', 'get_students_details', 'get_subject_names', 'is_active']
+    search_fields = ['name', 'schools__school_name', 'students__email', 'students__first_name', 'students__last_name']
+    list_filter = ['schools', 'is_active', 'subjects']
+    
+    # filter_horizontal = ('students', 'subjects')
+    autocomplete_fields = ['students', 'subjects']
 
     def get_students_details(self, obj):
         return '\n'.join(
@@ -61,7 +64,42 @@ class CourseGradeAdmin(admin.ModelAdmin):
         return '\n'.join(str(subject) for subject in obj.subjects.all())
     get_subject_names.short_description = 'Subject Names'
 
+
 admin.site.register(CourseGrade, CourseGradeAdmin)
+
+# class CourseGradeAdmin(admin.ModelAdmin):
+#     form = CourseGradeForm
+#     autocomplete_fields = ['students', 'subjects']
+#     list_display = ['name', 'schools', 'get_students_details', 'get_subject_names', 'is_active']
+#     search_fields = ['name', 'schools__school_name','students__email', 'students__first_name', 'students__last_name']
+#     list_filter = ['schools', 'is_active', 'subjects']
+#     filter_horizontal = ('students', 'subjects')
+
+#     def get_students_details(self, obj):
+#         return ", ".join([f"{s.first_name} {s.last_name}" for s in obj.students.all()])
+#     get_students_details.short_description = "Students"
+
+#     def get_subject_names(self, obj):
+#         return ", ".join([s.title for s in obj.subjects.all()])
+#     get_subject_names.short_description = "Subjects"
+
+#     class Media:
+#         css = {
+#             'all': ('sms/css/admin_custom.css',)  # Load the custom CSS file
+#         }
+
+#     def get_students_details(self, obj):
+#         return '\n'.join(
+#             f"({student.school})-({student.first_name}-{student.last_name}, {student.student_class})"
+#             for student in obj.students.all()
+#         )
+#     get_students_details.short_description = 'Student Details'
+
+#     def get_subject_names(self, obj): 
+#         return '\n'.join(str(subject) for subject in obj.subjects.all())
+#     get_subject_names.short_description = 'Subject Names'
+
+# admin.site.register(CourseGrade, CourseGradeAdmin)
 
 
 # ResultResource

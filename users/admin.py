@@ -21,35 +21,51 @@ class NewUserResource(resources.ModelResource):
         # fields = ('title',)
 
 class NewUserAdmin(ImportExportModelAdmin):
-    list_display = ['id', 'email', 'username', 'phone_number', 'first_name', 'last_name', 'student_class', 'school', 'countries', 'is_staff', 'is_superuser', 'is_active', 'last_login', 'date_joined']
-    list_filter = ['email', 'username', 'school', 'phone_number', 'first_name', 'last_login', 'student_class']
-    search_fields = ['email', 'username', 'school__school_name', 'phone_number', 'first_name', 'last_login', 'student_class']  # Use school__name to search by school name
+    list_display = [
+        'id', 'email', 'username', 'phone_number', 'first_name', 'last_name',
+        'student_class', 'school', 'countries', 'is_staff', 'is_superuser',
+        'is_active', 'last_login', 'date_joined'
+    ]
+    list_filter = [
+        'email', 'username', 'school', 'phone_number',
+        'first_name', 'last_login', 'student_class'
+    ]
+    search_fields = [
+        'email',
+        'username',
+        'first_name',
+        'last_name',
+        'phone_number',
+        'admission_no',
+        'school__school_name',
+        'student_class'
+    ]  # ✅ Removed 'title'
     ordering = ['date_joined']
-    
+    autocomplete_fields = ['school']
     resource_class = NewUserResource
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        queryset = queryset.select_related('school')  # Assuming school is a ForeignKey field in NewUser
-        return queryset
+        return queryset.select_related('school')
 
 admin.site.register(NewUser, NewUserAdmin)
-
-# class NewUserResource(resources.ModelResource):
-    
-#     class Meta:
-#         model = NewUser
-#         # fields = ('title',)
-               
+   
 # class NewUserAdmin(ImportExportModelAdmin):
 #     list_display = ['id', 'email', 'username', 'phone_number', 'first_name', 'last_name', 'student_class', 'school', 'countries', 'is_staff', 'is_superuser', 'is_active', 'last_login', 'date_joined']
 #     list_filter = ['email', 'username', 'school', 'phone_number', 'first_name', 'last_login', 'student_class']
-#     search_fields = ['email', 'username', 'school__school_name', 'phone_number', 'first_name', 'last_login', 'student_class']  # Use school__name to search by school name
+#     search_fields = ['email', 'title','username', 'school__school_name', 'phone_number', 'first_name', 'last_login', 'student_class']  # Use school__name to search by school name
 #     ordering = ['date_joined']
+#     autocomplete_fields = ['school']
     
 #     resource_class = NewUserResource
 
+#     def get_queryset(self, request):
+#         queryset = super().get_queryset(request)
+#         queryset = queryset.select_related('school')  # Assuming school is a ForeignKey field in NewUser
+#         return queryset
+
 # admin.site.register(NewUser, NewUserAdmin)
+
 
 from import_export.widgets import ForeignKeyWidget
 
