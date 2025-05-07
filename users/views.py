@@ -64,11 +64,29 @@ def assign_course_grade(student):
 #     except CourseGrade.DoesNotExist:
 #         # Handle the case where no matching CourseGrade is found
 #         pass
+from datetime import datetime, timedelta
+from django.utils import timezone
+
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 
 def SchoolStudentView(request):
     if request.method == 'POST':
         form = SchoolStudentSignupForm(request.POST, request=request)
-        
+
+        # ⏱ Timing validation logic
+        created = request.session.get('form_created_at')
+        if created:
+            try:
+                delta = timezone.now() - parse_datetime(created)
+                if delta.total_seconds() < 3:
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                        return JsonResponse({'error': 'Form submitted too quickly.'}, status=400)
+                    messages.error(request, "Form submitted too quickly. Please wait before submitting again.")
+                    return render(request, 'users/school_student.html', {'form': form})
+            except Exception as e:
+                pass  # Gracefully skip if parsing fails for any reason
+
         if form.is_valid():
             try:
                 student = form.save(request)  # form.save() returns the student instance
@@ -87,13 +105,46 @@ def SchoolStudentView(request):
 
         else:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                # Return form errors for AJAX requests
                 return JsonResponse({'errors': form.errors}, status=400)
-    
+
     else:
+        # ⏱ Record the form creation time in the session
+        request.session['form_created_at'] = str(timezone.now())
         form = SchoolStudentSignupForm(request=request)
 
     return render(request, 'users/school_student.html', {'form': form})
+
+#works fine
+# def SchoolStudentView(request):
+#     if request.method == 'POST':
+#         form = SchoolStudentSignupForm(request.POST, request=request)
+#         # At the start of the GET block
+
+#         if form.is_valid():
+#             try:
+#                 student = form.save(request)  # form.save() returns the student instance
+#                 assign_course_grade(student)  # Assign course grade here
+#                 messages.success(request, 'Student registered successfully and assigned to a course grade!')
+                
+#                 if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+#                     return JsonResponse({'message': 'Form submitted successfully!'})
+
+#                 return redirect('users:schoolstudentview')  # Redirect to the same page
+                
+#             except Exception as e:
+#                 messages.error(request, f"Error assigning course grade: {e}")
+#                 if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+#                     return JsonResponse({'error': str(e)}, status=400)
+
+#         else:
+#             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+#                 # Return form errors for AJAX requests
+#                 return JsonResponse({'errors': form.errors}, status=400)
+    
+#     else:
+#         form = SchoolStudentSignupForm(request=request)
+
+#     return render(request, 'users/school_student.html', {'form': form})
 
 
 # def SchoolStudentView(request):

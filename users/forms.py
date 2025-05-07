@@ -87,6 +87,89 @@ class SimpleSignupForm(SignupForm):
         
         return user
 
+
+from datetime import datetime, timedelta
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+
+# class SchoolStudentSignupForm(SignupForm):
+#     first_name = forms.CharField(max_length=222, label='First-name')
+#     last_name = forms.CharField(max_length=225, label='Last-name')
+#     admission_no = forms.CharField(max_length=50, label='Admission Number')
+#     student_class = forms.ChoiceField(choices=[], label='Student Class')
+#     countries = forms.ChoiceField(choices=country_choice, label='Country')
+#     school = forms.ModelChoiceField(queryset=School.objects.all(), label='School', required=True)
+
+#     # Honeypot fields
+#     honeypot = forms.CharField(required=False)
+#     js_honeypot = forms.CharField(required=False)
+#     phone_number = forms.CharField(required=False, widget=forms.HiddenInput())  # For bot check
+
+#     def __init__(self, *args, **kwargs):
+#         self.request = kwargs.pop('request', None)
+#         super(SchoolStudentSignupForm, self).__init__(*args, **kwargs)
+
+#         if self.request and self.request.user.is_authenticated:
+#             user = NewUser.objects.get(id=self.request.user.id)
+#             user_school = user.school
+#             self.fields['school'].queryset = School.objects.filter(id=user_school.id)
+#             self.fields['student_class'].choices = [
+#                 (cg.name, cg.name) for cg in CourseGrade.objects.filter(schools=user_school).only('name').distinct()
+#             ]
+
+#         # Honeypot UI logic
+#         if self.request and self.request.GET.get('debug') == '1':
+#             self.fields['honeypot'].widget = forms.TextInput(attrs={'placeholder': 'Leave blank'})
+#             self.fields['js_honeypot'].widget = forms.TextInput(attrs={'placeholder': 'Should say human'})
+#         else:
+#             self.fields['honeypot'].widget = forms.HiddenInput()
+#             self.fields['js_honeypot'].widget = forms.HiddenInput()
+
+#     def clean(self):
+#         cleaned = super().clean()
+
+#         if cleaned.get('honeypot'):
+#             raise ValidationError("Something went wrong. Please try again.")
+
+#         if cleaned.get('js_honeypot') != 'human':
+#             raise ValidationError("Something went wrong. Please try again.")
+
+#         if cleaned.get('phone_number'):
+#             raise ValidationError("Something went wrong. Please try again.")
+
+#         if self.request:
+#             ts = self.request.session.get('form_created_at')
+#             if ts:
+#                 try:
+#                     elapsed = timezone.now() - datetime.fromisoformat(ts)
+#                     if elapsed < timedelta(seconds=3):
+#                         raise ValidationError("Something went wrong. Please try again.")
+#                 except Exception:
+#                     pass  # Gracefully fail if timestamp can't be parsed
+
+#         return cleaned
+
+#     def save(self, request):
+#         user = super(SchoolStudentSignupForm, self).save(request)
+#         user.first_name = self.cleaned_data['first_name']
+#         user.last_name = self.cleaned_data['last_name']
+#         user.phone_number = self.cleaned_data.get('phone_number', '')
+#         user.admission_no = self.cleaned_data['admission_no']
+#         user.student_class = self.cleaned_data['student_class']
+#         user.countries = self.cleaned_data['countries']
+#         user.school = self.cleaned_data['school']
+#         user.save()
+#         return user
+
+
+from django import forms
+from django.core.exceptions import ValidationError
+
+from django import forms
+from django.core.exceptions import ValidationError
+from datetime import datetime, timedelta
+from django.utils import timezone
+
 class SchoolStudentSignupForm(SignupForm):
     first_name = forms.CharField(max_length=222, label='First-name')
     last_name = forms.CharField(max_length=225, label='Last-name')
@@ -95,6 +178,10 @@ class SchoolStudentSignupForm(SignupForm):
     countries = forms.ChoiceField(choices=country_choice, label='Country')
     school = forms.ModelChoiceField(queryset=School.objects.all(), label='School', required=True)
 
+    # Anti-bot fields
+    honeypot = forms.CharField(required=False,widget=forms.HiddenInput())
+    js_honeypot = forms.CharField(required=False, widget=forms.HiddenInput())
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super(SchoolStudentSignupForm, self).__init__(*args, **kwargs)
@@ -102,27 +189,91 @@ class SchoolStudentSignupForm(SignupForm):
         if self.request and self.request.user.is_authenticated:
             user = NewUser.objects.get(id=self.request.user.id)
             user_school = user.school
-            
-            # Restrict available schools to the user's school
             self.fields['school'].queryset = School.objects.filter(id=user_school.id)
-            
-            # Fetch available student classes based on the user’s school
             self.fields['student_class'].choices = [
                 (cg.name, cg.name) for cg in CourseGrade.objects.filter(schools=user_school).only('name').distinct()
             ]
+
+        # Show honeypot in debug mode
+        if self.request and self.request.GET.get('debug') == '1':
+            self.fields['honeypot'].widget = forms.TextInput(attrs={'placeholder': 'Leave this empty'})
+            self.fields['js_honeypot'].widget = forms.TextInput(attrs={'placeholder': 'Should be "human"'})
+
+    def clean(self):
+        cleaned = super().clean()
+
+        # 1. Honeypot field should be empty
+        if cleaned.get('honeypot'):
+            raise ValidationError("Something went wrong. Please try again.")
+
+        # 2. JS honeypot should be 'human'
+        if cleaned.get('js_honeypot') != 'human':
+            raise ValidationError("Something went wrong. Please try again.")
+
+        # 3. Check time elapsed since form render
+        if self.request:
+            ts = self.request.session.get('form_created_at')
+            if ts:
+                try:
+                    elapsed = timezone.now() - datetime.fromisoformat(ts)
+                    if elapsed < timedelta(seconds=3):
+                        raise ValidationError("Form submitted too quickly. Try again.")
+                except Exception:
+                    pass  # Ignore if datetime fails
+
+        return cleaned
 
     def save(self, request):
         user = super(SchoolStudentSignupForm, self).save(request)
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
-        user.phone_number = self.cleaned_data.get('phone_number', '')
+        user.phone_number = self.cleaned_data.get('phone_number', '')  # Optional
         user.admission_no = self.cleaned_data['admission_no']
-        user.student_class = self.cleaned_data['student_class']  # Save the selected class
+        user.student_class = self.cleaned_data['student_class']
         user.countries = self.cleaned_data['countries']
         user.school = self.cleaned_data['school']
         user.save()
-        
         return user
+
+
+#working signup form for school student
+# class SchoolStudentSignupForm(SignupForm):
+#     first_name = forms.CharField(max_length=222, label='First-name')
+#     last_name = forms.CharField(max_length=225, label='Last-name')
+#     admission_no = forms.CharField(max_length=50, label='Admission Number')
+#     student_class = forms.ChoiceField(choices=[], label='Student Class')  # Initially empty
+#     countries = forms.ChoiceField(choices=country_choice, label='Country')
+#     school = forms.ModelChoiceField(queryset=School.objects.all(), label='School', required=True)
+
+#     def __init__(self, *args, **kwargs):
+#         self.request = kwargs.pop('request', None)
+#         super(SchoolStudentSignupForm, self).__init__(*args, **kwargs)
+
+#         if self.request and self.request.user.is_authenticated:
+#             user = NewUser.objects.get(id=self.request.user.id)
+#             user_school = user.school
+            
+#             # Restrict available schools to the user's school
+#             self.fields['school'].queryset = School.objects.filter(id=user_school.id)
+            
+#             # Fetch available student classes based on the user’s school
+#             self.fields['student_class'].choices = [
+#                 (cg.name, cg.name) for cg in CourseGrade.objects.filter(schools=user_school).only('name').distinct()
+#             ]
+
+#     def save(self, request):
+#         user = super(SchoolStudentSignupForm, self).save(request)
+#         user.first_name = self.cleaned_data['first_name']
+#         user.last_name = self.cleaned_data['last_name']
+#         user.phone_number = self.cleaned_data.get('phone_number', '')
+#         user.admission_no = self.cleaned_data['admission_no']
+#         user.student_class = self.cleaned_data['student_class']  # Save the selected class
+#         user.countries = self.cleaned_data['countries']
+#         user.school = self.cleaned_data['school']
+#         user.save()
+        
+#         return user
+
 
 # class SchoolStudentSignupForm(SignupForm):
 #     first_name = forms.CharField(max_length=222, label='First-name')
