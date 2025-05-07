@@ -16,18 +16,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Read SECRET_KEY from an environment variable
 
-import os
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'cg#p$g+j9tax!#a3cup@1$8obt2_+&k3q+pmu)5%asj6yjpkag')
+# import os
+# SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'cg#p$g+j9tax!#a3cup@1$8obt2_+&k3q+pmu)5%asj6yjpkag')
 
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = True
-DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
+# DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
 
 
-ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = ['*']
 # ALLOWED_HOSTS = ['codethinkers.herokuapp.com','codethinkerslms.com','www.codethinkerslms.com','codethinkers.org','www.codethinkers.org', '127.0.0.1']
 # ALLOWED_HOSTS = ['ctsaalms.herokuapp.com','codethinkers.org' ,'127.0.0.1']
 
@@ -134,6 +134,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_FORMS = {'signup': 'users.forms.SimpleSignupForm'}
+ACCOUNT_ADAPTER = 'users.adapters.CustomAccountAdapter'
 
 
 
@@ -168,7 +169,6 @@ SOCIALACCOUNT_PROVIDERS = {
 # api_key = '671667183251344'
 # api_secret = 'P5WKA1qweMmd1i4TkU2W_ZY9ZuA'
 # secure = True
-CLOUDINARY_URL = 'CLOUDINARY_URL=cloudinary://671667183251344:P5WKA1qweMmd1i4TkU2W_ZY9ZuA@ds5l3gqr6'
 
 # Configure Cloudinary
 import cloudinary
@@ -176,14 +176,13 @@ import cloudinary.uploader
 import cloudinary.api
 
 # Configure Cloudinary
-cloudinary.config(
-    cloud_name='dcomiviua',
-    api_key='365524854341134',
-    api_secret='_a3awGtK3hznGaSpvLff2RFTt_I',
-    secure = True
-)
+# cloudinary.config(
+#     cloud_name='dcomiviua',
+#     api_key='365524854341134',
+#     api_secret='_a3awGtK3hznGaSpvLff2RFTt_I',
+#     secure = True
+# )
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # import cloudinary
 
@@ -202,17 +201,31 @@ DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # code to unblock zoho account
 # https://mail.zoho.com/UnblockMe
+import os
 
-EMAIL_BACKED = 'django_smtp_ssl.SSLEmailBackend'
-EMAIL_HOST = 'smtppro.zoho.eu'
-# EMAIL_HOST = 'smtppro.zoho.com'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False 
-EMAIL_HOST_USER = 'techsupport@esteemlearningcentre.com'
-# EMAIL_HOST_PASSWORD = '0806563624937811Bm.'
-EMAIL_HOST_PASSWORD = 'techSupport@01'
-DEFAULT_FROM_EMAIL = 'techsupport@esteemlearningcentre.com'
+EMAIL_USE_SSL = False
+
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+
+
+# EMAIL_BACKED = 'django_smtp_ssl.SSLEmailBackend'
+# EMAIL_HOST = 'smtppro.zoho.eu'
+# # EMAIL_HOST = 'smtppro.zoho.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_USE_SSL = False 
+
+# EMAIL_HOST_USER = 'techsupport@esteemlearningcentre.com'
+# # EMAIL_HOST_PASSWORD = '0806563624937811Bm.'
+# EMAIL_HOST_PASSWORD = 'techSupport@01'
+# DEFAULT_FROM_EMAIL = 'techsupport@esteemlearningcentre.com'
+
 
 # if DEBUG:
 #     EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
@@ -290,12 +303,12 @@ PROJECT_PATH =os.path.dirname(os.path.abspath(__file__))
 # }
 import os
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 
 
@@ -332,24 +345,31 @@ USE_L10N = True
 USE_TZ = True
 
 
-# ADDITIONAL SITE SECURITies
+# ADDITIONAL SITEs SECURITY
+# HTTPS and secure headers
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
 SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
-SECURE_SSL_REDIDERECT = True
-SECURE_HSTS_SECONDS = 3600
+
+# HSTS (HTTP Strict Transport Security)
+SECURE_HSTS_SECONDS = 3600  # You can increase to 31536000 (1 year) in production
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SESSION_COOKIES_SECURE = True
-SECURE_FRAME_DENY = True
+
+# Cookies and sessions
 CSRF_COOKIE_SECURE = True
-SESSION_COOKIES_HTTPONLY = True
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-# end of security
+# Optional - block embedding your site in iframes entirely
+SECURE_FRAME_DENY = True  # Already handled by X_FRAME_OPTIONS = 'DENY'
+
+# end of new security
+
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 LOGIN_REDIRECT_URL = 'teacher:student-dashboard'
@@ -379,7 +399,28 @@ MEDIA_ROOT =os.path.join(BASE_DIR, 'media')
 
 # Heroku: Update database configuration from $DATABASE_URL.
 
+import environ
+import os
 
+env = environ.Env(DEBUG=(bool, False))
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+
+DEBUG = env("DEBUG")
+SECRET_KEY = env("SECRET_KEY")
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+DATABASES = {
+    'default': env.db()
+}
+
+#CLOUDINARY SETTINGS
+cloudinary.config(
+    cloud_name = env("CLOUDINARY_CLOUD_NAME"),
+    api_key    = env("CLOUDINARY_API_KEY"),
+    api_secret = env("CLOUDINARY_API_SECRET"),
+    secure     = True
+)
+CLOUDINARY_URL = env('CLOUDINARY_URL')
+DEFAULT_FILE_STORAGE = env('DEFAULT_FILE_STORAGE')
 
 import dj_database_url
 # Update database configuration from $DATABASE_URL.
