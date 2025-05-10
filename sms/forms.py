@@ -17,15 +17,29 @@ from quiz.models import School
 
 class CoursesForm(forms.ModelForm):
     class Meta:
-        model = Courses
-        fields = ['title', 'session', 'term', 'exam_type', 'schools']  # Include 'schools'
+        model = Courses  # Reference the 'Courses' model correctly
+        fields = ['title', 'session', 'term', 'exam_type', 'schools']  # Define the fields to display in the form
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Get the user instance, default to None
-        super().__init__(*args, **kwargs)
+        user = kwargs.pop('user', None)  # Retrieve the 'user' argument passed during form initialization
+        super().__init__(*args, **kwargs)  # Call the parent constructor to set up the form
+
         if user:
-            self.fields['schools'].queryset = School.objects.filter(id=user.school.id)  # Ensure queryset contains only the user's school
-           
+            # Filter the 'schools' field to show only the school associated with the user
+            self.fields['schools'].queryset = School.objects.filter(id=user.school.id)
+
+# class CoursesForm(forms.ModelForm):
+#     class Meta:
+#         model = Courses
+#         fields = ['title', 'session', 'term', 'exam_type', 'schools']  # Include 'schools'
+
+#     def __init__(self, *args, **kwargs):
+#         user = kwargs.pop('user', None)  # Get the user instance, default to None
+#         super().__init__(*args, **kwargs)
+#         if user:
+#             self.fields['schools'].queryset = School.objects.filter(id=user.school.id)  # Ensure queryset contains only the user's school
+
+
 
 class PaymentForm(ModelForm):
     class Meta:

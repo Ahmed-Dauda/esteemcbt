@@ -78,4 +78,4 @@ class Teacher(models.Model):
             raise ValidationError('ai_question_num cannot exceed 20.')
         
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.school} - {self.first_name} {self.last_name}"

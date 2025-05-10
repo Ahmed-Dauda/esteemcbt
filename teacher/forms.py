@@ -168,8 +168,6 @@ class CourseGradeForm(forms.ModelForm):
         super(CourseGradeForm, self).__init__(*args, **kwargs)
         self.fields['students'].queryset = NewUser.objects.filter(school=user_school).select_related('school')
         self.fields['subjects'].queryset = Course.objects.filter(schools=user_school).prefetch_related('schools')
-        # self.fields['students'].queryset = NewUser.objects.filter(school=user_school)
-        # self.fields['subjects'].queryset = Courses.objects.filter(schools=user_school)
    
 
 

@@ -83,20 +83,41 @@ class CoursesResource(resources.ModelResource):
         model = Courses
         prepopulated_fields = {"slug": ("course_name",)}
         # fields = ('title',)
-               
-class CoursesAdmin(ImportExportModelAdmin, ExportActionMixin):
 
-    list_display = ['title','session','term','exam_type','display_subjects_school', 'created']
-    list_filter =  ['title']
+class CoursesAdmin(ImportExportModelAdmin, ExportActionMixin):
+    list_display = ['title', 'created_by', 'session', 'term', 'exam_type', 'display_subjects_school', 'created']
+    list_filter = ['title']
     search_fields = ['title']
     ordering = ['id']
     
     resource_class = CoursesResource
+
     def display_subjects_school(self, obj):
         return ", ".join([str(course) for course in obj.schools.all()])
-
+    
     display_subjects_school.short_description = 'School'
 
+    def created_by(self, obj):
+        return f"{obj.created_by.first_name} {obj.created_by.last_name}" if obj.created_by else "Unknown"
+
+    created_by.short_description = 'Created By'
+
 admin.site.register(Courses, CoursesAdmin)
+
+
+# class CoursesAdmin(ImportExportModelAdmin, ExportActionMixin):
+
+#     list_display = ['title', 'created_by','session','term','exam_type','display_subjects_school', 'created']
+#     list_filter =  ['title']
+#     search_fields = ['title']
+#     ordering = ['id']
+    
+#     resource_class = CoursesResource
+#     def display_subjects_school(self, obj):
+#         return ", ".join([str(course) for course in obj.schools.all()])
+
+#     display_subjects_school.short_description = 'School'
+
+# admin.site.register(Courses, CoursesAdmin)
 
 

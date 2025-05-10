@@ -9,10 +9,11 @@ admin.site.register(SampleCodes)
 admin.site.register(ColumnLock)
 
 class AdminTeacher(admin.ModelAdmin):
-    list_display = ['id', 'first_name', 'last_name', 'email', 'username', 'display_subjects_taught', 'display_classes_taught', 'school']
+    list_display = ['id','first_name', 'last_name', 'email', 'username', 'display_subjects_taught', 'display_classes_taught', 'school']
     search_fields = ['first_name', 'last_name', 'school__school_name']
     list_filter = ['school']
     filter_horizontal = ['classes_taught', 'subjects_taught']
+
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)

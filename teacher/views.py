@@ -156,66 +156,6 @@ def teacher_signup_view(request):
     return render(request, 'teacher/dashboard/teacher_signup.html', {'form': form})
 
    
-# real codes
-# @login_required(login_url='teacher:teacher_login')
-# def teacher_signup_view(request):
-#     if request.method == 'POST':
-#         form = TeacherSignupForm(request.POST, user=request.user)
-#         if form.is_valid():
-#             user = form.save()
-#             form.save_teacher(user)
-#             return redirect('teacher:teacher_login')  # Redirect to teacher login page
-#     else:
-#         form = TeacherSignupForm(user=request.user)
-        
-#     return render(request, 'teacher/dashboard/teacher_signup.html', {'form': form})
-
-
-# @login_required(login_url='teacher:teacher_login')
-# def teacher_signup_view(request):
-#     if request.method == 'POST':
-#         form = TeacherSignupForm(request.POST)
-#         if form.is_valid():
-#             user = form.save()
-#             form.save_teacher(user)
-#             return redirect('teacher:teacher_login')  # Redirect to teacher login page
-#     else:
-#         form = TeacherSignupForm()
-        
-#     return render(request, 'teacher/dashboard/teacher_signup.html', {'form': form})
-
-
-# def teacher_login_view(request):
-#     if request.method == 'POST':
-#         form = TeacherLoginForm(request, request.POST)
-#         if form.is_valid():
-#             username = form.cleaned_data['username']
-#             password = form.cleaned_data['password']
-#             # Retrieve all teachers
-#             teachers = Teacher.objects.all()
-#             # Print all teachers' email addresses
-#             print("Teachers' emails:",teachers)
-#             # for teacher in teachers:
-#             #     print(teacher.username)
-#             # Check if any teacher's email matches the entered email
-#             for teacher in teachers:
-#                 print(teacher.username)
-#                 # If the entered email matches a teacher's email, proceed with authentication
-#                 if teacher.username.lower():
-#                     user = authenticate(request, username=teacher.username, password=password)
-#                     if user is not None:
-#                         login(request, user)
-#                         # Redirect to a success page or dashboard
-#                         return redirect('teacher:teacher-dashboard')
-#                 else:
-#                     # If authentication fails, render the login form with an error message
-#                     return render(request, 'teacher/teacher_login.html', {'form': form, 'error_message': 'Invalid username or password'})
-#             else:
-#                 # If no teacher with the entered email exists, render the login form with an error message
-#                 return render(request, 'teacher/dashboard/teacher_login.html', {'form': form, 'error_message': 'Invalid username or password'})
-#     else:
-#         form = TeacherLoginForm()
-#     return render(request, 'teacher/dashboard/teacher_login.html', {'form': form})
 
 @cache_page(60 * 15)
 def teacher_logout_view(request):
@@ -1760,28 +1700,110 @@ from sms.forms import CoursesForm
 
 from django.contrib import messages  # Import the messages framework
 
-@login_required(login_url='teacher:teacher_login')
+
+#working
+# @login_required(login_url='teacher:teacher_login')
+# def add_course_view(request):
+#     if request.method == 'POST':
+#         form = CoursesForm(request.POST, user=request.user)  # Pass the user instance
+#         if form.is_valid():
+#             course = form.save(commit=False)
+#             course.save()  # Save the course without saving schools yet
+
+#             # Associate the course with the user's school
+#             course.schools.add(request.user.school)  # Adjust this if necessary
+
+#             # Add a success message
+#             messages.success(request, 'Subject has been successfully added!')
+
+#             return redirect('teacher:create_course_view')  # Replace with the name of the view to redirect to
+#     else:
+#         form = CoursesForm(user=request.user)  # Pass the user instance
+
+#     context = {
+#         'form': form,
+#     }
+#     return render(request, 'teacher/dashboard/exams_subjects.html', context)
+
+
+@login_required
 def add_course_view(request):
     if request.method == 'POST':
-        form = CoursesForm(request.POST, user=request.user)  # Pass the user instance
+        form = CoursesForm(request.POST, user=request.user)
         if form.is_valid():
-            course = form.save(commit=False)
-            course.save()  # Save the course without saving schools yet
+            # Save the Courses form
+            courses_instance = form.save(commit=False)
+            courses_instance.created_by = request.user
+            courses_instance.save()
+            courses_instance.schools.add(request.user.school)
 
-            # Associate the course with the user's school
-            course.schools.add(request.user.school)  # Adjust this if necessary
+            user = request.user
+            if not hasattr(user, 'teacher'):
+                messages.error(request, 'You are not assigned as a teacher yet.')
+                return redirect('teacher:create_course_view')
 
-            # Add a success message
-            messages.success(request, 'Subject has been successfully added!')
+            teacher = user.teacher
 
-            return redirect('teacher:create_course_view')  # Replace with the name of the view to redirect to
+            # Check if Course instance already exists
+            course_instance, created = Course.objects.get_or_create(
+                course_name=courses_instance,
+                session=courses_instance.session,
+                term=courses_instance.term,
+                schools=request.user.school,
+                exam_type=courses_instance.exam_type,
+                defaults={
+                    'room_name': 'Some Room',  # You may update dynamically
+                }
+            )
+
+            # Assign course to teacher if not already assigned
+            if course_instance not in teacher.subjects_taught.all():
+                teacher.subjects_taught.add(course_instance)
+                messages.success(request, 'Subject has been successfully added and assigned to you!')
+            else:
+                messages.info(request, 'This course is already assigned to you.')
+
+            return redirect('teacher:create_course_view')
     else:
-        form = CoursesForm(user=request.user)  # Pass the user instance
+        form = CoursesForm(user=request.user)
 
     context = {
         'form': form,
     }
     return render(request, 'teacher/dashboard/exams_subjects.html', context)
+
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from quiz.models import Course
+from teacher.models import Teacher  # Make sure the import is correct
+
+# @receiver(post_save, sender=Courses)
+# def create_course_for_subject(sender, instance, created, **kwargs):
+#     if created:
+#         # Use the first school (assuming one school per teacher)
+#         school = instance.schools.first()
+        
+#         # Create related Course
+#         course = Course.objects.create(
+#             course_name=instance,
+#             schools=school,
+#             session=instance.session,
+#             term=instance.term,
+#             exam_type=instance.exam_type,
+#             question_number=0,
+#             total_marks=0,
+#         )
+        
+#         # Find the teacher for this school and current user
+#         from django.contrib.auth import get_user_model
+#         User = get_user_model()
+        
+#         teacher = Teacher.objects.filter(user__school=school, user=instance.created_by).first()
+        
+#         if teacher:
+#             teacher.subjects_taught.add(course)
+
 
 # @login_required(login_url='teacher:teacher_login')
 # def exam_list_view(request):
