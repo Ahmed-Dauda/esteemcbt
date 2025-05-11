@@ -800,9 +800,15 @@ p {
       {% else %}
         <div class="carousel-item">
       {% endif %}
-      <img class="mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url|add:'?f_auto&q_auto' }}"  alt="{{ obj.caption }}" width="1920" height="520"
-        loading="lazy" style="height: 520px;" onerror="handleImageErrorcarousel(this);">
+      <img class="mobile-img d-block w-100 zoom-in"
+     src="https://res.cloudinary.com/dcomiviua/image/upload/w_800,c_fill,f_auto,q_auto,dpr_auto/v1715603767/w4giwgwsc0hd3a2pn3dx.jpg"
+     alt="Senior Students"
+     width="800" height="520"
+     loading="lazy"
+     style="height: 520px;" 
+     onerror="handleImageErrorcarousel(this);">
 
+    
       <!-- <img class="mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 520px;" onerror="handleImageErrorcarousel(this);">
        -->
       <div class="carousel-caption d-none d-md-block">
@@ -838,11 +844,14 @@ p {
   {% for image in advertisement_images %}
       <!-- <img class="popup-image {% if forloop.first %}active{% endif %}" src="{{ image.image.url }}" alt="Advertisement Image {{ forloop.counter }}" onerror="handleImageError(this);">
        -->
-       <img class="popup-image {% if forloop.first %}active{% endif %}" src="{{ image.image.url|add:'?f_auto&q_auto' }}" 
-       alt="Advertisement Image {{ forloop.counter }}" 
-       loading="lazy" width="800" height="600" style="object-fit: contain;" 
+       <img class="popup-image active"
+       src="https://res.cloudinary.com/dcomiviua/image/upload/w_500,c_limit,f_auto,q_auto,dpr_auto/v1715601738/v9pvgaz6d620kwyjafnx.jpg"
+       alt="Advertisement Image 1"
+       width="500" height="600"
+       loading="lazy"
+       style="object-fit: contain;" 
        onerror="handleImageError(this);">
-     
+  
       <div class="desc">
         <p> {{ image.desc }}</p>
           {% if image.link %}
