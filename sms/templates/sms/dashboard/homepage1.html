@@ -1,12 +1,15 @@
 {% extends 'sms/dashboard/homebase.html' %}
 {% load hitcount_tags %}
 {% load static %}
+{% load sms_filters %}
 
 {% block title %} Esteem Learning Centre, Abuja - knowledge, faith and discipline  {% endblock %}
 
   {% block content %} 
 
+  
 <style>
+
 
 body {
 
@@ -796,7 +799,11 @@ p {
       {% else %}
         <div class="carousel-item">
       {% endif %}
-      <img class="mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 520px;" onerror="handleImageErrorcarousel(this);">
+      <img class="mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url|add:'?f_auto&q_auto' }}"  alt="{{ obj.caption }}" width="1920" height="520"
+        loading="lazy" style="height: 520px;" onerror="handleImageErrorcarousel(this);">
+
+      <!-- <img class="mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 520px;" onerror="handleImageErrorcarousel(this);">
+       -->
       <div class="carousel-caption d-none d-md-block">
         <h5>{{ obj.caption }}</h5>
       </div>
@@ -815,7 +822,6 @@ p {
   </a>
 </div>
 
-
 <!-- end of courasel image -->
 
 <div  class="containers">
@@ -829,7 +835,13 @@ p {
 <div id="popup-container">
 
   {% for image in advertisement_images %}
-      <img class="popup-image {% if forloop.first %}active{% endif %}" src="{{ image.image.url }}" alt="Advertisement Image {{ forloop.counter }}" onerror="handleImageError(this);">
+      <!-- <img class="popup-image {% if forloop.first %}active{% endif %}" src="{{ image.image.url }}" alt="Advertisement Image {{ forloop.counter }}" onerror="handleImageError(this);">
+       -->
+       <img class="popup-image {% if forloop.first %}active{% endif %}" src="{{ image.image.url|add:'?f_auto&q_auto' }}" 
+       alt="Advertisement Image {{ forloop.counter }}" 
+       loading="lazy" width="800" height="600" style="object-fit: contain;" 
+       onerror="handleImageError(this);">
+     
       <div class="desc">
         <p> {{ image.desc }}</p>
           {% if image.link %}
@@ -958,7 +970,32 @@ p {
 <br>
 
 <div id="frontPageVideoCarousel"  class="carousel slide" data-bs-ride="carousel" data-bs-interval="false">
+  
   <div class="carousel-inner">
+    {% for video in front_page_videos %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %} d-flex align-items-center justify-content-center">
+            <div class="embed-responsive embed-responsive-16by9">
+                <iframe 
+                    id="video-{{ forloop.counter }}"
+                    src="{{ video.video|youtube_embed_url }}"
+                    frameborder="0"
+                    modestbranding="1"
+                    rel="0"
+                    showinfo="0"
+                    controls="0"
+                    disablekb="1"
+                    class="frontvideo"
+                    loading="lazy">
+                </iframe>
+            </div>
+            <div class="carousel-caption">
+                <h5>{{ video.title }}</h5> 
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+  <!-- <div class="carousel-inner">
     {% for video in front_page_videos %}
         {% if forloop.first %}
             <div class="carousel-item active d-flex align-items-center justify-content-center">
@@ -966,26 +1003,25 @@ p {
             <div class="carousel-item align-items-center justify-content-center">
         {% endif %}
         <div class="embed-responsive embed-responsive-16by9" style=""> 
-            <iframe
-            id="video-{{ forloop.counter }}"
-            src="{{ video.video }}"
-            frameborder="0"
-            modestbranding="1"
-            rel="0"
-            showinfo="0"
-            controls="0"
-            disablekb="1"
-            class="frontvideo"
-            >
-            </iframe> 
-         
+          <iframe 
+          id="video-{{ forloop.counter }}"
+          src="{{ video.video|youtube_embed_url }}"
+          frameborder="0"
+          modestbranding="1"
+          rel="0"
+          showinfo="0"
+          controls="0"
+          disablekb="1"
+          class="frontvideo">
+      </iframe>
+            
         </div>
         <div class="carousel-caption">
             <h5>{{ video.title }}</h5> 
         </div>
         </div>
     {% endfor %}
-</div>
+</div>  -->
 
 
 <a class="carousel-control-prev" href="#frontPageVideoCarousel" role="button" data-slide="prev" style="left: calc((100% - 80%) / 2); padding: 140px;">
@@ -1214,42 +1250,6 @@ error image loading -->
   </script>
   
 
-<!-- Refresh page once -->
-<!-- <script>
-   document.addEventListener('DOMContentLoaded', function() {
-        let reloadCount = localStorage.getItem('reloadCount') ? parseInt(localStorage.getItem('reloadCount')) : 0;
-
-        if (reloadCount < 1) {
-            setTimeout(function() {
-                reloadCount++;
-                localStorage.setItem('reloadCount', reloadCount);
-                location.reload();
-            }, 3000); 
-        } else {
-            localStorage.removeItem('reloadCount'); 
-        }
-    });
-</script> -->
-
-<!-- js for loading animation -->
-
-<!-- <script>
-  function hideLoadingScreen() {
-      document.getElementById('rolling-text-container').classList.add('hidden');
-      document.getElementById('main-content').classList.remove('hidden');
-  }
-
-  if (document.readyState === 'complete') {
-      // Document is already fully loaded
-      hideLoadingScreen();
-  } else {
-      // Document is not fully loaded yet
-      window.onload = function() {
-          hideLoadingScreen();
-      };
-  }
-</script> -->
-
 <!-- setting for vidos url direct parse -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -1274,5 +1274,9 @@ error image loading -->
   </script>
   
 
+  <!-- video setting js -->
+
+     
+  
 {% endblock %} 
  
