@@ -29,6 +29,18 @@ def youtube_embed_url(value):
 
     return value
 
+@register.filter
+def youtube_id(value):
+    try:
+        parsed_url = urlparse(value)
+        if 'youtu.be' in parsed_url.netloc:
+            return parsed_url.path.strip('/')
+        elif 'youtube.com' in parsed_url.netloc:
+            query = parse_qs(parsed_url.query)
+            return query.get('v', [None])[0]
+    except:
+        return ''
+    return ''
 
 
 @register.filter
