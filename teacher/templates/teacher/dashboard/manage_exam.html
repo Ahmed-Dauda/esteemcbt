@@ -123,7 +123,7 @@
             {% for course in courses %}
                 <div class="course-item">
                     <a href="{% url 'teacher:edit_examiner_exam' course.id %}" style="text-decoration: none;">
-                        <h6>{{ course.course_name|upper }}</h6>
+                        <h6 style="font-size: 12px;">{{ course.course_name|upper }}</h6>
                     </a>
                     
                     {% if course.schools %}
