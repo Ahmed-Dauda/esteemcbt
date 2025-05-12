@@ -7,23 +7,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <meta name="description" content="{% block description %} Esteem Learning Centre School provides high-quality education integrated with Islamic perspectives. Esteem Q offers a unique program where students memorize the Holy Qur'an within a year. Our dedicated instructors and specialized curriculum ensure that students achieve this remarkable feat while fostering spiritual growth and a deep connection to the Holy Scriptures. Our research-based curriculum fosters capable students who can excel globally in any academic environment. We cultivate a positive learning atmosphere, ensuring happiness, stability, safety, and security, while nurturing students' social and emotional well-being. Our approach promotes the development of self-discipline, responsibility, and respect for diverse cultural values. We offer students opportunities for holistic growth, encompassing intellectual, cultural, physical, social, and creative dimensions. {% endblock %}">
         <meta name="author" content="Esteem Learning Centre, Abuja">
-    <!-- Basic favicon -->
-        <link rel="icon" href="/static/sms/images/favicon.ico" sizes="32x32" type="image/x-icon">
-
-        <!-- PNG for modern browsers -->
-        <link rel="icon" type="image/png" sizes="32x32" href="/static/sms/images/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/static/sms/images/favicon-16x16.png">
-
-        <!-- Optional WebP (modern browsers only) -->
-        <link rel="icon" type="image/webp" sizes="32x32" href="/static/sms/images/favicon.webp">
-
-
-        <!-- Custom styles for this template-->
-        <link href="/static/sms/dashboard/css/sb-admin-2.min.css" rel="stylesheet">
-        <script defer type="module" src="https://cdn.jsdelivr.net/npm/lite-youtube-embed@0.2.0/dist/lite-yt-embed.js"></script>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lite-youtube-embed@0.2.0/dist/lite-yt-embed.css" />
-        
-
+        <link rel="icon" type="image/x-icon" href="/static/sms/images/esteemlogo.jpg">
+    
         <!-- Font Awesome -->
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
@@ -54,12 +39,10 @@
         <!-- DataTables CSS -->
         <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     
-
-        <!-- jQuery -->
-        <script src="https://code.jquery.com/jquery-3.6.4.js" integrity="sha256-a9jBBRygX1Bh5lt8GZjXDzyOB+bWve9EiO7tROUtj/E=" crossorigin="anonymous"></script>
         <title>{% block title %} Esteem Learning Centre, Abuja home page {% endblock %}</title>
     
-        
+        <!-- jQuery -->
+        <script src="https://code.jquery.com/jquery-3.6.4.js" integrity="sha256-a9jBBRygX1Bh5lt8GZjXDzyOB+bWve9EiO7tROUtj/E=" crossorigin="anonymous"></script>
     </head>
     
 <style>
@@ -364,9 +347,7 @@
     <nav class="navbar" >
         <div class="containernav" >
             <a href="{% url 'sms:homepage' %}" class="brand-logo" style="">
-                <link rel="icon" href="/static/sms/images/favicon.ico" sizes="32x32" type="image/x-icon">
-<!--                 
-                <img src="/static/sms/images/esteemlogo.jpg" class="logo" alt="School Logo">   -->
+                <img src="/static/sms/images/esteemlogo.jpg" class="logo" alt="School Logo">  
             </a>
             
 
@@ -523,39 +504,72 @@
         </div>
     </div>
 
-<!-- Bootstrap core JavaScript-->
-<!-- <script src="/static/sms/dashboard/vendor/jquery/jquery.min.js" defer></script>
-<script src="/static/sms/dashboard/vendor/bootstrap/js/bootstrap.bundle.min.js" defer></script> -->
+    <!-- Bootstrap core JavaScript-->
+    <script src="/static/sms/dashboard/vendor/jquery/jquery.min.js"></script>
+    <script src="/static/sms/dashboard/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-<!-- <script defer type="module" src="https://cdn.jsdelivr.net/npm/lite-youtube-embed@0.2.0/dist/lite-yt-embed.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lite-youtube-embed@0.2.0/dist/lite-yt-embed.css" /> -->
+    <!-- Core plugin JavaScript-->
+    <script src="/static/sms/dashboard/vendor/jquery-easing/jquery.easing.min.js"></script>
 
-  <!-- Font Awesome -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom scripts for all pages-->
+    <script src="/static/sms/dashboard/js/sb-admin-2.min.js"></script>
+
+    <!-- Page level plugins -->
+    <script src="/static/sms/dashboard/vendor/chart.js/Chart.min.js"></script>
+
+    <!-- Page level custom scripts -->
+    <script src="/static/sms/dashboard/js/demo/chart-area-demo.js"></script>
+    <script src="/static/sms/dashboard/js/demo/chart-pie-demo.js"></script>
+
+    <!-- Page level plugins -->
+    <script src="/static/sms/dashboard/vendor/datatables/jquery.dataTables.min.js"></script>
+    <script src="/static/sms/dashboard/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+
+    <!-- Page level custom scripts -->
+    <script src="/static/sms/dashboard/js/demo/datatables-demo.js"></script>
+
     
+      <script src="/static/sms/prism.js"></script>
 
-<script defer>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Function to toggle dropdown menu visibility
-        function toggleDropdownMenu(event) {
-            var dropdownMenu = event.target.nextElementSibling;
+      <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var dropdownMenuLink = document.getElementById('dropdownMenuLink');
+            dropdownMenuLink.addEventListener('click', function() {
+                var dropdownMenu = this.nextElementSibling;
+                dropdownMenu.classList.toggle('show');
+            });
+        });
+
+        // seconde drop down menu
+        document.addEventListener("DOMContentLoaded", function() {
+        var dropdownMenuLink = document.getElementById('dropdownMenuLink2');
+        dropdownMenuLink.addEventListener('click', function() {
+            var dropdownMenu = this.nextElementSibling;
             dropdownMenu.classList.toggle('show');
-        }
+        });
+    });
+     // school portal drop down menu
+     document.addEventListener("DOMContentLoaded", function() {
+        var dropdownMenuLink = document.getElementById('dropdownMenuLinkschoolportal');
+        dropdownMenuLink.addEventListener('click', function() {
+            var dropdownMenu = this.nextElementSibling;
+            dropdownMenu.classList.toggle('show');
+        });
+    });
+    </script>
 
-        // Add event listeners for dropdown menus
-        document.getElementById('dropdownMenuLink').addEventListener('click', toggleDropdownMenu);
-        document.getElementById('dropdownMenuLink2').addEventListener('click', toggleDropdownMenu);
-        document.getElementById('dropdownMenuLinkschoolportal').addEventListener('click', toggleDropdownMenu);
 
-        // Menu toggle for navigation links
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
         const menuToggle = document.querySelector('.menu-toggle');
         const navLinks = document.querySelector('.nav-links');
+
         menuToggle.addEventListener('click', function() {
             navLinks.classList.toggle('show');
         });
     });
 </script>
-
 
 
 </body>
