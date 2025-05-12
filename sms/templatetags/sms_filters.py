@@ -29,18 +29,19 @@ def youtube_embed_url(value):
 
     return value
 
+from urllib.parse import urlparse, parse_qs
+
 @register.filter
-def youtube_id(value):
-    try:
-        parsed_url = urlparse(value)
-        if 'youtu.be' in parsed_url.netloc:
-            return parsed_url.path.strip('/')
-        elif 'youtube.com' in parsed_url.netloc:
-            query = parse_qs(parsed_url.query)
-            return query.get('v', [None])[0]
-    except:
-        return ''
-    return ''
+def youtube_id_extractor(url):
+    query = urlparse(url)
+    if query.hostname == 'youtu.be':
+        return query.path[1:]
+    if query.hostname in ['www.youtube.com', 'youtube.com']:
+        if query.path == '/watch':
+            return parse_qs(query.query).get('v', [None])[0]
+        elif query.path.startswith('/embed/'):
+            return query.path.split('/')[2]
+    return None
 
 
 @register.filter
