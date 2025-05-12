@@ -267,7 +267,7 @@ class DigitalForm(ListView):
     
 
 
-#@method_decorator(cache_page(60 * 40), name='dispatch')  # Cache for 15 minutes
+@method_decorator(cache_page(60 * 40), name='dispatch')  # Cache for 15 minutes
 class Homepage(ListView):
     model = Courses
     template_name = 'sms/dashboard/homepage1.html'
