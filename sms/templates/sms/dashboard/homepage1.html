@@ -796,8 +796,19 @@ p {
       {% else %}
         <div class="carousel-item">
       {% endif %}
-      <img class="mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 520px;" onerror="handleImageErrorcarousel(this);">
-      
+      <img
+  class="mobile-img d-block w-100 zoom-in"
+  src="{{ obj.image_carousel.url }}?f_auto&q_auto&w=412&h=520"
+  alt="{{ obj.caption }}"
+  width="412"
+  height="520"
+  loading="lazy"
+  style="height: 520px;"
+  onerror="handleImageErrorcarousel(this);"
+/>
+
+      <!-- <img class="mobile-img d-block w-100 zoom-in" src="{{ obj.image_carousel.url }}" alt="{{ obj.caption }}" style="height: 520px;" onerror="handleImageErrorcarousel(this);">
+       -->
       <div class="carousel-caption d-none d-md-block">
         <h5>{{ obj.caption }}</h5>
       </div>
