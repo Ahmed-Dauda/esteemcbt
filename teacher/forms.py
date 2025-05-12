@@ -216,13 +216,19 @@ class TeacherSignupForm(UserCreationForm):
     email = forms.EmailField(max_length=254, label='Email')
     username = forms.CharField(max_length=35, label='Username')
     school = forms.ModelChoiceField(queryset=School.objects.none(), label='School', required=False)
-
     subjects_taught = forms.ModelMultipleChoiceField(
-        queryset=Courses.objects.all(),  # Ensure courses are properly loaded
+        queryset=Courses.objects.all().order_by('title'),  # Sort alphabetically by title
         label='Subjects Taught',
         required=False,
         widget=forms.CheckboxSelectMultiple
     )
+    
+    # subjects_taught = forms.ModelMultipleChoiceField(
+    #     queryset=Courses.objects.all(),  # Ensure courses are properly loaded
+    #     label='Subjects Taught',
+    #     required=False,
+    #     widget=forms.CheckboxSelectMultiple
+    # )
 
     classes_taught = forms.ModelMultipleChoiceField(
         queryset=CourseGrade.objects.all(),  # Ensure classes are properly loaded
@@ -235,6 +241,26 @@ class TeacherSignupForm(UserCreationForm):
         model = NewUser
         fields = ['first_name', 'last_name', 'email', 'username', 'password1', 'password2', 'school', 'subjects_taught', 'classes_taught']
 
+    # def __init__(self, *args, **kwargs):
+    #     user = kwargs.pop('user', None)  # ✅ Pop 'user' first
+    #     super(TeacherSignupForm, self).__init__(*args, **kwargs)  # THEN call super
+
+    #     if user and user.school:
+    #         self.fields['school'].queryset = School.objects.filter(id=user.school.id)
+    #         self.fields['school'].initial = user.school
+    #         self.fields['subjects_taught'].queryset = Course.objects.filter(
+    #             schools=user.school
+    #         ).order_by('course_name__title')  # or 'title'
+    #         self.fields['subjects_taught'].label_from_instance = lambda obj: str(obj)
+
+    #         self.fields['classes_taught'].queryset = CourseGrade.objects.filter(
+    #             schools=user.school
+    #         ).distinct()
+
+    #     self.fields['school'].widget.attrs['readonly'] = True
+    #     self.fields['school'].disabled = True
+
+
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(TeacherSignupForm, self).__init__(*args, **kwargs)
@@ -245,7 +271,7 @@ class TeacherSignupForm(UserCreationForm):
             self.fields['school'].queryset = School.objects.filter(id=user.school.id)
             self.fields['school'].initial = user.school  # Set the initial value to the user's school
             # Populate subjects and classes based on the user's school
-            self.fields['subjects_taught'].queryset = Course.objects.filter(schools=user.school)
+            self.fields['subjects_taught'].queryset = Course.objects.filter(schools=user.school).order_by('course_name__title')
             self.fields['classes_taught'].queryset = CourseGrade.objects.filter(schools=user.school).distinct()
 
         # Make the 'school' field read-only (disabled in the form)

@@ -37,7 +37,8 @@ class Course(models.Model):
         unique_together = ('course_name', 'session', 'term', 'schools', 'exam_type')  # Combined Meta classes
         verbose_name = 'Exam'
         verbose_name_plural = 'Exams'
-
+        ordering = ['course_name__title']  
+ 
     # def __str__(self):
     #     return f'{self.course_name or "No Course Name" }'
     

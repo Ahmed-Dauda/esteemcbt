@@ -9,6 +9,28 @@
    
 <div class="container">
     <h2 class="text-center text-success">Teacher Registration</h2>
+    {% if messages %}
+  <div id="message-container">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<!-- JavaScript to auto-hide the message -->
+<script>
+  setTimeout(function() {
+    const msg = document.getElementById('message-container');
+    if (msg) {
+      msg.style.transition = 'opacity 0.5s ease';
+      msg.style.opacity = '0';
+      setTimeout(() => msg.remove(), 500);
+    }
+  }, 3000);  // Disappear after 3 seconds
+</script>
+
     <!-- <form method="post">
         {% csrf_token %}
         {{ form|crispy }}
