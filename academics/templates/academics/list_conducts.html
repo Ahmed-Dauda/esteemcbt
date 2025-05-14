@@ -1,22 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Conducts</title>
+{% extends 'sms/dashboard/teacherbase.html' %}
 
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
+{% block title %} Teacher Dashboard {% endblock %}
 
-    <!-- Font Awesome for Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+{% block content %}
 
-    <!-- jQuery and DataTables JS -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
-</head>
-<body>
-    <h1>Student Conduct Records</h1>
+    <h1 style="text-align: center;">Student Conduct Records</h1>
 
     <div  style="padding-left: 10px;padding-right: 10px;">
         <a class="nav-link" href="{% url 'academics:add_conduct' %}">
@@ -82,5 +70,6 @@
             });
         });
     </script>
-</body>
-</html>
+
+
+{% endblock %}

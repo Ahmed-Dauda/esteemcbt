@@ -209,17 +209,68 @@ def teacher_dashboard_view(request):
         teacher_class = teacher.classes_taught.all()
         teacher_name = teacher.first_name
         # print(teacher_name)
+        courses = Courses.objects.filter(schools=user_school)
+
+        # print('rrrrr', courses)
 
         context = {
             'school': user_school,
             'username': username,
             'teacher_class': teacher_class,
             'teacher_subjects': teacher_subjects,
+            'courses': courses,  # ✅ Add this
+                
         }
         return render(request, 'teacher/dashboard/teacher_dashboard.html', context=context)
     except Teacher.DoesNotExist:
         # Handle case where Teacher instance does not exist
         return redirect('account_login')
+
+from .forms import EditSubjectForm
+
+@login_required(login_url='teacher:teacher_login')
+def edit_subjects_view(request, course_id):
+    user = NewUser.objects.select_related('school').get(id=request.user.id)
+    user_school = user.school
+
+    course = get_object_or_404(Courses.objects.prefetch_related('schools').filter(
+        schools=user_school,
+        id=course_id
+    ))
+
+    if request.method == 'POST':
+        form = EditSubjectForm(request.POST, instance=course, user_school=user_school)
+        if form.is_valid():
+            form.save()
+            return redirect('teacher:teacher-dashboard')
+    else:
+        form = EditSubjectForm(instance=course, user_school=user_school)
+
+    return render(request, 'teacher/dashboard/edit_subjects.html', {
+        'form': form,
+        'course': course
+    })
+
+@login_required(login_url='teacher:teacher_login')
+def delete_subject_view(request, course_id):
+    user = request.user
+    user_school = user.school
+
+    course = get_object_or_404(
+        Courses.objects.prefetch_related('schools').filter(
+            schools=user_school,
+            id=course_id
+        )
+    )
+
+    if request.method == 'POST':
+        course.delete()
+        messages.success(request, "Subject deleted successfully.")
+        return redirect('teacher:teacher-dashboard')
+
+    return render(request, 'teacher/dashboard/confirm_delete_subject.html', {
+        'course': course
+    })
 
 
 def some_view(request):
@@ -1245,9 +1296,11 @@ def save_results(request):
 # @cache_page(60 * 15)
 @login_required(login_url='teacher:teacher_login')
 def add_question_view(request):
+    
     user = request.user
 
     # Get the teacher instance associated with the user
+    
     try:
         teacher = Teacher.objects.select_related('user', 'school').get(user=user)
     except Teacher.DoesNotExist:
@@ -1258,9 +1311,11 @@ def add_question_view(request):
 
     # Get the course names associated with the subjects taught by the teacher
     subjects_taught_titles = [course for course in subjects_taught]
-
+    print('kkk', subjects_taught_titles)   
     # Filter the courses based on the subjects taught
-    courses = Course.objects.filter(course_name__title__in=subjects_taught_titles).prefetch_related('schools')
+    # courses = Course.objects.filter(course_name__title__in=subjects_taught_titles).prefetch_related('schools')
+# Get the subjects (courses) taught by the teacher
+    courses = teacher.subjects_taught.all()
 
     # Create a formset with QuestionForm
     QuestionFormSet = formset_factory(QuestionForm, extra=1)
@@ -1388,7 +1443,7 @@ def edit_coursegrade_view(request, pk):
         pk=pk)
         
   
-    print(course_grade.subjects, 'ttt')
+    # print(course_grade.subjects, 'ttt')
     if request.method == 'POST':
         form = CourseGradeForm(request.POST, instance=course_grade, user_school=user_school)
         if form.is_valid():
@@ -1482,7 +1537,8 @@ def create_examiner_exam(request):
     }
     return render(request, 'teacher/dashboard/create_examiner_exam.html', context)
 
-   
+
+  
 from .forms import CourseSelectionForm
 from django.contrib.auth.decorators import login_required
 
@@ -2781,50 +2837,6 @@ def import_word(request):
 
 
 
-# def import_word(request):
-#     if request.method == 'POST':
-#         # Check if the uploaded file format is supported
-#         allowed_formats = ['docx']
-#         uploaded_file = request.FILES.get('myfile')
-#         if not uploaded_file:
-#             return HttpResponse('No file uploaded.')
-
-#         file_extension = uploaded_file.name.split('.')[-1]
-#         if file_extension not in allowed_formats:
-#             return HttpResponse('File format not supported. Supported format: DOCX')
-
-#         # Handle Word document file
-#         document = Document(uploaded_file)
-#         questions = []
-
-#         for table_idx, table in enumerate(document.tables):
-#             for row_idx, row in enumerate(table.rows):
-#                 question = [cell.text.strip() for cell in row.cells]
-#                 if len(question) == 9:  # Assuming answer is included
-#                     questions.append(question)
-#                 else:
-#                     messages.warning(request, f"Ignored invalid line in table {table_idx + 1}, row {row_idx + 1}: {', '.join(question)}")
-
-#         if questions:
-#             # Create CSV content
-#             response = HttpResponse(content_type='text/csv')
-#             response['Content-Disposition'] = 'attachment; filename="imported_questions.csv"'
-
-#             writer = csv.writer(response)
-#             # writer.writerow(['course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer'])
-
-#             for question in questions:
-#                 writer.writerow(question)
-
-#             messages.success(request, "Data imported successfully.")
-            
-#             return response
-#         else:
-#             messages.warning(request, "No valid data found in the document.")
-
-#     return render(request, 'teacher/dashboard/importdocs.html')
-
-
 from .forms import TeacherUpdateForm
 
 def update_teacher_settings(request):
@@ -2856,46 +2868,11 @@ import os
 
 import csv
 import json
-# def write_to_csv(data, filename):
-#     with open(filename, 'w', newline='') as csvfile:
-#         fieldnames = ['course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer']
-#         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-#         writer.writeheader()
-        
-#         for response in data:
-#             row = {
-#                 'course': response.get('course', ''),
-#                 'marks': response.get('marks', ''),
-#                 'question': response.get('question', ''),
-#                 'img_quiz': response.get('img_quiz', ''),
-#                 'option1': response.get('option1', '').strip('"'),
-#                 'option2': response.get('option2', '').strip('"'),
-#                 'option3': response.get('option3', '').strip('"'),
-#                 'option4': response.get('option4', '').strip('"'),
-#                 'answer': response.get('answer', '')
-#             }
-            
-#             correct_option = row['answer'].upper()
-#             if correct_option == "A":
-#                 row['answer'] = "Option1"
-#             elif correct_option == "B":
-#                 row['answer'] = "Option2"
-#             elif correct_option == "C":
-#                 row['answer'] = "Option3"
-#             elif correct_option == "D":
-#                 row['answer'] = "Option4"
-            
-#             writer.writerow(row)
 
-
-
-from django.utils.timezone import now
-
-import json
-import csv
 import html
 from django.http import HttpResponse
 from django.utils.timezone import now
+
 
 def write_to_csv(data, file):
     writer = csv.writer(file)
@@ -3041,203 +3018,6 @@ def export_data(request):
         return render(request, 'teacher/dashboard/export_questions.html', {'courses': courses})
       
 
-# def export_data(request):
-#     if request.method == 'POST':
-#         try:
-#             selected_courses_ids = request.POST.getlist('courses')
-#         except MultiValueDictKeyError:
-#             # Handle the case when 'courses' key is not found in the POST data
-#             selected_courses_ids = []
-
-#         resource = QuestionResource()
-#         # Query questions using the selected course IDs
-#         queryset = Question.objects.filter(course__id__in=selected_courses_ids)
-#         print(queryset, 'queryset')
-#         dataset = resource.export(request=request, queryset=queryset)
-#         response = HttpResponse(dataset.csv, content_type='text/csv')
-#         response['Content-Disposition'] = 'attachment; filename="questions.csv"'
-#         return response
-#     else:
-#         user = request.user
-#         # Get the teacher instance associated with the user
-#         teacher = Teacher.objects.get(user=user)
-#         print(teacher, 'teacher')
-#         # Get the subjects taught by the teacher
-#         subjects_taught = teacher.subjects_taught.all()
-#         # Extract course IDs from the list of course objects
-#         selected_courses_ids = [course.id for course in subjects_taught]
-#         # Query courses using the extracted IDs
-#         courses = Course.objects.filter(id__in=selected_courses_ids)
-#         return render(request, 'teacher/dashboard/export_questions.html', {'courses': courses})
-
-
-# def generate_csv(request):
-#     user_school = request.user.school
-    
-#     # Optimize query to fetch related objects
-#     teacher = Teacher.objects.select_related('user', 'school').prefetch_related('subjects_taught', 'classes_taught').get(user__username=request.user.username)
-    
-#     # Prefetch subjects and retrieve additional teacher details
-#     teacher_subjects = teacher.subjects_taught.all()
-#     ai_question_num = teacher.ai_question_num
-#     learning_objectives = teacher.learning_objectives
-
-#     # Handle JSON form submission for CSV generation
-#     if request.method == 'POST':
-#         form = JSONForm(request.POST)
-#         if form.is_valid():
-#             # Parse JSON data
-#             json_data = form.cleaned_data['json_data']
-#             try:
-#                 data = json.loads(json_data)
-#                 # Generate CSV
-#                 write_to_csv(data, 'generated_questions.csv')
-#             except json.JSONDecodeError:
-#                 return render(request, 'teacher/dashboard/error.html', {'message': 'Invalid JSON data'})
-#             except Exception as e:
-#                 return render(request, 'teacher/dashboard/error.html', {'message': str(e)})
-
-#             return render(request, 'teacher/dashboard/success.html')
-#     else:
-#         form = JSONForm()
-
-#     # Prepare the context with teacher and form data
-#     context = {
-#         'school': user_school,
-#         'teacher_subjects': teacher_subjects,
-#         'ai_question_num': ai_question_num,
-#         'learning_objectives': learning_objectives,
-#         'form1': form  # Include the JSON form
-#     }
-      
-#     # Render the template with the context
-#     return render(request, 'teacher/dashboard/generate_csv.html', context)
-    
-
-# def export_data(request):
-#     if request.method == 'POST':
-#         try:
-#             selected_courses_ids = request.POST.getlist('courses')
-#         except MultiValueDictKeyError:
-#             # Handle the case when 'courses' key is not found in the POST data
-#             selected_courses_ids = []
-
-#         resource = QuestionResource()
-#         # Query questions using the selected course IDs
-#         queryset = Question.objects.filter(course__id__in=selected_courses_ids)
-        
-#         dataset = resource.export(request=request, queryset=queryset)
-#         response = HttpResponse(dataset.csv, content_type='text/csv')
-#         response['Content-Disposition'] = 'attachment; filename="questions.csv"'
-#         return response
-#     else:
-#         user = request.user
-#         # Get the teacher instance associated with the user
-#         teacher = Teacher.objects.get(user=user)
-#         # Get the subjects taught by the teacher
-#         subjects_taught = teacher.subjects_taught.all()
-#         # Extract course IDs from the list of course objects
-#         selected_courses_ids = [course.id for course in subjects_taught]
-#         # Query courses using the extracted IDs
-#         courses = Course.objects.filter(id__in=selected_courses_ids)
-#         return render(request, 'teacher/dashboard/export_questions.html', {'courses': courses})
-
-
-# @login_required
-# def generate_csv(request):
-#     sample_codes = SampleCodes.objects.all()
-#     # Get the current user's username and school
-#     user_school = request.user.school
-#     try:
-#         # Optimize query to fetch related objects without using only
-#         teacher = Teacher.objects.select_related('user', 'school').prefetch_related('subjects_taught', 'classes_taught').get(user__username=request.user.username)
-#         # Prefetch subjects and classes taught
-#         teacher_subjects = teacher.subjects_taught.all()
-#         # Retrieve ai_question_num
-#         ai_question_num = teacher.ai_question_num
-#         # Retrieve learning_objectives
-#         learning_objectives = teacher.learning_objectives
-
-#          # Handle the form submission for updating Teacher data
-#         if request.method == 'POST':
-#             form = TeacherUpdateForm(request.POST, instance=teacher)
-#             if form.is_valid():
-#                 form.save()
-#                 messages.success(request, 'Teacher settings updated successfully!')
-#                 return redirect('teacher:generate_csv')  # Redirect to the same page to see the changes
-#         else:
-#             form1 = TeacherUpdateForm(instance=teacher)
-
-#         # Prepare context for the template
-#         context = {
-#             'school': user_school,
-#             'teacher_subjects': teacher_subjects,
-#             'sample_codes': sample_codes,
-#             'ai_question_num':ai_question_num,
-#             'learning_objectives':learning_objectives,
-#             'form1': form1,  # Include the form in the context
-#         }
-
-#     except Teacher.DoesNotExist:
-#         return render(request, 'teacher/dashboard/error.html', {'message': 'Teacher not found'})
-
-#     if request.method == 'POST':
-#         form = JSONForm(request.POST)
-#         if form.is_valid():
-#             # Parse JSON data
-#             json_data = form.cleaned_data['json_data']
-#             try:
-#                 data = json.loads(json_data)
-#             except json.JSONDecodeError:
-#                 context['message'] = 'Invalid JSON data'
-#                 return render(request, 'teacher/dashboard/error.html', context)
-
-#             # Generate CSV
-#             try:
-#                 write_to_csv(data, 'generated_questions.csv')
-#             except Exception as e:
-#                 context['message'] = str(e)
-#                 return render(request, 'teacher/dashboard/error.html', context)
-
-#             return render(request, 'teacher/dashboard/success.html', context)
-#     else:
-#         form = JSONForm()
-
-#     # Add form to context
-#     context['form'] = form
-
-#     return render(request, 'teacher/dashboard/generate_csv.html', context)
-
-
-
-# def generate_csv(request):
-
-#     sample_codes = SampleCodes.objects.all()
-#     # print('sample',sample_codes)
-#     if request.method == 'POST':
-#         form = JSONForm(request.POST)
-#         if form.is_valid():
-#             # Parse JSON data
-#             json_data = form.cleaned_data['json_data']
-#             try:
-#                 data = json.loads(json_data)
-#             except json.JSONDecodeError:
-#                 return render(request, 'teacher/dashboard/error.html', {'message': 'Invalid JSON data'})
-
-#             # Generate CSV
-#             try:
-#                 write_to_csv(data, 'generated_questions.csv')
-#             except Exception as e:
-#                 return render(request, 'teacher/dashboard/error.html', {'message': str(e)})
-
-#             return render(request, 'teacher/dashboard/success.html')
-#     else:
-#         form = JSONForm()
-    
-        
-#     return render(request, 'teacher/dashboard/generate_csv.html', {'form': form, 'sample_codes':sample_codes})
-
-
 
 def download_csv(request):
     # Assuming the CSV file is generated and saved as 'generated_questions.csv'
@@ -3249,62 +3029,6 @@ def download_csv(request):
         response['Content-Disposition'] = 'attachment; filename=' + filename
         return response
     
-# uu
-# def export_data(request):
-#     if request.method == 'POST':
-#         try:
-#             selected_courses_ids = request.POST.getlist('courses')
-#         except MultiValueDictKeyError:
-#             # Handle the case when 'courses' key is not found in the POST data
-#             selected_courses_ids = []
-
-#         resource = QuestionResource()
-#         # Query questions using the selected course IDs
-#         # queryset = Question.objects.filter(course__id__in=selected_courses_ids)
-#         queryset = Question.objects.filter(course__id__in=selected_courses_ids).select_related('course').only(
-#     'id', 'course__course_name', 'question', 'marks', 'option1', 'option2', 'option3', 'option4', 'answer'
-# )
-#         dataset = resource.export(request=request, queryset=queryset)
-#         response = HttpResponse(dataset.csv, content_type='text/csv')
-#         response['Content-Disposition'] = 'attachment; filename="questions.csv"'
-#         return response
-#     else:
-#         user = request.user
-#         # Get the teacher instance associated with the user
-#         # teacher = Teacher.objects.get(user=user)
-#         teacher = Teacher.objects.select_related('user', 'school').only(
-#                 'id', 'user__username', 'user__email', 'school__name',
-#             ).get(user=user)
-
-#         # Get the subjects taught by the teacher
-#         subjects_taught = teacher.subjects_taught.all()
-#         # Extract course IDs from the list of course objects
-#         selected_courses_ids = [course.id for course in subjects_taught]
-#         # Query courses using the extracted IDs
-#         courses = Course.objects.filter(id__in=selected_courses_ids)
-
-#         return render(request, 'teacher/dashboard/export_questions.html', {'courses': courses})
-
-
-# def export_data(request):
-#     if request.method == 'POST':
-#         selected_courses = request.POST.getlist('courses')
-#         resource = QuestionResource()
-#         dataset = resource.export(request=request, queryset=Question.objects.filter(course__in=selected_courses))
-#         response = HttpResponse(dataset.csv, content_type='text/csv')
-#         response['Content-Disposition'] = 'attachment; filename="questions.csv"'
-#         return response
-#     else:
-#         user = request.user
-#         # Get the teacher instance associated with the user
-#         teacher = Teacher.objects.get(user=user)
-#         # Get the subjects taught by the teacher
-#         subjects_taught = teacher.subjects_taught.all()
-#         subjects_taught_titles = [course.course_name for course in subjects_taught]
-#         print("subjects_taught66", subjects_taught_titles)
-#         courses = Course.objects.filter(course_name = subjects_taught_titles)
-#         print('cor',courses)
-#         return render(request, 'teacher/dashboard/export_questions.html', {'courses': courses})
 
 
 

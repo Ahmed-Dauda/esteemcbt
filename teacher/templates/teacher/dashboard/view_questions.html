@@ -109,6 +109,35 @@
             }
         }
     </style>
+<style>
+    .responsive-flex {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+  
+    .responsive-flex a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      text-decoration: none;
+      border-radius: 5px;
+      color: white;
+    }
+  
+    /* Optional: Button colors for external links */
+    .btn-default {
+      background-color: #6c757d;
+    }
+  
+    .btn-default:hover {
+      background-color: #5a6268;
+    }
+  </style>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
@@ -120,50 +149,52 @@
     });
 </script>
 
-    <!-- Include MathJax script -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-    <script type="text/x-mathjax-config">
-        MathJax.Hub.Config({
-            tex2jax: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']],
-            },
-            "HTML-CSS": { availableFonts: ["TeX"] }
-        });
-    </script> -->
     
     <!-- Begin Page Content -->
 
-    <div style="display: flex; gap: 6px; justify-content: center; align-items: center; margin-bottom: 20px;">
+    <div class="responsive-flex">
         <!-- Add Questions -->
-        <a class="nav-link btn btn-primary" href="{% url 'teacher:add_question' %}" style="display: flex; align-items: center; padding: 10px;">
-            <i class="fas fa-fw fa-plus"></i>
-            <span style="margin-left: 8px;">Add Questions</span>
+        <a class="nav-link btn btn-primary" href="{% url 'teacher:add_question' %}">
+          <i class="fas fa-fw fa-plus"></i>
+          <span>Add Questions</span>
         </a>
-    
-        <!-- Generate Questions with AI -->
-        <a class="nav-link btn btn-info" href="{% url 'teacher:generate_csv' %}" style="display: flex; align-items: center; padding: 10px;">
-            <i class="fas fa-fw fa-eye"></i>
-            <span style="margin-left: 8px;">Generate Questions with AI</span>
-        </a>
-    
-        <!-- Export Questions -->
-        <a class="nav-link btn btn-success" href="{% url 'teacher:export_data' %}" style="display: flex; align-items: center; padding: 10px;">
-            <i class="fas fa-fw fa-file-export"></i>
-            <span style="margin-left: 8px;">Export Questions</span>
-        </a>
-    
-        <!-- Import Questions -->
-        <a class="nav-link btn btn-warning" href="{% url 'teacher:import_data' %}" style="display: flex; align-items: center; padding: 10px;">
-            <i class="fas fa-fw fa-file-import"></i>
-            <span style="margin-left: 8px;">Import Questions</span>
-        </a>
-    </div>
       
+        <!-- Generate Questions with AI -->
+        <a class="nav-link btn btn-info" href="{% url 'teacher:generate_csv' %}">
+          <i class="fas fa-fw fa-eye"></i>
+          <span>Generate Questions with AI</span>
+        </a>
+      
+        <!-- Export Questions -->
+        <a class="nav-link btn btn-success" href="{% url 'teacher:export_data' %}">
+          <i class="fas fa-fw fa-file-export"></i>
+          <span>Export Questions</span>
+        </a>
+      
+        <!-- Import Questions -->
+        <a class="nav-link btn btn-warning" href="{% url 'teacher:import_data' %}">
+          <i class="fas fa-fw fa-file-import"></i>
+          <span>Import Questions</span>
+        </a>
+      
+        <!-- Prompt Questions -->
+        <a class="nav-link btn btn-default" href="https://docs.google.com/document/d/14_kSz39_j2OpDADmF4rkVBprWvI_jIcw/edit?usp=sharing"
+           target="_blank" rel="noopener noreferrer">
+          <i class="fas fa-fw fa-file-alt"></i>
+          <span>Prompt</span>
+        </a>
+      
+        <!-- Question Sample -->
+        <a class="nav-link btn btn-default" href="https://docs.google.com/document/d/1aDY4sKhT7zkyOnNiLM2OoDFvsHSrvm0r/edit?usp=sharing"
+           target="_blank" rel="noopener noreferrer">
+          <i class="fas fa-fw fa-file-alt"></i>
+          <span>Question Sample</span>
+        </a>
+      </div>
         <!-- DataTables Example -->
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold">Exam Questions</h6>
+                <h6 style="color:black; background-color: white;" class="m-0 font-weight-bold">Exam Questions</h6>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -183,10 +214,10 @@
                                 <th>Delete</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody style="font-size: 12px;font-family: Arial, Helvetica, sans-serif;">
                             {% for question in questions %}
                             <tr>
-                                <td>{{ question.course }}</td>
+                                <td >{{ question.course.course_name }}</td>
                                 <td>{{ question.question|safe }}</td> <!-- Render MathML -->
                                 <td>
                                     {% if question.img_quiz %}

@@ -15,6 +15,27 @@ from django.contrib.auth.forms import AuthenticationForm
 from sms.models import Courses
 from quiz.models import Result
 
+
+class EditSubjectForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.user_school = kwargs.pop('user_school', None)
+        super().__init__(*args, **kwargs)
+
+        if self.user_school:
+            self.fields['schools'].queryset = self.fields['schools'].queryset.filter(id=self.user_school.id)
+
+    class Meta:
+        model = Courses
+        fields = ['title', 'schools', 'session', 'term', 'exam_type']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'schools': forms.CheckboxSelectMultiple(),
+            'session': forms.Select(attrs={'class': 'form-control'}),
+            'term': forms.Select(attrs={'class': 'form-control'}),
+            'exam_type': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+
 class ResultEditForm(forms.ModelForm):
     class Meta:
         model = Result

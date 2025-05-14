@@ -34,6 +34,10 @@ urlpatterns = [
     path('student-logout/', views.student_logout_view, name='student-logout'),\
     # path('login-section/', views.login_section_view, name='login_section-view'),
     path('teacher-dashboard', views.teacher_dashboard_view,name='teacher-dashboard'),
+    path('subject/edit/<int:course_id>/', views.edit_subjects_view, name='edit_subjects_view'),
+    path('subject/delete/<int:course_id>/', views.delete_subject_view, name='delete_subject_view'),
+
+
     path('student-dashboard', views.student_dashboard_view,name='student-dashboard'),
     path('add-question/', views.add_question_view, name='add_question'),
     # Add more URLs as needed

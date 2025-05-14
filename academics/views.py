@@ -68,7 +68,7 @@ def list_conducts(request):
     # Get the school name where the teacher is assigned
     teacher_school = StudentConduct.objects.filter(school_id=user_school.id).values_list('school__school_name', flat=True).first()
     
-    print(request.user.email, 'sc')
+    # print(request.user.email, 'sc')
 
     """List all student conduct records with counts, restricted to the logged-in teacher unless superuser."""
     if request.user.is_superuser:
@@ -104,7 +104,7 @@ def edit_conduct(request, pk):
         form = StudentConductForm(request.POST, instance=conduct)
         if form.is_valid():
             form.save()
-            return redirect('list_conducts')
+            return redirect('academics:list_conducts')
     else:
         form = StudentConductForm(instance=conduct)
     

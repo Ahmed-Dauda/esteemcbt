@@ -70,8 +70,8 @@ def ordinal(n):
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-
 from django.db.models import F
+
 
 @login_required
 def examiner_report_card_list(request):
@@ -99,7 +99,7 @@ def examiner_report_card_list(request):
         'report_cards': unique_students.values(),
     }
 
-    return render(request, 'student/dashboard/examiner_report_card_list.html', context)
+    return render(request, 'teacher/dashboard/examiner_report_card_list.html', context)
 
 
 

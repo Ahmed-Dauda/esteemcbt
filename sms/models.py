@@ -122,7 +122,8 @@ class Courses(models.Model):
     def __str__(self):
         school_name = '\n'.join(str(school) for school in self.schools.all())
         return f'{self.title}'
-
+ 
+ 
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from .models import Courses
