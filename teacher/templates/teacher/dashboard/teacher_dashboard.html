@@ -148,6 +148,7 @@
                     <h5 class="mb-0">Subjects Taught</h5>
                 </div>
                 <div class="card-body">
+                    {% if request.user.is_authenticated and request.user.is_superuser %}
                     <ul class="list-group list-group-flush">
                         {% for course in courses %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -165,7 +166,15 @@
                             <li class="list-group-item text-muted">No subjects found.</li>
                         {% endfor %}
                     </ul>
-                    
+                    {% else %}
+               <ul class="list-group list-group-flush">
+                        {% for subject in teacher_subjects %}
+                        <li style="font-size: 14px;" class="list-group-item">{{ subject.course_name }}</li>
+                           
+                        {% endfor %}
+                    </ul>         
+                    {% endif %}
+
                     <!-- <ul class="list-group list-group-flush">
                         {% for subject in teacher_subjects %}
                         <li style="font-size: 14px;" class="list-group-item">{{ subject.course_name }}</li>
