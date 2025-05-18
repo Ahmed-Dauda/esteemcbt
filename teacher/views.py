@@ -3062,24 +3062,50 @@ def view_questions(request):
     # Render the template with the questions
     return render(request, 'teacher/dashboard/view_questions.html', context)
 
-
-# @cache_page(60 * 5)
+@login_required
 def edit_question(request, question_id):
-    # question = get_object_or_404(Question, id=question_id)
+    # Get the logged-in teacher
+    teacher = get_object_or_404(Teacher, user=request.user)
+    assigned_courses = teacher.subjects_taught.all()
+
+    # Fetch the question only if it belongs to a course assigned to the teacher
     question = get_object_or_404(
         Question.objects.select_related('course').only(
-            'id', 'course__course_name', 'question','img_quiz','marks', 'option1', 'option2', 'option3', 'option4', 'answer'
-        ),
+            'id', 'course__course_name', 'question', 'img_quiz', 'marks',
+            'option1', 'option2', 'option3', 'option4', 'answer'
+        ).filter(course__in=assigned_courses),
         id=question_id
     )
+
     if request.method == 'POST':
-        form = QuestionForm(request.POST, request.FILES,instance=question)
+        form = QuestionForm(request.POST, request.FILES, instance=question, courses=assigned_courses)
         if form.is_valid():
             form.save()
-            return redirect('teacher:view_questions')  # Redirect to the view questions page
+            return redirect('teacher:view_questions')
     else:
-        form = QuestionForm(instance=question)
+        form = QuestionForm(instance=question, courses=assigned_courses)
+
     return render(request, 'teacher/dashboard/edit_questions.html', {'form': form})
+
+
+#real view
+# @cache_page(60 * 5)
+# def edit_question(request, question_id):
+#     # question = get_object_or_404(Question, id=question_id)
+#     question = get_object_or_404(
+#         Question.objects.select_related('course').only(
+#             'id', 'course__course_name', 'question','img_quiz','marks', 'option1', 'option2', 'option3', 'option4', 'answer'
+#         ),
+#         id=question_id
+#     )
+#     if request.method == 'POST':
+#         form = QuestionForm(request.POST, request.FILES,instance=question)
+#         if form.is_valid():
+#             form.save()
+#             return redirect('teacher:view_questions')  # Redirect to the view questions page
+#     else:
+#         form = QuestionForm(instance=question)
+#     return render(request, 'teacher/dashboard/edit_questions.html', {'form': form})
 
 
 
@@ -3100,4 +3126,3 @@ def delete_question_view(request, question_id):
         # Render a confirmation page before deleting the question
         return render(request, 'teacher/dashboard/delete_question.html', {'question': question})
     
-
