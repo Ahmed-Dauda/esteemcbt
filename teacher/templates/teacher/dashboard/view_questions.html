@@ -1,143 +1,111 @@
 {% extends 'sms/dashboard/teacherbase.html' %}
 
-{% block title %} Course Overall Scores Detail View {% endblock %}
+{% block title %}Manage Course Questions{% endblock %}
 
 {% block content %}
-    <style>
-        /* Styling remains the same as you've provided */
-        .container-fluid {
-            padding: 20px;
-        }
-
-        .card {
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border: none;
-        }
-
-        .card-header {
-            background-color: #007bff;
-            color: white;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-        }
-
-        .card-header h6 {
-            font-size: 1.25rem;
-            font-weight: bold;
-        }
-
-        .table-responsive {
-            margin-top: 20px;
-            width: 100%;
-            overflow-x: auto;
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-
-        .table th, .table td {
-            padding: 10px;
-            text-align: left;
-            vertical-align: middle;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .table th {
-            background-color: #f8f9fa;
-            color: #333;
-            font-weight: bold;
-        }
-
-        .table td {
-            word-wrap: break-word;
-            word-break: break-word;
-            white-space: normal;
-            overflow: hidden;
-            max-width: 150px;
-        }
-
-        .table tbody tr:hover {
-            background-color: #f1f1f1;
-        }
-
-        .btn {
-            padding: 8px 12px;
-            font-size: 14px;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-
-        .btn-primary {
-            background-color: #007bff;
-            border: none;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-
-        .btn-danger {
-            background-color: #dc3545;
-            border: none;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background-color: #c82333;
-        }
-
-        img {
-            border-radius: 5px;
-            object-fit: cover;
-        }
-
-        @media (max-width: 768px) {
-            .table th, .table td {
-                font-size: 12px;
-                padding: 8px;
-            }
-
-            .table td {
-                white-space: normal;
-                word-wrap: break-word;
-                word-break: break-all;
-            }
-        }
-    </style>
 <style>
-    .responsive-flex {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-  
-    .responsive-flex a {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      text-decoration: none;
-      border-radius: 5px;
-      color: white;
-    }
-  
-    /* Optional: Button colors for external links */
-    .btn-default {
-      background-color: #6c757d;
-    }
-  
-    .btn-default:hover {
-      background-color: #5a6268;
-    }
-  </style>
+    .container-fluid { padding: 20px; }
 
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border: none;
+    }
+
+    .card-header {
+        background-color: #007bff;
+        color: white;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .card-header h6 {
+        font-size: 1.25rem;
+        font-weight: bold;
+    }
+
+    .table-responsive {
+        margin-top: 20px;
+        overflow-x: auto;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .table th, .table td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+        vertical-align: middle;
+        word-wrap: break-word;
+        max-width: 150px;
+    }
+
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f1f1f1;
+    }
+
+    .btn {
+        padding: 8px 12px;
+        font-size: 14px;
+        border-radius: 5px;
+        transition: 0.3s;
+        color: white;
+    }
+
+    .btn-primary { background-color: #007bff; }
+    .btn-primary:hover { background-color: #0056b3; }
+
+    .btn-danger { background-color: #dc3545; }
+    .btn-danger:hover { background-color: #c82333; }
+
+    .btn-info { background-color: #17a2b8; }
+    .btn-info:hover { background-color: #117a8b; }
+
+    .btn-success { background-color: #28a745; }
+    .btn-success:hover { background-color: #1e7e34; }
+
+    .btn-warning { background-color: #ffc107; color: black; }
+    .btn-warning:hover { background-color: #e0a800; }
+
+    .btn-default {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-default:hover {
+        background-color: #5a6268;
+    }
+
+    img {
+        border-radius: 5px;
+        object-fit: cover;
+    }
+
+    .responsive-flex {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 768px) {
+        .table th, .table td {
+            font-size: 12px;
+            padding: 8px;
+        }
+    }
+</style>
+
+<!-- MathJax for math rendering -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
@@ -149,108 +117,188 @@
     });
 </script>
 
-    
-    <!-- Begin Page Content -->
+<!-- Action Buttons -->
+<style>
+.responsive-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center; /* Center horizontally */
+  margin-bottom: 30px;
+}
 
-    <div class="responsive-flex">
-        <!-- Add Questions -->
-        <a class="nav-link btn btn-primary" href="{% url 'teacher:add_question' %}">
-          <i class="fas fa-fw fa-plus"></i>
-          <span>Add Questions</span>
-        </a>
-      
-        <!-- Generate Questions with AI -->
-        <a class="nav-link btn btn-info" href="{% url 'teacher:generate_csv' %}">
-          <i class="fas fa-fw fa-eye"></i>
-          <span>Generate Questions with AI</span>
-        </a>
-      
-        <!-- Export Questions -->
-        <a class="nav-link btn btn-success" href="{% url 'teacher:export_data' %}">
-          <i class="fas fa-fw fa-file-export"></i>
-          <span>Export Questions</span>
-        </a>
-      
-        <!-- Import Questions -->
-        <a class="nav-link btn btn-warning" href="{% url 'teacher:import_data' %}">
-          <i class="fas fa-fw fa-file-import"></i>
-          <span>Import Questions</span>
-        </a>
-      
-        <!-- Prompt Questions -->
-        <a class="nav-link btn btn-default" href="https://docs.google.com/document/d/14_kSz39_j2OpDADmF4rkVBprWvI_jIcw/edit?usp=sharing"
-           target="_blank" rel="noopener noreferrer">
-          <i class="fas fa-fw fa-file-alt"></i>
-          <span>Prompt</span>
-        </a>
-        <a class="nav-link btn btn-default" href=" https://docs.google.com/document/d/1q04EPpEtmRXUwdmf-c9RXSEL38StiWzhnvmzZYKjuug/edit?usp=sharing"
-           target="_blank" rel="noopener noreferrer">
-          <i class="fas fa-fw fa-file-alt"></i>
-          <span>Science Prompt</span>
-        </a>
-      
-        <!-- Question Sample -->
-        <a class="nav-link btn btn-default" href="https://docs.google.com/document/d/1aDY4sKhT7zkyOnNiLM2OoDFvsHSrvm0r/edit?usp=sharing"
-           target="_blank" rel="noopener noreferrer">
-          <i class="fas fa-fw fa-file-alt"></i>
-          <span>Question Sample</span>
-        </a>
-      </div>
-        <!-- DataTables Example -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 style="color:black; background-color: white;" class="m-0 font-weight-bold">Exam Questions</h6>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered" id="dataTable" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>Course</th>
-                                <th>Question</th>
-                                <th>Image</th>
-                                <th>Marks</th>
-                                <th>Option 1</th>
-                                <th>Option 2</th>
-                                <th>Option 3</th>
-                                <th>Option 4</th>
-                                <th>Answers</th>
-                                <th>Edit</th>
-                                <th>Delete</th>
-                            </tr>
-                        </thead>
-                        <tbody style="font-size: 12px;font-family: Arial, Helvetica, sans-serif;">
-                            {% for question in questions %}
-                            <tr>
-                                <td >{{ question.course.course_name }}</td>
-                                <td>{{ question.question|safe }}</td> <!-- Render MathML -->
-                                <td>
-                                    {% if question.img_quiz %}
-                                        <img src="{{ question.img_quiz.url }}" width="50" height="50" alt="Quiz Image">
-                                    {% else %}
-                                        <span>No Image</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ question.marks }}</td>
-                                  
-                                <td>{{ question.option1|safe }}</td>
-                                <td>{{ question.option2|safe }}</td> <!-- Render MathML -->
-                                <td>{{ question.option3|safe }}</td> <!-- Render MathML -->
-                                <td>{{ question.option4|safe }}</td> <!-- Render MathML -->
-                                <td>{{ question.answer }}</td>
-                                <td>
-                                    <a href="{% url 'teacher:edit_question' question.id %}" class="btn btn-primary">Edit</a>
-                                </td>
-                                <td>
-                                    <a href="{% url 'teacher:delete_question' question.id %}" class="btn btn-danger">Delete</a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+.responsive-flex .btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  padding: 12px 18px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgb(0 0 0 / 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-size: 1rem;
+  min-width: 180px;
+  justify-content: center;
+}
+
+.responsive-flex .btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgb(0 0 0 / 0.15);
+  text-decoration: none;
+  opacity: 0.95;
+}
+
+.responsive-flex .btn i {
+  font-size: 1.2rem;
+}
+
+.badge-info {
+  background-color: #17a2b8;
+  color: white;
+  padding: 8px 14px;
+  font-weight: 600;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  margin-right: 8px;
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+}
+
+.badge-info:hover {
+  background-color: #138496;
+  text-decoration: none;
+}
+
+.text-primary strong {
+  font-size: 1.25rem;
+  letter-spacing: 0.03em;
+}
+
+.alert-info {
+  font-size: 1rem;
+  padding: 15px 20px;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.07);
+  max-width: 600px;
+  margin: 0 auto; /* center alert */
+}
+
+.btn-outline-secondary {
+  border-radius: 12px;
+  padding: 6px 14px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #6c757d;
+  color: white;
+  text-decoration: none;
+}
+</style>
+<style>
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+</style>
+
+<div class="responsive-flex">
+    <a class="btn btn-primary" href="{% url 'teacher:add_question' %}">
+        <i class="fas fa-plus"></i> Add Questions
+    </a>
+    <a class="btn btn-info" href="{% url 'teacher:generate_csv' %}">
+        <i class="fas fa-robot"></i> Generate with AI
+    </a>
+    <a class="btn btn-success" href="{% url 'teacher:export_data' %}">
+        <i class="fas fa-file-export"></i> Export Questions
+    </a>
+    <a class="btn btn-warning" href="{% url 'teacher:import_data' %}">
+        <i class="fas fa-file-import"></i> Import Questions
+    </a>
+    <a class="btn btn-default" href="https://docs.google.com/document/d/14_kSz39_j2OpDADmF4rkVBprWvI_jIcw/edit?usp=sharing" target="_blank">
+        <i class="fas fa-file-alt"></i> Prompt
+    </a>
+    <a class="btn btn-default" href="https://docs.google.com/document/d/1aDY4sKhT7zkyOnNiLM2OoDFvsHSrvm0r/edit?usp=sharing" target="_blank">
+        <i class="fas fa-file-alt"></i> Question Sample
+    </a>
+</div>
+
+<!-- Subjects List -->
+<div class="mb-4 text-center">
+    <h5 class="text-primary"><strong>Subjects Taught:</strong></h5>
+    <p style="color: #555; font-size: 0.9rem;">Click on a subject below to see its questions</p>
+    <div style="font-size: 2rem; color: #007bff; animation: bounce 1.5s infinite;">&#8595;</div> 
+    <p class="text-muted">
+        {% for subject in teacher.subjects_taught.all %}
+            <a href="{% url 'teacher:subject_questions' subject.id %}" class="badge badge-info">{{ subject.course_name }}</a>
+        {% empty %}
+            <span class="text-danger">None</span>
+        {% endfor %}
+    </p>
+</div>
+
+{% if selected_subject %}
+    <div class="alert alert-info text-center">
+      <strong>Showing questions for:</strong> {{ selected_subject.course_name }} {{ selected_subject.term }} {{ selected_subject.session }} {{ selected_subject.exam_type }}
+      <a href="{% url 'teacher:view_questions' %}" class="btn btn-sm btn-outline-secondary ml-3">Show All</a>
+    </div>
+{% endif %}
+
+
+<!-- Question Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold" style="color:black;">Exam Questions</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Question</th>
+                        <th>Image</th>
+                        <th>Marks</th>
+                        <th>Option 1</th>
+                        <th>Option 2</th>
+                        <th>Option 3</th>
+                        <th>Option 4</th>
+                        <th>Answer</th>
+                        <th>Edit</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody style="font-size: 12px; font-family: Arial, Helvetica, sans-serif;">
+                    {% for question in questions %}
+                    <tr>
+                        <td>{{ question.course.course_name }}</td>
+                        <td>{{ question.question|safe }}</td>
+                        <td>
+                            {% if question.img_quiz %}
+                                <img src="{{ question.img_quiz.url }}" width="50" height="50" alt="Quiz Image">
+                            {% else %}
+                                <span>No Image</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ question.marks }}</td>
+                        <td>{{ question.option1|safe }}</td>
+                        <td>{{ question.option2|safe }}</td>
+                        <td>{{ question.option3|safe }}</td>
+                        <td>{{ question.option4|safe }}</td>
+                        <td>{{ question.answer }}</td>
+                        <td>
+                            <a href="{% url 'teacher:edit_question' question.id %}" class="btn btn-primary btn-sm">Edit</a>
+                        </td>
+                        <td>
+                            <a href="{% url 'teacher:delete_question' question.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this question?');">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
-    <!-- End of Main Content -->
+</div>
 {% endblock %}

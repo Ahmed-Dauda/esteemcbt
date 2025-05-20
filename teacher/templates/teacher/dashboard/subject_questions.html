@@ -1,0 +1,6 @@
+{% if selected_subject %}
+  <div class="alert alert-info">
+    Showing questions for: <strong>{{ selected_subject }}</strong>
+    <a href="{% url 'teacher:view_questions' %}" class="btn btn-sm btn-outline-secondary ml-2">Show All</a>
+  </div>
+{% endif %}

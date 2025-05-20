@@ -2438,7 +2438,7 @@ def import_results(request):
         form = UploadFileForm()
 
     return render(request, 'teacher/dashboard/import_results.html', {'form': form})
-                  
+                 
 
 
 def confirm_import(request):
@@ -2659,7 +2659,9 @@ def tex_to_mathml(tex_input):
         return tex_input
     
 
+
 # original codes
+
 @login_required(login_url='teacher:teacher_login')
 def import_data(request):
     if request.method == 'POST':
@@ -2765,75 +2767,75 @@ def extract_equations_from_paragraph(paragraph):
     return equations
 
 
-def import_word(request):
-    if request.method == 'POST':
-        allowed_formats = ['docx']
-        uploaded_file = request.FILES.get('myfile')
+# def import_word(request):
+#     if request.method == 'POST':
+#         allowed_formats = ['docx']
+#         uploaded_file = request.FILES.get('myfile')
 
-        if not uploaded_file:
-            messages.error(request, 'No file uploaded.')
-            return render(request, 'teacher/dashboard/importdocs.html')
+#         if not uploaded_file:
+#             messages.error(request, 'No file uploaded.')
+#             return render(request, 'teacher/dashboard/importdocs.html')
 
-        file_extension = uploaded_file.name.split('.')[-1]
-        if file_extension.lower() not in allowed_formats:
-            messages.error(request, 'File format not supported. Supported format: DOCX')
-            return render(request, 'teacher/dashboard/importdocs.html')
+#         file_extension = uploaded_file.name.split('.')[-1]
+#         if file_extension.lower() not in allowed_formats:
+#             messages.error(request, 'File format not supported. Supported format: DOCX')
+#             return render(request, 'teacher/dashboard/importdocs.html')
 
-        try:
-            document = Document(uploaded_file)
-            questions = []
+#         try:
+#             document = Document(uploaded_file)
+#             questions = []
 
-            for table_idx, table in enumerate(document.tables):
-                for row_idx, row in enumerate(table.rows):
-                    question_data = [cell.text.strip() for cell in row.cells]
+#             for table_idx, table in enumerate(document.tables):
+#                 for row_idx, row in enumerate(table.rows):
+#                     question_data = [cell.text.strip() for cell in row.cells]
 
-                    if len(question_data) >= 8:  # Ensure there are enough data fields
-                        equations = []
-                        for cell in row.cells:
-                            for paragraph in cell.paragraphs:
-                                equations.extend(extract_equations_from_paragraph(paragraph))
+#                     if len(question_data) >= 8:  # Ensure there are enough data fields
+#                         equations = []
+#                         for cell in row.cells:
+#                             for paragraph in cell.paragraphs:
+#                                 equations.extend(extract_equations_from_paragraph(paragraph))
 
-                        if equations:  # Check if any equations were found
-                            question = Question(
-                                course=question_data[0],
-                                marks=int(question_data[1]),
-                                question_text=question_data[2],
-                                option1=question_data[3],
-                                option2=question_data[4],
-                                option3=question_data[5],
-                                option4=question_data[6],
-                                answer=question_data[7],
-                                equations=', '.join(equations)  # Store equations
-                            )
-                            question.save()
-                            questions.append(question_data)
-                        else:
-                            logger.warning(f"No equations found for table {table_idx + 1}, row {row_idx + 1}.")
+#                         if equations:  # Check if any equations were found
+#                             question = Question(
+#                                 course=question_data[0],
+#                                 marks=int(question_data[1]),
+#                                 question_text=question_data[2],
+#                                 option1=question_data[3],
+#                                 option2=question_data[4],
+#                                 option3=question_data[5],
+#                                 option4=question_data[6],
+#                                 answer=question_data[7],
+#                                 equations=', '.join(equations)  # Store equations
+#                             )
+#                             question.save()
+#                             questions.append(question_data)
+#                         else:
+#                             logger.warning(f"No equations found for table {table_idx + 1}, row {row_idx + 1}.")
 
-                    else:
-                        messages.warning(request, f"Ignored invalid line in table {table_idx + 1}, row {row_idx + 1}: {', '.join(question_data)}")
+#                     else:
+#                         messages.warning(request, f"Ignored invalid line in table {table_idx + 1}, row {row_idx + 1}: {', '.join(question_data)}")
 
-            if questions:
-                response = HttpResponse(content_type='text/csv')
-                response['Content-Disposition'] = 'attachment; filename="imported_questions.csv"'
+#             if questions:
+#                 response = HttpResponse(content_type='text/csv')
+#                 response['Content-Disposition'] = 'attachment; filename="imported_questions.csv"'
 
-                writer = csv.writer(response)
-                writer.writerow(['course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer', 'equations'])
+#                 writer = csv.writer(response)
+#                 writer.writerow(['course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer', 'equations'])
 
-                for question in questions:
-                    writer.writerow(question)
+#                 for question in questions:
+#                     writer.writerow(question)
 
-                messages.success(request, "Data imported and saved successfully.")
-                return response
-            else:
-                messages.warning(request, "No valid data found in the document.")
+#                 messages.success(request, "Data imported and saved successfully.")
+#                 return response
+#             else:
+#                 messages.warning(request, "No valid data found in the document.")
 
-        except Exception as e:
-            messages.error(request, f"An error occurred while processing the file: {str(e)}")
-            logger.error(f"Error processing file: {str(e)}")
-            return render(request, 'teacher/dashboard/importdocs.html')
+#         except Exception as e:
+#             messages.error(request, f"An error occurred while processing the file: {str(e)}")
+#             logger.error(f"Error processing file: {str(e)}")
+#             return render(request, 'teacher/dashboard/importdocs.html')
 
-    return render(request, 'teacher/dashboard/importdocs.html')
+#     return render(request, 'teacher/dashboard/importdocs.html')
 
 
 
@@ -3045,21 +3047,37 @@ def view_questions(request):
         try:
             # teacher = Teacher.objects.get(user=request.user)
              teacher = Teacher.objects.select_related('user', 'school').get(user=request.user)
+            
         except Teacher.DoesNotExist:
             # Handle the case where the user is not a teacher
             return redirect('teacher:teacher_login')  # or any other appropriate action
     
-    # Filter questions based on the subjects taught by the teacher
-    # questions = Question.objects.filter(course__in=teacher.subjects_taught.all())
   
     questions = Question.objects.filter(course__in=teacher.subjects_taught.all()).select_related('course').order_by('id')
-
-    # print('q',questions)
+  
     context = {
-        'questions': questions
+        'questions': questions,
+        'teacher': teacher,  # Add teacher object
     }
 
     # Render the template with the questions
+    return render(request, 'teacher/dashboard/view_questions.html', context)
+
+
+@login_required(login_url='teacher:teacher_login')
+def subject_questions(request, subject_id):
+    teacher = get_object_or_404(Teacher.objects.select_related('user', 'school'), user=request.user)
+
+    # Ensure the teacher teaches the subject
+    course = get_object_or_404(teacher.subjects_taught, id=subject_id)
+
+    questions = Question.objects.filter(course=course).select_related('course').order_by('id')
+
+    context = {
+        'questions': questions,
+        'teacher': teacher,
+        'selected_subject': course,
+    }
     return render(request, 'teacher/dashboard/view_questions.html', context)
 
 @login_required
