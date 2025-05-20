@@ -88,7 +88,7 @@
     <div class="card-body container">
         <div class="table-responsive">
             <table class="table table-striped table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
-                <thead class="thead-dark">
+                <thead class="thead-blue">
                     <tr>
                         <th class="text-center">Class Name</th>
                         <th class="text-center">Students</th>
@@ -103,12 +103,12 @@
                             <td class="align-middle">{{ course_grade.name }}</td>
                             <td class="align-middle">
                                 {% for student in course_grade.students.all %}
-                              {{ student.first_name }} {{ student.last_name }}<br>
+                              {{ student.first_name }} {{ student.last_name }} - <b style="color: rgb(34, 34, 187);">{{ student.username }}</b> <br>
                                 {% endfor %}
                             </td>
                             <td class="align-middle">
                                 {% for subject in course_grade.subjects.all %}
-                                {{ subject}}<br>
+                                {{ subject.course_name }}  {{ subject.term }}  {{ subject.session }}  {{ subject.exam_type }}<br>
                                 {% endfor %}
                             </td>
                             <td class="align-middle text-center">

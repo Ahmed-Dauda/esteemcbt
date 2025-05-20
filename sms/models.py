@@ -118,7 +118,8 @@ class Courses(models.Model):
     class Meta:
         verbose_name = 'subject'
         verbose_name_plural = 'subjects'
-        
+        ordering = ['title']  # Order by creation date, newest first
+         
     def __str__(self):
         school_name = '\n'.join(str(school) for school in self.schools.all())
         return f'{self.title}'
