@@ -60,7 +60,7 @@ class Teacher(models.Model):
     subjects_taught = models.ManyToManyField(Course, related_name='teachers', blank=True)
     school = models.ForeignKey(School, on_delete=models.SET_NULL, related_name='teachers', blank=True, null=True)
     learning_objectives = models.CharField(max_length=2000, blank=True, default='Input your learning objectives')
-    ai_question_num = models.PositiveIntegerField(default=600,verbose_name="Number of AI Questions", blank=True, null=True)
+    ai_question_num = models.PositiveIntegerField(default=500,verbose_name="Number of AI Questions", blank=True, null=True)
     id = models.AutoField(primary_key=True)
 
     # Updated fields
@@ -72,10 +72,10 @@ class Teacher(models.Model):
     )  # Role of the form teacher
 
 
-    def clean(self):
-        super().clean()
-        if self.ai_question_num is not None and self.ai_question_num > 500:
-            raise ValidationError('ai_question_num cannot exceed 500.')
+    # def clean(self):
+    #     super().clean()
+    #     if self.ai_question_num is not None and self.ai_question_num > 500:
+    #         raise ValidationError('ai_question_num cannot exceed 500.')
         
     def __str__(self):
         return f"{self.school} - {self.first_name} {self.last_name}"
