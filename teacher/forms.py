@@ -58,8 +58,9 @@ class TeacherUpdateForm(forms.ModelForm):
         model = Teacher
         fields = ['ai_question_num', 'learning_objectives']
         widgets = {
-            'ai_question_num': forms.NumberInput(attrs={'min': 1, 'max': 20}),
-            'learning_objectives': forms.Textarea(attrs={'rows': 3}),
+            'ai_question_num': forms.NumberInput(attrs={'min': 1, 'max': 500}),
+            'learning_objectives': forms.Textarea(attrs={'rows': 6, 'cols': 50}),
+
         }
 
 
