@@ -288,12 +288,17 @@
                         <td>{{ question.option3|safe }}</td>
                         <td>{{ question.option4|safe }}</td>
                         <td>{{ question.answer }}</td>
-                        <td>
-                            <a href="{% url 'teacher:edit_question' question.id %}" class="btn btn-primary btn-sm">Edit</a>
-                        </td>
-                        <td>
-                            <a href="{% url 'teacher:delete_question' question.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this question?');">Delete</a>
-                        </td>
+                       <td>
+    <a href="{% url 'teacher:edit_question' question.id %}" class="btn btn-primary btn-sm" title="Edit">
+        <i class="fas fa-edit"></i>
+    </a>
+</td>
+<td>
+    <a href="{% url 'teacher:delete_question' question.id %}" class="btn btn-danger btn-sm" title="Delete" onclick="return confirm('Are you sure you want to delete this question?');">
+        <i class="fas fa-trash-alt"></i>
+    </a>
+</td>
+
                     </tr>
                     {% endfor %}
                 </tbody>
