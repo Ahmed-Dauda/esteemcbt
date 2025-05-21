@@ -59,7 +59,10 @@ class Teacher(models.Model):
     classes_taught = models.ManyToManyField(CourseGrade, related_name='teachers', blank=True)
     subjects_taught = models.ManyToManyField(Course, related_name='teachers', blank=True)
     school = models.ForeignKey(School, on_delete=models.SET_NULL, related_name='teachers', blank=True, null=True)
-    learning_objectives = models.CharField(max_length=2000, blank=True, default='Input your learning objectives')
+    learning_objectives = models.TextField(
+                blank=True,null=True,default='Input your learning objectives')
+
+    # learning_objectives = models.CharField(max_length=2000, blank=True, default='Input your learning objectives', null=True)
     ai_question_num = models.PositiveIntegerField(default=500,verbose_name="Number of AI Questions", blank=True, null=True)
     id = models.AutoField(primary_key=True)
 
