@@ -283,11 +283,11 @@
                             {% endif %}
                         </td>
                         <td>{{ question.marks }}</td>
-                        <td>{{ question.option1|safe }}</td>
-                        <td>{{ question.option2|safe }}</td>
-                        <td>{{ question.option3|safe }}</td>
-                        <td>{{ question.option4|safe }}</td>
-                        <td>{{ question.answer }}</td>
+                        <td><div>{{ question.option1|safe }}</div> </td>
+                        <td> <div>{{ question.option2|safe }}</div> </td>
+                        <td> <div>{{ question.option3|safe }}</div> </td>
+                        <td> <div>{{ question.option4|safe }}</div></td>
+                        <td><div>{{ question.answer }}</div></td>
                        <td>
     <a href="{% url 'teacher:edit_question' question.id %}" class="btn btn-primary btn-sm" title="Edit">
         <i class="fas fa-edit"></i>
@@ -306,4 +306,23 @@
         </div>
     </div>
 </div>
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=MML_HTMLorMML">
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["mml2jax.js"],
+    jax: ["input/MathML", "output/HTML-CSS"],
+    "HTML-CSS": {
+      availableFonts: ["TeX"]
+    },
+    mml2jax: {
+      preview: "mathml",
+      useMathMLspacing: true
+    }
+  });
+</script>
+
 {% endblock %}
