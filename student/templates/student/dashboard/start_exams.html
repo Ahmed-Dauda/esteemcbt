@@ -388,32 +388,6 @@ div.quiz p {
     });
     </script>
     
-<!-- <script> 
-
-$.fn.dataTable.ext.errMode = 'none';
-
-var table = $('#example').DataTable({
-    pageLength: 1,
-    order: [[3, 'desc']],
-    lengthChange: false, 
-    stateSave: true,
-    
-    sDom: 'lrtip',
-    "ordering": false,
-    "dom": 'rtp',
- 
-    // dom: '<"top"fi>rt<"bottom"lp><"clear">',
-    columnDefs: [
-        {
-            orderable: false,
-            targets: [1, 2, 3]
-        }
-    ]
- 
-});
-
-  </script> -->
-
 
 
 <!-- end of new js -->
@@ -554,6 +528,9 @@ function updateTimer(time, timerElement) {
         let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
 
         timerElement.innerHTML = `<b>Time Left: ${displayMinutes}:${displaySeconds}</b>`;
+if (window.timerInterval) {
+    clearInterval(window.timerInterval); // Prevent multiple intervals
+}
 
         // When the time runs out, stop the timer, clear localStorage, and submit
         if (remainingTime <= 0) {
@@ -565,52 +542,9 @@ function updateTimer(time, timerElement) {
 
         remainingTime--;
         localStorage.setItem('remainingTime', remainingTime); // Update stored remaining time
-    }, 1500);
+    }, 1000);
 }
 
-    // // Function to update the time
-    
-    // function updateTimer(time, timerElement) {
-    //     let storedTime = localStorage.getItem('remainingTime');
-    //     let remainingTime;
-
-    //     if (storedTime !== null) {
-    //         remainingTime = parseInt(storedTime);
-    //     } else {
-    //         remainingTime = time * 60; // Convert minutes to seconds
-    //         localStorage.setItem('remainingTime', remainingTime);
-    //     }
-
-    //     const timer = setInterval(() => {
-    //         let minutes = Math.floor(remainingTime / 60);
-    //         let seconds = remainingTime % 60;
-
-    //         let displayMinutes = minutes < 10 ? '0' + minutes : minutes;
-    //         let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
-
-    //         timerElement.innerHTML = `<b>Time Left: ${displayMinutes}:${displaySeconds}</b>`;
-
-    //         if (remainingTime <= 0) {
-    //             clearInterval(timer);
-    //             localStorage.clear()
-    //             localStorage.removeItem('remainingTime');
-    //             // submitQuiz(); // Call the function to submit the quiz when time is over
-    //             return;
-    //         }
-    //         if (minutes <= 0 && seconds <= 0) {
-    //             clearInterval(timer);
-    //             localStorage.clear()
-    //             localStorage.removeItem('remainingTime');
-    //             submitQuiz(); // Call the function to submit the quiz when time is over
-    //         }
-
-    //         remainingTime--;
-    //         localStorage.setItem('remainingTime', remainingTime); // Update stored remaining time
-    //     }, 1000);
-
-    //     // Store the timer interval ID
-    //     window.timerInterval = timer; // Assigning to a global variable
-    // }
 
     // Call the updateTimer function
     updateTimer({{ course.duration_minutes }}, timerElement); // Pass timerElement
@@ -675,6 +609,9 @@ function submitQuiz() {
         remainingTime = time * 60; // Convert minutes to seconds
         localStorage.setItem('remainingTime', remainingTime);
     }
+if (window.timerInterval) {
+    clearInterval(window.timerInterval); // Prevent multiple intervals
+}
 
     const timer = setInterval(() => {
         let minutes = Math.floor(remainingTime / 60);
@@ -814,8 +751,7 @@ allRadioButtons.forEach(function(radioButton) {
     }
 });
 
-   
-
+ 
 // });
           // test
 
@@ -875,10 +811,7 @@ window.onblur = function () {
 document.getElementById("submit").addEventListener("click", function() {
   // Clear the inactive count from localStorage
 
-//   window.location.href = "{% url 'student:view_result' %}";
-  // Perform the submit action, if any other logic is required
-//   submitQuiz();
-    // submitQuiz();
+
     localStorage.removeItem("inactiveCount");
     // localStorage.clear();
 });
