@@ -3703,32 +3703,6 @@ def take_exams_view(request):
 #     return render(request, 'student/dashboard/take_exams.html', context=context)
 
 
-
-
-
-
-# @login_required
-# def start_exams_view(request, pk):
-    
-#     course = QMODEL.Course.objects.get(id = pk)
-#     questions = QMODEL.Question.objects.get_queryset().filter(course = course).order_by('id')
-#     q_count = QMODEL.Question.objects.all().filter(course = course).count()
-#     paginator = Paginator(questions, 100) # Show 25 contacts per page.
-#     page_number = request.GET.get('page')
-#     page_obj = paginator.get_page(page_number)
-
-#     context = {
-#         'course':course,
-#         'questions':questions,
-#         'q_count':q_count,
-#         'page_obj':page_obj
-#     }
-#     if request.method == 'POST':
-#         pass
-#     response = render(request, 'student/dashboard/start_exams.html', context=context)
-#     response.set_cookie('course_id', course.id)
-#     return response
-
 from datetime import datetime, timedelta
 
 from django.http import HttpResponse
@@ -3756,7 +3730,7 @@ def start_exams_view(request, pk):
         ),
         id=pk
     )
-    print(course.schools, 'course.exam_type')
+    # print(course.schools, 'course.exam_type')
     # num_attemps = course.num_attemps
     # questions = QMODEL.Question.objects.filter(course=course).order_by('id')
     questions = QMODEL.Question.objects.select_related('course').only(
@@ -3778,8 +3752,7 @@ def start_exams_view(request, pk):
     
     #     # Get the number of questions to display for the course
     show_questions = course.show_questions
-    # Retrieve all questions for the course
-    # all_questions = QMODEL.Question.objects.filter(course=course)
+   
     # Count the total number of questions
     total_questions = questions.count()
   
@@ -3797,8 +3770,7 @@ def start_exams_view(request, pk):
     context = {
         'course': course,
         'questions': questions,
-        # 'num_attemps':num_attemps,
-        # 'result_exists':result_exists,
+
         'q_count': q_count,
         'page_obj': questions,
         # 'remaining_seconds': remaining_seconds,  # Pass remaining time to template
