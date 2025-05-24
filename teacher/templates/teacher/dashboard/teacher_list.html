@@ -15,12 +15,21 @@
 </style>
 
 
+<div style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
+  <a class="nav-link" href="{% url 'teacher:teacher_signup' %}" style="text-decoration: none;">
+    <button type="button" class="btn btn-primary px-4">
+      Add Teachers
+    </button>
+  </a>
 
+  <a class="nav-link" href="{% url 'quiz:examiner_course_list' %}" style="text-decoration: none;">
+    <button type="button" class="btn btn-success px-4">
+      View Questions
+    </button>
+  </a>
+</div>
+<br>
 <div class="container mt-4">
-
-        <a class="nav-link" href="{% url 'teacher:teacher_signup' %}">
-           <button class="btn btn-primary"><span>Add Teachers </span></button> 
-        </a>
 
     <h2 class="mb-4">List of Teachers for {{ request.user.school }}</h2>
 

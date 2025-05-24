@@ -1,0 +1,67 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %}Questions for {{ course }}{% endblock %}
+
+
+{% block content %}
+<div class="content p-3">
+ 
+<h5>Questions for Your School - {{ course }}</h5>
+
+<table id="questionsTable" class="table table-bordered display">
+  <thead>
+    <tr>
+      <th>Course</th>
+      <th>Question</th>
+      <th>Image</th>
+      <th>Option 1</th>
+      <th>Option 2</th>
+      <th>Option 3</th>
+      <th>Option 4</th>
+      <th>Answer</th>
+      <th>Marks</th>
+      <th>Edit</th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for question in questions %}
+    <tr>
+      <td>{{ question.course.course_name }}</td>
+      <td>{{ question.question|safe|truncatechars:100 }}</td>
+      <td>
+        {% if question.img_quiz %}
+          <img src="{{ question.img_quiz.url }}" alt="Question Image" style="max-height: 60px;">
+        {% else %}
+          No Image
+        {% endif %}
+      </td>
+      <td>{{ question.option1|safe }}</td>
+      <td>{{ question.option2|safe }}</td>
+      <td>{{ question.option3|safe }}</td>
+      <td>{{ question.option4|safe }}</td>
+      <td>{{ question.answer }}</td>
+      <td>{{ question.marks }}</td>
+      <td><a href="{% url 'quiz:examiner_question_edit' question.pk %}" class="btn btn-sm btn-primary">Edit</a></td>
+      <td><a href="{% url 'quiz:examiner_question_delete' question.pk %}" class="btn btn-sm btn-danger">Delete</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="11">No questions found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<a href="{% url 'quiz:examiner_course_list' %}" class="btn btn-secondary mt-3">Back to Courses</a>
+
+</div>
+
+<script>
+  $(document).ready(function() {
+    $('#questionsTable').DataTable();
+  });
+</script>
+
+{% endblock %}
+
+
+

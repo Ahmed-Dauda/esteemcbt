@@ -3032,8 +3032,28 @@ def download_csv(request):
         return response
     
 
+def teacher_subjects_view(request):
+    teacher = get_object_or_404(Teacher, user=request.user)
+    subjects = teacher.subjects_taught.all()  # M2M to Course
+    
+    context = {
+        'subjects': subjects,
+    }
+    return render(request, 'teacher/dashboard/subjects_list.html', context)
 
 
+def subject_questions_view(request, subject_id):
+    subject = get_object_or_404(Course, id=subject_id)
+    # Assuming your Question model has a ForeignKey to Course named 'course'
+    questions = subject.question_set.all()  # or Question.objects.filter(course=subject)
+    
+    context = {
+        'subject': subject,
+        'questions': questions,
+    }
+    return render(request, 'teacher/dashboard/subject_questions.html', context)
+
+  
 # @cache_page(60 * 15)
 def view_questions(request):
     # Check if user is authenticated
@@ -3064,21 +3084,68 @@ def view_questions(request):
     return render(request, 'teacher/dashboard/view_questions.html', context)
 
 
-@login_required(login_url='teacher:teacher_login')
-def subject_questions(request, subject_id):
-    teacher = get_object_or_404(Teacher.objects.select_related('user', 'school'), user=request.user)
+# views.py
+# @login_required(login_url='teacher:teacher_login')
+# def view_questions(request):
+#     teacher = get_object_or_404(Teacher, user=request.user)
+#     questions = Question.objects.filter(course__in=teacher.subjects_taught.all()).order_by('id')
+#     context = {
+#         'questions': questions,
+#         'teacher': teacher,
+#         'selected_subject': None,
+#     }
+#     return render(request, 'teacher/dashboard/view_questions.html', context)
 
-    # Ensure the teacher teaches the subject
-    course = get_object_or_404(teacher.subjects_taught, id=subject_id)
 
-    questions = Question.objects.filter(course=course).select_related('course').order_by('id')
+# @login_required(login_url='teacher:teacher_login')
+# def subject_questions(request, subject_id):
+#     teacher = get_object_or_404(Teacher.objects.select_related('user', 'school'), user=request.user)
+#     course = get_object_or_404(teacher.subjects_taught, id=subject_id)
+#     questions = Question.objects.filter(course=course).select_related('course').order_by('id')
+#     context = {
+#         'questions': questions,
+#         'teacher': teacher,
+#         'selected_subject': course,
+#     }
+#     return render(request, 'teacher/dashboard/view_questions.html', context)
 
-    context = {
-        'questions': questions,
-        'teacher': teacher,
-        'selected_subject': course,
-    }
-    return render(request, 'teacher/dashboard/view_questions.html', context)
+
+# @login_required(login_url='teacher:teacher_login')
+# def subject_questions(request, subject_id):
+#     # Get the currently logged-in teacher
+#     teacher = get_object_or_404(Teacher.objects.select_related('user', 'school'), user=request.user)
+
+#     # Ensure the teacher teaches the selected subject
+#     course = get_object_or_404(teacher.subjects_taught, id=subject_id)
+
+#     # Get all questions for that course
+#     questions = Question.objects.filter(course=course).select_related('course').order_by('id')
+
+#     context = {
+#         'questions': questions,
+#         'teacher': teacher,
+#         'selected_subject': course,
+#     }
+
+#     return render(request, 'teacher/dashboard/view_questions.html', context)
+
+
+# @login_required(login_url='teacher:teacher_login')
+# def subject_questions(request, subject_id):
+#     teacher = get_object_or_404(Teacher.objects.select_related('user', 'school'), user=request.user)
+
+#     # Ensure the teacher teaches the subject
+#     course = get_object_or_404(teacher.subjects_taught, id=subject_id)
+
+#     questions = Question.objects.filter(course=course).select_related('course').order_by('id')
+
+#     context = {
+#         'questions': questions,
+#         'teacher': teacher,
+#         'selected_subject': course,
+#     }
+#     return render(request, 'teacher/dashboard/view_questions.html', context)
+
 
 @login_required
 def edit_question(request, question_id):

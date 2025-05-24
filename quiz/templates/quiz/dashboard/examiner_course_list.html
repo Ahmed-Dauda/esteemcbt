@@ -1,0 +1,52 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %}Courses - Examiner View{% endblock %}
+
+{% block extra_css %}
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+{% endblock %}
+
+{% block content %}
+  <div class="container my-4">
+    <h2 class="mb-4">Courses for Your School</h2>
+    {% if courses %}
+      <table id="coursesTable" class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Course Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for course in courses %}
+            <tr>
+              <td>
+                <a href="{% url 'quiz:examiner_course_questions' course.pk %}" class="text-decoration-none">
+                  {{ course }}
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="alert alert-warning" role="alert">
+        No courses found.
+      </div>
+    {% endif %}
+  </div>
+
+  
+  <script>
+    $(document).ready(function() {
+      $('#coursesTable').DataTable({
+        "paging": true,
+        "searching": true,
+        "info": false,
+        "lengthChange": false
+      });
+    });
+  </script>
+
+{% endblock %}
+

@@ -15,6 +15,67 @@ from django.db.models import Max, Subquery, OuterRef
 from quiz.models import  Course
 from django.http import HttpResponseRedirect
 from django.views.decorators.cache import cache_page
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Question
+from teacher.forms import QuestionForm
+
+def examiner_course_list(request):
+    school = request.user.school
+    courses = Course.objects.filter(schools=school)
+    return render(request, 'quiz/dashboard/examiner_course_list.html', {'courses': courses})
+
+def examiner_course_questions(request, course_id):
+    school = request.user.school
+    course = get_object_or_404(Course, pk=course_id, schools=school)
+    questions = Question.objects.filter(course=course)
+    return render(request, 'quiz/dashboard/examiner_course_questions.html', {'course': course, 'questions': questions})
+
+# def examiner_question_list(request):
+#     school = request.user.school
+#     questions = Question.objects.filter(course__schools=school)  # Adjust `schools` if your Course model uses a different FK
+#     context = {'questions': questions}
+#     return render(request, 'quiz/dashboard/examiner_question_list.html', context)
+
+
+def examiner_question_edit(request, pk):
+    question = get_object_or_404(Question, pk=pk, course__schools=request.user.school)
+    if request.method == "POST":
+        form = QuestionForm(request.POST, request.FILES, instance=question)
+        if form.is_valid():
+            form.save()
+            # Redirect to the course-specific question list after editing
+            return redirect('quiz:examiner_course_questions', course_id=question.course.pk)
+    else:
+        form = QuestionForm(instance=question)
+    return render(request, 'quiz/dashboard/examiner_question_edit.html', {'form': form})
+
+def examiner_question_delete(request, pk):
+    question = get_object_or_404(Question, pk=pk, course__schools=request.user.school)
+    course_id = question.course.pk
+    if request.method == "POST":
+        question.delete()
+        return redirect('quiz:examiner_course_questions', course_id=course_id)
+    return render(request, 'quiz/dashboard/examiner_question_confirm_delete.html', {'question': question})
+
+
+# def examiner_question_edit(request, pk):
+#     question = get_object_or_404(Question, pk=pk, course__schools=request.user.school)
+#     if request.method == "POST":
+#         form = QuestionForm(request.POST, request.FILES, instance=question)
+#         if form.is_valid():
+#             form.save()
+#             return redirect('quiz:examiner_question_list')
+#     else:
+#         form = QuestionForm(instance=question)
+#     return render(request, 'quiz/dashboard/examiner_question_edit.html', {'form': form})
+
+
+# def examiner_question_delete(request, pk):
+#     question = get_object_or_404(Question, pk=pk, course__schools=request.user.school)
+#     if request.method == "POST":
+#         question.delete()
+#         return redirect('quiz:examiner_question_list')
+#     return render(request, 'quiz/dashboard/examiner_question_confirm_delete.html', {'question': question})
 
 
    

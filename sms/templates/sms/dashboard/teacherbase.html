@@ -227,6 +227,20 @@
                     <span>HOME</span>
                 </a>
             </li>
+                        <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:teacher_subjects' %}">
+                    <i class="fas fa-fw fa-eye"></i> <!-- Icon for view questions -->
+                    <span>Manage Questions</span>
+                </a>
+            </li>
+
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:teacher_results' %}">
+                    <i class="fas fa-fw fa-poll"></i> <!-- Icon for teacher results -->
+                    <span>Manage Results</span>
+                </a>
+            </li>
+
 
             {% if request.user.is_authenticated %}
             {% if teacher_school|lower == user_school|lower %}
@@ -263,19 +277,6 @@
                     <span>Conduct List</span>
                 </a>
             </li> -->
-            <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'teacher:view_questions' %}">
-                    <i class="fas fa-fw fa-eye"></i> <!-- Icon for view questions -->
-                    <span>Manage Questions</span>
-                </a>
-            </li>
-
-            <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'teacher:teacher_results' %}">
-                    <i class="fas fa-fw fa-poll"></i> <!-- Icon for teacher results -->
-                    <span>Manage Results</span>
-                </a>
-            </li>
 
         
             {% endif %}

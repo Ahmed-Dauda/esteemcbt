@@ -1,0 +1,49 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block content %}
+
+<!-- Action Buttons -->
+<div class="d-flex flex-wrap justify-content-center gap-3 mb-4">
+  <a class="btn btn-primary btn-lg d-flex align-items-center gap-2" href="{% url 'teacher:add_question' %}">
+    <i class="fas fa-plus"></i> Add Questions
+  </a>
+  <a class="btn btn-info btn-lg d-flex align-items-center gap-2" href="{% url 'teacher:generate_csv' %}">
+    <i class="fas fa-robot"></i> Generate with AI
+  </a>
+  <a class="btn btn-success btn-lg d-flex align-items-center gap-2" href="{% url 'teacher:export_data' %}">
+    <i class="fas fa-file-export"></i> Export Questions
+  </a>
+  <a class="btn btn-warning btn-lg d-flex align-items-center gap-2" href="{% url 'teacher:import_data' %}">
+    <i class="fas fa-file-import"></i> Import Questions
+  </a>
+  <a class="btn btn-outline-secondary btn-lg d-flex align-items-center gap-2" href="https://docs.google.com/document/d/1aDY4sKhT7zkyOnNiLM2OoDFvsHSrvm0r/edit?usp=sharing" target="_blank" rel="noopener">
+    <i class="fas fa-file-alt"></i> Question Sample
+  </a>
+</div>
+
+<!-- Subjects List -->
+<div class="text-center mb-5">
+  <h4 class="text-primary fw-bold mb-2">Subjects Taught</h4>
+  <p class="text-secondary mb-3">Click on a subject below to view its questions</p>
+  <div class="display-4 text-primary animate-bounce">&#8595;</div>
+
+  <div class="d-inline-flex flex-wrap justify-content-center gap-2 mt-3">
+    {% for subject in subjects %}
+      <a href="{% url 'teacher:subject_questions' subject.id %}" class="badge rounded-pill bg-info text-white px-3 py-2 shadow-sm hover-scale">
+        {{ subject.course_name }} <span class="badge bg-light text-dark ms-2">{{ subject.question_number }}</span>
+      </a>
+    {% empty %}
+      <span class="text-danger fs-5">No subjects assigned.</span>
+    {% endfor %}
+  </div>
+</div>
+
+{% if selected_subject %}
+  <div class="alert alert-info text-center mb-4">
+    <strong>Showing questions for:</strong> 
+    {{ selected_subject.course_name }} &mdash; {{ selected_subject.term }} | {{ selected_subject.session }} | {{ selected_subject.exam_type }}
+    <a href="{% url 'teacher:view_questions' %}" class="btn btn-sm btn-outline-secondary ms-3">Show All</a>
+  </div>
+{% endif %}
+
+{% endblock content %}

@@ -75,10 +75,5 @@ class Teacher(models.Model):
     )  # Role of the form teacher
 
 
-    # def clean(self):
-    #     super().clean()
-    #     if self.ai_question_num is not None and self.ai_question_num > 500:
-    #         raise ValidationError('ai_question_num cannot exceed 500.')
-        
     def __str__(self):
         return f"{self.school} - {self.first_name} {self.last_name}"
