@@ -211,6 +211,9 @@ div.quiz p {
                     <!-- Inactivity Warning and Timer -->
                     <div class="col-12 col-md-4" style="padding: 10px;">
                         <h6 style="color: #dc3545; font-weight: bold; font-size: 16px;" id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</h6>
+                        <h5 id="attempts" style="color:red; font-size:24px;">Allow attempts: 0</h5>
+
+
                         <div id="timer" style="font-size: 24px; font-weight: bold; color: #333; text-align: center; margin: 10px 0;">00:00</div>
                         <div class="progress mt-3" style="height: 20px; border-radius: 10px;">
                             <div class="progress-bar bg-success" role="progressbar" style="width: 0%; border-radius: 10px;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0% Complete</div>
@@ -312,9 +315,6 @@ div.quiz p {
     
 </form> 
 
-
-
-
 <!-- Button with inline CSS -->
 
 <div class="container buttonheight" style="display: flex; justify-content: center; align-items: center; padding: 20px;">
@@ -333,230 +333,63 @@ div.quiz p {
 
 
 <br><br>
-<!-- changing colors for pagination -->
 
-<!-- new js -->
-
+<!-- working codes -->
 <script>
-    $.fn.dataTable.ext.errMode = 'none';
-    
-    function isMobileView() {
-        return window.innerWidth <= 768; // Adjust this value as needed for mobile devices
-    }
-    
-    var table = $('#example').DataTable({
-        pageLength: 1,
-        order: [[3, 'desc']],
-        lengthChange: false, 
-        stateSave: true,
-        sDom: 'lrtip',
-        "ordering": false,
-        "dom": 'rtp',
-        
-        // Set pagingType dynamically based on screen size
-        "pagingType": isMobileView() ? "simple" : "full_numbers",  // "simple" for mobile, "full_numbers" for desktop
-    
-        columnDefs: [
-            {
-                orderable: false,
-                targets: [1, 2, 3]
-            }
-        ]
-    });
-    
-    // Adjust pagination type when the window is resized
-    $(window).resize(function() {
-        var table = $('#example').DataTable();
-        table.destroy();  // Destroy existing DataTable instance
-        $('#example').DataTable({
-            pageLength: 1,
-            order: [[3, 'desc']],
-            lengthChange: false, 
-            stateSave: true,
-            sDom: 'lrtip',
-            "ordering": false,
-            "dom": 'rtp',
-            "pagingType": isMobileView() ? "simple" : "full_numbers",  // Reapply based on new window size
-    
-            columnDefs: [
-                {
-                    orderable: false,
-                    targets: [1, 2, 3]
-                }
-            ]
-        });
-    });
-    </script>
-    
-
-
-<!-- end of new js -->
-    <!-- end of quiz timer --> 
-
-<script>
-// $(document).ready(function() {
-//     var timerInterval; // Variable to store the timer interval ID
-//     var timerElement = document.getElementById('timer'); // Define timerElement here
-
-//     // Pass course id safely from Django template to JS variable
-//     var currentCourseId = '{{ course.id }}';
-
-//     // Check stored course id in localStorage
-//     var storedCourseId = localStorage.getItem('courseId');
-
-//     // If course changed, clear remainingTime so timer resets
-//     if (storedCourseId !== currentCourseId) {
-//         localStorage.removeItem('remainingTime');
-//         localStorage.setItem('courseId', currentCourseId);
-//     }
-
-//     // Function to update the timer
-//     function updateTimer(time) {
-//         let storedTime = localStorage.getItem('remainingTime');
-//         let remainingTime;
-
-//         if (storedTime !== null) {
-//             remainingTime = parseInt(storedTime);
-//         } else {
-//             remainingTime = time * 60; // Convert minutes to seconds
-//             localStorage.setItem('remainingTime', remainingTime);
-//         }
-
-//         const timer = setInterval(() => {
-//             let minutes = Math.floor(remainingTime / 60);
-//             let seconds = remainingTime % 60;
-
-//             let displayMinutes = minutes < 10 ? '0' + minutes : minutes;
-//             let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
-
-//             timerElement.innerHTML = `<span>Time Left: ${displayMinutes}:${displaySeconds}</span>`;
-
-//             if (remainingTime <= 0) {
-//                 clearInterval(timer);
-//                 localStorage.removeItem('remainingTime');
-//                 localStorage.removeItem('courseId');
-//                 submitQuiz(); // Call the function to submit the quiz when time is over
-//                 return;
-//             }
-
-//             remainingTime--;
-//             localStorage.setItem('remainingTime', remainingTime); // Update stored remaining time
-//         }, 1000);
-
-//         // Store the timer interval ID
-//         timerInterval = timer;
-//     }
-
-//     // Call the updateTimer function with course duration_minutes
-//     updateTimer({{ course.duration_minutes }});
-
-//     // Event handler for manual submit button click
-//     $('#submit').on('click', function (e) {
-//         var confirmation = confirm("Are you sure you want to submit the quiz?");
-//         if (confirmation) {
-//             e.preventDefault();
-
-//             // Clear timer interval and local storage keys related to the quiz
-//             clearInterval(timerInterval);
-//             localStorage.removeItem('remainingTime');
-//             localStorage.removeItem('courseId');
-//             localStorage.removeItem("inactiveCount");
-//             // Avoid clearing all localStorage here (don't use localStorage.clear())
-
-//             // Proceed with the quiz submission (your existing ajax)
-//             var formData = table.$('input, select').serialize();
-//             var dataArray = formData.split('&');
-//             var quizData = {};
-//             for (var i = 0; i < dataArray.length; i++) {
-//                 var keyValue = dataArray[i].split('=');
-//                 var questionIndex = parseInt(keyValue[0]);
-//                 var answer = keyValue[1];
-//                 quizData[questionIndex] = answer;
-//             }
-//             var jsonData = JSON.stringify(quizData);
-
-//             $.ajax({
-//                 type: "POST",
-//                 url: "/student/calculate_marks",
-//                 data: jsonData,
-//                 success: function(response) {
-//                     alert("Quiz submitted successfully!");
-//                     localStorage.removeItem("inactiveCount");
-
-//                     // Reload the page after a short delay
-//                     setTimeout(function() {
-//                         window.location.reload();
-//                     }, 1000);
-//                 },
-//                 error: function(xhr, status, error) {
-//                     console.error("Error:", error);
-//                 }
-//             });
-//         }
-//     });
-// });
-
-// real codes
-
 $(document).ready(function() {
-    var timerInterval; // Variable to store the timer interval ID
-    var timerElement = document.getElementById('timer'); // Define timerElement here
+    var timerElement = document.getElementById('timer');
 
-    // Function to update the timer
-    function updateTimer(time) {
-        let storedTime = localStorage.getItem('remainingTime');
-        let remainingTime;
+    // Shared timer function
+function updateTimer(time, timerElement) {
+    let courseKey = 'remainingTime_{{ course.id }}'; // Unique key per subject
+    let storedTime = localStorage.getItem(courseKey);
+    let remainingTime;
 
-        if (storedTime !== null) {
-            remainingTime = parseInt(storedTime);
-        } else {
-            remainingTime = time * 60; // Convert minutes to seconds
-            localStorage.setItem('remainingTime', remainingTime);
+    if (storedTime !== null) {
+        remainingTime = parseInt(storedTime);
+    } else {
+        remainingTime = time * 60; // Convert minutes to seconds
+        localStorage.setItem(courseKey, remainingTime);
+    }
+
+    // Clear any existing timer
+    if (window.timerInterval) {
+        clearInterval(window.timerInterval);
+    }
+
+    window.timerInterval = setInterval(() => {
+        let minutes = Math.floor(remainingTime / 60);
+        let seconds = remainingTime % 60;
+
+        let displayMinutes = minutes < 10 ? '0' + minutes : minutes;
+        let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
+
+        timerElement.innerHTML = `<span>Time Left: ${displayMinutes}:${displaySeconds}</span>`;
+
+        if (remainingTime <= 0) {
+            clearInterval(window.timerInterval);
+            localStorage.removeItem(courseKey); // Only remove current subject's key
+            submitQuiz(); // Submit on timeout
+            return;
         }
 
-        const timer = setInterval(() => {
-            let minutes = Math.floor(remainingTime / 60);
-            let seconds = remainingTime % 60;
+        remainingTime--;
+        localStorage.setItem(courseKey, remainingTime);
+    }, 1000);
+}
 
-            let displayMinutes = minutes < 10 ? '0' + minutes : minutes;
-            let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
+    // Call updateTimer once on page load
+    updateTimer({{ course.duration_minutes }}, timerElement);
 
-            timerElement.innerHTML = `<span>Time Left: ${displayMinutes}:${displaySeconds}</span>`;
-
-            if (remainingTime <= 0) {
-                clearInterval(timer);
-                localStorage.removeItem('remainingTime');
-               localStorage.clear()
-                submitQuiz(); // Call the function to submit the quiz when time is over
-                return;
-            }
-
-            remainingTime--;
-            localStorage.setItem('remainingTime', remainingTime); // Update stored remaining time
-        }, 1000);
-
-        // Store the timer interval ID
-        timerInterval = timer;
-    }
-
-    // Call the updateTimer function
-    updateTimer({{ course.duration_minutes }});
-
-    // Event handler for manual submit button click
+    // Event handler for manual submit button
     $('#submit').on('click', function (e) {
         var confirmation = confirm("Are you sure you want to submit the quiz?");
         if (confirmation) {
             e.preventDefault();
-            
-            // Clear timer interval and local storage
-            clearInterval(timerInterval);
-            localStorage.removeItem('remainingTime');
-            localStorage.removeItem("inactiveCount");
-            localStorage.clear()
-            
-            // Restart the timer
-            updateTimer({{ course.duration_minutes }});
-            
+
+            clearInterval(window.timerInterval);
+            localStorage.clear();
+
             // Proceed with the quiz submission
             var formData = table.$('input, select').serialize();
             var dataArray = formData.split('&');
@@ -574,19 +407,13 @@ $(document).ready(function() {
                 url: "/student/calculate_marks",
                 data: jsonData,
                 success: function(response) {
-                alert("Quiz submitted successfully!");
-                localStorage.removeItem("inactiveCount");
-                localStorage.clear()
+                    alert("Quiz submitted successfully!");
+                    localStorage.clear();
 
-                // First reload
-                // window.location.reload();
-                    // Second reload after a delay
                     setTimeout(function() {
                         window.location.reload();
-                    }, 1000); // Delay of 1000 milliseconds (1 second)
+                    }, 1000);
                 },
-
-            
                 error: function(xhr, status, error) {
                     console.error("Error:", error);
                 }
@@ -595,70 +422,147 @@ $(document).ready(function() {
     });
 });
 
-
-
+// OPTIONAL: If this was meant for end time management, handle it separately
 document.addEventListener('DOMContentLoaded', function() {
-    var endTime = new Date("{{ quiz_end_time|date:"Y-m-d\TH:i:s" }}").getTime();
-    var timerElement = document.getElementById('timer');
-    var quizForm = document.getElementById('quizf');
+    var endTime = new Date("{{ quiz_end_time|date:"Y-m-d\\TH:i:s" }}").getTime();
+    // This block could handle countdown until `endTime`, if needed.
+});
+</script>
 
-    // Function to update the time
-    
-function updateTimer(time, timerElement) {
-    let storedTime = localStorage.getItem('remainingTime');
-    let remainingTime;
+<script>
+// quiz submit due to time expiration
+function submitQuiz() {
+    // Clear local storage
+    localStorage.clear();
+    // localStorage.removeItem("inactiveCount");
+    // localStorage.removeItem('remainingTime');
 
-    // If there's a stored time, use it; otherwise, initialize remainingTime
-    if (storedTime !== null) {
-        remainingTime = parseInt(storedTime);
-    } else {
-        remainingTime = time * 60; // Convert minutes to seconds
-        localStorage.setItem('remainingTime', remainingTime);
+    // Gather form data
+    var formData = table.$('input, select').serialize(); // Serialize the form data within the table
+    var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
+    var pageInfo = table.page.info();
+    // Extract the total number of pages
+    var totalPages = pageInfo.pages;
+
+    // Process each key-value pair
+    var quizData = {};
+    for (var i = 0; i < dataArray.length; i++) {
+        var keyValue = dataArray[i].split('=');
+        var questionIndex = parseInt(keyValue[0]);
+        var answer = keyValue[1];
+        quizData[questionIndex] = answer;
     }
 
-    // Clear any existing timer to avoid duplicates
-    if (window.timerInterval) {
-        clearInterval(window.timerInterval);
-    }
-
-    // Start the timer
-    window.timerInterval = setInterval(() => {
-        let minutes = Math.floor(remainingTime / 60);
-        let seconds = remainingTime % 60;
-
-        let displayMinutes = minutes < 10 ? '0' + minutes : minutes;
-        let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
-
-        timerElement.innerHTML = `<b>Time Left: ${displayMinutes}:${displaySeconds}</b>`;
-if (window.timerInterval) {
-    clearInterval(window.timerInterval); // Prevent multiple intervals
-}
-
-        // When the time runs out, stop the timer, clear localStorage, and submit
-        if (remainingTime <= 0) {
-            clearInterval(window.timerInterval);
-            localStorage.removeItem('remainingTime');
-            submitQuiz(); // Call the function to submit the quiz when time is over
-            return;
+    // Convert data to JSON
+    var jsonData = JSON.stringify(quizData);
+    console.log("jsonData", jsonData);
+    // Send the data to the calculate_marks view using AJAX
+    $.ajax({
+        type: "POST",
+        url: "/student/calculate_marks", // URL of the calculate_marks view
+        contentType: "application/json",
+        data: jsonData,
+        success: function(response) {
+            // You can do further processing based on the response here
+        },
+        error: function(xhr, status, error) {
+            // Handle error
+            console.error("Error:", error);
         }
+    });
 
-        remainingTime--;
-        localStorage.setItem('remainingTime', remainingTime); // Update stored remaining time
-    }, 1000);
+    alert("Quiz submitted automatically due to time expiration!");
+
+    window.location.href = "{% url 'student:view_result' %}";
 }
+</script>
 
 
-    // Call the updateTimer function
-    updateTimer({{ course.duration_minutes }}, timerElement); // Pass timerElement
+<script>
+  var isTabActive = true;
+
+  // Retrieve the maximum allowed tab switch attempts from Django context.
+  // Use parseInt to ensure it is treated as a number.
+  const maxAttempts = parseInt("{{ course.num_attemps|default:'1' }}");
+
+  // Get the current number of inactive tab switches from localStorage, default to 0 if not found
+  var inactiveCount = parseInt(localStorage.getItem("inactiveCount")) || 0;
+
+  // When the DOM is fully loaded, update the page with the current counts
+  document.addEventListener("DOMContentLoaded", function () {
+    // Update the max allowed attempts displayed in the page header
+    document.getElementById("attempts").innerText = `Allow attempts: ${maxAttempts}`;
+
+    // Update the current inactive tab switch count on the page
+    document.getElementById("inactiveCount").innerText = `Inactive tab switches: ${inactiveCount}`;
+  });
+
+  // When the user switches browser tabs or windows (loses focus)
+  window.onblur = function () {
+    isTabActive = false;
+
+    // Increment the count of inactive tab switches
+    inactiveCount++;
+
+    // Save the updated count back to localStorage so it persists across reloads
+    localStorage.setItem("inactiveCount", inactiveCount);
+
+    // Update the displayed inactive count on the page
+    document.getElementById("inactiveCount").innerText = `Inactive tab switches: ${inactiveCount}`;
+
+    // If the user exceeds or meets the maximum allowed tab switches, submit the quiz and reload the page
+    if (inactiveCount >= maxAttempts) {
+      submitQuiz();  // Make sure this function exists in your code
+      window.location.reload();
+    }
+  };
+
+  // When the user submits the quiz, clear the inactive tab switch count to reset
+  document.getElementById("submit").addEventListener("click", function () {
+    localStorage.removeItem("inactiveCount");
+  });
+</script>
+
+
+<!-- <script>
+// real codes
+// inactive js
+
+var isTabActive = true; // Initialize the variable
+var inactiveCount = parseInt(localStorage.getItem("inactiveCount")) || 0; // Retrieve count from localStorage or set to 0 if not present
+
+window.onblur = function () { 
+  isTabActive = false; 
+  inactiveCount++; 
+  localStorage.setItem("inactiveCount", inactiveCount); // Store the updated count in localStorage
+  document.getElementById("inactiveCount").innerText = inactiveCount; 
+  if (inactiveCount + 1 >= {{ course.num_attemps }}) {
+    // Perform action when count exceeds the threshold
+    submitQuiz();
+    window.location.reload();
+      // Add an event listener for the submit button
+
+  }
+  
+}; 
+
+document.getElementById("submit").addEventListener("click", function() {
+  // Clear the inactive count from localStorage
+
+    localStorage.removeItem("inactiveCount");
+    // localStorage.clear();
 });
 
+</script> -->
 
 
+<!-- <script>
+// quiz submit due to time expiration
 function submitQuiz() {
     // Clear local storage
     
     localStorage.clear();
-    localStorage.removeItem("inactiveCount");
+    // localStorage.removeItem("inactiveCount");
     // localStorage.removeItem('remainingTime');
  
     // Gather form data
@@ -699,57 +603,10 @@ function submitQuiz() {
     window.location.href = "{% url 'student:view_result' %}";
 }
 
-//         //  test 
-//     function updateTimer(time) {
-//     const timerElement = document.getElementById('timer'); // Define timerElement here
-//     let storedTime = localStorage.getItem('remainingTime');
-//     let remainingTime;
-
-//     if (storedTime !== null) {
-//         remainingTime = parseInt(storedTime);
-//     } else {
-//         remainingTime = time * 60; // Convert minutes to seconds
-//         localStorage.setItem('remainingTime', remainingTime);
-//     }
-// if (window.timerInterval) {
-//     clearInterval(window.timerInterval); // Prevent multiple intervals
-// }
-
-//     const timer = setInterval(() => {
-//         let minutes = Math.floor(remainingTime / 60);
-//         let seconds = remainingTime % 60;
-
-//         let displayMinutes = minutes < 10 ? '0' + minutes : minutes;
-//         let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
-
-//         timerElement.innerHTML = `<b>Time Left: ${displayMinutes}:${displaySeconds}</b>`;
-
-//         if (remainingTime <= 0) {
-//             clearInterval(timer);
-//             // localStorage.clear()
-//             localStorage.removeItem('remainingTime');
-//             submitQuiz(); // Call the function to submit the quiz when time is over
-//             return;
-//         }
-
-//         if (minutes <= 0 && seconds <= 0) {
-//             clearInterval(timer);
-//             localStorage.removeItem('remainingTime');
-//             submitQuiz(); // Call the function to submit the quiz when time is over
-//             return;
-//         }
-
-//         remainingTime--;
-//         localStorage.setItem('remainingTime', remainingTime); // Update stored remaining time
-//     }, 1000);
-
-//     // Store the timer interval ID
-//     window.timerInterval = timer;
-// }
-
-    </script>
+</script> -->
 
 
+<!-- cbt settings -->
 <script>
 
   $(document).ready(function() {
@@ -877,47 +734,9 @@ allRadioButtons.forEach(function(radioButton) {
     updatePagination();
 
     // Set interval to update pagination boxes every second
-    // setInterval(updatePagination, 1000);
-    setInterval(updatePagination, 1000);
-
     
+    setInterval(updatePagination, 1000);
 });
-
-
-// inactive js
-
-var isTabActive = true; // Initialize the variable
-var inactiveCount = parseInt(localStorage.getItem("inactiveCount")) || 0; // Retrieve count from localStorage or set to 0 if not present
-
-// window.onfocus = function () { 
-//   isTabActive = true; 
-// }; 
-
-window.onblur = function () { 
-  isTabActive = false; 
-  inactiveCount++; 
-  localStorage.setItem("inactiveCount", inactiveCount); // Store the updated count in localStorage
-  document.getElementById("inactiveCount").innerText = inactiveCount; 
-  if (inactiveCount + 1 >= {{ course.num_attemps }}) {
-    // Perform action when count exceeds the threshold
-    submitQuiz();
-    // window.location.reload();
-      // Add an event listener for the submit button
-
-   
-  }
-  
-}; 
-
-
-document.getElementById("submit").addEventListener("click", function() {
-  // Clear the inactive count from localStorage
-
-
-    localStorage.removeItem("inactiveCount");
-    // localStorage.clear();
-});
-
 
   </script>
 
@@ -948,6 +767,57 @@ document.addEventListener('DOMContentLoaded', (event) => {
 });
   
 </script>
+
+<script>
+    $.fn.dataTable.ext.errMode = 'none';
+    
+    function isMobileView() {
+        return window.innerWidth <= 768; // Adjust this value as needed for mobile devices
+    }
+    
+    var table = $('#example').DataTable({
+        pageLength: 1,
+        order: [[3, 'desc']],
+        lengthChange: false, 
+        stateSave: true,
+        sDom: 'lrtip',
+        "ordering": false,
+        "dom": 'rtp',
+        
+        // Set pagingType dynamically based on screen size
+        "pagingType": isMobileView() ? "simple" : "full_numbers",  // "simple" for mobile, "full_numbers" for desktop
+    
+        columnDefs: [
+            {
+                orderable: false,
+                targets: [1, 2, 3]
+            }
+        ]
+    });
+    
+    // Adjust pagination type when the window is resized
+    $(window).resize(function() {
+        var table = $('#example').DataTable();
+        table.destroy();  // Destroy existing DataTable instance
+        $('#example').DataTable({
+            pageLength: 1,
+            order: [[3, 'desc']],
+            lengthChange: false, 
+            stateSave: true,
+            sDom: 'lrtip',
+            "ordering": false,
+            "dom": 'rtp',
+            "pagingType": isMobileView() ? "simple" : "full_numbers",  // Reapply based on new window size
+    
+            columnDefs: [
+                {
+                    orderable: false,
+                    targets: [1, 2, 3]
+                }
+            ]
+        });
+    });
+    </script>
 
 
 <br><br><br><br><br><br>
