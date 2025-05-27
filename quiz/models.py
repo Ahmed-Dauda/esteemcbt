@@ -121,6 +121,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 
 class Question(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, blank=True, null=True)
+    # school = models.ForeignKey(School, on_delete=models.CASCADE,blank=True, null=True)
     marks = models.PositiveIntegerField(blank=True, null=True)
     question = HTMLField(blank=True, null=True)
     img_quiz = CloudinaryField('image', blank=True, null=True)
@@ -179,7 +180,8 @@ class Result(models.Model):
 
     class Meta:
         unique_together = ('student', 'exam', 'session', 'term', 'result_class', 'exam_type')
-
+        ordering = ['exam__course_name']  
+  
     def __str__(self):
         return f"{self.student}---{self.exam.course_name}---{self.exam_type}---{self.marks}"
 

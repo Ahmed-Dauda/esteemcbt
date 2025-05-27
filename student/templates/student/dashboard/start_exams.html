@@ -210,6 +210,8 @@ div.quiz p {
                     </div>
                     <!-- Inactivity Warning and Timer -->
                     <div class="col-12 col-md-4" style="padding: 10px;">
+                     
+
                         <h6 style="color: #dc3545; font-weight: bold; font-size: 16px;" id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</h6>
                         <h5 id="attempts" style="color:red; font-size:24px;">Allow attempts: 0</h5>
 
@@ -429,6 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+
 <script>
 // quiz submit due to time expiration
 function submitQuiz() {
@@ -478,49 +481,67 @@ function submitQuiz() {
 </script>
 
 
+
+<!-- inactive working codes -->
 <script>
-  var isTabActive = true;
-
-  // Retrieve the maximum allowed tab switch attempts from Django context.
-  // Use parseInt to ensure it is treated as a number.
   const maxAttempts = parseInt("{{ course.num_attemps|default:'1' }}");
+  let inactiveCount = parseInt(localStorage.getItem("inactiveCount")) || 0;
+  let isSubmitted = false;
 
-  // Get the current number of inactive tab switches from localStorage, default to 0 if not found
-  var inactiveCount = parseInt(localStorage.getItem("inactiveCount")) || 0;
+  window.quizAlreadySubmitted = {{ quiz_already_submitted|yesno:"true,false" }};
 
-  // When the DOM is fully loaded, update the page with the current counts
+  // Display current state on load
   document.addEventListener("DOMContentLoaded", function () {
-    // Update the max allowed attempts displayed in the page header
-    document.getElementById("attempts").innerText = `Allow attempts: ${maxAttempts}`;
+    document.getElementById("attempts").innerText = `Allowed attempts: ${maxAttempts}`;
+    document.getElementById("inactiveCount").innerText = `${inactiveCount}`;
 
-    // Update the current inactive tab switch count on the page
-    document.getElementById("inactiveCount").innerText = `Inactive tab switches: ${inactiveCount}`;
-  });
-
-  // When the user switches browser tabs or windows (loses focus)
-  window.onblur = function () {
-    isTabActive = false;
-
-    // Increment the count of inactive tab switches
-    inactiveCount++;
-
-    // Save the updated count back to localStorage so it persists across reloads
-    localStorage.setItem("inactiveCount", inactiveCount);
-
-    // Update the displayed inactive count on the page
-    document.getElementById("inactiveCount").innerText = `Inactive tab switches: ${inactiveCount}`;
-
-    // If the user exceeds or meets the maximum allowed tab switches, submit the quiz and reload the page
-    if (inactiveCount >= maxAttempts) {
-      submitQuiz();  // Make sure this function exists in your code
-      window.location.reload();
+    // Clear attempts if already submitted
+    if (window.quizAlreadySubmitted) {
+      clearAttempts();
     }
-  };
-
-  // When the user submits the quiz, clear the inactive tab switch count to reset
-  document.getElementById("submit").addEventListener("click", function () {
-    localStorage.removeItem("inactiveCount");
   });
+
+  // Track only real tab switches, prevent excessive firing
+  let blurTimeout;
+  window.addEventListener("blur", function () {
+    blurTimeout = setTimeout(() => {
+      if (window.quizAlreadySubmitted || isSubmitted) return;
+
+      inactiveCount++;
+      localStorage.setItem("inactiveCount", inactiveCount);
+      document.getElementById("inactiveCount").innerText = `Inactive tab switches: ${inactiveCount}`;
+
+      if (inactiveCount >= maxAttempts) {
+        isSubmitted = true;
+        clearAttempts();
+
+        const form = document.getElementById("quiz-form");
+        if (form) {
+          form.submit(); // trigger actual form submission
+        } else {
+          console.warn("Quiz form not found.");
+        }
+      }
+    }, 300);  // Delay slightly to avoid false triggers
+  });
+
+  // Cancel blur if focus returns quickly (false alarm)
+  window.addEventListener("focus", function () {
+    if (blurTimeout) clearTimeout(blurTimeout);
+  });
+
+  // Manual submission
+  document.getElementById("submit").addEventListener("click", function () {
+    clearAttempts();
+    isSubmitted = true;
+  });
+
+  // Utility to clear attempts
+  function clearAttempts() {
+    localStorage.removeItem("inactiveCount");
+    inactiveCount = 0;
+    document.getElementById("inactiveCount").innerText = `Inactive tab switches: ${inactiveCount}`;
+  }
 </script>
 
 

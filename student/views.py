@@ -3760,69 +3760,122 @@ def permission_denied_view(request, exception):
 
 @login_required
 def start_exams_view(request, pk):
-
-    # course = QMODEL.Course.objects.get(id=pk)
     course = get_object_or_404(
         Course.objects.select_related('course_name').only(
-            'id', 'room_name', 'course_name__id', 'exam_type__name','course_name__title', 
-            'num_attemps', 'show_questions', 
-            'duration_minutes'
+            'id', 'room_name', 'course_name__id', 'exam_type__name', 'course_name__title',
+            'num_attemps', 'show_questions', 'duration_minutes'
         ),
         id=pk
     )
-    # print(course.schools, 'course.exam_type')
-    # num_attemps = course.num_attemps
-    # questions = QMODEL.Question.objects.filter(course=course).order_by('id')
+
     questions = QMODEL.Question.objects.select_related('course').only(
-        'id', 'course__id', 'marks', 'question', 'img_quiz', 'option1', 'option2', 
+        'id', 'course__id', 'marks', 'question', 'img_quiz', 'option1', 'option2',
         'option3', 'option4', 'answer'
     ).filter(course=course).order_by('id')
 
-    # result_exists = Result.objects.filter(student=request.user.profile, exam=course).exists()
     result_exists = Result.objects.select_related('student', 'exam').only(
-        'student__id', 'student__username','exam_type__name', 'exam__id', 'exam__course_name'
+        'student__id', 'student__username', 'exam_type__name', 'exam__id', 'exam__course_name'
     ).filter(
-        student=request.user.profile, 
+        student=request.user.profile,
         exam=course
     ).exists()
-    
-    # Check if the student has already taken this exam
+
     if result_exists:
         return redirect('student:view_result')
-    
-    #     # Get the number of questions to display for the course
+
     show_questions = course.show_questions
-   
-    # Count the total number of questions
     total_questions = questions.count()
-  
+
     if total_questions >= show_questions:
         questions = random.sample(list(questions), show_questions)
     else:
         questions = list(questions)
 
-    # Order the selected questions by their primary key for stable pagination
     questions.sort(key=lambda q: q.id)
-   
-    q_count = len(questions)  # Calculate the count of questions
-    # print("q_count", q_count)
+    q_count = len(questions)
 
     context = {
         'course': course,
         'questions': questions,
-
         'q_count': q_count,
         'page_obj': questions,
-        # 'remaining_seconds': remaining_seconds,  # Pass remaining time to template
+        'quiz_already_submitted': result_exists,
     }
 
     if request.method == 'POST':
-        # Handle form submission
+        # Handle form submission if needed
         pass
 
     response = render(request, 'student/dashboard/start_exams.html', context=context)
     response.set_cookie('course_id', course.id)
     return response
+
+# real codes
+# @login_required
+# def start_exams_view(request, pk):
+
+#     # course = QMODEL.Course.objects.get(id=pk)
+#     course = get_object_or_404(
+#         Course.objects.select_related('course_name').only(
+#             'id', 'room_name', 'course_name__id', 'exam_type__name','course_name__title', 
+#             'num_attemps', 'show_questions', 
+#             'duration_minutes'
+#         ),
+#         id=pk
+#     )
+#     # print(course.schools, 'course.exam_type')
+#     # num_attemps = course.num_attemps
+#     # questions = QMODEL.Question.objects.filter(course=course).order_by('id')
+#     questions = QMODEL.Question.objects.select_related('course').only(
+#         'id', 'course__id', 'marks', 'question', 'img_quiz', 'option1', 'option2', 
+#         'option3', 'option4', 'answer'
+#     ).filter(course=course).order_by('id')
+
+#     # result_exists = Result.objects.filter(student=request.user.profile, exam=course).exists()
+#     result_exists = Result.objects.select_related('student', 'exam').only(
+#         'student__id', 'student__username','exam_type__name', 'exam__id', 'exam__course_name'
+#     ).filter(
+#         student=request.user.profile, 
+#         exam=course
+#     ).exists()
+    
+#     # Check if the student has already taken this exam
+#     if result_exists:
+#         return redirect('student:view_result')
+    
+#     #     # Get the number of questions to display for the course
+#     show_questions = course.show_questions
+   
+#     # Count the total number of questions
+#     total_questions = questions.count()
+  
+#     if total_questions >= show_questions:
+#         questions = random.sample(list(questions), show_questions)
+#     else:
+#         questions = list(questions)
+
+#     # Order the selected questions by their primary key for stable pagination
+#     questions.sort(key=lambda q: q.id)
+   
+#     q_count = len(questions)  # Calculate the count of questions
+#     # print("q_count", q_count)
+
+#     context = {
+#         'course': course,
+#         'questions': questions,
+
+#         'q_count': q_count,
+#         'page_obj': questions,
+#         # 'remaining_seconds': remaining_seconds,  # Pass remaining time to template
+#     }
+
+#     if request.method == 'POST':
+#         # Handle form submission
+#         pass
+
+#     response = render(request, 'student/dashboard/start_exams.html', context=context)
+#     response.set_cookie('course_id', course.id)
+#     return response
 
 
 # @login_required
