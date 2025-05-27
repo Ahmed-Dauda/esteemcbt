@@ -180,7 +180,7 @@ class Result(models.Model):
 
     class Meta:
         unique_together = ('student', 'exam', 'session', 'term', 'result_class', 'exam_type')
-        ordering = ['exam__course_name']  
+        ordering = ['student__first_name','student__last_name', 'exam__course_name']  
   
     def __str__(self):
         return f"{self.student}---{self.exam.course_name}---{self.exam_type}---{self.marks}"
