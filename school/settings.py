@@ -346,7 +346,7 @@ USE_TZ = True
 
 
 # ADDITIONAL SITEs SECURITY
-# HTTPS and secure headers
+# HTTPS and secure header
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
