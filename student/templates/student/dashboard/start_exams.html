@@ -493,7 +493,7 @@ function submitQuiz() {
   // Display current state on load
   document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("attempts").innerText = `Allowed attempts: ${maxAttempts}`;
-    document.getElementById("inactiveCount").innerText = `Inactive tab switches: ${inactiveCount}`;
+    document.getElementById("inactiveCount").innerText = `switches: ${inactiveCount}`;
 
     // Clear attempts if already submitted
     if (window.quizAlreadySubmitted) {
