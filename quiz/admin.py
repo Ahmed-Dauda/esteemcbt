@@ -10,7 +10,10 @@ from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from .models import Question, Course, Session, Term, ExamType  # Import required models
 from import_export.fields import Field
 from django.db.models import Prefetch
-
+from .models import CourseGrade
+from quiz.forms import CourseGradeForm
+from django.contrib import admin
+from .resources import CourseGradeResource
 
 class SchoolAdmin(admin.ModelAdmin):
 
@@ -36,21 +39,13 @@ class CourseAdmin(admin.ModelAdmin):
 
 admin.site.register(Course, CourseAdmin)
 
+class CourseGradeAdmin(ImportExportModelAdmin):  # ⬅ ImportExport + Your Customizations
+    form = CourseGradeForm
+    resource_class = CourseGradeResource
 
-
-from .models import CourseGrade
-from quiz.forms import CourseGradeForm
-
-from django.contrib import admin
-from .models import CourseGrade
-
-class CourseGradeAdmin(admin.ModelAdmin):
-    form = CourseGradeForm  # ✅ This must be a ModelForm
     list_display = ['name', 'schools', 'get_students_details', 'get_subject_names', 'is_active']
     search_fields = ['name', 'schools__school_name', 'students__email', 'students__first_name', 'students__last_name']
     list_filter = ['schools', 'is_active', 'subjects']
-    
-    # filter_horizontal = ('students', 'subjects')
     autocomplete_fields = ['students', 'subjects']
 
     def get_students_details(self, obj):
@@ -64,8 +59,32 @@ class CourseGradeAdmin(admin.ModelAdmin):
         return '\n'.join(str(subject) for subject in obj.subjects.all())
     get_subject_names.short_description = 'Subject Names'
 
-
 admin.site.register(CourseGrade, CourseGradeAdmin)
+
+#real codes
+# class CourseGradeAdmin(admin.ModelAdmin):
+#     form = CourseGradeForm  # ✅ This must be a ModelForm
+#     list_display = ['name', 'schools', 'get_students_details', 'get_subject_names', 'is_active']
+#     search_fields = ['name', 'schools__school_name', 'students__email', 'students__first_name', 'students__last_name']
+#     list_filter = ['schools', 'is_active', 'subjects']
+    
+#     # filter_horizontal = ('students', 'subjects')
+#     autocomplete_fields = ['students', 'subjects']
+
+#     def get_students_details(self, obj):
+#         return '\n'.join(
+#             f"({student.school})-({student.first_name}-{student.last_name}, {student.student_class})"
+#             for student in obj.students.all()
+#         )
+#     get_students_details.short_description = 'Student Details'
+
+#     def get_subject_names(self, obj): 
+#         return '\n'.join(str(subject) for subject in obj.subjects.all())
+#     get_subject_names.short_description = 'Subject Names'
+
+
+# admin.site.register(CourseGrade, CourseGradeAdmin)
+
 
 # class CourseGradeAdmin(admin.ModelAdmin):
 #     form = CourseGradeForm
