@@ -2348,7 +2348,7 @@ def leaderboard(request, session, term):
         'leaderboard': leaderboard_data,
     }
 
-    return render(request, 'student/dashboard/leaderboard_maintenace.html.html', context)
+    return render(request, 'student/dashboard/leaderboard_maintenace.html', context)
 
 
 # Helper function to convert numbers to ordinals
