@@ -1292,32 +1292,20 @@ def save_results(request):
 
 #     return render(request, 'teacher/dashboard/results_table.html', context)
 
+from django.contrib import messages  # Add this import
 
-# @cache_page(60 * 15)
 @login_required(login_url='teacher:teacher_login')
 def add_question_view(request):
-    
     user = request.user
-
-    # Get the teacher instance associated with the user
-    
     try:
         teacher = Teacher.objects.select_related('user', 'school').get(user=user)
     except Teacher.DoesNotExist:
         return redirect('teacher_login')
 
-    # Get the subjects taught by the teacher
     subjects_taught = teacher.subjects_taught.all()
-
-    # Get the course names associated with the subjects taught by the teacher
     subjects_taught_titles = [course for course in subjects_taught]
-    print('kkk', subjects_taught_titles)   
-    # Filter the courses based on the subjects taught
-    # courses = Course.objects.filter(course_name__title__in=subjects_taught_titles).prefetch_related('schools')
-# Get the subjects (courses) taught by the teacher
     courses = teacher.subjects_taught.all()
 
-    # Create a formset with QuestionForm
     QuestionFormSet = formset_factory(QuestionForm, extra=1)
  
     if request.method == 'POST':
@@ -1326,11 +1314,12 @@ def add_question_view(request):
             for form in formset:
                 if form.is_valid():
                     question = form.save(commit=False)
-                    question.teacher = teacher  # Associate the question with the teacher
+                    question.teacher = teacher
                     question.save()
-            return redirect('teacher:add_question')  # Redirect to teacher dashboard after successfully adding questions
+            # Add success message here
+            messages.success(request, "Questions added successfully!")
+            return redirect('teacher:add_question')
     else:
-        # Pass the courses queryset to each form in the formset
         formset = QuestionFormSet(form_kwargs={'courses': courses})
 
     context = {
@@ -1338,6 +1327,48 @@ def add_question_view(request):
         'subjects_taught': subjects_taught,
     }
     return render(request, 'teacher/dashboard/teacher_add_question.html', context)
+
+
+# @cache_page(60 * 15)
+# @login_required(login_url='teacher:teacher_login')
+# def add_question_view(request):
+
+#     user = request.user
+#     # Get the teacher instance associated with the user
+#     try:
+#         teacher = Teacher.objects.select_related('user', 'school').get(user=user)
+#     except Teacher.DoesNotExist:
+#         return redirect('teacher_login')
+
+#     # Get the subjects taught by the teacher
+#     subjects_taught = teacher.subjects_taught.all()
+
+#     # Get the course names associated with the subjects taught by the teacher
+#     subjects_taught_titles = [course for course in subjects_taught]
+  
+#     courses = teacher.subjects_taught.all()
+
+#     # Create a formset with QuestionForm
+#     QuestionFormSet = formset_factory(QuestionForm, extra=1)
+ 
+#     if request.method == 'POST':
+#         formset = QuestionFormSet(request.POST, request.FILES)
+#         if formset.is_valid():
+#             for form in formset:
+#                 if form.is_valid():
+#                     question = form.save(commit=False)
+#                     question.teacher = teacher  # Associate the question with the teacher
+#                     question.save()
+#             return redirect('teacher:add_question')  # Redirect to teacher dashboard after successfully adding questions
+#     else:
+#         # Pass the courses queryset to each form in the formset
+#         formset = QuestionFormSet(form_kwargs={'courses': courses})
+
+#     context = {
+#         'formset': formset,
+#         'subjects_taught': subjects_taught,
+#     }
+#     return render(request, 'teacher/dashboard/teacher_add_question.html', context)
 
 
 # @login_required(login_url='teacher:teacher_login')
@@ -2438,7 +2469,7 @@ def import_results(request):
         form = UploadFileForm()
 
     return render(request, 'teacher/dashboard/import_results.html', {'form': form})
-                  
+                 
 
 
 def confirm_import(request):
@@ -2659,7 +2690,94 @@ def tex_to_mathml(tex_input):
         return tex_input
     
 
+# @login_required(login_url='teacher:teacher_login')
+# def import_data(request):
+#     if request.method == 'POST':
+#         dataset = Dataset()
+#         new_file = request.FILES['myfile']
+
+#         allowed_formats = ['xlsx', 'xls', 'csv', 'docx']
+#         file_extension = new_file.name.split('.')[-1].lower()
+#         if file_extension not in allowed_formats:
+#             messages.error(request, 'File format not supported. Supported formats: XLSX, XLS, CSV, DOCX')
+#             return redirect(request.path_info)
+
+#         imported_data = None
+
+#         try:
+#             if file_extension == 'csv':
+#                 data = io.TextIOWrapper(new_file, encoding='utf-8')
+#                 imported_data = dataset.load(data, format=file_extension)
+#             elif file_extension in ['xlsx', 'xls']:
+#                 imported_data = dataset.load(new_file.read(), format=file_extension)
+#             elif file_extension == 'docx':
+#                 document = Document(new_file)
+#                 rows = []
+#                 for table in document.tables:
+#                     for row in table.rows:
+#                         row_data = [tex_to_mathml(cell.text) for cell in row.cells]
+#                         rows.append(row_data)
+#                 csv_data = io.StringIO()
+#                 writer = csv.writer(csv_data)
+#                 writer.writerows(rows)
+#                 csv_data.seek(0)
+#                 imported_data = dataset.load(csv_data, format='csv')
+#             else:
+#                 messages.error(request, 'An error occurred while importing the file.')
+#                 return redirect(request.path_info)
+
+#             # Normalize answers and convert TeX to MathML
+#             for row in imported_data.dict:
+#                 # Normalize answer field robustly
+#                 if 'answer' in row:
+#                     raw_answer = str(row['answer']).strip().replace('\n', '').replace('\r', '').replace(' ', '').lower()
+#                     if raw_answer in ['option1', 'option2', 'option3', 'option4']:
+#                         normalized_answer = 'Option' + raw_answer[-1]
+#                         print(f"Normalizing answer from '{row['answer']}' to '{normalized_answer}'")
+#                         row['answer'] = normalized_answer
+#                     else:
+#                         row['answer'] = str(row['answer']).strip()
+#                         print(f"Keeping original answer as '{row['answer']}'")
+
+#                 # Convert other keys (including question mark fix)
+#                 for key in ['question', 'img_quiz', 'option1', 'option2', 'option3', 'option4']:
+#                     if key in row and row[key]:
+#                         original_value = row[key]
+#                         if key == 'question' and original_value.endswith('?'):
+#                             processed_value = original_value[:-1].strip()
+#                         else:
+#                             processed_value = original_value
+#                         row[key] = tex_to_mathml(processed_value) + ('?' if key == 'question' else '')
+#                         print(f"Converted {key} from '{original_value}' to '{row[key]}'")
+
+#             resource = QuestionResource()
+#             result = resource.import_data(imported_data, dry_run=True)  # Dry run first
+
+#             if result.has_errors():
+#                 messages.error(request, "Errors occurred during import: {}".format(result.errors))
+#                 print(f"Import dry run errors: {result.errors}")
+#             else:
+#                 result = resource.import_data(imported_data, dry_run=False)
+#                 if result.has_errors():
+#                     messages.error(request, "Errors occurred during saving: {}".format(result.errors))
+#                     print(f"Import saving errors: {result.errors}")
+#                 else:
+#                     messages.success(request, "Data imported and saved successfully.")
+#                     print("Data saved successfully.")
+
+#             return redirect(request.path_info)
+
+#         except Exception as e:
+#             messages.error(request, "You do not have permission to import this subject, or the subject name does not match your assigned subject. Please check the dashboard for your assigned subjects.")
+#             print(f"An error occurred while processing the file: {e}")
+#             return redirect(request.path_info)
+
+#     return render(request, 'teacher/dashboard/import.html')
+
+
+
 # original codes
+
 @login_required(login_url='teacher:teacher_login')
 def import_data(request):
     if request.method == 'POST':
@@ -2765,75 +2883,75 @@ def extract_equations_from_paragraph(paragraph):
     return equations
 
 
-def import_word(request):
-    if request.method == 'POST':
-        allowed_formats = ['docx']
-        uploaded_file = request.FILES.get('myfile')
+# def import_word(request):
+#     if request.method == 'POST':
+#         allowed_formats = ['docx']
+#         uploaded_file = request.FILES.get('myfile')
 
-        if not uploaded_file:
-            messages.error(request, 'No file uploaded.')
-            return render(request, 'teacher/dashboard/importdocs.html')
+#         if not uploaded_file:
+#             messages.error(request, 'No file uploaded.')
+#             return render(request, 'teacher/dashboard/importdocs.html')
 
-        file_extension = uploaded_file.name.split('.')[-1]
-        if file_extension.lower() not in allowed_formats:
-            messages.error(request, 'File format not supported. Supported format: DOCX')
-            return render(request, 'teacher/dashboard/importdocs.html')
+#         file_extension = uploaded_file.name.split('.')[-1]
+#         if file_extension.lower() not in allowed_formats:
+#             messages.error(request, 'File format not supported. Supported format: DOCX')
+#             return render(request, 'teacher/dashboard/importdocs.html')
 
-        try:
-            document = Document(uploaded_file)
-            questions = []
+#         try:
+#             document = Document(uploaded_file)
+#             questions = []
 
-            for table_idx, table in enumerate(document.tables):
-                for row_idx, row in enumerate(table.rows):
-                    question_data = [cell.text.strip() for cell in row.cells]
+#             for table_idx, table in enumerate(document.tables):
+#                 for row_idx, row in enumerate(table.rows):
+#                     question_data = [cell.text.strip() for cell in row.cells]
 
-                    if len(question_data) >= 8:  # Ensure there are enough data fields
-                        equations = []
-                        for cell in row.cells:
-                            for paragraph in cell.paragraphs:
-                                equations.extend(extract_equations_from_paragraph(paragraph))
+#                     if len(question_data) >= 8:  # Ensure there are enough data fields
+#                         equations = []
+#                         for cell in row.cells:
+#                             for paragraph in cell.paragraphs:
+#                                 equations.extend(extract_equations_from_paragraph(paragraph))
 
-                        if equations:  # Check if any equations were found
-                            question = Question(
-                                course=question_data[0],
-                                marks=int(question_data[1]),
-                                question_text=question_data[2],
-                                option1=question_data[3],
-                                option2=question_data[4],
-                                option3=question_data[5],
-                                option4=question_data[6],
-                                answer=question_data[7],
-                                equations=', '.join(equations)  # Store equations
-                            )
-                            question.save()
-                            questions.append(question_data)
-                        else:
-                            logger.warning(f"No equations found for table {table_idx + 1}, row {row_idx + 1}.")
+#                         if equations:  # Check if any equations were found
+#                             question = Question(
+#                                 course=question_data[0],
+#                                 marks=int(question_data[1]),
+#                                 question_text=question_data[2],
+#                                 option1=question_data[3],
+#                                 option2=question_data[4],
+#                                 option3=question_data[5],
+#                                 option4=question_data[6],
+#                                 answer=question_data[7],
+#                                 equations=', '.join(equations)  # Store equations
+#                             )
+#                             question.save()
+#                             questions.append(question_data)
+#                         else:
+#                             logger.warning(f"No equations found for table {table_idx + 1}, row {row_idx + 1}.")
 
-                    else:
-                        messages.warning(request, f"Ignored invalid line in table {table_idx + 1}, row {row_idx + 1}: {', '.join(question_data)}")
+#                     else:
+#                         messages.warning(request, f"Ignored invalid line in table {table_idx + 1}, row {row_idx + 1}: {', '.join(question_data)}")
 
-            if questions:
-                response = HttpResponse(content_type='text/csv')
-                response['Content-Disposition'] = 'attachment; filename="imported_questions.csv"'
+#             if questions:
+#                 response = HttpResponse(content_type='text/csv')
+#                 response['Content-Disposition'] = 'attachment; filename="imported_questions.csv"'
 
-                writer = csv.writer(response)
-                writer.writerow(['course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer', 'equations'])
+#                 writer = csv.writer(response)
+#                 writer.writerow(['course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer', 'equations'])
 
-                for question in questions:
-                    writer.writerow(question)
+#                 for question in questions:
+#                     writer.writerow(question)
 
-                messages.success(request, "Data imported and saved successfully.")
-                return response
-            else:
-                messages.warning(request, "No valid data found in the document.")
+#                 messages.success(request, "Data imported and saved successfully.")
+#                 return response
+#             else:
+#                 messages.warning(request, "No valid data found in the document.")
 
-        except Exception as e:
-            messages.error(request, f"An error occurred while processing the file: {str(e)}")
-            logger.error(f"Error processing file: {str(e)}")
-            return render(request, 'teacher/dashboard/importdocs.html')
+#         except Exception as e:
+#             messages.error(request, f"An error occurred while processing the file: {str(e)}")
+#             logger.error(f"Error processing file: {str(e)}")
+#             return render(request, 'teacher/dashboard/importdocs.html')
 
-    return render(request, 'teacher/dashboard/importdocs.html')
+#     return render(request, 'teacher/dashboard/importdocs.html')
 
 
 
@@ -2939,7 +3057,6 @@ def generate_csv(request):
             try:
                 # Create a dynamic filename with a timestamp
                 filename = f"generated_questions_{now().strftime('%Y%m%d%H%M%S')}.csv"
-                
                 # Prepare the response with appropriate CSV headers
                 response = HttpResponse(content_type='text/csv')
                 response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -2953,10 +3070,7 @@ def generate_csv(request):
     else:
         form = JSONForm()
         
-    # context =  {
-    #         'form': form,
-    #          'sample_codes': sample_codes
-    #         }
+
     context = {
         'school': user_school,
         'teacher_subjects': teacher_subjects,
@@ -3012,7 +3126,7 @@ def export_data(request):
 
         # Fetch the courses that the teacher teaches (based on the subjects_taught)
         courses = Course.objects.filter(id__in=subjects_taught.values_list('id', flat=True)).distinct()
-        print(f"Courses fetched: {courses}")  # Debug courses
+        # print(f"Courses fetched: {courses}")  # Debug courses
         
         # Render the export template with the courses
         return render(request, 'teacher/dashboard/export_questions.html', {'courses': courses})
@@ -3030,8 +3144,28 @@ def download_csv(request):
         return response
     
 
+def teacher_subjects_view(request):
+    teacher = get_object_or_404(Teacher, user=request.user)
+    subjects = teacher.subjects_taught.all()  # M2M to Course
+    
+    context = {
+        'subjects': subjects,
+    }
+    return render(request, 'teacher/dashboard/subjects_list.html', context)
 
 
+def subject_questions_view(request, subject_id):
+    subject = get_object_or_404(Course, id=subject_id)
+    # Assuming your Question model has a ForeignKey to Course named 'course'
+    questions = subject.question_set.all()  # or Question.objects.filter(course=subject)
+    
+    context = {
+        'subject': subject,
+        'questions': questions,
+    }
+    return render(request, 'teacher/dashboard/subject_questions.html', context)
+
+  
 # @cache_page(60 * 15)
 def view_questions(request):
     # Check if user is authenticated
@@ -3045,41 +3179,130 @@ def view_questions(request):
         try:
             # teacher = Teacher.objects.get(user=request.user)
              teacher = Teacher.objects.select_related('user', 'school').get(user=request.user)
+            
         except Teacher.DoesNotExist:
             # Handle the case where the user is not a teacher
             return redirect('teacher:teacher_login')  # or any other appropriate action
     
-    # Filter questions based on the subjects taught by the teacher
-    # questions = Question.objects.filter(course__in=teacher.subjects_taught.all())
   
     questions = Question.objects.filter(course__in=teacher.subjects_taught.all()).select_related('course').order_by('id')
-
-    # print('q',questions)
+  
     context = {
-        'questions': questions
+        'questions': questions,
+        'teacher': teacher,  # Add teacher object
     }
 
     # Render the template with the questions
     return render(request, 'teacher/dashboard/view_questions.html', context)
 
 
-# @cache_page(60 * 5)
+# views.py
+# @login_required(login_url='teacher:teacher_login')
+# def view_questions(request):
+#     teacher = get_object_or_404(Teacher, user=request.user)
+#     questions = Question.objects.filter(course__in=teacher.subjects_taught.all()).order_by('id')
+#     context = {
+#         'questions': questions,
+#         'teacher': teacher,
+#         'selected_subject': None,
+#     }
+#     return render(request, 'teacher/dashboard/view_questions.html', context)
+
+
+# @login_required(login_url='teacher:teacher_login')
+# def subject_questions(request, subject_id):
+#     teacher = get_object_or_404(Teacher.objects.select_related('user', 'school'), user=request.user)
+#     course = get_object_or_404(teacher.subjects_taught, id=subject_id)
+#     questions = Question.objects.filter(course=course).select_related('course').order_by('id')
+#     context = {
+#         'questions': questions,
+#         'teacher': teacher,
+#         'selected_subject': course,
+#     }
+#     return render(request, 'teacher/dashboard/view_questions.html', context)
+
+
+# @login_required(login_url='teacher:teacher_login')
+# def subject_questions(request, subject_id):
+#     # Get the currently logged-in teacher
+#     teacher = get_object_or_404(Teacher.objects.select_related('user', 'school'), user=request.user)
+
+#     # Ensure the teacher teaches the selected subject
+#     course = get_object_or_404(teacher.subjects_taught, id=subject_id)
+
+#     # Get all questions for that course
+#     questions = Question.objects.filter(course=course).select_related('course').order_by('id')
+
+#     context = {
+#         'questions': questions,
+#         'teacher': teacher,
+#         'selected_subject': course,
+#     }
+
+#     return render(request, 'teacher/dashboard/view_questions.html', context)
+
+
+# @login_required(login_url='teacher:teacher_login')
+# def subject_questions(request, subject_id):
+#     teacher = get_object_or_404(Teacher.objects.select_related('user', 'school'), user=request.user)
+
+#     # Ensure the teacher teaches the subject
+#     course = get_object_or_404(teacher.subjects_taught, id=subject_id)
+
+#     questions = Question.objects.filter(course=course).select_related('course').order_by('id')
+
+#     context = {
+#         'questions': questions,
+#         'teacher': teacher,
+#         'selected_subject': course,
+#     }
+#     return render(request, 'teacher/dashboard/view_questions.html', context)
+
+
+@login_required
 def edit_question(request, question_id):
-    # question = get_object_or_404(Question, id=question_id)
+    # Get the logged-in teacher
+    teacher = get_object_or_404(Teacher, user=request.user)
+    assigned_courses = teacher.subjects_taught.all()
+
+    # Fetch the question only if it belongs to a course assigned to the teacher
     question = get_object_or_404(
         Question.objects.select_related('course').only(
-            'id', 'course__course_name', 'question','img_quiz','marks', 'option1', 'option2', 'option3', 'option4', 'answer'
-        ),
+            'id', 'course__course_name', 'question', 'img_quiz', 'marks',
+            'option1', 'option2', 'option3', 'option4', 'answer'
+        ).filter(course__in=assigned_courses),
         id=question_id
     )
+
     if request.method == 'POST':
-        form = QuestionForm(request.POST, request.FILES,instance=question)
+        form = QuestionForm(request.POST, request.FILES, instance=question, courses=assigned_courses)
         if form.is_valid():
             form.save()
-            return redirect('teacher:view_questions')  # Redirect to the view questions page
+            return redirect('teacher:view_questions')
     else:
-        form = QuestionForm(instance=question)
+        form = QuestionForm(instance=question, courses=assigned_courses)
+
     return render(request, 'teacher/dashboard/edit_questions.html', {'form': form})
+
+
+#real view
+# @cache_page(60 * 5)
+# def edit_question(request, question_id):
+#     # question = get_object_or_404(Question, id=question_id)
+#     question = get_object_or_404(
+#         Question.objects.select_related('course').only(
+#             'id', 'course__course_name', 'question','img_quiz','marks', 'option1', 'option2', 'option3', 'option4', 'answer'
+#         ),
+#         id=question_id
+#     )
+#     if request.method == 'POST':
+#         form = QuestionForm(request.POST, request.FILES,instance=question)
+#         if form.is_valid():
+#             form.save()
+#             return redirect('teacher:view_questions')  # Redirect to the view questions page
+#     else:
+#         form = QuestionForm(instance=question)
+#     return render(request, 'teacher/dashboard/edit_questions.html', {'form': form})
 
 
 
