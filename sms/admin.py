@@ -81,13 +81,10 @@ class CoursesResource(resources.ModelResource):
         model = Courses
         prepopulated_fields = {"slug": ("course_name",)}
 
+from quiz.models import Course
 
-@admin.register(Courses)
-class CoursesAdmin(ImportExportModelAdmin, ExportActionMixin):
-    list_display = [
-        'title', 'created_by', 'session', 'term',
-        'exam_type', 'display_subjects_school', 'created'
-    ]
+class CoursesAdmin(ExportActionMixin, admin.ModelAdmin):
+    list_display = ['title', 'created_by', 'session', 'term', 'exam_type', 'display_subjects_school', 'created']
     list_filter = ['title']
     search_fields = ['title']
     ordering = ['id']
@@ -95,28 +92,28 @@ class CoursesAdmin(ImportExportModelAdmin, ExportActionMixin):
 
     def display_subjects_school(self, obj):
         return ", ".join([str(school) for school in obj.schools.all()])
-    
     display_subjects_school.short_description = 'School'
 
     def created_by(self, obj):
-        if obj.created_by:
-            return f"{obj.created_by.first_name} {obj.created_by.last_name}"
-        return "Unknown"
-    
+        return f"{obj.created_by.first_name} {obj.created_by.last_name}" if obj.created_by else "Unknown"
     created_by.short_description = 'Created By'
-
-    # 🔒 Safe delete for a single course
-    def delete_model(self, request, obj):
-        for grade in CourseGrade.objects.filter(subjects=obj):
-            grade.subjects.remove(obj)
-        obj.delete()
 
     # 🔒 Safe delete for multiple selected courses
     def delete_queryset(self, request, queryset):
-        for obj in queryset:
-            for grade in CourseGrade.objects.filter(subjects=obj):
-                grade.subjects.remove(obj)
-            obj.delete()
+        for course_def in queryset:
+            # Find all Course instances linked to this Courses object
+            related_courses = Course.objects.filter(course_name=course_def)
+
+            for course in related_courses:
+                # Remove Course instance from any CourseGrade it belongs to
+                for grade in CourseGrade.objects.filter(subjects=course):
+                    grade.subjects.remove(course)
+                course.delete()  # Optionally delete the Course instance too
+
+            course_def.delete()  # Finally, delete the Courses object
+
+
+admin.site.register(Courses, CoursesAdmin)
 
 
 # class CoursesResource(resources.ModelResource):

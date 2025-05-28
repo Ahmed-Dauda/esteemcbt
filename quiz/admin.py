@@ -61,6 +61,7 @@ class CourseGradeAdmin(ImportExportModelAdmin):  # ⬅ ImportExport + Your Custo
 
 admin.site.register(CourseGrade, CourseGradeAdmin)
 
+
 #real codes
 # class CourseGradeAdmin(admin.ModelAdmin):
 #     form = CourseGradeForm  # ✅ This must be a ModelForm
