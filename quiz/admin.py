@@ -13,7 +13,6 @@ from django.db.models import Prefetch
 from .models import CourseGrade
 from quiz.forms import CourseGradeForm
 from django.contrib import admin
-from .resources import CourseGradeResource
 
 class SchoolAdmin(admin.ModelAdmin):
 
