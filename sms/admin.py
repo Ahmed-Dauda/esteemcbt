@@ -88,8 +88,8 @@ class CoursesAdmin(ImportExportModelAdmin, ExportActionMixin):
     list_display = ['title', 'created_by', 'session', 'term', 'exam_type', 'display_subjects_school', 'created']
     list_filter = ['title']
     search_fields = ['title']
-    ordering = ['id']
-    
+    ordering = ['title']
+     
     resource_class = CoursesResource
 
     def display_subjects_school(self, obj):
