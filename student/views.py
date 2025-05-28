@@ -3810,6 +3810,7 @@ def start_exams_view(request, pk):
     response.set_cookie('course_id', course.id)
     return response
 
+
 # real codes
 # @login_required
 # def start_exams_view(request, pk):

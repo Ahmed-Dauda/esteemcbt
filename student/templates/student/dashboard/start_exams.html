@@ -337,6 +337,7 @@ div.quiz p {
 <br><br>
 
 <!-- working codes -->
+ 
 <script>
 $(document).ready(function() {
     var timerElement = document.getElementById('timer');
@@ -484,66 +485,90 @@ function submitQuiz() {
 
 <!-- inactive working codes -->
 <script>
-  const maxAttempts = parseInt("{{ course.num_attemps|default:'1' }}");
-  let inactiveCount = parseInt(localStorage.getItem("inactiveCount")) || 0;
-  let isSubmitted = false;
+  // Configuration
+  const MAX_ATTEMPTS = parseInt("{{ course.num_attemps|default:'1' }}") || 1;
+  const STORAGE_KEY = 'tabSwitchCounter';
+  const SUBMISSION_DELAY = 300; // Milliseconds for valid tab switch detection
 
-  window.quizAlreadySubmitted = {{ quiz_already_submitted|yesno:"true,false" }};
+  // State Management
+  let tabSwitchCount = parseInt(localStorage.getItem(STORAGE_KEY)) || 0;
+  let isSubmitted = {{ quiz_already_submitted|yesno:"true,false" }};
+  let detectionTimeout = null;
 
-  // Display current state on load
-  document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("attempts").innerText = `Allowed attempts: ${maxAttempts}`;
-    document.getElementById("inactiveCount").innerText = `switches: ${inactiveCount}`;
+  // DOM Elements
+  const attemptsDisplay = document.getElementById("attempts");
+  const switchDisplay = document.getElementById("inactiveCount");
+  const quizForm = document.getElementById("quiz-form");
 
-    // Clear attempts if already submitted
-    if (window.quizAlreadySubmitted) {
-      clearAttempts();
+  // Initial Setup
+  document.addEventListener("DOMContentLoaded", () => {
+    updateAttemptsDisplay();
+    
+    if (isSubmitted) {
+      resetAttemptCounter();
     }
   });
 
-  // Track only real tab switches, prevent excessive firing
-  let blurTimeout;
-  window.addEventListener("blur", function () {
-    blurTimeout = setTimeout(() => {
-      if (window.quizAlreadySubmitted || isSubmitted) return;
-
-      inactiveCount++;
-      localStorage.setItem("inactiveCount", inactiveCount);
-      document.getElementById("inactiveCount").innerText = `Inactive tab switches: ${inactiveCount}`;
-
-      if (inactiveCount >= maxAttempts) {
-        isSubmitted = true;
-        clearAttempts();
-
-        const form = document.getElementById("quiz-form");
-        if (form) {
-          form.submit(); // trigger actual form submission
-        } else {
-          console.warn("Quiz form not found.");
-        }
-      }
-    }, 300);  // Delay slightly to avoid false triggers
-  });
-
-  // Cancel blur if focus returns quickly (false alarm)
-  window.addEventListener("focus", function () {
-    if (blurTimeout) clearTimeout(blurTimeout);
-  });
-
-  // Manual submission
-  document.getElementById("submit").addEventListener("click", function () {
-    clearAttempts();
-    isSubmitted = true;
-  });
-
-  // Utility to clear attempts
-  function clearAttempts() {
-    localStorage.removeItem("inactiveCount");
-    inactiveCount = 0;
-    document.getElementById("inactiveCount").innerText = `Inactive tab switches: ${inactiveCount}`;
+  // Tab Visibility Handling
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  
+  function handleVisibilityChange() {
+    if (document.hidden && !isSubmitted) {
+      detectionTimeout = setTimeout(registerTabSwitch, SUBMISSION_DELAY);
+    } else {
+      clearTimeout(detectionTimeout);
+    }
   }
-</script>
 
+  // Core Logic
+  function registerTabSwitch() {
+    if (isSubmitted) return;
+
+    tabSwitchCount++;
+    localStorage.setItem(STORAGE_KEY, tabSwitchCount);
+    updateAttemptsDisplay();
+
+    if (tabSwitchCount === MAX_ATTEMPTS) {
+      triggerAutomaticSubmission();
+    }
+  }
+
+  function triggerAutomaticSubmission() {
+    isSubmitted = true;
+    clearTimeout(detectionTimeout);
+    resetAttemptCounter();
+    
+    if (quizForm) {
+      quizForm.submit();
+    }
+  }
+
+  // UI Updates
+  function updateAttemptsDisplay() {
+    attemptsDisplay.textContent = `Allowed attempts: ${MAX_ATTEMPTS}`;
+    switchDisplay.textContent = `Tab switches: ${tabSwitchCount}/${MAX_ATTEMPTS}`;
+  }
+
+  // Cleanup Functions
+  function resetAttemptCounter() {
+    localStorage.removeItem(STORAGE_KEY);
+    tabSwitchCount = 0;
+    updateAttemptsDisplay();
+  }
+
+  // Manual Submission Handler
+  document.getElementById("submit")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    resetAttemptCounter();
+    isSubmitted = true;
+    quizForm?.submit();
+  });
+
+  // Cleanup on Exit
+  window.addEventListener("beforeunload", () => {
+    clearTimeout(detectionTimeout);
+  });
+</script>
 
 <!-- <script>
 // real codes

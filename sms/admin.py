@@ -3,7 +3,7 @@ from import_export import resources
 from import_export.admin import ImportExportModelAdmin, ExportActionMixin
 from import_export import fields,resources
 from import_export.widgets import ForeignKeyWidget
-  
+from quiz.models import CourseGrade 
 
 from sms.models import (
     Categories, Courses,
@@ -70,39 +70,86 @@ class CarouselImageAdmin(admin.ModelAdmin):
 
 admin.site.register(CarouselImage, CarouselImageAdmin)
 
-
-
 class CoursesResource(resources.ModelResource):
-    
     courses = fields.Field(
-        column_name= 'categories',
+        column_name='categories',
         attribute='categories',
-        widget=ForeignKeyWidget(Categories,'name') )
-    
+        widget=ForeignKeyWidget(Categories, 'name')
+    )
+
     class Meta:
         model = Courses
         prepopulated_fields = {"slug": ("course_name",)}
-        # fields = ('title',)
 
+
+@admin.register(Courses)
 class CoursesAdmin(ImportExportModelAdmin, ExportActionMixin):
-    list_display = ['title', 'created_by', 'session', 'term', 'exam_type', 'display_subjects_school', 'created']
+    list_display = [
+        'title', 'created_by', 'session', 'term',
+        'exam_type', 'display_subjects_school', 'created'
+    ]
     list_filter = ['title']
     search_fields = ['title']
     ordering = ['id']
-    
     resource_class = CoursesResource
 
     def display_subjects_school(self, obj):
-        return ", ".join([str(course) for course in obj.schools.all()])
+        return ", ".join([str(school) for school in obj.schools.all()])
     
     display_subjects_school.short_description = 'School'
 
     def created_by(self, obj):
-        return f"{obj.created_by.first_name} {obj.created_by.last_name}" if obj.created_by else "Unknown"
-
+        if obj.created_by:
+            return f"{obj.created_by.first_name} {obj.created_by.last_name}"
+        return "Unknown"
+    
     created_by.short_description = 'Created By'
 
-admin.site.register(Courses, CoursesAdmin)
+    # 🔒 Safe delete for a single course
+    def delete_model(self, request, obj):
+        for grade in CourseGrade.objects.filter(subjects=obj):
+            grade.subjects.remove(obj)
+        obj.delete()
+
+    # 🔒 Safe delete for multiple selected courses
+    def delete_queryset(self, request, queryset):
+        for obj in queryset:
+            for grade in CourseGrade.objects.filter(subjects=obj):
+                grade.subjects.remove(obj)
+            obj.delete()
+
+
+# class CoursesResource(resources.ModelResource):
+    
+#     courses = fields.Field(
+#         column_name= 'categories',
+#         attribute='categories',
+#         widget=ForeignKeyWidget(Categories,'name') )
+    
+#     class Meta:
+#         model = Courses
+#         prepopulated_fields = {"slug": ("course_name",)}
+#         # fields = ('title',)
+
+# class CoursesAdmin(ImportExportModelAdmin, ExportActionMixin):
+#     list_display = ['title', 'created_by', 'session', 'term', 'exam_type', 'display_subjects_school', 'created']
+#     list_filter = ['title']
+#     search_fields = ['title']
+#     ordering = ['id']
+    
+#     resource_class = CoursesResource
+
+#     def display_subjects_school(self, obj):
+#         return ", ".join([str(course) for course in obj.schools.all()])
+    
+#     display_subjects_school.short_description = 'School'
+
+#     def created_by(self, obj):
+#         return f"{obj.created_by.first_name} {obj.created_by.last_name}" if obj.created_by else "Unknown"
+
+#     created_by.short_description = 'Created By'
+
+# admin.site.register(Courses, CoursesAdmin)
 
 
 # class CoursesAdmin(ImportExportModelAdmin, ExportActionMixin):
