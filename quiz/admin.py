@@ -38,13 +38,16 @@ class CourseAdmin(admin.ModelAdmin):
 
 admin.site.register(Course, CourseAdmin)
 
-class CourseGradeAdmin(ImportExportModelAdmin):  # ⬅ ImportExport + Your Customizations
-    form = CourseGradeForm
-    resource_class = CourseGradeResource
 
+#real codes
+
+class CourseGradeAdmin(admin.ModelAdmin):
+    form = CourseGradeForm  # ✅ This must be a ModelForm
     list_display = ['name', 'schools', 'get_students_details', 'get_subject_names', 'is_active']
     search_fields = ['name', 'schools__school_name', 'students__email', 'students__first_name', 'students__last_name']
     list_filter = ['schools', 'is_active', 'subjects']
+    
+    # filter_horizontal = ('students', 'subjects')
     autocomplete_fields = ['students', 'subjects']
 
     def get_students_details(self, obj):
@@ -58,32 +61,8 @@ class CourseGradeAdmin(ImportExportModelAdmin):  # ⬅ ImportExport + Your Custo
         return '\n'.join(str(subject) for subject in obj.subjects.all())
     get_subject_names.short_description = 'Subject Names'
 
+
 admin.site.register(CourseGrade, CourseGradeAdmin)
-
-
-#real codes
-# class CourseGradeAdmin(admin.ModelAdmin):
-#     form = CourseGradeForm  # ✅ This must be a ModelForm
-#     list_display = ['name', 'schools', 'get_students_details', 'get_subject_names', 'is_active']
-#     search_fields = ['name', 'schools__school_name', 'students__email', 'students__first_name', 'students__last_name']
-#     list_filter = ['schools', 'is_active', 'subjects']
-    
-#     # filter_horizontal = ('students', 'subjects')
-#     autocomplete_fields = ['students', 'subjects']
-
-#     def get_students_details(self, obj):
-#         return '\n'.join(
-#             f"({student.school})-({student.first_name}-{student.last_name}, {student.student_class})"
-#             for student in obj.students.all()
-#         )
-#     get_students_details.short_description = 'Student Details'
-
-#     def get_subject_names(self, obj): 
-#         return '\n'.join(str(subject) for subject in obj.subjects.all())
-#     get_subject_names.short_description = 'Subject Names'
-
-
-# admin.site.register(CourseGrade, CourseGradeAdmin)
 
 
 # class CourseGradeAdmin(admin.ModelAdmin):
