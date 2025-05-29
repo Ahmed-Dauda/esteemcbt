@@ -162,7 +162,8 @@ class CourseSelectionForm(forms.ModelForm):
         
         # Make question_number and total_marks fields read-only by disabling them
         self.fields['question_number'].widget.attrs['readonly'] = True
-        self.fields['total_marks'].widget.attrs['readonly'] = False
+        self.fields['total_marks'].widget.attrs['readonly'] = True
+        self.fields['show_questions'].widget.attrs['readonly'] = True
 
 
 

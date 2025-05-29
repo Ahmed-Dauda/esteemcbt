@@ -49,7 +49,6 @@ class Course(models.Model):
         return self.question_set.all()[:self.show_questions]
 
 
-
 from django.core.exceptions import ValidationError
 
 class CourseGrade(models.Model):
@@ -112,53 +111,106 @@ class School(models.Model):
 from django.db import models
 from django.db.models import F
 from django.db.models import Sum
+from django.db.models.signals import post_save, post_delete
 
-           
+            
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 
-
-# real codes
 
 class Question(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, blank=True, null=True)
-    # school = models.ForeignKey(School, on_delete=models.CASCADE,blank=True, null=True)
+    course = models.ForeignKey('Course', on_delete=models.CASCADE, blank=True, null=True)
     marks = models.PositiveIntegerField(blank=True, null=True)
     question = HTMLField(blank=True, null=True)
     img_quiz = CloudinaryField('image', blank=True, null=True)
+
     option1 = HTMLField(max_length=500, blank=True, null=True)
     option2 = HTMLField(max_length=500, blank=True, null=True)
     option3 = HTMLField(max_length=500, blank=True, null=True)
     option4 = HTMLField(max_length=500, blank=True, null=True)
 
-    cat = (('Option1', 'Option1'), ('Option2', 'Option2'), ('Option3', 'Option3'), ('Option4', 'Option4'))
-    answer = models.CharField(max_length=200, choices=cat, blank=True, null=True)
-    created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    updated = models.DateTimeField(auto_now=True, blank=True, null=True)
+    OPTION_CHOICES = [
+        ('Option1', 'Option1'),
+        ('Option2', 'Option2'),
+        ('Option3', 'Option3'),
+        ('Option4', 'Option4'),
+    ]
+    answer = models.CharField(max_length=200, choices=OPTION_CHOICES, blank=True, null=True)
+
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
     id = models.AutoField(primary_key=True)
 
     def __str__(self):
-        return f"{self.course} | {self.question}"
+        return f"{self.course} | {self.question[:30]}"
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if self.course:
-            total_marks = Question.objects.filter(course=self.course).aggregate(Sum('marks'))['marks__sum'] or 0
-            self.course.total_marks = total_marks
-            # Update the question_number in the related Course
-            self.course.question_number = Question.objects.filter(course=self.course).count()
-            # self.course.total_marks = Question.objects.filter(course = self.course).count()
-            self.course.save()
 
-    def delete(self, *args, **kwargs):
-        course = self.course
-        super().delete(*args, **kwargs)
-        if course:
-            # Update the question_number in the related Course
-            total_marks = Question.objects.filter(course=course).aggregate(Sum('marks'))['marks__sum'] or 0
-            course.total_marks = total_marks
-            course.question_number = Question.objects.filter(course=course).count()
-            # course.total_marks = Question.objects.filter(course=course).count()
-            course.save()
+# ✅ Signal functions defined directly below the model
+
+def update_course_fields(course):
+    from .models import Question  # avoid circular imports
+    questions = Question.objects.filter(course=course)
+    total_marks = questions.aggregate(Sum('marks'))['marks__sum'] or 0
+    count = questions.count()
+    course.total_marks = total_marks
+    course.question_number = count
+    course.show_questions = count
+    course.save()
+
+@receiver(post_save, sender=Question)
+def update_course_on_question_save(sender, instance, **kwargs):
+    if instance.course:
+        update_course_fields(instance.course)
+
+@receiver(post_delete, sender=Question)
+def update_course_on_question_delete(sender, instance, **kwargs):
+    if instance.course:
+        update_course_fields(instance.course)
+
+
+
+# real codes
+# class Question(models.Model):
+#     course = models.ForeignKey(Course, on_delete=models.CASCADE, blank=True, null=True)
+#     # school = models.ForeignKey(School, on_delete=models.CASCADE,blank=True, null=True)
+#     marks = models.PositiveIntegerField(blank=True, null=True)
+#     question = HTMLField(blank=True, null=True)
+#     img_quiz = CloudinaryField('image', blank=True, null=True)
+#     option1 = HTMLField(max_length=500, blank=True, null=True)
+#     option2 = HTMLField(max_length=500, blank=True, null=True)
+#     option3 = HTMLField(max_length=500, blank=True, null=True)
+#     option4 = HTMLField(max_length=500, blank=True, null=True)
+
+#     cat = (('Option1', 'Option1'), ('Option2', 'Option2'), ('Option3', 'Option3'), ('Option4', 'Option4'))
+#     answer = models.CharField(max_length=200, choices=cat, blank=True, null=True)
+#     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+#     updated = models.DateTimeField(auto_now=True, blank=True, null=True)
+#     id = models.AutoField(primary_key=True)
+
+#     def __str__(self):
+#         return f"{self.course} | {self.question}"
+
+#     def save(self, *args, **kwargs):
+#         super().save(*args, **kwargs)
+#         if self.course:
+#             total_marks = Question.objects.filter(course=self.course).aggregate(Sum('marks'))['marks__sum'] or 0
+#             self.course.total_marks = total_marks
+#             # Update the question_number in the related Course
+#             self.course.question_number = Question.objects.filter(course=self.course).count()
+#             self.course.total_marks = Question.objects.filter(course = self.course).count()
+#             self.course.save()
+
+#     def delete(self, *args, **kwargs):
+#         course = self.course
+#         super().delete(*args, **kwargs)
+#         if course:
+#             # Update the question_number in the related Course
+#             total_marks = Question.objects.filter(course=course).aggregate(Sum('marks'))['marks__sum'] or 0
+#             course.total_marks = total_marks
+#             course.question_number = Question.objects.filter(course=course).count()
+#             # course.total_marks = Question.objects.filter(course=course).count()
+#             course.save()
 
 
 from django.db import models

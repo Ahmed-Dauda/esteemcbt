@@ -636,7 +636,7 @@ def report_card_list(request):
         'report_cards': report_cards,
     }
 
-    return render(request, 'student/dashboard/report_card_list.html', context)
+    return render(request, 'student/dashboard/report_card_list_testing.html', context)
      
 
 @login_required

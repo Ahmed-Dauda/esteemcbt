@@ -13,6 +13,7 @@ class AdminTeacher(admin.ModelAdmin):
     search_fields = ['first_name', 'last_name', 'school__school_name']
     list_filter = ['school']
     filter_horizontal = ['classes_taught', 'subjects_taught']
+    ordering = ['first_name', 'last_name']
 
 
     def get_queryset(self, request):
