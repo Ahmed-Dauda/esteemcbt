@@ -1,75 +1,57 @@
 {% extends 'sms/dashboard/teacherbase.html' %}
 
-{% block title %}Export & Import Results{% endblock %}
+{% block title %}Export Results{% endblock %}
 
 {% block content %}
-  <div class="container mt-5">
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <!-- Export Results Card -->
-        <div class="card shadow-sm mb-4">
-          <div class="card-header bg-primary text-white text-center">
-            <h4 class="mb-0">Export Results</h4>
-          </div>
-          <div class="card-body">
-            <form method="post" action="{% url 'teacher:export_results_csv' %}">
-              {% csrf_token %}
-              <div class="form-group">
-                <label for="file-type" class="font-weight-bold">Select File Type:</label>
-                <select class="form-control" name="file-type" id="file-type">
-                  <option value="csv">CSV</option>
-                  <option value="pdf">PDF</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="course" class="font-weight-bold">Select Subject:</label>
-                <select class="form-control" name="course" id="course">
-                  {% for subject in subjects_taught %}
-                    <option value="{{ subject.id }}">{{ subject }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="text-center mt-4">
-                <button type="submit" class="btn btn-primary">
-                  <i class="fas fa-download"></i> Export
-                </button>
-              </div>
-            </form>
-          </div>
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-7">
+      <!-- Export Results Card -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white text-center">
+          <h4 class="mb-0">Download Student Results</h4>
         </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'teacher:export_results_csv' %}">
+            {% csrf_token %}
 
-<!--        
-        <div class="card shadow-sm">
-          <div class="card-header bg-success text-white text-center">
-            <h4 class="mb-0">Import Results</h4>
-          </div>
-          <div class="card-body">
-            <form method="post" enctype="multipart/form-data" action="{% url 'teacher:import-results' %}">
-              {% csrf_token %}
-              <div class="form-group">
-                <label for="csv_file" class="font-weight-bold">Upload CSV File:</label>
-                <input type="file" class="form-control-file" id="csv_file" name="csv_file" accept=".csv">
-              </div>
-              <div class="form-group">
-                <label for="course" class="font-weight-bold">Select Subject:</label>
-                <select class="form-control" name="course" id="course">
-                  {% for subject in subjects_taught %}
-                    <option value="{{ subject.id }}">{{ subject }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="text-center mt-4">
-                <button type="submit" class="btn btn-success">
-                  <i class="fas fa-upload"></i> Import
-                </button>
-              </div>
-            </form>
-          </div>
+            <!-- Select Subject -->
+            <div class="mb-3">
+              <label for="course" class="form-label">Choose Subject</label>
+              <select class="form-select" id="course" name="course" required>
+                <option value="" disabled selected>-- Select a Subject --</option>
+                {% for subject in subjects_taught %}
+                  <option value="{{ subject.id }}">{{ subject }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-text">Choose the subject you want to download results for.</div>
+            </div>
+
+            <!-- Select Format -->
+            <div class="mb-3">
+              <label for="file-type" class="form-label">Choose Format</label>
+              <select class="form-select" id="file-type" name="file-type" required>
+                <option value="csv">CSV (Excel)</option>
+                <option value="pdf">PDF (Printable)</option>
+              </select>
+              <div class="form-text">Select the format you'd like to export the results in.</div>
+            </div>
+
+            <!-- Submit -->
+            <div class="text-center">
+              <button type="submit" class="btn btn-success w-100">
+                <i class="fas fa-download"></i> Download Results
+              </button>
+            </div>
+          </form>
         </div>
       </div>
+
+      <!-- Optional: Alert for instructions -->
+      <div class="alert alert-info mt-4 text-center">
+        Need help? Select your subject and format, then click <strong>Download Results</strong>.
+      </div>
     </div>
-  </div> -->
-
-  <!-- Message Alerts -->
-
+  </div>
+</div>
 {% endblock %}

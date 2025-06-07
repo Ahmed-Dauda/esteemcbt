@@ -3800,6 +3800,7 @@ def start_exams_view(request, pk):
         'q_count': q_count,
         'page_obj': questions,
         'quiz_already_submitted': result_exists,
+        'tab_limit': course.num_attemps,
     }
 
     if request.method == 'POST':
@@ -3809,6 +3810,9 @@ def start_exams_view(request, pk):
     response = render(request, 'student/dashboard/start_exams.html', context=context)
     response.set_cookie('course_id', course.id)
     return response
+
+
+
 
 
 # real codes
@@ -4005,6 +4009,7 @@ def calculate_marks_view(request):
     else:
         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
     
+
 # @login_required
 # def calculate_marks_view(request):
 #     if request.COOKIES.get('course_id') is not None:

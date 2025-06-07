@@ -136,7 +136,7 @@ class ResultResource(resources.ModelResource):
         
         fields = (
              
-            'id', 'exam_course_name', 'result_class', 'session__name', 'term__name', 
+            'id', 'exam_course_name','result_class', 'session__name', 'term__name', 
             'exam_type__name', 'student_username', 'student_first_name', 
             'student_last_name', 'marks', 'created'
         )

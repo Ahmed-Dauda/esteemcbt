@@ -2043,101 +2043,178 @@ def exam_statistics_view(request, course_id):
     return render(request, 'teacher/dashboard/exam_statistics.html', context)
 
 
+# @login_required
+# def teacher_result_list_view(request):
+#     user = request.user
+
+#     try:
+#         teacher = Teacher.objects.select_related('user').get(user=user)
+#     except Teacher.DoesNotExist:
+#         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
+
+#     courses = teacher.subjects_taught.all()  # Assuming ManyToMany to Course
+
+#     return render(request, 'teacher/dashboard/teacher_result_list.html', {
+#         'teacher': teacher,
+#         'courses': courses,
+#     })
+
+
+@login_required
+def teacher_course_results_view(request, course_id):
+    user = request.user
+
+    try:
+        teacher = Teacher.objects.get(user=user)
+    except Teacher.DoesNotExist:
+        return render(request, 'error_page.html', {'message': 'You are not a teacher'})
+
+    course = get_object_or_404(Course, id=course_id)
+
+    if course not in teacher.subjects_taught.all():
+        return render(request, 'error_page.html', {'message': 'Unauthorized access to this course.'})
+
+    results = Result.objects.select_related('student', 'exam').filter(exam__course_name=course.course_name)
+
+    return render(request, 'teacher/dashboard/course_results_detail.html', {
+        'teacher': teacher,
+        'course': course,
+        'results': results,
+    })
+
 
 @login_required
 def teacher_results_view(request):
     user = request.user
 
-    # Check if the user is authenticated
-    if not user.is_authenticated:
-        return redirect('login')  # Redirect to login if user is not authenticated
-
-    # Get the teacher instance associated with the user
     try:
         teacher = Teacher.objects.select_related('user').get(user=user)
     except Teacher.DoesNotExist:
-        # Handle the case where the user is not a teacher
         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
 
-    # Cache key for the teacher's results
-    cache_key = f"teacher_results_{teacher.id}"
-    results = cache.get(cache_key)
+    # Get all courses this teacher teaches
+    courses = teacher.subjects_taught.all()
 
-    if not results:
-        # Get the subjects (Courses) taught by the teacher
-        subjects_taught = teacher.subjects_taught.all()  # This should be related to the "Course" model
+    # Get selected course_id from query params
+    course_id = request.GET.get('course_id')
+    results = None
+    selected_course = None
 
-        # If you want to filter by `course_name`, extract the names:
-        subjects_taught_titles = [course.course_name for course in subjects_taught]
+    if course_id:
+        selected_course = get_object_or_404(Course, id=course_id, teachers=teacher)
+        cache_key = f"teacher_results_{teacher.id}_course_{course_id}"
+        results = cache.get(cache_key)
 
-        # Use actual Course instances in the filter
-        results = Result.objects.select_related('exam', 'student').only(
-                'id', 'marks', 'schools','exam__id', 'exam__course_name', 'student__id'
-            ).filter(exam__course_name__in=subjects_taught_titles)
-        
-        # Cache the results for 5 minutes
-        cache.set(cache_key, results, 60 * 1)
-        logger.info(f"Results cached for teacher {teacher.id}")
-    else:
-        logger.info(f"Results fetched from cache for teacher {teacher.id}")
+        if not results:
+            results = Result.objects.select_related('exam', 'student', 'session', 'term', 'exam_type').filter(exam=selected_course)
+            cache.set(cache_key, results, 60 * 1)
+            logger.info(f"Results cached for teacher {teacher.id} and course {course_id}")
+        else:
+            logger.info(f"Results fetched from cache for teacher {teacher.id} and course {course_id}")
 
     context = {
         'teacher': teacher,
+        'courses': courses,
         'results': results,
+        'selected_course': selected_course,
     }
     return render(request, 'teacher/dashboard/teacher_results.html', context)
+
+# @login_required
+# def teacher_results_view(request):
+#     user = request.user
+
+#     # Check if the user is authenticated
+#     if not user.is_authenticated:
+#         return redirect('login')  # Redirect to login if user is not authenticated
+
+#     # Get the teacher instance associated with the user
+#     try:
+#         teacher = Teacher.objects.select_related('user').get(user=user)
+#     except Teacher.DoesNotExist:
+#         # Handle the case where the user is not a teacher
+#         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
+
+#     # Cache key for the teacher's results
+#     cache_key = f"teacher_results_{teacher.id}"
+#     results = cache.get(cache_key)
+
+#     if not results:
+#         # Get the subjects (Courses) taught by the teacher
+#         subjects_taught = teacher.subjects_taught.all()  # This should be related to the "Course" model
+
+#         # If you want to filter by `course_name`, extract the names:
+#         subjects_taught_titles = [course.course_name for course in subjects_taught]
+
+#         # Use actual Course instances in the filter
+#         results = Result.objects.select_related('exam', 'student').only(
+#                 'id', 'marks', 'schools','exam__id', 'exam__course_name', 'student__id'
+#             ).filter(exam__course_name__in=subjects_taught_titles)
+        
+#         # Cache the results for 5 minutes
+#         cache.set(cache_key, results, 60 * 1)
+#         logger.info(f"Results cached for teacher {teacher.id}")
+#     else:
+#         logger.info(f"Results fetched from cache for teacher {teacher.id}")
+
+#     context = {
+#         'teacher': teacher,
+#         'results': results,
+#     }
+#     return render(request, 'teacher/dashboard/teacher_results.html', context)
+
 
 
 from .forms import ResultEditForm
 
 @login_required
-def edit_teacher_results_view(request, result_id):
+def edit_teacher_results_view(request, course_id, result_id):
     user = request.user
 
-    # Ensure the user is a teacher
+    # Verify teacher access
     try:
         teacher = Teacher.objects.get(user=user)
     except Teacher.DoesNotExist:
         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
 
-    # Fetch the specific result to be edited
-    result = get_object_or_404(Result, id=result_id)
+    # Validate course
+    course = get_object_or_404(Course, id=course_id)
 
-    # Check if the teacher is allowed to edit this result (e.g., if the result is for one of the teacher's subjects)
-    if result.exam.course_name not in [course.course_name for course in teacher.subjects_taught.all()]:
-        return render(request, 'error_page.html', {'message': 'You are not authorized to edit this result.'})
+    # Ensure course is taught by this teacher
+    if course not in teacher.subjects_taught.all():
+        return render(request, 'error_page.html', {'message': 'Unauthorized access to this course.'})
 
-    # Initialize the form with the current data if it's a GET request
+    # Validate and fetch result
+    result = get_object_or_404(Result, id=result_id, exam=course)
+
+    # GET request - load form with result instance
     if request.method == 'GET':
         form = ResultEditForm(instance=result)
 
-    # Handle form submission
-    if request.method == 'POST':
+    # POST request - update the result
+    elif request.method == 'POST':
         form = ResultEditForm(request.POST, instance=result)
         if form.is_valid():
-            # Save the updated result
             form.save()
 
-            # Show success message
-            messages.success(request, f"Result for {result.student} updated successfully!")
-
-            # Clear the cache for the teacher's results to refresh the data
-            cache_key = f"teacher_results_{teacher.id}"
+            # Clear related cache
+            cache_key = f"teacher_results_{teacher.id}_course_{course.id}"
             cache.delete(cache_key)
 
-            # Redirect back to the teacher's result page after updating
-            return redirect('teacher:teacher_results')
+            messages.success(request, f"Result for {result.student.first_name} updated successfully.")
+            return redirect('teacher:teacher_course_results', course_id=course.id)
 
-    # Render the edit result page with the form
-    context = {
+    # Render the edit form template
+    return render(request, 'teacher/dashboard/edit_teacher_results.html', {
         'teacher': teacher,
         'form': form,
         'result': result,
-    }
-    return render(request, 'teacher/dashboard/edit_teacher_results.html', context)
+        'course': course,
+    })
 
 
-def delete_teacher_result_view(request, result_id):
+@login_required
+def delete_teacher_result_view(request, course_id, result_id):
     user = request.user
 
     # Ensure the user is a teacher
@@ -2146,21 +2223,73 @@ def delete_teacher_result_view(request, result_id):
     except Teacher.DoesNotExist:
         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
 
-    # Get the result to be deleted
-    result_to_delete = get_object_or_404(Result, id=result_id)
+    # Validate course
+    course = get_object_or_404(Course, id=course_id)
 
-  
+    # Check if the teacher teaches this course
+    if course not in teacher.subjects_taught.all():
+        return render(request, 'error_page.html', {'message': 'Unauthorized access to this course.'})
+
+    # Get the result to delete
+    result_to_delete = get_object_or_404(Result, id=result_id, exam=course)
+
     # Delete the result
     result_to_delete.delete()
 
-    # Cache key for the teacher's results
-    cache_key = f"teacher_results_{teacher.id}"
-
-    # Delete the cached results
+    # Clear the related cache
+    cache_key = f"teacher_results_{teacher.id}_course_{course.id}"
     cache.delete(cache_key)
 
-    # Redirect back to the results page
-    return redirect(reverse('teacher:teacher_results'))  # Use the correct view name
+    # Redirect back to the course results view
+    return redirect(reverse('teacher:teacher_course_results', args=[course.id]))
+
+
+# @login_required
+# def edit_teacher_results_view(request, result_id):
+#     user = request.user
+
+#     # Ensure the user is a teacher
+#     try:
+#         teacher = Teacher.objects.get(user=user)
+#     except Teacher.DoesNotExist:
+#         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
+
+#     # Fetch the specific result to be edited
+#     result = get_object_or_404(Result, id=result_id)
+
+#     # Check if the teacher is allowed to edit this result (e.g., if the result is for one of the teacher's subjects)
+#     if result.exam.course_name not in [course.course_name for course in teacher.subjects_taught.all()]:
+#         return render(request, 'error_page.html', {'message': 'You are not authorized to edit this result.'})
+
+#     # Initialize the form with the current data if it's a GET request
+#     if request.method == 'GET':
+#         form = ResultEditForm(instance=result)
+
+#     # Handle form submission
+#     if request.method == 'POST':
+#         form = ResultEditForm(request.POST, instance=result)
+#         if form.is_valid():
+#             # Save the updated result
+#             form.save()
+
+#             # Show success message
+#             messages.success(request, f"Result for {result.student} updated successfully!")
+
+#             # Clear the cache for the teacher's results to refresh the data
+#             cache_key = f"teacher_results_{teacher.id}"
+#             cache.delete(cache_key)
+
+#             # Redirect back to the teacher's result page after updating
+#             return redirect('teacher:teacher_results')
+
+#     # Render the edit result page with the form
+#     context = {
+#         'teacher': teacher,
+#         'form': form,
+#         'result': result,
+#     }
+#     return render(request, 'teacher/dashboard/edit_teacher_results.html', context)
+
 
 
 # @login_required
@@ -3107,7 +3236,7 @@ def export_data(request):
 
         # Filter questions based on the selected course IDs
         queryset = Question.objects.filter(course__id__in=selected_courses_ids)
-        print(queryset)  # Debug the queryset
+        # print(queryset)  # Debug the queryset
 
         dataset = resource.export(request=request, queryset=queryset)
         response = HttpResponse(dataset.csv, content_type='text/csv')
@@ -3308,18 +3437,39 @@ def edit_question(request, question_id):
 
 # @cache_page(60 * 5)
 def delete_question_view(request, question_id):
-    # question = get_object_or_404(Question, id=question_id)
     question = get_object_or_404(
         Question.objects.select_related('course').only(
-            'id', 'course__course_name', 'question', 'marks', 'option1', 'option2', 'option3', 'option4', 'answer'
+            'id', 'course__id', 'course__course_name', 'question', 'marks', 'option1', 'option2', 'option3', 'option4', 'answer'
         ),
         id=question_id
     )
+
     if request.method == 'POST':
-        # Handle form submission for deleting the question
+        subject_id = question.course.id  # Get the course/subject ID before deletion
         question.delete()
-        return redirect('teacher:view_questions')  # Redirect to the teacher dashboard after deleting
+        return redirect('teacher:subject_questions', subject_id=subject_id)  # Redirect to subject-specific question list
     else:
-        # Render a confirmation page before deleting the question
         return render(request, 'teacher/dashboard/delete_question.html', {'question': question})
     
+
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+
+from django.shortcuts import redirect
+
+@require_POST
+def bulk_delete_questions_view(request):
+    ids = request.POST.getlist('selected_questions')
+    
+    if ids:
+        # Get the course ID from the first selected question to redirect properly
+        first_question = Question.objects.filter(id__in=ids).first()
+        subject_id = first_question.course.id if first_question else None
+
+        Question.objects.filter(id__in=ids).delete()
+
+        if subject_id:
+            return redirect('teacher:subject_questions', subject_id=subject_id)
+
+    # If no ID or subject found, fallback
+    return redirect('teacher:view_questions')

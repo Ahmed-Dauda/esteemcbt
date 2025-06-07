@@ -5,6 +5,10 @@ from django.contrib.auth.views import LoginView
 app_name = 'teacher'
 
 urlpatterns = [
+    path('questions/bulk-delete/', views.bulk_delete_questions_view, name='bulk_delete_questions'),
+
+    # path('teacher/results/', views.teacher_result_list_view, name='teacher_result_list'),
+    path('teacher/results/<int:course_id>/', views.teacher_course_results_view, name='teacher_course_results'),
 
     path('control/<str:result_class>/<str:subject>/<str:session_name>/<str:term_name>/', views.control_view, name='control'),
     path('control-list/', views.control_list_view, name='control-list'),
@@ -54,8 +58,11 @@ urlpatterns = [
     path('edit/<int:question_id>/', views.edit_question, name='edit_question'),
     path('delete-question/<int:question_id>/', views.delete_question_view, name='delete_question'),
     path('teacher-results/', views.teacher_results_view, name='teacher_results'),
-    path('teacher/results/edit/<int:result_id>/',  views.edit_teacher_results_view, name='edit_teacher_results'),
-    path('teacher/results/delete/<int:result_id>/', views.delete_teacher_result_view, name='delete_teacher_result'),
+    path('teacher/results/edit/<int:course_id>/<int:result_id>/', views.edit_teacher_results_view, name='edit_teacher_results'),
+
+    # path('teacher/results/edit/<int:result_id>/',  views.edit_teacher_results_view, name='edit_teacher_results'),
+    path('teacher/results/delete/<int:course_id>/<int:result_id>/', views.delete_teacher_result_view, name='delete_teacher_result'),
+
     path('export-results-csv/', views.export_results_csv, name='export_results_csv'),
     path('import-results/', views.import_results, name='import-results'),
     path('results/<str:result_class>/<str:subject>/<str:session>/<str:term>/', views.result_column_view, name='result_column_view'),

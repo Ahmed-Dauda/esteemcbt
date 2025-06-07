@@ -45,7 +45,7 @@
 {% if 'MATH' in subject|upper or 'MATHEMATICS' in subject|upper or 'MATHS' in subject|upper %}
 Give me <strong>{{ ai_question_num }}</strong> MCQs and answers for {{ subject.course_name }} on these objectives:
 <strong>{{ learning_objectives }}</strong>.
-Questions and options should be formatted as MathML's tag structure with http://www.w3.org/1998/Math/MathML as shown below:
+Questions and options should be formatted as MathML's tag structure with http://www.w3.org/1998/Math/MathML as shown below with randomize answers:
 
                             [
                             {
@@ -64,7 +64,7 @@ Questions and options should be formatted as MathML's tag structure with http://
 {% elif 'CHEM' in subject|upper or 'CHEMISTRY' in subject|upper or 'CHEMS' in subject|upper %}
 Give me <strong>{{ ai_question_num }}</strong> MCQs and answers for {{ subject.course_name }} on these objectives:
 <strong>{{ learning_objectives }}</strong>.
-Questions and options should be formatted as MathML's tag structure with http://www.w3.org/1998/Math/MathML as shown below:
+Questions and options should be formatted as MathML's tag structure with http://www.w3.org/1998/Math/MathML as shown below with randomize answers:
 
 [
 {
@@ -83,7 +83,7 @@ Questions and options should be formatted as MathML's tag structure with http://
 {% elif 'PHYS' in subject|upper or 'PHYSICS' in subject|upper or 'PHYSIC' in subject|upper %}
 Give me <strong>{{ ai_question_num }}</strong> MCQs and answers for {{ subject.course_name }} on these objectives:
 <strong>{{ learning_objectives }}</strong>.
-Questions and options should be formatted as MathML's tag structure with http://www.w3.org/1998/Math/MathML as shown below:
+Questions and options should be formatted as MathML's tag structure with http://www.w3.org/1998/Math/MathML as shown below with randomize answers:
 
 [
 {
@@ -102,7 +102,7 @@ Questions and options should be formatted as MathML's tag structure with http://
 {% else %}
 Give me <strong>{{ ai_question_num }}</strong> MCQs and answers for {{ subject.course_name }} on these objectives:
 <strong>{{ learning_objectives }}</strong>.
-Questions and options should be formatted as shown below:
+Questions and options should be formatted as shown below with randomize answers:
 
 [
   {

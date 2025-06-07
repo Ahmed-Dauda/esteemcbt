@@ -139,7 +139,7 @@ class SubjectsCreateForm(forms.ModelForm):
         self.fields['question_number'].widget.attrs['readonly'] = True
         self.fields['total_marks'].widget.attrs['readonly'] = False
 
-
+from django.core.exceptions import ValidationError
 
 class CourseSelectionForm(forms.ModelForm):
     class Meta:
@@ -155,15 +155,47 @@ class CourseSelectionForm(forms.ModelForm):
         super(CourseSelectionForm, self).__init__(*args, **kwargs)
         
         if user_school:
-            # Filter the schools field to only show the user's school
             self.fields['schools'].queryset = School.objects.filter(school_name=user_school.school_name)
-            # Filter the course_name field to only show courses associated with the user's school
-            # self.fields['course_name'].queryset = Courses.objects.filter(schools=user_school)
         
-        # Make question_number and total_marks fields read-only by disabling them
         self.fields['question_number'].widget.attrs['readonly'] = True
-        self.fields['total_marks'].widget.attrs['readonly'] = True
-        self.fields['show_questions'].widget.attrs['readonly'] = True
+        self.fields['total_marks'].widget.attrs['readonly'] = False
+        self.fields['show_questions'].widget.attrs['readonly'] = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        total_marks = cleaned_data.get('total_marks')
+        show_questions = cleaned_data.get('show_questions')
+        question_number = cleaned_data.get('question_number')
+
+        # Ensure all fields are present to avoid NoneType errors
+        if total_marks is not None and show_questions is not None and question_number is not None:
+            if total_marks > question_number or show_questions > question_number:
+                raise ValidationError("⚠ Total marks and Show questions must not exceed the Question number.")
+
+
+# class CourseSelectionForm(forms.ModelForm):
+#     class Meta:
+#         model = Course
+#         fields = [
+#             'schools', 'show_questions', 'question_number',
+#             'total_marks', 'num_attemps', 'duration_minutes'
+#         ]
+    
+#     def __init__(self, *args, **kwargs):
+#         user_school = kwargs.pop('user_school', None)
+#         initial = kwargs.pop('initial', None)
+#         super(CourseSelectionForm, self).__init__(*args, **kwargs)
+        
+#         if user_school:
+#             # Filter the schools field to only show the user's school
+#             self.fields['schools'].queryset = School.objects.filter(school_name=user_school.school_name)
+#             # Filter the course_name field to only show courses associated with the user's school
+#             # self.fields['course_name'].queryset = Courses.objects.filter(schools=user_school)
+        
+#         # Make question_number and total_marks fields read-only by disabling them
+#         self.fields['question_number'].widget.attrs['readonly'] = True
+#         self.fields['total_marks'].widget.attrs['readonly'] = False
+#         self.fields['show_questions'].widget.attrs['readonly'] = False
 
 
 

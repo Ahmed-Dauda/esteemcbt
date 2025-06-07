@@ -210,63 +210,87 @@
 </div>
 
 
-<!-- Question Table -->
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold" style="color:black;">Exam Questions</h6>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered" id="dataTable" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th>Course</th>
-                        <th>Question</th>
-                        <th>Image</th>
-                        <th>Marks</th>
-                        <th>Option 1</th>
-                        <th>Option 2</th>
-                        <th>Option 3</th>
-                        <th>Option 4</th>
-                        <th>Answer</th>
-                        <th>Edit</th>
-                        <th>Delete</th>
-                    </tr>
-                </thead>
-                <tbody style="font-size: 12px; font-family: Arial, Helvetica, sans-serif;">
-    {% for question in questions %}
-    <tr>
-        <td>{{ question.course.course_name }}</td>
-        <td>{{ question.question|safe }}</td>
-        <td>
-            {% if question.img_quiz %}
-                <img src="{{ question.img_quiz.url }}" width="50" height="50" alt="Quiz Image">
-            {% else %}
-                <span>No Image</span>
-            {% endif %}
-        </td>
-        <td>{{ question.marks }}</td>
-        <td><div>{{ question.option1|safe }}</div></td>
-        <td><div>{{ question.option2|safe }}</div></td>
-        <td><div>{{ question.option3|safe }}</div></td>
-        <td><div>{{ question.option4|safe }}</div></td>
-        <td><div>{{ question.answer }}</div></td>
-        <td>
-            <a href="{% url 'teacher:edit_question' question.id %}" class="btn btn-primary btn-sm" title="Edit">
-                <i class="fas fa-edit"></i>
-            </a>
-        </td>
-        <td>
-            <a href="{% url 'teacher:delete_question' question.id %}" class="btn btn-danger btn-sm" title="Delete" onclick="return confirm('Are you sure you want to delete this question?');">
-                <i class="fas fa-trash-alt"></i>
-            </a>
-        </td>
-    </tr>
-    {% endfor %}
-</tbody>
+<!-- Bulk Delete Form -->
+<form method="post" action="{% url 'teacher:bulk_delete_questions' %}">
+  {% csrf_token %}
 
-            </table>
-        </div>
+  <!-- Question Table -->
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+      <h6 class="m-0 font-weight-bold text-dark">Exam Questions</h6>
+      <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete selected questions?');">
+        <i class="fas fa-trash"></i> Delete Selected
+      </button>
     </div>
-</div>
+
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-bordered" id="dataTable" cellspacing="0">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="select-all"></th>
+              <th>Course</th>
+              <th>Question</th>
+              <th>Image</th>
+              <th>Marks</th>
+              <th>Option 1</th>
+              <th>Option 2</th>
+              <th>Option 3</th>
+              <th>Option 4</th>
+              <th>Answer</th>
+              <th>Edit</th>
+              <th>Delete</th>
+            </tr>
+          </thead>
+          <tbody style="font-size: 12px; font-family: Arial, Helvetica, sans-serif;">
+            {% for question in questions %}
+              <tr>
+                <td>
+                  <input type="checkbox" name="selected_questions" value="{{ question.id }}">
+                </td>
+                <td>{{ question.course.course_name }}</td>
+                <td>{{ question.question|safe }}</td>
+                <td>
+                  {% if question.img_quiz %}
+                    <img src="{{ question.img_quiz.url }}" width="50" height="50" alt="Quiz Image">
+                  {% else %}
+                    <span>No Image</span>
+                  {% endif %}
+                </td>
+                <td>{{ question.marks }}</td>
+                <td><div>{{ question.option1|safe }}</div></td>
+                <td><div>{{ question.option2|safe }}</div></td>
+                <td><div>{{ question.option3|safe }}</div></td>
+                <td><div>{{ question.option4|safe }}</div></td>
+                <td><div>{{ question.answer }}</div></td>
+                <td>
+                  <a href="{% url 'teacher:edit_question' question.id %}" class="btn btn-primary btn-sm" title="Edit">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                </td>
+                <td>
+                  <a href="{% url 'teacher:delete_question' question.id %}" class="btn btn-danger btn-sm" title="Delete">
+                    <i class="fas fa-trash-alt"></i>
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</form>
+
+<!-- JavaScript for Select All -->
+<script>
+  document.getElementById('select-all').addEventListener('click', function(e) {
+    const checkboxes = document.querySelectorAll('input[name="selected_questions"]');
+    checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+  });
+</script>
+
+<hr>
+
+
 {% endblock %}

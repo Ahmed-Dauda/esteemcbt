@@ -34,13 +34,21 @@ class Course(models.Model):
  
     class Meta:
         # unique_together = ('course_name', 'session', 'term', 'schools')  # Combined Meta classes  
-        unique_together = ('course_name', 'session', 'term', 'schools', 'exam_type')  # Combined Meta classes
+        # unique_together = ('course_name', 'session', 'term', 'schools', 'exam_type')
         verbose_name = 'Exam'
         verbose_name_plural = 'Exams'
         ordering = ['course_name__title']  
  
-    # def __str__(self):
-    #     return f'{self.course_name or "No Course Name" }'
+    def save(self, *args, **kwargs):
+        if self.total_marks != self.show_questions:
+            # Choose the one that changed recently? Or always sync to the max or min?
+            # Here's example: prioritize whichever is bigger
+            if self.total_marks > self.show_questions or self.total_marks < self.show_questions:
+                self.show_questions = self.total_marks
+            else:
+                self.total_marks = self.show_questions
+        super().save(*args, **kwargs)
+
     
     def __str__(self):
         return f'{self.schools} - {self.course_name} - {self.session} - {self.term} - {self.exam_type}'
@@ -121,7 +129,10 @@ from django.dispatch import receiver
 
 class Question(models.Model):
     course = models.ForeignKey('Course', on_delete=models.CASCADE, blank=True, null=True)
-    marks = models.PositiveIntegerField(blank=True, null=True)
+    # marks = models.PositiveIntegerField(blank=True, null=True)
+    marks = models.PositiveIntegerField(null=True,default=1,validators=[MinValueValidator(1), MaxValueValidator(1)],
+        help_text="This field is locked to 1 mark."
+    )
     question = HTMLField(blank=True, null=True)
     img_quiz = CloudinaryField('image', blank=True, null=True)
 
@@ -145,28 +156,56 @@ class Question(models.Model):
     def __str__(self):
         return f"{self.course} | {self.question[:30]}"
 
+    def save(self, *args, **kwargs):
+        self.marks = 1  # Ensure marks is always set to 1
+        super().save(*args, **kwargs)
+        if self.course:
+            total_marks = Question.objects.filter(course=self.course).aggregate(Sum('marks'))['marks__sum'] or 0
+           
+            self.course.question_number = Question.objects.filter(course=self.course).count()
+            # self.course.total_marks = Question.objects.filter(course = self.course).count()
+            self.course.save()
 
-# ✅ Signal functions defined directly below the model
-
-def update_course_fields(course):
-    from .models import Question  # avoid circular imports
-    questions = Question.objects.filter(course=course)
-    total_marks = questions.aggregate(Sum('marks'))['marks__sum'] or 0
-    count = questions.count()
-    course.total_marks = total_marks
-    course.question_number = count
-    course.show_questions = count
-    course.save()
-
-@receiver(post_save, sender=Question)
-def update_course_on_question_save(sender, instance, **kwargs):
-    if instance.course:
-        update_course_fields(instance.course)
+    def delete(self, *args, **kwargs):
+        course = self.course
+        super().delete(*args, **kwargs)
+        if course:
+            # Update question_number after deletion
+            course.question_number = Question.objects.filter(course=course).count()
+            course.save()
 
 @receiver(post_delete, sender=Question)
 def update_course_on_question_delete(sender, instance, **kwargs):
     if instance.course:
         update_course_fields(instance.course)
+
+def update_course_fields(course):
+    questions_count = Question.objects.filter(course=course).count()
+    course.question_number = questions_count
+    course.save()
+
+
+# ✅ Signal functions defined directly below the model
+# for all questions, show questions and total marks
+# def update_course_fields(course):
+#     from .models import Question  # avoid circular imports
+#     questions = Question.objects.filter(course=course)
+#     total_marks = questions.aggregate(Sum('marks'))['marks__sum'] or 0
+#     count = questions.count()
+#     course.total_marks = total_marks
+#     # course.question_number = count
+#     # course.show_questions = count
+#     course.save()
+
+# @receiver(post_save, sender=Question)
+# def update_course_on_question_save(sender, instance, **kwargs):
+#     if instance.course:
+#         update_course_fields(instance.course)
+
+# @receiver(post_delete, sender=Question)
+# def update_course_on_question_delete(sender, instance, **kwargs):
+#     if instance.course:
+#         update_course_fields(instance.course)
 
 
 
@@ -215,11 +254,13 @@ def update_course_on_question_delete(sender, instance, **kwargs):
 
 from django.db import models
 
+
 class Result(models.Model):
     student = models.ForeignKey(Profile, on_delete=models.CASCADE, db_index=True)  # Adding index
     exam = models.ForeignKey(Course, on_delete=models.CASCADE, db_index=True)  # Adding index
     schools = models.ForeignKey(School, on_delete=models.SET_NULL, related_name='courseschool', blank=True, null=True)
     marks = models.PositiveIntegerField()
+    # tab_switch_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     date = models.DateTimeField(auto_now=True)
     result_class = models.CharField(max_length=200, blank=True, null=True, db_index=True)  # Adding index
     session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True)  # ForeignKey to Session model
