@@ -85,14 +85,13 @@ class CoursesResource(resources.ModelResource):
         # fields = ('title',)
 
 
-@admin.action(description="Delete all unused Placeholder Title courses")
+@admin.action(description="Delete unused Placeholder Title courses")
 def delete_unused_placeholder_courses(modeladmin, request, queryset):
-    placeholder_courses = Courses.objects.filter(title="Placeholder Title")
+    placeholder_courses = Course.objects.filter(title="Placeholder Title")
 
     deleted_count = 0
     for course in placeholder_courses:
-        # Skip deletion if course is used in CourseGrade
-        if not course.coursegrade_set.exists():
+        if not course.course_grade.exists():  # Use reverse relation
             course.delete()
             deleted_count += 1
 
