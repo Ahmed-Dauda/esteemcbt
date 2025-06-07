@@ -21,12 +21,27 @@ class SchoolAdmin(admin.ModelAdmin):
 
 admin.site.register(School, SchoolAdmin)
 
+from quiz.models import CourseGrade, Course
+
+@admin.action(description="Delete unused Placeholder Title courses")
+def delete_unused_placeholder_courses(modeladmin, request, queryset):
+    placeholder_courses = Course.objects.filter(course_name="Placeholder Title")
+
+    deleted_count = 0
+    for course in placeholder_courses:
+        if not course.course_grade.exists():  # Use reverse relation
+            course.delete()
+            deleted_count += 1
+
+    modeladmin.message_user(request, f"Deleted {deleted_count} unused Placeholder Title course(s).")
 
 
 class CourseAdmin(admin.ModelAdmin):    
     list_display = ['get_school_name', 'show_questions', 'course_name', 'session','term','exam_type','question_number', 'total_marks', 'num_attemps', 'duration_minutes', 'created']
     search_fields = ['course_name__title', 'schools__school_name','term__name', 'exam_type__name']  # Add search field for course name and school name
     autocomplete_fields = ['schools']
+    actions = [delete_unused_placeholder_courses]
+    
     
     def get_queryset(self, request):
         queryset = super().get_queryset(request)

@@ -84,19 +84,6 @@ class CoursesResource(resources.ModelResource):
         prepopulated_fields = {"slug": ("course_name",)}
         # fields = ('title',)
 
-from quiz.models import CourseGrade, Course
-
-@admin.action(description="Delete unused Placeholder Title courses")
-def delete_unused_placeholder_courses(modeladmin, request, queryset):
-    placeholder_courses = Course.objects.filter(title="Placeholder Title")
-
-    deleted_count = 0
-    for course in placeholder_courses:
-        if not course.course_grade.exists():  # Use reverse relation
-            course.delete()
-            deleted_count += 1
-
-    modeladmin.message_user(request, f"Deleted {deleted_count} unused Placeholder Title course(s).")
 
 
 class CoursesAdmin(ImportExportModelAdmin, ExportActionMixin):
@@ -104,7 +91,6 @@ class CoursesAdmin(ImportExportModelAdmin, ExportActionMixin):
     list_filter = ['title']
     search_fields = ['title']
     ordering = ['title']
-    actions = [delete_unused_placeholder_courses]
      
     resource_class = CoursesResource
 
