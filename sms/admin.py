@@ -84,6 +84,7 @@ class CoursesResource(resources.ModelResource):
         prepopulated_fields = {"slug": ("course_name",)}
         # fields = ('title',)
 
+from quiz.models import CourseGrade, Course
 
 @admin.action(description="Delete unused Placeholder Title courses")
 def delete_unused_placeholder_courses(modeladmin, request, queryset):
