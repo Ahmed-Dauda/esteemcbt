@@ -91,12 +91,13 @@ def delete_unused_placeholder_courses(modeladmin, request, queryset):
 
     deleted_count = 0
     for course in placeholder_courses:
-        # Only delete if the course is not in any CourseGrade
-        if not course.course_grade.exists():  # course.course_grade is the related_name
+        # Skip deletion if course is used in CourseGrade
+        if not course.coursegrade_set.exists():
             course.delete()
             deleted_count += 1
 
-    modeladmin.message_user(request, f"Successfully deleted {deleted_count} unused Placeholder Title course(s).")
+    modeladmin.message_user(request, f"Deleted {deleted_count} unused Placeholder Title course(s).")
+
 
 class CoursesAdmin(ImportExportModelAdmin, ExportActionMixin):
     list_display = ['title', 'created_by', 'session', 'term', 'exam_type', 'display_subjects_school', 'created']
