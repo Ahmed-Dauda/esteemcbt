@@ -11,25 +11,25 @@ class Command(BaseCommand):
         deleted_count = 0
         skipped_count = 0
 
-        for course in placeholder_courses:
-            # Check if it's referenced in Course (quiz.models.Course)
-            in_use = Course.objects.filter(course_name=course).exists()
+        for courses_instance in placeholder_courses:
+            # Check if it's used in any Course (quiz.models.Course)
+            related_courses = Course.objects.filter(course_name=courses_instance)
 
-            if in_use:
-                self.stdout.write(f"SKIPPED: '{course.title}' (ID: {course.id}) is still used in quiz.models.Course.")
+            if related_courses.exists():
+                self.stdout.write(f"SKIPPED: '{courses_instance.title}' (ID: {courses_instance.id}) is used in Course.")
                 skipped_count += 1
                 continue
 
-            # Remove from any CourseGrade M2M relation
-            course_grades = CourseGrade.objects.filter(subjects=course)
-            if course_grades.exists():
-                for cg in course_grades:
-                    cg.subjects.remove(course)
-                    self.stdout.write(f"Removed link to CourseGrade: {cg.name} (ID: {cg.id})")
+            # Remove related Course instances from CourseGrade.subjects
+            for course in Course.objects.filter(course_name=courses_instance):
+                grades = CourseGrade.objects.filter(subjects=course)
+                for grade in grades:
+                    grade.subjects.remove(course)
+                    self.stdout.write(f"Removed Course '{course}' from CourseGrade '{grade.name}'")
 
-            # Now delete the course
-            course.delete()
-            self.stdout.write(self.style.SUCCESS(f"Deleted: '{course.title}' (ID: {course.id})"))
+            # Now safe to delete the Courses entry
+            courses_instance.delete()
+            self.stdout.write(self.style.SUCCESS(f"Deleted placeholder Courses '{courses_instance.title}' (ID: {courses_instance.id})"))
             deleted_count += 1
 
-        self.stdout.write(self.style.SUCCESS(f"Deleted {deleted_count} placeholder courses. Skipped {skipped_count}."))
+        self.stdout.write(self.style.SUCCESS(f"Deleted {deleted_count} placeholder subjects. Skipped {skipped_count}."))
