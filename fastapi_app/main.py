@@ -19,7 +19,7 @@ app = FastAPI()
 # === Middleware ===
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React/Vue etc.
+    allow_origins=["*"],  # React/Vue etc.
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
