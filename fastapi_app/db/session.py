@@ -7,7 +7,7 @@ load_dotenv()
 
 import os
 
-DATABASE_URL = os.getenv("FASTAPI_DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL is not set in the environment!")
