@@ -408,9 +408,22 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+
+# DATABASES = {
+#     'default': env.db()
+# }
+
 DATABASES = {
-    'default': env.db()
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'esteemcbt',
+        'USER': 'esteemuser',
+        'PASSWORD': '0806',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
 }
+
 
 #CLOUDINARY SETTINGS
 cloudinary.config(

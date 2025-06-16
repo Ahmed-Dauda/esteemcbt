@@ -18,7 +18,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.5/js/jquery.dataTables.min.js"></script>
     
-   
+ <!-- Load MathJax for MathML rendering -->
+  
 <style>
 div.quiz p {
   text-align: left;
@@ -182,7 +183,16 @@ div.quiz p {
     color: white !important;
     border-radius: 4px;
   }
+  math {
+  font-size: 1.2em;
+  margin: 0 4px;
+  vertical-align: middle;
+}
+
 </style>
+
+
+<!-- MathJax for math rendering -->
 
 
 <form novalidate autocomplete="off" class="no-copy" id="quizf" action="/student/calculate_marks" onsubmit="return saveAns()" enctype="multipart/form-data"  method="POST">
@@ -269,7 +279,7 @@ div.quiz p {
                             id="option1-{{ forloop.counter }}" 
                             value="Option1" required>
                         <label for="option1-{{ forloop.counter }}">
-                            {{ q.option1|safe|striptags }}
+                            {{ q.option1|safe }}
                         </label>
                     </div>
                 </div>
@@ -284,7 +294,7 @@ div.quiz p {
                             id="option2-{{ forloop.counter }}" 
                             value="Option2" required>
                         <label for="option2-{{ forloop.counter }}">
-                            {{ q.option2|safe|striptags }}
+                            {{ q.option2|safe }}
                         </label>
                     </div>
                 </div>
@@ -299,7 +309,7 @@ div.quiz p {
                             id="option3-{{ forloop.counter }}" 
                             value="Option3" required>
                         <label for="option3-{{ forloop.counter }}">
-                            {{ q.option3|safe|striptags }}
+                            {{ q.option3|safe }}
                         </label>
                     </div>
                 </div>
@@ -314,7 +324,7 @@ div.quiz p {
                             id="option4-{{ forloop.counter }}" 
                             value="Option4" required>
                         <label for="option4-{{ forloop.counter }}">
-                            {{ q.option4|safe|striptags }}
+                            {{ q.option4|safe }}
                         </label>
                     </div>
                 </div>
@@ -390,11 +400,211 @@ div.quiz p {
     </div>
 </div>
 
-<video id="proctorVideo" width="320" height="240" autoplay muted></video>
-<div id="alarm" style="display:none; color: red; font-weight: bold; font-size: 1.5em;"></div>
 
-<br><br>
+<!-- Calculator UI -->
+ <!-- TOGGLE BUTTON -->
+<button onclick="toggleCalculator()" style="position: fixed; top: 10px; right: 10px; z-index: 9999;">Calculator</button>
 
+
+<div id="calculator" style="
+  position: fixed;
+  top: 50px;
+  right: 10px;
+  width: 260px;
+  background-color: #f8f9fa;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  display: none;
+  z-index: 9999;
+  font-family: Arial, sans-serif;
+">
+
+
+  <div id="calc-header" style="
+    cursor: move;
+    padding: 4px 8px;
+    background: #007bff;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 6px 6px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  ">
+    <span>Calc</span>
+    <button onclick="toggleCalculator()" style="
+      background: none;
+      border: none;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+    " title="Close">✖</button>
+  </div>
+
+
+  <input type="text" id="calc-display" style="
+    width: 100%;
+    font-size: 16px;
+    padding: 6px;
+    box-sizing: border-box;
+    border: none;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    outline: none;
+  " readonly>
+
+
+  <div style="padding: 6px;">
+    <div>
+      <button onclick="appendCalc('7')">7</button>
+      <button onclick="appendCalc('8')">8</button>
+      <button onclick="appendCalc('9')">9</button>
+      <button onclick="appendCalc('/')">÷</button>
+    </div>
+    <div>
+      <button onclick="appendCalc('4')">4</button>
+      <button onclick="appendCalc('5')">5</button>
+      <button onclick="appendCalc('6')">6</button>
+      <button onclick="appendCalc('*')">×</button>
+    </div>
+    <div>
+      <button onclick="appendCalc('1')">1</button>
+      <button onclick="appendCalc('2')">2</button>
+      <button onclick="appendCalc('3')">3</button>
+      <button onclick="appendCalc('-')">−</button>
+    </div>
+    <div>
+      <button onclick="appendCalc('0')">0</button>
+      <button onclick="appendCalc('.')">.</button>
+      <button onclick="calculate()">=</button>
+      <button onclick="appendCalc('+')">+</button>
+    </div>
+    <div>
+      <button onclick="clearCalc()">C</button>
+      <button onclick="appendCalc('(')">(</button>
+      <button onclick="appendCalc(')')">)</button>
+      <button onclick="toggleScientific()">Sci</button>
+    </div>
+
+
+    <div id="scientific" style="display: none; margin-top: 6px;">
+      <button onclick="appendCalc('Math.sqrt(')">√</button>
+      <button onclick="appendCalc('Math.pow(')">xʸ</button>
+      <button onclick="appendCalc('Math.sin(')">sin</button>
+      <button onclick="appendCalc('Math.cos(')">cos</button>
+      <button onclick="appendCalc('Math.tan(')">tan</button>
+      <button onclick="appendCalc('Math.log(')">log</button>
+      <button onclick="appendCalc('Math.PI')">π</button>
+      <button onclick="appendCalc('Math.E')">e</button>
+    </div>
+  </div>
+</div>
+
+
+<style>
+  #calculator button {
+    width: 48px;
+    height: 36px;
+    margin: 2px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+  }
+
+  #calculator button:hover {
+    background-color: #e9ecef;
+  }
+</style>
+
+
+<script>
+  function toggleCalculator() {
+    const calc = document.getElementById('calculator');
+    calc.style.display = (calc.style.display === 'none' || calc.style.display === '') ? 'block' : 'none';
+  }
+
+  function appendCalc(value) {
+    const display = document.getElementById('calc-display');
+    display.value += value;
+  }
+
+  function clearCalc() {
+    document.getElementById('calc-display').value = '';
+  }
+
+  function calculate() {
+    const display = document.getElementById('calc-display');
+    try {
+      display.value = eval(display.value);
+    } catch {
+      display.value = 'Error';
+    }
+  }
+
+  function toggleScientific() {
+    const sci = document.getElementById('scientific');
+    sci.style.display = (sci.style.display === 'none' || sci.style.display === '') ? 'block' : 'none';
+  }
+
+
+  document.addEventListener('keydown', function (e) {
+    const display = document.getElementById('calc-display');
+    if (document.getElementById('calculator').style.display === 'none') return;
+
+    if (
+      (e.key >= '0' && e.key <= '9') ||
+      ['+', '-', '*', '/', '.', '(', ')'].includes(e.key)
+    ) {
+      display.value += e.key;
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      calculate();
+    } else if (e.key === 'Backspace') {
+      display.value = display.value.slice(0, -1);
+    } else if (e.key === 'Escape') {
+      clearCalc();
+    }
+  });
+
+  // DRAGGING
+  dragElement(document.getElementById("calculator"));
+
+  function dragElement(elmnt) {
+    const header = document.getElementById("calc-header");
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+    if (header) {
+      header.onmousedown = dragMouseDown;
+    }
+
+    function dragMouseDown(e) {
+      e.preventDefault();
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      document.onmouseup = closeDragElement;
+      document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+      e.preventDefault();
+      pos1 = pos3 - e.clientX;
+      pos2 = pos4 - e.clientY;
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+      elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+      document.onmouseup = null;
+      document.onmousemove = null;
+    }
+  }
+</script>
 
 
 <script>
