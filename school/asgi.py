@@ -18,21 +18,21 @@ https://docs.djangoproject.com/en/3.2/howto/deployment/asgi/
 
 
 # This file is used to configure the ASGI application for the Django project.
+# school/asgi.py
+
 import os
 import django
+from fastapi import FastAPI
+from fastapi_app.main import app as fastapi_app
+from django.core.asgi import get_asgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "school.settings")
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'school.settings')
 django.setup()
 
-from django.core.asgi import get_asgi_application
-from starlette.middleware.wsgi import WSGIMiddleware
-from starlette.routing import Mount
-from starlette.applications import Starlette
-from fastapi_app.main import app as fastapi_app
+# Django ASGI app
+django_asgi_app = get_asgi_application()
 
-application = Starlette(
-    routes=[
-        Mount("/fastapi", app=fastapi_app),  # FastAPI mounted here
-        Mount("/", app=WSGIMiddleware(get_asgi_application())),
-    ]
-)
+# Combine both
+main_app = FastAPI()
+main_app.mount("/api", fastapi_app)     # FastAPI routes
+main_app.mount("/", django_asgi_app)    # Django routes
