@@ -7,18 +7,18 @@ load_dotenv()
 
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+# DATABASE_URL = os.getenv("DATABASE_URL")
 
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL is not set in the environment!")
+# if not DATABASE_URL:
+#     raise ValueError("DATABASE_URL is not set in the environment!")
 
 
-# DATABASE_URL = "postgresql+asyncpg://esteemuser:0806@localhost/esteemcbt"
+DATABASE_URL = "postgresql+asyncpg://esteemuser:0806@localhost/esteemcbt"
 
 
 # Async Engine
 async_engine = create_async_engine(DATABASE_URL, echo=True)
-
+ 
 # Session factory
 AsyncSessionLocal = sessionmaker(
     bind=async_engine,
