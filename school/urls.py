@@ -32,7 +32,7 @@ from fastapi_app.fastapi_asgi import app as fastapi_app
 from django.http import HttpResponseNotFound
 
 # Django + FastAPI integration
-from django_asgi_app.asgi import get_asgi_application
+
 from starlette.middleware.wsgi import WSGIMiddleware
 from fastapi.middleware.wsgi import WSGIMiddleware as FastAPIWsgiMiddleware
 
@@ -49,7 +49,6 @@ from django.http import HttpResponse
 
 # Set up FastAPI for /api/ path
 from django.urls import path
-from django.conf.urls import url
 from django.views.generic import RedirectView
 
 from fastapi.middleware.wsgi import WSGIMiddleware
@@ -59,7 +58,7 @@ from fastapi.middleware.wsgi import WSGIMiddleware
 
 urlpatterns = [  
     path('api/', WSGIMiddleware(fastapi_app)), 
-    
+
     path('admin/', admin.site.urls),
     path('', include('sms.urls')),
     path('student/', include('student.urls')),
