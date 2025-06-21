@@ -100,20 +100,21 @@
                                     <span class="text-muted">No students assigned</span>
                                 {% endfor %}
                             </td>
-<td class="align-middle">
-    {% with course_grade.subjects.all as subjects %}
-        {% if subjects %}
-            {% for subject in subjects %}
-                {{ subject.course_name }} |
-                {{ subject.term.name }} |
-                {{ subject.session.name }} |
-                {{ subject.exam_type.name }}<br>
-            {% endfor %}
-        {% else %}
-            <span class="text-muted">No subjects assigned</span>
-        {% endif %}
-    {% endwith %}
-</td>
+                <td class="align-middle">
+                    {% with course_grade.subjects.all as subjects %}
+                        {% if subjects %}
+                            {% for subject in subjects %}
+                                {{ subject.schools.school_name }} |
+                                {{ subject.course_name }} |
+                                {{ subject.session.name }} |
+                                {{ subject.term.name }} |
+                                {{ subject.exam_type.name }}<br>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-muted">No subjects assigned</span>
+                        {% endif %}
+                    {% endwith %}
+                </td>
 
                             <!-- <td class="align-middle">
                                 {% for subject in course_grade.subjects.all %}

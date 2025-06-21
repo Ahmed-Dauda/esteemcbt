@@ -1448,6 +1448,14 @@ def examiner_dashboard_view(request):
         schools=user_school
     ).prefetch_related('students', 'subjects')
 
+    # 🔍 DEBUGGING: Check assigned subjects
+    for cg in course_grades:
+        print(f"Class: {cg.name}")
+        print("Subjects:")
+        for subject in cg.subjects.all():
+            print(f"- {subject.schools.school_name} | {subject.course_name} | {subject.session.name} | {subject.term.name} | {subject.exam_type.name}")
+        print("-----")
+
     context = {
         'course_grades': course_grades,
     }
