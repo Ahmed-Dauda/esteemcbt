@@ -1470,22 +1470,23 @@ def edit_coursegrade_view(request, pk):
     user_school = user.school
 
     course_grade = get_object_or_404(
-        CourseGrade.objects.prefetch_related('students', 'subjects'), 
+        CourseGrade.objects.prefetch_related('students', 'subjects'),
         pk=pk,
-        schools=user_school  # Optional safety check to prevent cross-school editing
+        schools=user_school  # Ensures teachers can't access other schools' data
     )
 
     if request.method == 'POST':
         form = CourseGradeForm(request.POST, instance=course_grade, user_school=user_school)
         if form.is_valid():
             form.save()
+            messages.success(request, "Course grade updated successfully.")
             return redirect('teacher:examiner_dashboard')
     else:
         form = CourseGradeForm(instance=course_grade, user_school=user_school)
 
     context = {
         'form': form,
-        'course_grade': course_grade,  # ✅ add this
+        'course_grade': course_grade,
     }
 
     return render(request, 'teacher/dashboard/edit_coursegrade.html', context)

@@ -43,7 +43,7 @@
     <h5 class="text-center">Currently Assigned Subjects:</h5>
     <ul class="list-group">
       {% for subject in course_grade.subjects.all %}
-        <li class="list-group-item">{{ subject.title }}</li>
+        <li class="list-group-item">{{ subject.course_name }}</li>
       {% endfor %}
     </ul>
   </div>
