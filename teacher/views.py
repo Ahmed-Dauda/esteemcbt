@@ -1439,26 +1439,40 @@ from django.contrib.auth.decorators import login_required
 
 #         return render(request, 'teacher/dashboard/examiner_dashboard.html', context)
 
-
 @login_required(login_url='teacher:teacher_login')
 def examiner_dashboard_view(request):
- 
-    # Check if the user is authenticated
-    if request.user.is_authenticated:
-        # user = NewUser.objects.get(id=request.user.id)
-        user = NewUser.objects.select_related('school').get(id=request.user.id)
-        user_school = user.school
-     
-        # Filter CourseGrade objects based on the user's school
-        course_grades = CourseGrade.objects.filter(
-                students__school=user_school
-            ).distinct().prefetch_related('students', 'subjects')
-        
-        context = {     
-            'course_grades': course_grades,
-        }
+    user = NewUser.objects.select_related('school').get(id=request.user.id)
+    user_school = user.school
 
-        return render(request, 'teacher/dashboard/examiner_dashboard.html', context)
+    course_grades = CourseGrade.objects.filter(
+        schools=user_school
+    ).prefetch_related('students', 'subjects')
+
+    context = {
+        'course_grades': course_grades,
+    }
+
+    return render(request, 'teacher/dashboard/examiner_dashboard.html', context)
+
+# @login_required(login_url='teacher:teacher_login')
+# def examiner_dashboard_view(request):
+ 
+#     # Check if the user is authenticated
+#     if request.user.is_authenticated:
+#         # user = NewUser.objects.get(id=request.user.id)
+#         user = NewUser.objects.select_related('school').get(id=request.user.id)
+#         user_school = user.school
+     
+#         # Filter CourseGrade objects based on the user's school
+#         course_grades = CourseGrade.objects.filter(
+#                 students__school=user_school
+#             ).distinct().prefetch_related('students', 'subjects')
+        
+#         context = {     
+#             'course_grades': course_grades,
+#         }
+
+#         return render(request, 'teacher/dashboard/examiner_dashboard.html', context)
 
 
 from .forms import CourseGradeForm 
