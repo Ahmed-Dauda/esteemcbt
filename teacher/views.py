@@ -1449,7 +1449,7 @@ def examiner_dashboard_view(request):
         schools=user_school
     ).prefetch_related('students', 'subjects')
 
-    # 🔍 DEBUGGING: Check assigned subjects
+    # 🔍 DEBUGGING: Check assigned subject
     for cg in course_grades:
         print(f"Class: {cg.name}")
         print("Subjects:")
