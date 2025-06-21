@@ -1454,6 +1454,7 @@ def examiner_dashboard_view(request):
 
     return render(request, 'teacher/dashboard/examiner_dashboard.html', context)
 
+
 # @login_required(login_url='teacher:teacher_login')
 # def examiner_dashboard_view(request):
  

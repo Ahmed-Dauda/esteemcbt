@@ -100,13 +100,26 @@
                                     <span class="text-muted">No students assigned</span>
                                 {% endfor %}
                             </td>
-                            <td class="align-middle">
+<td class="align-middle">
+    {% with course_grade.subjects.all as subjects %}
+        {% if subjects %}
+            {% for subject in subjects %}
+                {{ subject.course_name }} | {{ subject.term }} | {{ subject.session }} | {{ subject.exam_type }}<br>
+            {% endfor %}
+        {% else %}
+            <span class="text-muted">No subjects assigned</span>
+        {% endif %}
+    {% endwith %}
+</td>
+
+                            <!-- <td class="align-middle">
                                 {% for subject in course_grade.subjects.all %}
                                     {{ subject.course_name }} | {{ subject.term }} | {{ subject.session }} | {{ subject.exam_type }}<br>
                                 {% empty %}
                                     <span class="text-muted">No subjects assigned</span>
                                 {% endfor %}
                             </td>
+                             -->
                             <td class="align-middle text-center">
                                 <a href="{% url 'teacher:edit_coursegrade' course_grade.id %}" class="btn btn-sm btn-info mb-1">Edit</a>
                                 <a href="{% url 'teacher:delete_coursegrade' course_grade.id %}" class="btn btn-sm btn-danger mb-1">Delete</a>
