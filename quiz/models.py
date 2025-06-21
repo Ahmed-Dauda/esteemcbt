@@ -278,13 +278,13 @@ class Result(models.Model):
     def __str__(self):
         return f"{self.student}---{self.exam.course_name}---{self.exam_type}---{self.marks}"
 
-class ExamsRules(models.Model):
-    # school_name = models.ForeignKey(
-    #     School, on_delete=models.SET_NULL,
-    #     related_name='examrules', blank=True, null=True
-    # )
-    rules = models.TextField(blank=True, null=True)
-    action = models.TextField(blank=True, null=True)
-    created = models.DateTimeField(auto_now_add=True, null=True)
-    updated = models.DateTimeField(auto_now=True, null=True)
-    id = models.AutoField(primary_key=True)
+# class ExamsRules(models.Model):
+#     # school_name = models.ForeignKey(
+#     #     School, on_delete=models.SET_NULL,
+#     #     related_name='examrules', blank=True, null=True
+#     # )
+#     rules = models.TextField(blank=True, null=True)
+#     action = models.TextField(blank=True, null=True)
+#     created = models.DateTimeField(auto_now_add=True, null=True)
+#     updated = models.DateTimeField(auto_now=True, null=True)
+#     id = models.AutoField(primary_key=True)

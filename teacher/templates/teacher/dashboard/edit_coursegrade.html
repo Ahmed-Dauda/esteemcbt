@@ -4,38 +4,6 @@
 
 {% load crispy_forms_tags %}
 
-
-    <title>Edit Course Grade</title>
-
-
-    <h1 class="text-center my-4">Edit Subjects and Students</h1>
-
-    <form method="post" class="container">
-        {% csrf_token %}
-        <div class="row justify-content-center">
-            <div class="form-group col-md-6 mb-4">
-                <label class="form-label font-weight-bold">Students</label>
-                <div class="checkbox-group">
-                    {{ form.students|as_crispy_field }}
-                </div>
-            </div>
-            <div class="form-group col-md-6 mb-4">
-                <label class="form-label font-weight-bold">Subjects</label>
-                <div class="checkbox-group">
-                 {{ form.subjects|as_crispy_field }}
-                </div>
-            </div>
-        </div>
-    
-        <div class="form-group text-center mt-4">
-            <button type="submit" class="btn btn-primary btn-lg">Save Changes</button>
-        </div>
-    </form>
-    
-    <div class="text-center mt-3">
-        <a href="{% url 'teacher:examiner_dashboard' %}" class="btn btn-secondary">Cancel</a>
-    </div>
-    
     <style>
         h1 {
             font-size: 2.5rem;
@@ -104,6 +72,38 @@
             color: #495057;
         }
     </style>
+
+    <title>Edit Course Grade</title>
+
+
+    <h1 class="text-center my-4">Edit Subjects and Students</h1>
+
+    <form method="post" class="container">
+        {% csrf_token %}
+        <div class="row justify-content-center">
+            <div class="form-group col-md-6 mb-4">
+                <label class="form-label font-weight-bold">Students</label>
+                <div class="checkbox-group">
+                    {{ form.students|as_crispy_field }}
+                </div>
+            </div>
+            <div class="form-group col-md-6 mb-4">
+                <label class="form-label font-weight-bold">Subjects</label>
+                <div class="checkbox-group">
+                 {{ form.subjects|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+    
+        <div class="form-group text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-lg">Save Changes</button>
+        </div>
+    </form>
+    
+    <div class="text-center mt-3">
+        <a href="{% url 'teacher:examiner_dashboard' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+    
         
 
     {% endblock %}

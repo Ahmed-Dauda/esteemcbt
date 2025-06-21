@@ -4,7 +4,7 @@ from import_export.admin import ImportExportModelAdmin, ExportActionMixin
 from import_export import fields,resources
 from import_export.widgets import ForeignKeyWidget
 from users.models import Profile
-from quiz.models import (Question, Course, Result,School,ExamsRules)
+from quiz.models import (Question, Course, Result,School)
 from import_export import fields, resources
 from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from .models import Question, Course, Session, Term, ExamType  # Import required models
@@ -14,12 +14,12 @@ from .models import CourseGrade
 from quiz.forms import CourseGradeForm
 from django.contrib import admin
 
-class ExamsResultsAdmin(admin.ModelAdmin):
+# class ExamsResultsAdmin(admin.ModelAdmin):
 
-    list_display = ['rules','created', 'updated']
-    search_fields = ['rules']  # Add search field for course name
+#     list_display = ['rules','created', 'updated']
+#     search_fields = ['rules']  # Add search field for course name
 
-admin.site.register(ExamsRules, ExamsResultsAdmin)
+# admin.site.register(ExamsRules, ExamsResultsAdmin)
 
   
 class SchoolAdmin(admin.ModelAdmin):

@@ -1,3 +1,0 @@
-course,marks,question,img_quiz,option1,option2,option3,option4,answer
-Math,10,What is 2+2?,,&lt;math&gt;&lt;mi&gt;2&lt;/mi&gt;&lt;mo&gt;+&lt;/mo&gt;&lt;mi&gt;2&lt;/mi&gt;&lt;/math&gt;,5,3,1,4
-Physics,8,Solve x^2 = 4,,&lt;math&gt;&lt;mi&gt;x&lt;/mi&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;mn&gt;2&lt;/mn&gt;&lt;/math&gt;,-2,0,4,2

@@ -24,40 +24,10 @@ from debug_toolbar.toolbar import debug_toolbar_urls
 
 # django_project/urls.py
 
-# esteemcbt/urls.py or your project-level urls.py
-from django.contrib import admin
-from django.urls import path, re_path
-from django.views.generic import TemplateView
-from fastapi_app.fastapi_asgi import app as fastapi_app
-from django.http import HttpResponseNotFound
-
-# Django + FastAPI integration
-
-from starlette.middleware.wsgi import WSGIMiddleware
-from fastapi.middleware.wsgi import WSGIMiddleware as FastAPIWsgiMiddleware
-
-from django.core.asgi import get_asgi_application
-from starlette.middleware import Middleware
-from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.sessions import SessionMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-
-from django.urls import re_path
-from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import View
-from django.http import HttpResponse
-
-# Set up FastAPI for /api/ path
-from django.urls import path
-from django.views.generic import RedirectView
-
-from fastapi.middleware.wsgi import WSGIMiddleware
-
-
 
 
 urlpatterns = [  
-    path('api/', WSGIMiddleware(fastapi_app)), 
+    # path('api/', WSGIMiddleware(fastapi_app)), 
 
     path('admin/', admin.site.urls),
     path('', include('sms.urls')),
