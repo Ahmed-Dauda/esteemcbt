@@ -1439,6 +1439,7 @@ from django.contrib.auth.decorators import login_required
 
 #         return render(request, 'teacher/dashboard/examiner_dashboard.html', context)
 
+
 @login_required(login_url='teacher:teacher_login')
 def examiner_dashboard_view(request):
     user = NewUser.objects.select_related('school').get(id=request.user.id)

@@ -104,6 +104,7 @@
                     {% with course_grade.subjects.all as subjects %}
                         {% if subjects %}
                             {% for subject in subjects %}
+                            <h1>test: {{ subject.course_name}}</h1>
                                 {{ subject.schools.school_name }} |
                                 {{ subject.course_name.title }} |
                                 {{ subject.session.name }} |
