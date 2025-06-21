@@ -104,7 +104,10 @@
     {% with course_grade.subjects.all as subjects %}
         {% if subjects %}
             {% for subject in subjects %}
-                {{ subject.course_name }} | {{ subject.term }} | {{ subject.session }} | {{ subject.exam_type }}<br>
+                {{ subject.course_name }} |
+                {{ subject.term.name }} |
+                {{ subject.session.name }} |
+                {{ subject.exam_type.name }}<br>
             {% endfor %}
         {% else %}
             <span class="text-muted">No subjects assigned</span>
