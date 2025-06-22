@@ -145,12 +145,12 @@
            
             {% if request.user.is_authenticated and request.user.is_superuser %}
             {% if teacher_school|lower == user_school|lower %}
-            <li class="nav-item">
+            <!-- <li class="nav-item">
                 <a class="nav-link" href="{% url 'student:examiner-report-card-list' %}">
                     <i class="fas fa-fw fa-book"></i>
                     <span>Report Card List</span>
                 </a>
-             </li>
+             </li> -->
              {% endif %}
              {% endif %} 
 
