@@ -3,71 +3,6 @@
 {% block title %}Manage Students{% endblock %}
 
 {% block content %}
-<style>
-    .card-header {
-        background-color: #007bff;
-        color: #fff;
-        font-size: 1.5rem;
-        padding: 1rem;
-        border-bottom: 2px solid #0056b3;
-    }
-
-    .thead-dark th {
-        background-color: #343a40;
-        color: #fff;
-        text-align: center;
-    }
-
-    .align-middle {
-        vertical-align: middle !important;
-    }
-
-    .btn-info {
-        background-color: #17a2b8;
-        border-color: #17a2b8;
-    }
-
-    .btn-info:hover {
-        background-color: #138496;
-        border-color: #117a8b;
-    }
-
-    .btn-danger {
-        background-color: #dc3545;
-        border-color: #dc3545;
-    }
-
-    .btn-danger:hover {
-        background-color: #c82333;
-        border-color: #bd2130;
-    }
-
-    .text-center {
-        text-align: center !important;
-    }
-
-    @media (max-width: 768px) {
-        .card-header h5 {
-            font-size: 1.25rem;
-        }
-
-        .table th, .table td {
-            font-size: 0.875rem;
-        }
-
-        .btn-sm {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-        }
-    }
-</style>
-
-<!-- Top Buttons -->
-<div class="d-flex justify-content-center gap-3 flex-wrap mt-4 mb-3">
-    <a href="{% url 'quiz:move_group' %}" class="btn btn-success">Promote Students</a>
-    <a href="{% url 'users:schoolstudentview' %}" class="btn btn-success">Add Students</a>
-    <a href="{% url 'student:student_list' %}" class="btn btn-success">Students List</a>
-</div>
 
 <!-- Card Section -->
 <div class="card shadow-sm mb-4">
@@ -78,20 +13,17 @@
 
 <hr style="color: black;">
 
-{% with course_grade.subjects.all as subjects %}
-                        {% if subjects %}
-                            {% for subject in subjects %}
-                            <h1>test: {{ subject}}</h1>
-                                {{ subject.schools.school_name }} |
-                                {{ subject.course_name.title }} |
-                                {{ subject.session.name }} |
-                                {{ subject.term.name }} |
-                                {{ subject.exam_type.name }}<br>
-                            {% endfor %}
-                        {% else %}
-                            <span class="text-muted">No subjects assigned</span>
-                        {% endif %}
-                    {% endwith %}
+{% for course_grade in course_grades %}
+    <h2>Class: {{ course_grade.name }}</h2>
 
-                    <h1>ggggggggggggggg</h1>
+    {% for subject in course_grade.subjects.all %}
+        <h4>Subject: {{ subject }}</h4>
+    {% empty %}
+        <p class="text-muted">No subjects assigned.</p>
+    {% endfor %}
+{% endfor %}
+
+
+<h1>ggggggggggggggg</h1>
+
 {% endblock %}
