@@ -251,10 +251,14 @@ MIDDLEWARE = [
 
 ]
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'  # or your Redis cloud URL
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+import os
+from celery.schedules import crontab
+
+# Redis config for Celery
+CELERY_BROKER_URL = os.environ.get('REDISCLOUD_URL', 'redis://localhost:6379')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL  # Optional if you want result backend
 
 
 CSRF_COOKIE_SECURE=False
