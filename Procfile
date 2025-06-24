@@ -1,6 +1,6 @@
 # web: gunicorn school.wsgi --log-file -
 
-web: gunicorn school.wsgi --workers 3 --timeout 30
+web: gunicorn school.wsgi --workers 1 --timeout 30
 
 worker: celery -A school worker --loglevel=info
 
