@@ -15,13 +15,17 @@ from quiz.forms import CourseGradeForm
 from django.contrib import admin
 from quiz.models import StudentAnswer
 
+@admin.register(StudentAnswer)
 class StudentAnswerAdmin(admin.ModelAdmin):
-
-    list_display = ['result','question', 'selected_answer','is_correct','submitted_at']
-    search_fields = ['result']  # Add search field for course name
-
-admin.site.register(StudentAnswer, StudentAnswerAdmin)
-
+    list_display = ('result', 'question', 'selected_answer', 'is_correct', 'submitted_at')
+    list_filter = ('is_correct', 'submitted_at')
+    search_fields = ('result__student__user__email', 'question__question')
+    
+    def get_queryset(self, request):
+        # Use select_related to avoid N+1 issues
+        qs = super().get_queryset(request)
+        return qs.select_related('result__student__user', 'question')
+    
   
 class SchoolAdmin(admin.ModelAdmin):
 
