@@ -2,7 +2,7 @@
 
 web: gunicorn school.wsgi --workers 1 --timeout 30
 
-worker: celery -A school worker --loglevel=info
+worker: celery -A school worker --loglevel=info --concurrency=1 --max-tasks-per-child=50 -P eventlet
 
 #flower: celery -A school flower --port=5555
 
