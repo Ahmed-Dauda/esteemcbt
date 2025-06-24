@@ -13,13 +13,14 @@ from django.db.models import Prefetch
 from .models import CourseGrade
 from quiz.forms import CourseGradeForm
 from django.contrib import admin
+from quiz.models import StudentAnswer
 
-# class ExamsResultsAdmin(admin.ModelAdmin):
+class StudentAnswerAdmin(admin.ModelAdmin):
 
-#     list_display = ['rules','created', 'updated']
-#     search_fields = ['rules']  # Add search field for course name
+    list_display = ['result','question', 'selected_answer','is_correct','submitted_at']
+    search_fields = ['result']  # Add search field for course name
 
-# admin.site.register(ExamsRules, ExamsResultsAdmin)
+admin.site.register(StudentAnswer, StudentAnswerAdmin)
 
   
 class SchoolAdmin(admin.ModelAdmin):

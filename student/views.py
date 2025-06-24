@@ -3968,46 +3968,148 @@ from django.http import JsonResponse
 
 from django.db.models import F
 
-   
-@login_required
-def calculate_marks_view(request):
-    if request.COOKIES.get('course_id') is not None:
-        course_id = request.COOKIES.get('course_id')
-        course = QMODEL.Course.objects.get(id=course_id)
-        
-        total_marks = 0
-        questions = QMODEL.Question.objects.filter(course=course).order_by('id')
-        
-        if request.body:
-            json_data = json.loads(request.body)
-            for i, question in enumerate(questions, start=1):
-                selected_ans = json_data.get(str(i))
-                actual_answer = question.answer
-                if selected_ans == actual_answer:
-                    total_marks += question.marks
-        
-        student = Profile.objects.get(user_id=request.user.id)
 
-        try:
-            # Create a new result, or raise IntegrityError if it already exists
-            QMODEL.Result.objects.create(
-                schools = course.schools,
-                marks=total_marks,
-                exam=course,
-                session=course.session,
-                term=course.term,
-                exam_type=course.exam_type,
-                student=student,
-                result_class=student.student_class
-            )
-            return JsonResponse({'success': True, 'message': 'Marks calculated and saved successfully.'})
-        
-        except IntegrityError:
-            # If the result already exists, return an appropriate response
-            return JsonResponse({'success': False, 'error': 'Result already exists.'})
+
+from django.db import transaction
+
+from student.tasks import save_result_and_answers  # 👈 import your celery task
+
+from quiz.models import StudentAnswer
+from django.db import transaction
     
-    else:
+from student.tasks import save_result_and_answers  # import your task
+
+@login_required
+@csrf_exempt
+def calculate_marks_view(request):
+    course_id = request.COOKIES.get('course_id')
+    if not course_id:
         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
+
+    try:
+        course = QMODEL.Course.objects.select_related(
+            'schools', 'course_name', 'session', 'term', 'exam_type'
+        ).get(id=course_id)
+    except QMODEL.Course.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Course not found.'})
+
+    questions = QMODEL.Question.objects.filter(course=course).order_by('id')
+    total_marks = 0
+    answers_dict = {}
+
+    if request.body:
+        json_data = json.loads(request.body)
+        for i, question in enumerate(questions, start=1):
+            selected_ans = json_data.get(str(i))
+            correct_ans = question.answer
+            if selected_ans == correct_ans:
+                total_marks += question.marks or 0
+
+            answers_dict[question.id] = {
+                'selected': selected_ans,
+                'correct': correct_ans
+            }
+
+    # Call the task asynchronously
+    save_result_and_answers.delay(
+        user_id=request.user.id,
+        course_id=course.id,
+        total_marks=total_marks,
+        answers_dict=answers_dict
+    )
+
+    return JsonResponse({'success': True, 'message': 'Quiz submitted. Result is being processed in the background.'})
+
+
+# @login_required
+# @csrf_exempt  # Only needed if you're doing raw JS POST without CSRF token
+# def calculate_marks_view(request):
+#     course_id = request.COOKIES.get('course_id')
+#     if not course_id:
+#         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
+
+#     # ✅ Optimize Course fetching
+#     try:
+#         course = QMODEL.Course.objects.select_related(
+#             'schools', 'course_name', 'session', 'term', 'exam_type'
+#         ).get(id=course_id)
+#     except QMODEL.Course.DoesNotExist:
+#         return JsonResponse({'success': False, 'error': 'Course not found.'})
+
+#     # ✅ Optimize Question fetching (with course FK)
+#     questions = QMODEL.Question.objects.filter(course=course).select_related('course').order_by('id')
+
+#     total_marks = 0
+#     if request.body:
+#         json_data = json.loads(request.body)
+#         for i, question in enumerate(questions, start=1):
+#             selected_ans = json_data.get(str(i))
+#             actual_answer = question.answer
+#             if selected_ans == actual_answer:
+#                 total_marks += question.marks or 0
+
+#     # ✅ Optimize Profile fetching with user FK
+#     student = Profile.objects.select_related('user').get(user_id=request.user.id)
+
+#     try:
+#         # Wrap in transaction to ensure DB consistency
+#         with transaction.atomic():
+#             QMODEL.Result.objects.create(
+#                 schools=course.schools,
+#                 marks=total_marks,
+#                 exam=course,
+#                 session=course.session,
+#                 term=course.term,
+#                 exam_type=course.exam_type,
+#                 student=student,
+#                 result_class=student.student_class
+#             )
+#         return JsonResponse({'success': True, 'message': 'Marks calculated and saved successfully.'})
+
+#     except IntegrityError:
+#         return JsonResponse({'success': False, 'error': 'Result already exists.'})
+
+
+#working fine
+# @login_required
+# def calculate_marks_view(request):
+#     if request.COOKIES.get('course_id') is not None:
+#         course_id = request.COOKIES.get('course_id')
+#         course = QMODEL.Course.objects.get(id=course_id)
+        
+#         total_marks = 0
+#         questions = QMODEL.Question.objects.filter(course=course).order_by('id')
+        
+#         if request.body:
+#             json_data = json.loads(request.body)
+#             for i, question in enumerate(questions, start=1):
+#                 selected_ans = json_data.get(str(i))
+#                 actual_answer = question.answer
+#                 if selected_ans == actual_answer:
+#                     total_marks += question.marks
+        
+#         student = Profile.objects.get(user_id=request.user.id)
+
+#         try:
+#             # Create a new result, or raise IntegrityError if it already exists
+#             QMODEL.Result.objects.create(
+#                 schools = course.schools,
+#                 marks=total_marks,
+#                 exam=course,
+#                 session=course.session,
+#                 term=course.term,
+#                 exam_type=course.exam_type,
+#                 student=student,
+#                 result_class=student.student_class
+#             )
+#             return JsonResponse({'success': True, 'message': 'Marks calculated and saved successfully.'})
+        
+#         except IntegrityError:
+#             # If the result already exists, return an appropriate response
+#             return JsonResponse({'success': False, 'error': 'Result already exists.'})
+    
+#     else:
+#         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
     
 
 # @login_required

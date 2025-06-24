@@ -240,6 +240,7 @@ MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.gzip.GZipMiddleware',  # Add at the top
 
     'django.middleware.common.CommonMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
@@ -249,9 +250,16 @@ MIDDLEWARE = [
 
 
 ]
-CSRF_COOKIE_SECURE=False
 
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # or your Redis cloud URL
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+
+CSRF_COOKIE_SECURE=False
 ROOT_URLCONF = 'school.urls'
+CONN_MAX_AGE = 600
 
 TEMPLATES = [
     {
@@ -301,14 +309,24 @@ PROJECT_PATH =os.path.dirname(os.path.abspath(__file__))
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+
 import os
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+# settings.py
+import os
+import dj_database_url
+
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL and '+asyncpg' in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace('+asyncpg', '')  # ✅ strip out unsupported adapter
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
 
 
 
@@ -409,9 +427,9 @@ DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
-DATABASES = {
-    'default': env.db()
-}
+# DATABASES = {
+#     'default': env.db()
+# }
 
 # DATABASES = {
 #     'default': {
@@ -435,11 +453,11 @@ cloudinary.config(
 CLOUDINARY_URL = env('CLOUDINARY_URL')
 DEFAULT_FILE_STORAGE = env('DEFAULT_FILE_STORAGE')
 
-import dj_database_url
+# import dj_database_url
 # Update database configuration from $DATABASE_URL.
 
-db_from_env = dj_database_url.config(conn_max_age=500)
-DATABASES['default'].update(db_from_env)
+# db_from_env = dj_database_url.config(conn_max_age=500)
+# DATABASES['default'].update(db_from_env)
 
 
 # STATIC_ROOT = BASE_DIR / 'staticfiles'

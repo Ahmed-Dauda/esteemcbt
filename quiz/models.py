@@ -278,6 +278,19 @@ class Result(models.Model):
     def __str__(self):
         return f"{self.student}---{self.exam.course_name}---{self.exam_type}---{self.marks}"
 
+# models.py
+
+class StudentAnswer(models.Model):
+    result = models.ForeignKey(Result, on_delete=models.CASCADE, related_name='answers')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    selected_answer = models.CharField(max_length=200)
+    is_correct = models.BooleanField()
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.result.student.user.username} | Q{self.question.id} | {self.selected_answer}"
+
+
 # class ExamsRules(models.Model):
 #     # school_name = models.ForeignKey(
 #     #     School, on_delete=models.SET_NULL,

@@ -52,14 +52,14 @@ from sms.views import(
    
       
 ) 
-
+from django.views.generic import TemplateView
 from .views import AboutUsView,AwardView
 
 app_name = 'sms'
 
 urlpatterns = [
     
-
+    path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
     # path('', Categorieslistview.as_view(), name='categorieslist'),
     path('pdf-gallery/', PDFGalleryView.as_view(), name='pdf_gallery'),
     path('directors/', DirectorsView.as_view(), name='directors'),
