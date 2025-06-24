@@ -317,18 +317,10 @@ PROJECT_PATH =os.path.dirname(os.path.abspath(__file__))
 import os
 
 # settings.py
-import os
 import dj_database_url
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL and '+asyncpg' in DATABASE_URL:
-    DATABASE_URL = DATABASE_URL.replace('+asyncpg', '')  # ✅ strip out unsupported adapter
-
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
 }
 
 
