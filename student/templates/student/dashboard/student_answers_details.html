@@ -1,0 +1,40 @@
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Answers for: {{ result.exam.course_name }} - {{ result.exam_type.name }}</h2>
+  <p><strong>Score:</strong> {{ result.marks }} | <strong>Submitted:</strong> {{ result.date|date:"Y-m-d H:i" }}</p>
+
+  <table class="table table-bordered table-striped mt-4">
+    <thead class="thead-dark">
+      <tr>
+        <th>#</th>
+        <th>Question</th>
+        <th>Selected Answer</th>
+        <th>Correct?</th>
+        <th>Time Submitted</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for answer in answers %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ answer.question.question|safe|truncatechars:100 }}</td>
+        <td>{{ answer.selected_answer }}</td>
+        <td>
+          {% if answer.is_correct %}
+            <span class="badge bg-success">✔ Correct</span>
+          {% else %}
+            <span class="badge bg-danger">✘ Incorrect</span>
+          {% endif %}
+        </td>
+        <td>{{ answer.submitted_at|date:"Y-m-d H:i:s" }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5">No answers found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

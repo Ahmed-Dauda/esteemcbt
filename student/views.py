@@ -3757,39 +3757,54 @@ def permission_denied_view(request, exception):
     # Redirect the user to the desired page
     return redirect("student:view_result")
 
+from django.shortcuts import render, redirect
+from asgiref.sync import sync_to_async, async_to_sync
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.http import HttpRequest
+ # replace with actual import
+import random
+from quiz.models import Question
+
+from django.shortcuts import render, redirect
+from asgiref.sync import sync_to_async, async_to_sync
+from django.contrib.auth.decorators import login_required
 
 @login_required
 def start_exams_view(request, pk):
-    course = get_object_or_404(
-        Course.objects.select_related('course_name').only(
-            'id', 'room_name', 'course_name__id', 'exam_type__name', 'course_name__title',
-            'num_attemps', 'show_questions', 'duration_minutes'
-        ),
-        id=pk
-    )
+    return async_to_sync(_start_exam_async)(request, pk)
 
-    questions = QMODEL.Question.objects.select_related('course').only(
-        'id', 'course__id', 'marks', 'question', 'img_quiz', 'option1', 'option2',
-        'option3', 'option4', 'answer'
-    ).filter(course=course).order_by('id')
 
-    result_exists = Result.objects.select_related('student', 'exam').only(
-        'student__id', 'student__username', 'exam_type__name', 'exam__id', 'exam__course_name'
-    ).filter(
-        student=request.user.profile,
-        exam=course
-    ).exists()
+async def _start_exam_async(request, pk):
+    user = request.user
+
+    user_profile = await sync_to_async(lambda: user.profile)()
+
+    course = await sync_to_async(lambda: Course.objects.select_related(
+        'course_name'
+    ).only(
+        'id', 'room_name', 'course_name__id', 'exam_type__name', 'course_name__title',
+        'num_attemps', 'show_questions', 'duration_minutes'
+    ).get(id=pk))()
+
+    questions = await sync_to_async(lambda: list(Question.objects.select_related('course').only(
+        'id', 'course__id', 'marks', 'question', 'img_quiz',
+        'option1', 'option2', 'option3', 'option4', 'answer'
+    ).filter(course=course).order_by('id')))()
+
+    result_exists = await sync_to_async(lambda: Result.objects.select_related('student', 'exam').only(
+        'student__id', 'student__username', 'exam_type__name',
+        'exam__id', 'exam__course_name'
+    ).filter(student=user_profile, exam=course).exists())()
 
     if result_exists:
-        return redirect('student:view_result')
+        return await sync_to_async(redirect)('student:view_result')
 
     show_questions = course.show_questions
-    total_questions = questions.count()
+    total_questions = len(questions)
 
     if total_questions >= show_questions:
-        questions = random.sample(list(questions), show_questions)
-    else:
-        questions = list(questions)
+        questions = random.sample(questions, show_questions)
 
     questions.sort(key=lambda q: q.id)
     q_count = len(questions)
@@ -3803,13 +3818,62 @@ def start_exams_view(request, pk):
         'tab_limit': course.num_attemps,
     }
 
-    if request.method == 'POST':
-        # Handle form submission if needed
-        pass
-
-    response = render(request, 'student/dashboard/start_exams.html', context=context)
+    response = await sync_to_async(render)(request, 'student/dashboard/start_exams.html', context)
     response.set_cookie('course_id', course.id)
     return response
+
+# @login_required
+# def start_exams_view(request, pk):
+#     course = get_object_or_404(
+#         Course.objects.select_related('course_name').only(
+#             'id', 'room_name', 'course_name__id', 'exam_type__name', 'course_name__title',
+#             'num_attemps', 'show_questions', 'duration_minutes'
+#         ),
+#         id=pk
+#     )
+
+#     questions = QMODEL.Question.objects.select_related('course').only(
+#         'id', 'course__id', 'marks', 'question', 'img_quiz', 'option1', 'option2',
+#         'option3', 'option4', 'answer'
+#     ).filter(course=course).order_by('id')
+
+#     result_exists = Result.objects.select_related('student', 'exam').only(
+#         'student__id', 'student__username', 'exam_type__name', 'exam__id', 'exam__course_name'
+#     ).filter(
+#         student=request.user.profile,
+#         exam=course
+#     ).exists()
+
+#     if result_exists:
+#         return redirect('student:view_result')
+
+#     show_questions = course.show_questions
+#     total_questions = questions.count()
+
+#     if total_questions >= show_questions:
+#         questions = random.sample(list(questions), show_questions)
+#     else:
+#         questions = list(questions)
+
+#     questions.sort(key=lambda q: q.id)
+#     q_count = len(questions)
+
+#     context = {
+#         'course': course,
+#         'questions': questions,
+#         'q_count': q_count,
+#         'page_obj': questions,
+#         'quiz_already_submitted': result_exists,
+#         'tab_limit': course.num_attemps,
+#     }
+
+#     if request.method == 'POST':
+#         # Handle form submission if needed
+#         pass
+
+#     response = render(request, 'student/dashboard/start_exams.html', context=context)
+#     response.set_cookie('course_id', course.id)
+#     return response
 
 
 
@@ -3967,59 +4031,495 @@ from django.http import JsonResponse
 # example 2
 
 from django.db.models import F
-
-
-
-from django.db import transaction
-
-from student.tasks import save_result_and_answers  # 👈 import your celery task
-
 from quiz.models import StudentAnswer
 from django.db import transaction
-    
-from student.tasks import save_result_and_answers  # import your task
+from django.db import IntegrityError, transaction
+from django.db import transaction
 
-@login_required
+from asgiref.sync import async_to_sync, sync_to_async
+
 @csrf_exempt
+@login_required
 def calculate_marks_view(request):
+    # 🔄 Wrap async grading logic for sync Django views
+    return async_to_sync(_calculate_marks_async)(request)
+
+
+# 🧠 Async grading logic
+async def _calculate_marks_async(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
     course_id = request.COOKIES.get('course_id')
     if not course_id:
-        return JsonResponse({'success': False, 'error': 'Course ID not found.'})
+        return JsonResponse({'success': False, 'error': 'Course ID not found in cookies.'})
 
     try:
-        course = QMODEL.Course.objects.select_related(
-            'schools', 'course_name', 'session', 'term', 'exam_type'
-        ).get(id=course_id)
+        answers_dict = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON format.'})
+
+    try:
+        course = await sync_get_course(course_id)
     except QMODEL.Course.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Course not found.'})
 
-    questions = QMODEL.Question.objects.filter(course=course).order_by('id')
+    try:
+        student = await sync_get_student(request.user.id)
+    except Profile.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Student profile not found.'})
+
+    # ✅ Check for duplicate result
+    result_exists = await sync_check_result_exists(course, student)
+    if result_exists:
+        return JsonResponse({'success': False, 'error': 'Result already exists.'})
+
+    questions = await sync_get_questions(course)
     total_marks = 0
-    answers_dict = {}
 
-    if request.body:
-        json_data = json.loads(request.body)
-        for i, question in enumerate(questions, start=1):
-            selected_ans = json_data.get(str(i))
-            correct_ans = question.answer
-            if selected_ans == correct_ans:
-                total_marks += question.marks or 0
+    for i, question in enumerate(questions, start=1):
+        selected = answers_dict.get(str(i))
+        if selected == question.answer:
+            total_marks += question.marks or 0
 
-            answers_dict[question.id] = {
-                'selected': selected_ans,
-                'correct': correct_ans
-            }
+    try:
+        # 💾 Save only the result (not individual answers)
+        def save_result_only():
+            with transaction.atomic():
+                QMODEL.Result.objects.create(
+                    schools=course.schools,
+                    marks=total_marks,
+                    exam=course,
+                    session=course.session,
+                    term=course.term,
+                    exam_type=course.exam_type,
+                    student=student,
+                    result_class=student.student_class
+                )
 
-    # Call the task asynchronously
-    save_result_and_answers.delay(
-        user_id=request.user.id,
-        course_id=course.id,
-        total_marks=total_marks,
-        answers_dict=answers_dict
-    )
+        await sync_to_async(save_result_only)()
+        return JsonResponse({'success': True, 'message': 'Quiz graded and result saved ✅'})
 
-    return JsonResponse({'success': True, 'message': 'Quiz submitted. Result is being processed in the background.'})
+    except IntegrityError:
+        return JsonResponse({'success': False, 'error': 'Result already exists (race condition).'})
 
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'})
+
+
+# ✅ Async helper functions
+@sync_to_async
+def sync_get_course(course_id):
+    return QMODEL.Course.objects.select_related('schools', 'session', 'term', 'exam_type').get(id=course_id)
+
+@sync_to_async
+def sync_get_student(user_id):
+    return Profile.objects.select_related('user').get(user_id=user_id)
+
+@sync_to_async
+def sync_check_result_exists(course, student):
+    return QMODEL.Result.objects.filter(
+        student=student,
+        exam=course,
+        session=course.session,
+        term=course.term,
+        exam_type=course.exam_type,
+        result_class=student.student_class
+    ).exists()
+
+@sync_to_async
+def sync_get_questions(course):
+    return list(QMODEL.Question.objects.filter(course=course).order_by('id'))
+
+
+#workin async
+# @csrf_exempt
+# @login_required
+# def calculate_marks_view(request):
+#     # 🔄 This wraps and calls the async view in sync context
+#     return async_to_sync(_calculate_marks_async)(request)
+
+
+# # 🧠 Async grading logic here
+# async def _calculate_marks_async(request):
+#     if request.method != 'POST':
+#         return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+#     course_id = request.COOKIES.get('course_id')
+#     if not course_id:
+#         return JsonResponse({'success': False, 'error': 'Course ID not found in cookies.'})
+
+#     try:
+#         answers_dict = json.loads(request.body)
+#     except json.JSONDecodeError:
+#         return JsonResponse({'success': False, 'error': 'Invalid JSON format.'})
+
+#     try:
+#         course = await sync_get_course(course_id)
+#     except QMODEL.Course.DoesNotExist:
+#         return JsonResponse({'success': False, 'error': 'Course not found.'})
+
+#     try:
+#         student = await sync_get_student(request.user.id)
+#     except Profile.DoesNotExist:
+#         return JsonResponse({'success': False, 'error': 'Student profile not found.'})
+
+#     # Check for existing result
+#     result_exists = await sync_check_result_exists(course, student)
+#     if result_exists:
+#         return JsonResponse({'success': False, 'error': 'Result already exists.'})
+
+#     questions = await sync_get_questions(course)
+#     total_marks = 0
+#     student_answers = []
+
+#     for i, question in enumerate(questions, start=1):
+#         selected = answers_dict.get(str(i))
+#         if selected:
+#             is_correct = selected == question.answer
+#             if is_correct:
+#                 total_marks += question.marks or 0
+#             student_answers.append(QMODEL.StudentAnswer(
+#                 question=question,
+#                 selected_answer=selected,
+#                 is_correct=is_correct
+#             ))
+
+#     try:
+#         # Save in a transaction
+#         def save_results():
+#             with transaction.atomic():
+#                 result = QMODEL.Result.objects.create(
+#                     schools=course.schools,
+#                     marks=total_marks,
+#                     exam=course,
+#                     session=course.session,
+#                     term=course.term,
+#                     exam_type=course.exam_type,
+#                     student=student,
+#                     result_class=student.student_class
+#                 )
+#                 for ans in student_answers:
+#                     ans.result = result
+#                 QMODEL.StudentAnswer.objects.bulk_create(student_answers)
+#         await sync_to_async(save_results)()
+
+#         return JsonResponse({'success': True, 'message': 'Quiz graded and saved ✅'})
+
+#     except IntegrityError:
+#         return JsonResponse({'success': False, 'error': 'Result already exists.'})
+#     except Exception as e:
+#         return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'})
+
+
+# # ✅ Supporting helper async wrappers
+
+# from asgiref.sync import sync_to_async
+
+# @sync_to_async
+# def sync_get_course(course_id):
+#     return QMODEL.Course.objects.select_related('schools', 'session', 'term', 'exam_type').get(id=course_id)
+
+# @sync_to_async
+# def sync_get_student(user_id):
+#     return Profile.objects.select_related('user').get(user_id=user_id)
+
+# @sync_to_async
+# def sync_check_result_exists(course, student):
+#     return QMODEL.Result.objects.filter(
+#         student=student,
+#         exam=course,
+#         session=course.session,
+#         term=course.term,
+#         exam_type=course.exam_type,
+#         result_class=student.student_class
+#     ).exists()
+
+# @sync_to_async
+# def sync_get_questions(course):
+#     return list(QMODEL.Question.objects.filter(course=course).order_by('id'))
+
+
+# @csrf_exempt
+# @login_required
+# def calculate_marks_view(request):
+#     if request.method != 'POST':
+#         return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+#     # 🚨 Trigger test task here
+#     celery_heartbeat_test.delay(request.user.id)
+        
+#     course_id = request.COOKIES.get('course_id')
+#     if not course_id:
+#         return JsonResponse({'success': False, 'error': 'Course ID not found in cookies.'})
+
+#     try:
+#         answers_dict = json.loads(request.body)
+#     except json.JSONDecodeError:
+#         return JsonResponse({'success': False, 'error': 'Invalid JSON format.'})
+
+#     try:
+#         course = QMODEL.Course.objects.select_related(
+#             'schools', 'session', 'term', 'exam_type'
+#         ).get(id=course_id)
+#     except QMODEL.Course.DoesNotExist:
+#         return JsonResponse({'success': False, 'error': 'Course not found.'})
+
+#     try:
+#         student = Profile.objects.select_related('user').get(user=request.user)
+#     except Profile.DoesNotExist:
+#         return JsonResponse({'success': False, 'error': 'Student profile not found.'})
+
+#     # Check if result already exists
+#     if QMODEL.Result.objects.filter(
+#         student=student,
+#         exam=course,
+#         session=course.session,
+#         term=course.term,
+#         exam_type=course.exam_type,
+#         result_class=student.student_class
+#     ).exists():
+#         return JsonResponse({'success': False, 'error': 'Result already exists for this student and course.'})
+
+#     # Fetch questions and evaluate
+#     questions = QMODEL.Question.objects.filter(course=course).order_by('id')
+#     total_marks = 0
+#     student_answers = []
+
+#     for i, question in enumerate(questions, start=1):
+#         selected_ans = answers_dict.get(str(i))
+#         if selected_ans:
+#             is_correct = selected_ans == question.answer
+#             if is_correct:
+#                 total_marks += question.marks or 0
+
+#             student_answers.append(QMODEL.StudentAnswer(
+#                 question=question,
+#                 selected_answer=selected_ans,
+#                 is_correct=is_correct
+#             ))
+
+#     # Save result and student answers in a transaction
+#     try:
+#         with transaction.atomic():
+#             result = QMODEL.Result.objects.create(
+#                 schools=course.schools,
+#                 marks=total_marks,
+#                 exam=course,
+#                 session=course.session,
+#                 term=course.term,
+#                 exam_type=course.exam_type,
+#                 student=student,
+#                 result_class=student.student_class
+#             )
+
+#             for answer in student_answers:
+#                 answer.result = result  # link each answer to the result
+
+#             QMODEL.StudentAnswer.objects.bulk_create(student_answers)
+
+#         return JsonResponse({'success': True, 'message': 'Result and answers saved successfully.'})
+
+#     except Exception as e:
+#         return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'})
+
+ 
+#working fine
+# @login_required
+# def calculate_marks_view(request):
+#     if request.COOKIES.get('course_id') is not None:
+#         course_id = request.COOKIES.get('course_id')
+#         course = QMODEL.Course.objects.get(id=course_id)
+        
+#         total_marks = 0
+#         questions = QMODEL.Question.objects.filter(course=course).order_by('id')
+        
+#         if request.body:
+#             json_data = json.loads(request.body)
+#             for i, question in enumerate(questions, start=1):
+#                 selected_ans = json_data.get(str(i))
+#                 actual_answer = question.answer
+#                 if selected_ans == actual_answer:
+#                     total_marks += question.marks
+        
+#         student = Profile.objects.get(user_id=request.user.id)
+
+#         try:
+#             # Create a new result, or raise IntegrityError if it already exists
+#             QMODEL.Result.objects.create(
+#                 schools = course.schools,
+#                 marks=total_marks,
+#                 exam=course,
+#                 session=course.session,
+#                 term=course.term,
+#                 exam_type=course.exam_type,
+#                 student=student,
+#                 result_class=student.student_class
+#             )
+#             return JsonResponse({'success': True, 'message': 'Marks calculated and saved successfully.'})
+        
+#         except IntegrityError:
+#             # If the result already exists, return an appropriate response
+#             return JsonResponse({'success': False, 'error': 'Result already exists.'})
+    
+#     else:
+#         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
+
+
+# from django.contrib.auth.decorators import login_required
+# from django.http import JsonResponse
+# from django.views.decorators.csrf import csrf_exempt
+# import json
+
+
+# @csrf_exempt
+# @login_required
+# def calculate_marks_view(request):
+#     course_id = request.COOKIES.get('course_id')
+#     if not course_id:
+#         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
+
+#     try:
+#         course = QMODEL.Course.objects.select_related(
+#             'schools', 'session', 'term', 'exam_type'
+#         ).get(id=course_id)
+#     except QMODEL.Course.DoesNotExist:
+#         return JsonResponse({'success': False, 'error': 'Course not found.'})
+
+#     student = Profile.objects.select_related('user').get(user=request.user)
+#     questions = QMODEL.Question.objects.filter(course=course).order_by('id')
+
+#     total_marks = 0
+#     answers_dict = {}
+
+#     if request.body:
+#         try:
+#             json_data = json.loads(request.body)
+#         except json.JSONDecodeError:
+#             return JsonResponse({'success': False, 'error': 'Invalid JSON format.'})
+
+#         # Prefetch correct answers to reduce DB hits
+#         question_map = {str(q.id): q for q in questions}
+
+#         for i, question in enumerate(questions, start=1):
+#             selected_ans = json_data.get(str(i))
+#             if selected_ans:
+#                 is_correct = selected_ans == question.answer
+#                 if is_correct:
+#                     total_marks += question.marks or 0
+#                 answers_dict[str(question.id)] = {
+#                     'selected': selected_ans,
+#                     'correct': question.answer
+#                 }
+
+#     try:
+#         with transaction.atomic():
+#             result = QMODEL.Result.objects.create(
+#                 schools=course.schools,
+#                 marks=total_marks,
+#                 exam=course,
+#                 session=course.session,
+#                 term=course.term,
+#                 exam_type=course.exam_type,
+#                 student=student,
+#                 result_class=student.student_class
+#             )
+
+#             # Bulk create StudentAnswers to minimize DB hits
+#             student_answers = []
+#             for q_id_str, info in answers_dict.items():
+#                 question = question_map.get(q_id_str)
+#                 if question:
+#                     student_answers.append(QMODEL.StudentAnswer(
+#                         result=result,
+#                         question=question,
+#                         selected_answer=info['selected'],
+#                         is_correct=(info['selected'] == info['correct'])
+#                     ))
+
+#             QMODEL.StudentAnswer.objects.bulk_create(student_answers)
+
+#         return JsonResponse({'success': True, 'message': 'Result and answers saved successfully.'})
+
+#     except IntegrityError:
+#         return JsonResponse({'success': False, 'error': 'Result already exists.'})
+#     except Exception as e:
+#         return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'})
+    
+      
+
+#saving  answers questions and results
+
+# @login_required
+# def calculate_marks_view(request):
+#     course_id = request.COOKIES.get('course_id')
+#     if not course_id:
+#         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
+
+#     try:
+#         course = QMODEL.Course.objects.get(id=course_id)
+#     except QMODEL.Course.DoesNotExist:
+#         return JsonResponse({'success': False, 'error': 'Course not found.'})
+
+#     total_marks = 0
+#     answers_dict = {}
+#     questions = QMODEL.Question.objects.filter(course=course).order_by('id')
+
+#     if request.body:
+#         try:
+#             json_data = json.loads(request.body)
+#         except json.JSONDecodeError:
+#             return JsonResponse({'success': False, 'error': 'Invalid JSON format.'})
+
+#         for i, question in enumerate(questions, start=1):
+#             selected_ans = json_data.get(str(i))
+#             correct_ans = question.answer
+
+#             if selected_ans:
+#                 is_correct = selected_ans == correct_ans
+#                 if is_correct:
+#                     total_marks += question.marks or 0
+
+#                 answers_dict[str(question.id)] = {
+#                     'selected': selected_ans,
+#                     'correct': correct_ans
+#                 }
+
+#     student = Profile.objects.get(user_id=request.user.id)
+
+#     try:
+#         # Save result
+#         result = QMODEL.Result.objects.create(
+#             schools=course.schools,
+#             marks=total_marks,
+#             exam=course,
+#             session=course.session,
+#             term=course.term,
+#             exam_type=course.exam_type,
+#             student=student,
+#             result_class=student.student_class
+#         )
+
+#         # Save student answers directly (not with Celery for now)
+#         for q_id, info in answers_dict.items():
+#             try:
+#                 question = QMODEL.Question.objects.get(id=int(q_id))
+#                 QMODEL.StudentAnswer.objects.create(
+#                     result=result,
+#                     question=question,
+#                     selected_answer=info['selected'],
+#                     is_correct=(info['selected'] == info['correct'])
+#                 )
+#             except QMODEL.Question.DoesNotExist:
+#                 continue  # skip if question not found
+#             except Exception as e:
+#                 print(f"❌ Failed to save StudentAnswer: {e}")
+
+#         return JsonResponse({'success': True, 'message': 'Result and answers saved successfully.'})
+
+#     except IntegrityError:
+#         return JsonResponse({'success': False, 'error': 'Result already exists.'})
+    
 
 # @login_required
 # @csrf_exempt  # Only needed if you're doing raw JS POST without CSRF token
@@ -4069,47 +4569,6 @@ def calculate_marks_view(request):
 #     except IntegrityError:
 #         return JsonResponse({'success': False, 'error': 'Result already exists.'})
 
-
-#working fine
-# @login_required
-# def calculate_marks_view(request):
-#     if request.COOKIES.get('course_id') is not None:
-#         course_id = request.COOKIES.get('course_id')
-#         course = QMODEL.Course.objects.get(id=course_id)
-        
-#         total_marks = 0
-#         questions = QMODEL.Question.objects.filter(course=course).order_by('id')
-        
-#         if request.body:
-#             json_data = json.loads(request.body)
-#             for i, question in enumerate(questions, start=1):
-#                 selected_ans = json_data.get(str(i))
-#                 actual_answer = question.answer
-#                 if selected_ans == actual_answer:
-#                     total_marks += question.marks
-        
-#         student = Profile.objects.get(user_id=request.user.id)
-
-#         try:
-#             # Create a new result, or raise IntegrityError if it already exists
-#             QMODEL.Result.objects.create(
-#                 schools = course.schools,
-#                 marks=total_marks,
-#                 exam=course,
-#                 session=course.session,
-#                 term=course.term,
-#                 exam_type=course.exam_type,
-#                 student=student,
-#                 result_class=student.student_class
-#             )
-#             return JsonResponse({'success': True, 'message': 'Marks calculated and saved successfully.'})
-        
-#         except IntegrityError:
-#             # If the result already exists, return an appropriate response
-#             return JsonResponse({'success': False, 'error': 'Result already exists.'})
-    
-#     else:
-#         return JsonResponse({'success': False, 'error': 'Course ID not found.'})
     
 
 # @login_required

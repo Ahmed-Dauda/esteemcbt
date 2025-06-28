@@ -65,42 +65,35 @@ gender_choice = [
 ]
 
 class NewUser(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(max_length=254, unique=True, db_index=True)  # Indexing the email for quick lookup
-    username = models.CharField(max_length=35, blank=True, db_index=True)  # Indexing username
-    school = models.ForeignKey('quiz.School', on_delete=models.SET_NULL, blank=True, null=True, db_index=True)  # Indexing the school
-    student_class = models.CharField(max_length=254, null=True, blank=True, db_index=True)  # Indexing class for faster queries
-    phone_number = models.CharField(max_length=254, blank=True)
-    first_name = models.CharField(max_length=254, null=True, blank=True, db_index=True)  # Indexing first name
-    last_name = models.CharField(max_length=254, null=True, blank=True, db_index=True)  # Indexing last name
-    admission_no = models.CharField(max_length=254, null=True, blank=True, db_index=True)  # Indexing admission number
-    countries = models.CharField(max_length=254, blank=True, null=True)
-    pro_img = CloudinaryField('profile_photos', blank=True, null=True, default='https://i.ibb.co/cx34WCc/logo.png')
-    gender = models.CharField(choices=gender_choice, max_length=225, blank=True, null=True)
-    is_staff = models.BooleanField(default=False)
-    is_superuser = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
-    last_login = models.DateTimeField(null=True, blank=True)
-    date_joined = models.DateTimeField(auto_now_add=True, db_index=True)  # Indexing date_joined for quick sorting/filtering
-     
+    email           = models.EmailField(max_length=254, unique=True, db_index=True)
+    username        = models.CharField(max_length=35, blank=True, db_index=True)
+    school          = models.ForeignKey('quiz.School', on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
+    student_class   = models.CharField(max_length=254, null=True, blank=True, db_index=True)
+    phone_number    = models.CharField(max_length=254, blank=True)
+    first_name      = models.CharField(max_length=254, null=True, blank=True, db_index=True)
+    last_name       = models.CharField(max_length=254, null=True, blank=True, db_index=True)
+    admission_no    = models.CharField(max_length=254, null=True, blank=True, db_index=True)
+    countries       = models.CharField(max_length=254, blank=True, null=True)
+    pro_img         = CloudinaryField('profile_photos', blank=True, null=True, default='https://i.ibb.co/cx34WCc/logo.png')
+    gender          = models.CharField(choices=gender_choice, max_length=225, blank=True, null=True)
 
-    USERNAME_FIELD = 'email'
-    # USERNAME_FIELD = 'username'
-    EMAIL_FIELD = 'username'
+    is_staff        = models.BooleanField(default=False)
+    is_superuser    = models.BooleanField(default=False)
+    is_active       = models.BooleanField(default=True)
+    last_login      = models.DateTimeField(null=True, blank=True)
+    date_joined     = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    USERNAME_FIELD  = 'email'
+    EMAIL_FIELD     = 'username'
     REQUIRED_FIELDS = []
 
-    objects = CustomUserManager()
-
-    # def __str__(self):
-    #     # Ensure this method returns a string
-    #     return self.email or 'No Email'
+    objects         = CustomUserManager()
 
     def __str__(self):
         return f'({self.school}) - ({self.first_name}, {self.last_name}, {self.student_class})'
-    
 
     class Meta:
-        #  pass
-      db_table = 'auth_user'
+        db_table = 'auth_user'
 
 
 
@@ -135,40 +128,30 @@ class NewUser(AbstractBaseUser, PermissionsMixin):
 #     updated = models.DateTimeField(auto_now=True, blank=True, null=True)
 
 class Profile(models.Model):
-    PAYMENT_CHOICES = [
-        ('Premium', 'PREMIUM'),
-        ('Free', 'FREE'),
-        ('Sponsored', 'SPONSORED'),
-    ]
+    PAYMENT_CHOICES = [('Premium', 'PREMIUM'), ('Free', 'FREE'), ('Sponsored', 'SPONSORED')]
+    gender_choice = [('Male', 'MALE'), ('Female', 'FEMALE')]
 
-    gender_choice = [
-        ('Male', 'MALE'),
-        ('Female', 'FEMALE'),
-    ]
-
-    user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE, unique=True, related_name='profile', blank=True, null=True, db_index=True)  # Indexed for fast lookup
-    username = models.CharField(max_length=225, blank=True, null=True, db_index=True)  # Indexed for frequent querying
-    schools = models.ForeignKey('quiz.School',related_name='profile_school' ,on_delete=models.SET_NULL, blank=True, null=True, db_index=True)  # Indexing the school
-    student_course = models.ForeignKey('sms.Courses', on_delete=models.SET_NULL, related_name='students', null=True, db_index=True)  # Indexed for course lookups
-    first_name = models.CharField(max_length=225, blank=True, null=True, db_index=True)  # Indexed for search
-    last_name = models.CharField(max_length=225, blank=True, null=True, db_index=True)  # Indexed for search
-    student_class = models.CharField(max_length=254, null=True, blank=True, db_index=True)  # Indexed for filtering
-    status_type = models.CharField(choices=PAYMENT_CHOICES, default='Free', max_length=225, db_index=True)  # Indexed since it's a filtering field
+    user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE, unique=True, related_name='profile', blank=True, null=True, db_index=True)
+    username = models.CharField(max_length=225, blank=True, null=True, db_index=True)
+    schools = models.ForeignKey('quiz.School', related_name='profile_school', on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
+    student_course = models.ForeignKey('sms.Courses', on_delete=models.SET_NULL, related_name='students', null=True, db_index=True)
+    first_name = models.CharField(max_length=225, blank=True, null=True, db_index=True)
+    last_name = models.CharField(max_length=225, blank=True, null=True, db_index=True)
+    student_class = models.CharField(max_length=254, null=True, blank=True, db_index=True)
+    status_type = models.CharField(choices=PAYMENT_CHOICES, default='Free', max_length=225, db_index=True)
     gender = models.CharField(choices=gender_choice, max_length=225, blank=True, null=True)
-    admission_no = models.CharField(max_length=254, null=True, blank=True, db_index=True)  # Indexed for lookups
-    phone_number = models.CharField(max_length=225, blank=True, null=True, db_index=True)  # Indexed for lookups
-    countries = models.CharField(max_length=225, blank=True, null=True, db_index=True)  # Indexed for filtering by country
+    admission_no = models.CharField(max_length=254, null=True, blank=True, db_index=True)
+    phone_number = models.CharField(max_length=225, blank=True, null=True, db_index=True)
+    countries = models.CharField(max_length=225, blank=True, null=True, db_index=True)
     pro_img = models.CharField(max_length=225, blank=True, null=True)
-
     bio = models.TextField(max_length=600, blank=True, null=True)
-    created = models.DateTimeField(auto_now_add=True, blank=True, null=True, db_index=True)  # Indexed for sorting/filtering by creation date
-    updated = models.DateTimeField(auto_now=True, blank=True, null=True, db_index=True)  # Indexed for sorting/filtering by update time
+    created = models.DateTimeField(auto_now_add=True, blank=True, null=True, db_index=True)
+    updated = models.DateTimeField(auto_now=True, blank=True, null=True, db_index=True)
 
     def get_absolute_url(self):
         return reverse('sms:userprofileupdateform', kwargs={'pk': self.pk})
     
     def __str__(self):
-        # Ensure this method returns a string
         return f'{self.first_name or "No First Name"} {self.last_name or "No Last Name"}'.strip()
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)

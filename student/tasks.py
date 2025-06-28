@@ -1,44 +1,48 @@
 from celery import shared_task
+from django.db import transaction
 from quiz import models as QMODEL
-from users.models import Profile
+from student.models import Profile
 
-@shared_task
-def save_result_and_answers(user_id, course_id, total_marks, answers_dict):
+@shared_task(bind=True)
+def save_result_and_answers_task(self, course_id, student_id, total_marks, answers_data):
     try:
-        student = Profile.objects.select_related('user').get(user_id=user_id)
-        course = QMODEL.Course.objects.select_related(
-            'schools', 'course_name', 'session', 'term', 'exam_type'
-        ).get(id=course_id)
+        course = QMODEL.Course.objects.select_related('schools', 'session', 'term', 'exam_type').get(id=course_id)
+        student = Profile.objects.select_related('user').get(id=student_id)
 
-        # Create or get the result object
-        result, created = QMODEL.Result.objects.get_or_create(
+        if QMODEL.Result.objects.filter(
             student=student,
             exam=course,
             session=course.session,
             term=course.term,
             exam_type=course.exam_type,
-            result_class=student.student_class,
-            defaults={
-                'schools': course.schools,
-                'marks': total_marks,
-            }
-        )
+            result_class=student.student_class
+        ).exists():
+            return 'Result already exists'
 
-        # Save individual answers
-        for q_id, info in answers_dict.items():
-            try:
-                question = QMODEL.Question.objects.get(id=int(q_id))
-                QMODEL.StudentAnswer.objects.create(
+        with transaction.atomic():
+            result = QMODEL.Result.objects.create(
+                schools=course.schools,
+                marks=total_marks,
+                exam=course,
+                session=course.session,
+                term=course.term,
+                exam_type=course.exam_type,
+                student=student,
+                result_class=student.student_class
+            )
+
+            answer_objs = [
+                QMODEL.StudentAnswer(
                     result=result,
-                    question=question,
-                    selected_answer=info['selected'],
-                    is_correct=(info['selected'] == info['correct'])
+                    question_id=ans['question_id'],
+                    selected_answer=ans['selected_answer'],
+                    is_correct=ans['is_correct']
                 )
-            except QMODEL.Question.DoesNotExist:
-                continue  # Skip if question not found
+                for ans in answers_data
+            ]
+            QMODEL.StudentAnswer.objects.bulk_create(answer_objs)
 
-        return {'status': 'success'}
-
+        return 'Result and answers saved ✅'
 
     except Exception as e:
-        return {'status': 'error', 'message': str(e)}
+        return f'Failed: {str(e)}'

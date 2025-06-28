@@ -1,0 +1,96 @@
+{% block content %}
+<style>
+  .container {
+    max-width: 960px;
+    margin: 40px auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+
+  h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #333;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #f9f9f9;
+  }
+
+  th, td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+
+  thead {
+    background-color: #f1f1f1;
+  }
+
+  tr:hover {
+    background-color: #f0f8ff;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 6px 12px;
+    font-size: 13px;
+    text-decoration: none;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    color: #007bff;
+    transition: 0.3s;
+  }
+
+  .btn:hover {
+    background-color: #007bff;
+    color: white;
+  }
+
+  .text-center {
+    text-align: center;
+  }
+</style>
+
+<div class="container">
+  <h2>Your Past Results</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Subject</th>
+        <th>Type</th>
+        <th>Score</th>
+        <th>Term</th>
+        <th>Session</th>
+        <th>Date</th>
+        <th class="text-center">View Answers</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for result in results %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ result.exam.course_name }}</td>
+        <td>{{ result.exam_type.name }}</td>
+        <td>{{ result.marks }}</td>
+        <td>{{ result.term.name }}</td>
+        <td>{{ result.session.name }}</td>
+        <td>{{ result.date|date:"Y-m-d H:i" }}</td>
+        <td class="text-center">
+          <a href="{% url 'student:student_answers_view' result.id %}" class="btn">View Answers</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="8" class="text-center">You haven't completed any quizzes yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

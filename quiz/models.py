@@ -17,80 +17,86 @@ class ExamType(models.Model):
 
 class Course(models.Model):
     room_name = models.CharField(max_length=100, blank=True, null=True)
-    schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='course', blank=True, null=True)
-    course_name = models.ForeignKey(Courses, on_delete=models.CASCADE, blank=True, null=True)  # Ensure this is referencing the correct model
+    schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='course', blank=True, null=True, db_index=True)
+    course_name = models.ForeignKey(Courses, on_delete=models.CASCADE, blank=True, null=True, db_index=True)
     question_number = models.PositiveIntegerField(blank=True, null=True)
     course_pay = models.BooleanField(default=False)
     total_marks = models.PositiveIntegerField(blank=True, null=True)
-    session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True)
-    term = models.ForeignKey(Term, on_delete=models.SET_NULL, blank=True, null=True)
-    exam_type = models.ForeignKey(ExamType, on_delete=models.CASCADE, blank=True, null=True)
-    num_attemps = models.PositiveIntegerField(default=4)  # Fixed typo
+    session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
+    term = models.ForeignKey(Term, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
+    exam_type = models.ForeignKey(ExamType, on_delete=models.CASCADE, blank=True, null=True, db_index=True)
+    num_attemps = models.PositiveIntegerField(default=4)
     show_questions = models.PositiveIntegerField(default=10)
     duration_minutes = models.PositiveIntegerField(default=10)
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     updated = models.DateTimeField(auto_now=True, blank=True, null=True)
     id = models.AutoField(primary_key=True)
- 
+
     class Meta:
-        # unique_together = ('course_name', 'session', 'term', 'schools')  # Combined Meta classes  
-        # unique_together = ('course_name', 'session', 'term', 'schools', 'exam_type')
         verbose_name = 'Exam'
         verbose_name_plural = 'Exams'
-        ordering = ['course_name__title']  
- 
+        ordering = ['course_name__title']
+        indexes = [
+            models.Index(fields=['schools']),
+            models.Index(fields=['course_name']),
+            models.Index(fields=['session']),
+            models.Index(fields=['term']),
+            models.Index(fields=['exam_type']),
+        ]
+        # unique_together can be uncommented and applied if needed for preventing duplicates:
+        # unique_together = ('course_name', 'session', 'term', 'schools', 'exam_type')
+
     def save(self, *args, **kwargs):
         if self.total_marks != self.show_questions:
-            # Choose the one that changed recently? Or always sync to the max or min?
-            # Here's example: prioritize whichever is bigger
-            if self.total_marks > self.show_questions or self.total_marks < self.show_questions:
-                self.show_questions = self.total_marks
-            else:
-                self.total_marks = self.show_questions
+            self.show_questions = self.total_marks
         super().save(*args, **kwargs)
 
-    
     def __str__(self):
         return f'{self.schools} - {self.course_name} - {self.session} - {self.term} - {self.exam_type}'
 
-    def get_questions(self):    
+    def get_questions(self):
         return self.question_set.all()[:self.show_questions]
 
 
 from django.core.exceptions import ValidationError
 
 class CourseGrade(models.Model):
-    schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='coursegrade', blank=True, null=True)
-    name = models.CharField(max_length=140, blank=True, null=True)  # This is the class name like JSS1, JSS2, etc.
+    schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='coursegrade', blank=True, null=True, db_index=True)  # 🔍 Faster lookup by school
+    name = models.CharField(max_length=140, blank=True, null=True, db_index=True)  # 🔍 Faster filtering/searching by class name
     students = models.ManyToManyField(NewUser, related_name='course_grades', blank=True)
-    # subjects = models.ManyToManyField(Courses, related_name='course_grade')
     subjects = models.ManyToManyField(Course, related_name='course_grade')
-    is_active = models.BooleanField(default=True)  # Add the checkbox field
+    is_active = models.BooleanField(default=True, db_index=True)  # 🔍 Fast filtering of active classes
     id = models.AutoField(primary_key=True)
-    
+
     class Meta:
         verbose_name = 'Student class'
         verbose_name_plural = 'student classes'
+        indexes = [
+            models.Index(fields=['schools']),
+            models.Index(fields=['name']),
+            models.Index(fields=['is_active']),
+        ]
 
     def __str__(self):
-        # Return the class name (JSS1, JSS2, SS1, etc.) instead of subjects
         return self.name if self.name else 'Unnamed Class'
- 
+
 
 class School(models.Model):
-    name = models.CharField(max_length=255)
-    # students = models.ManyToManyField(Student, blank=True, related_name='school')
-    # groups = models.ManyToManyField('quiz.Group', blank=True, null= True)
-    school_name = models.CharField(max_length=255)
-    course_pay = models.BooleanField(default=False)
-    customer = models.BooleanField(default=True)
-    school_motto = models.CharField(max_length=255, blank=True, null= True)
-    school_address = models.CharField(max_length=355, blank=True, null= True)
-    portfolio = models.CharField(max_length=255, blank=True, null= True)
-    logo = CloudinaryField('school_logos', blank=True, null= True)
-    principal_signature = CloudinaryField('principal_signatures', blank=True, null= True)
-    created = models.DateTimeField(auto_now_add=True,blank=True, null= True)
-    updated = models.DateTimeField(auto_now=True, blank=True, null= True)
+    name = models.CharField(max_length=255, db_index=True)  # Indexed for fast lookup
+    school_name = models.CharField(max_length=255, db_index=True)  # Often filtered/joined
+
+    course_pay = models.BooleanField(default=False, db_index=True)  # Useful for filtering
+    customer = models.BooleanField(default=True, db_index=True)     # Useful if used in business logic
+
+    school_motto = models.CharField(max_length=255, blank=True, null=True)
+    school_address = models.CharField(max_length=355, blank=True, null=True)
+    portfolio = models.CharField(max_length=255, blank=True, null=True)
+
+    logo = CloudinaryField('school_logos', blank=True, null=True)
+    principal_signature = CloudinaryField('principal_signatures', blank=True, null=True)
+
+    created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    updated = models.DateTimeField(auto_now=True, blank=True, null=True)
 
     # Grading system fields
     A_min = models.IntegerField(default=81)
@@ -111,9 +117,16 @@ class School(models.Model):
     P_comment = models.CharField(max_length=255, blank=True, null=True, default='Pass')
     F_comment = models.CharField(max_length=255, blank=True, null=True, default='Fail')
 
-
     def __str__(self):
         return f"{self.school_name}"
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['school_name']),
+            models.Index(fields=['course_pay']),
+            models.Index(fields=['customer']),
+        ]
 
 
 from django.db import models
@@ -128,11 +141,17 @@ from django.dispatch import receiver
 
 
 class Question(models.Model):
-    course = models.ForeignKey('Course', on_delete=models.CASCADE, blank=True, null=True)
-    # marks = models.PositiveIntegerField(blank=True, null=True)
-    marks = models.PositiveIntegerField(null=True,default=1,validators=[MinValueValidator(1), MaxValueValidator(1)],
+    course = models.ForeignKey(
+        'Course', on_delete=models.CASCADE, blank=True, null=True, db_index=True
+    )  # ✅ index added
+
+    marks = models.PositiveIntegerField(
+        null=True,
+        default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(1)],
         help_text="This field is locked to 1 mark."
     )
+
     question = HTMLField(blank=True, null=True)
     img_quiz = CloudinaryField('image', blank=True, null=True)
 
@@ -147,7 +166,9 @@ class Question(models.Model):
         ('Option3', 'Option3'),
         ('Option4', 'Option4'),
     ]
-    answer = models.CharField(max_length=200, choices=OPTION_CHOICES, blank=True, null=True)
+    answer = models.CharField(
+        max_length=200, choices=OPTION_CHOICES, blank=True, null=True
+    )
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -256,20 +277,20 @@ from django.db import models
 
 
 class Result(models.Model):
-    student = models.ForeignKey(Profile, on_delete=models.CASCADE, db_index=True)  # Adding index
-    exam = models.ForeignKey(Course, on_delete=models.CASCADE, db_index=True)  # Adding index
+    student = models.ForeignKey(Profile, on_delete=models.CASCADE, db_index=True)
+    exam = models.ForeignKey(Course, on_delete=models.CASCADE, db_index=True)
     schools = models.ForeignKey(School, on_delete=models.SET_NULL, related_name='courseschool', blank=True, null=True)
     marks = models.PositiveIntegerField()
-    # tab_switch_count = models.PositiveIntegerField(default=0, blank=True, null=True)
     date = models.DateTimeField(auto_now=True)
-    result_class = models.CharField(max_length=200, blank=True, null=True, db_index=True)  # Adding index
-    session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True)  # ForeignKey to Session model
-    term = models.ForeignKey(Term, on_delete=models.SET_NULL, blank=True, null=True)  # Adding index
-    exam_type = models.ForeignKey(ExamType, on_delete=models.CASCADE, blank=True, null=True, db_index=True)  # Adding index
+
+    result_class = models.CharField(max_length=300, blank=True, null=True, db_index=True)
+    session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
+    term = models.ForeignKey(Term, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
+    exam_type = models.ForeignKey(ExamType, on_delete=models.CASCADE, blank=True, null=True, db_index=True)
+
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     updated = models.DateTimeField(auto_now=True, blank=True, null=True)
-    is_locked = models.BooleanField(default=False)  # Add this field
-    id = models.AutoField(primary_key=True)
+    is_locked = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('student', 'exam', 'session', 'term', 'result_class', 'exam_type')
