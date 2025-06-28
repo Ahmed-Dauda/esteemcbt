@@ -1,8 +1,8 @@
 # web: gunicorn school.wsgi --log-file -
 
-# web: gunicorn school.wsgi --log-file -
+web: gunicorn school.wsgi --log-file -
 
-# worker: celery -A school worker --loglevel=info
+worker: celery -A school worker --loglevel=info
 
 #flower: celery -A school flower --port=5555
 
