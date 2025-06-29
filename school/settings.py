@@ -321,8 +321,16 @@ import os
 import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.config(conn_max_age=600)
+    'default': dj_database_url.config(
+        conn_max_age=100,  # or even 10
+        ssl_require=True
+    )
 }
+
+
+# DATABASES = {
+#     'default': dj_database_url.config(conn_max_age=600)
+# }
 
 
 
