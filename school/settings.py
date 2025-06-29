@@ -424,6 +424,9 @@ DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
+# ASGI application
+ASGI_APPLICATION = 'school.asgi.application'
+
 # DATABASES = {
 #     'default': env.db()
 # }
