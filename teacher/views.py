@@ -2962,16 +2962,21 @@ def tex_to_mathml(tex_input):
 
 
 # original codes
+logger = logging.getLogger(__name__)
 
 @login_required(login_url='teacher:teacher_login')
 def import_data(request):
     if request.method == 'POST':
         dataset = Dataset()
-        new_file = request.FILES['myfile']
+        new_file = request.FILES.get('myfile')
+
+        if not new_file:
+            messages.error(request, 'No file was uploaded. Please choose a file to import.')
+            return redirect(request.path_info)
 
         # Check if the uploaded file format is supported
         allowed_formats = ['xlsx', 'xls', 'csv', 'docx']
-        file_extension = new_file.name.split('.')[-1]
+        file_extension = new_file.name.split('.')[-1].lower()
         if file_extension not in allowed_formats:
             messages.error(request, 'File format not supported. Supported formats: XLSX, XLS, CSV, DOCX')
             return redirect(request.path_info)
@@ -2982,7 +2987,7 @@ def import_data(request):
             if file_extension == 'csv':
                 # Handle CSV
                 data = io.TextIOWrapper(new_file, encoding='utf-8')
-                imported_data = dataset.load(data, format=file_extension)
+                imported_data = dataset.load(data, format='csv')
             elif file_extension in ['xlsx', 'xls']:
                 # Handle Excel files
                 imported_data = dataset.load(new_file.read(), format=file_extension)
@@ -3008,18 +3013,16 @@ def import_data(request):
                 for key in ['question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer']:
                     if key in row:
                         original_value = row[key]
-                        # Handle the question mark for MathML questions
                         if key == 'question' and original_value.endswith('?'):
-                            # Remove the question mark before conversion
                             processed_value = original_value[:-1].strip()
                         else:
                             processed_value = original_value
 
-                        row[key] = tex_to_mathml(processed_value) + ('?' if key == 'question' else '')  # Add question mark back if it was a question
+                        row[key] = tex_to_mathml(processed_value) + ('?' if key == 'question' else '')
                         logger.debug(f"Converted {key} from {original_value} to {row[key]}")
 
             resource = QuestionResource()
-            result = resource.import_data(imported_data, dry_run=True)  # Dry run first
+            result = resource.import_data(imported_data, dry_run=True)
 
             if result.has_errors():
                 messages.error(request, "Errors occurred during import: {}".format(result.errors))
@@ -3034,11 +3037,92 @@ def import_data(request):
             return redirect(request.path_info)
 
         except Exception as e:
-            messages.error(request, "You do not have permission to import this subject, or the subject name does not match your assigned subject. Please check the dashboard for your assigned subjects.")
+            messages.error(
+                request,
+                "You do not have permission to import this subject, or the subject name does not match your assigned subject. Please check the dashboard for your assigned subjects."
+            )
             logger.error(f"An error occurred while processing the file: {e}")
             return redirect(request.path_info)
 
     return render(request, 'teacher/dashboard/import.html')
+
+
+# @login_required(login_url='teacher:teacher_login')
+# def import_data(request):
+#     if request.method == 'POST':
+#         dataset = Dataset()
+#         new_file = request.FILES['myfile']
+
+#         # Check if the uploaded file format is supported
+#         allowed_formats = ['xlsx', 'xls', 'csv', 'docx']
+#         file_extension = new_file.name.split('.')[-1]
+#         if file_extension not in allowed_formats:
+#             messages.error(request, 'File format not supported. Supported formats: XLSX, XLS, CSV, DOCX')
+#             return redirect(request.path_info)
+
+#         imported_data = None
+
+#         try:
+#             if file_extension == 'csv':
+#                 # Handle CSV
+#                 data = io.TextIOWrapper(new_file, encoding='utf-8')
+#                 imported_data = dataset.load(data, format=file_extension)
+#             elif file_extension in ['xlsx', 'xls']:
+#                 # Handle Excel files
+#                 imported_data = dataset.load(new_file.read(), format=file_extension)
+#             elif file_extension == 'docx':
+#                 # Handle Word documents
+#                 document = Document(new_file)
+#                 rows = []
+#                 for table in document.tables:
+#                     for row in table.rows:
+#                         row_data = [tex_to_mathml(cell.text) for cell in row.cells]
+#                         rows.append(row_data)
+#                 csv_data = io.StringIO()
+#                 writer = csv.writer(csv_data)
+#                 writer.writerows(rows)
+#                 csv_data.seek(0)
+#                 imported_data = dataset.load(csv_data, format='csv')
+#             else:
+#                 messages.error(request, 'An error occurred while importing the file.')
+#                 return redirect(request.path_info)
+
+#             # Convert TeX to MathML for imported data
+#             for row in imported_data.dict:
+#                 for key in ['question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer']:
+#                     if key in row:
+#                         original_value = row[key]
+#                         # Handle the question mark for MathML questions
+#                         if key == 'question' and original_value.endswith('?'):
+#                             # Remove the question mark before conversion
+#                             processed_value = original_value[:-1].strip()
+#                         else:
+#                             processed_value = original_value
+
+#                         row[key] = tex_to_mathml(processed_value) + ('?' if key == 'question' else '')  # Add question mark back if it was a question
+#                         logger.debug(f"Converted {key} from {original_value} to {row[key]}")
+
+#             resource = QuestionResource()
+#             result = resource.import_data(imported_data, dry_run=True)  # Dry run first
+
+#             if result.has_errors():
+#                 messages.error(request, "Errors occurred during import: {}".format(result.errors))
+#             else:
+#                 result = resource.import_data(imported_data, dry_run=False)
+#                 if result.has_errors():
+#                     messages.error(request, "Errors occurred during saving: {}".format(result.errors))
+#                 else:
+#                     messages.success(request, "Data imported and saved successfully.")
+#                     logger.info("Data saved successfully.")
+
+#             return redirect(request.path_info)
+
+#         except Exception as e:
+#             messages.error(request, "You do not have permission to import this subject, or the subject name does not match your assigned subject. Please check the dashboard for your assigned subjects.")
+#             logger.error(f"An error occurred while processing the file: {e}")
+#             return redirect(request.path_info)
+
+#     return render(request, 'teacher/dashboard/import.html')
 
 
 
