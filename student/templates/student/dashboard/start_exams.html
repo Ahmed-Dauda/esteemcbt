@@ -430,15 +430,17 @@ function renderCustomPagination(tableInstance) {
         const length = pageInfo.length;
         const startIndex = i * length;
         const endIndex = startIndex + length;
-        const rows = table.rows({ order: 'applied' }).nodes();
+        const rows = tableInstance.rows({ order: 'applied' }).nodes();
         const pageRows = $(rows).slice(startIndex, endIndex);
+
+        if (pageRows.length === 0) continue;
 
         pageRows.find('input[type=radio], input[type=checkbox]').each(function () {
             const name = $(this).attr('name');
             const value = $(this).val();
             if (storedAnswers[name] && storedAnswers[name] == value) {
                 isAnswered = true;
-                return false; // Break
+                return false; // Break loop
             }
         });
 
@@ -453,9 +455,9 @@ function renderCustomPagination(tableInstance) {
         if (answeredPages[i]) classes += ' answered-page';
         html += `<span class="${classes}" data-page="${i}" style="cursor:pointer; padding:5px;">${i + 1}</span> `;
     }
+
     $('#paginationBoxes').html(html);
 }
-
 
 // Restore answers and render pagination on page load
 $(document).ready(function () {
@@ -504,12 +506,16 @@ $('#paginationBoxes').on('click', '.custom-page-number', function (e) {
 
 table.on('draw', function () {
     const storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+
     Object.keys(storedAnswers).forEach(function (questionId) {
         const value = storedAnswers[questionId];
-        $(`input[name="${questionId}"][value="${value}"]`).prop('checked', true);
+        const inputSelector = `input[name="${questionId}"][value="${value}"]`;
+        $(inputSelector).prop('checked', true);
     });
-    renderCustomPagination(table);
+
+    renderCustomPagination(table);  // Re-render custom pagination
 });
+
 
 $('#submit').on('click', function () {
     localStorage.removeItem('quizAnswers');
@@ -637,41 +643,47 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 <script>
-  
 function manualSubmitQuiz() {
     var confirmation = confirm("Are you sure you want to submit the quiz?");
     if (!confirmation) return;
 
+    // Stop the timer
     if (window.timerInterval) {
         clearInterval(window.timerInterval);
     }
 
+    // Remove stored time for this course
     let courseKey = 'remainingTime_{{ course.id }}';
     localStorage.removeItem(courseKey);
 
+    // Use the last known tab switch count (optional reset to 0 if needed)
     const finalTabSwitchCount = parseInt(localStorage.getItem('tabSwitchCount')) || 0;
+    localStorage.setItem('tabSwitchCount', 0);  // Reset for next quiz/session
 
-    var storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+    // Use either localStorage answers or form serialization from DataTable
+    let storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+
+    // Add tabSwitchCount to the payload
     storedAnswers['tabSwitchCount'] = finalTabSwitchCount;
+    var jsonData = JSON.stringify(storedAnswers);  // use localStorage data
 
-    var jsonData = JSON.stringify(storedAnswers);
-
+    // Submit the quiz data
     $.ajax({
         type: "POST",
         url: "/student/calculate_marks",
         contentType: "application/json",
         data: jsonData,
-        success: function(response) {
+        success: function (response) {
             alert("Quiz submitted successfully!");
             localStorage.clear();
-            clearInterval(window.timerInterval);
+            clearInterval(window.timerInterval);  // Just to be sure
 
             setTimeout(function () {
                 window.location.reload();
             }, 1000);
         },
-        error: function(xhr, status, error) {
-            console.error("Error:", error);
+        error: function (xhr, status, error) {
+            console.error("Error submitting quiz:", error);
         }
     });
 }
@@ -1124,20 +1136,17 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 <script>
 $(document).on('keydown', function (e) {
-    if ($(e.target).is('input, textarea')) return;
+    const pageInfo = table.page.info();
+    const currentPage = pageInfo.page;
+    const totalPages = pageInfo.pages;
 
-    const currentPage = table.page();
-    const totalPages = table.page.info().pages;
-
-    if (e.key === 'ArrowLeft' || e.keyCode === 37) {
-        if (currentPage > 0) {
-            table.page(currentPage - 1).draw(false);
-        }
-    }
-
-    if (e.key === 'ArrowRight' || e.keyCode === 39) {
+    if (e.key === 'ArrowRight') {
         if (currentPage < totalPages - 1) {
             table.page(currentPage + 1).draw(false);
+        }
+    } else if (e.key === 'ArrowLeft') {
+        if (currentPage > 0) {
+            table.page(currentPage - 1).draw(false);
         }
     }
 });
