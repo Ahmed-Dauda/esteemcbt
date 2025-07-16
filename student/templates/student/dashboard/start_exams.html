@@ -398,6 +398,10 @@ var table = $('#example').DataTable({
     ]
 });
 
+// ✅ Restore last visited page after table is initialized
+const lastPage = parseInt(localStorage.getItem('lastVisitedPage') || 0);
+table.page(lastPage).draw(false);
+
 var answeredPages = {};
 
 function checkIfPageAnswered(pageNumber) {
@@ -502,7 +506,24 @@ $('#paginationBoxes').on('click', '.custom-page-number', function (e) {
     e.preventDefault();
     const page = $(this).data('page');
     table.page(page).draw(false);
+    localStorage.setItem('lastVisitedPage', page); // ✅ Save page on click
 });
+
+$(document).on('keydown', function (e) {
+    const pageInfo = table.page.info();
+    const currentPage = pageInfo.page;
+
+    if (e.key === 'ArrowRight' && currentPage < pageInfo.pages - 1) {
+        table.page(currentPage + 1).draw(false);
+        localStorage.setItem('lastVisitedPage', currentPage + 1); // ✅ Save on right arrow
+    }
+
+    if (e.key === 'ArrowLeft' && currentPage > 0) {
+        table.page(currentPage - 1).draw(false);
+        localStorage.setItem('lastVisitedPage', currentPage - 1); // ✅ Save on left arrow
+    }
+});
+
 
 table.on('draw', function () {
     const storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
@@ -647,43 +668,42 @@ function manualSubmitQuiz() {
     var confirmation = confirm("Are you sure you want to submit the quiz?");
     if (!confirmation) return;
 
-    // Stop the timer
     if (window.timerInterval) {
         clearInterval(window.timerInterval);
     }
 
-    // Remove stored time for this course
     let courseKey = 'remainingTime_{{ course.id }}';
     localStorage.removeItem(courseKey);
 
-    // Use the last known tab switch count (optional reset to 0 if needed)
     const finalTabSwitchCount = parseInt(localStorage.getItem('tabSwitchCount')) || 0;
-    localStorage.setItem('tabSwitchCount', 0);  // Reset for next quiz/session
 
-    // Use either localStorage answers or form serialization from DataTable
-    let storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
-
-    // Add tabSwitchCount to the payload
+    var storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
     storedAnswers['tabSwitchCount'] = finalTabSwitchCount;
-    var jsonData = JSON.stringify(storedAnswers);  // use localStorage data
 
-    // Submit the quiz data
+    var jsonData = JSON.stringify(storedAnswers);
+
     $.ajax({
         type: "POST",
         url: "/student/calculate_marks",
         contentType: "application/json",
         data: jsonData,
-        success: function (response) {
-            alert("Quiz submitted successfully!");
-            localStorage.clear();
-            clearInterval(window.timerInterval);  // Just to be sure
+        success: function(response) {
+          alert("Quiz submitted successfully!");
+          
+          // Clear all stored quiz data
+          localStorage.removeItem('quizAnswers');
+          localStorage.removeItem('lastVisitedPage');
+          localStorage.removeItem('tabSwitchCount');
+          localStorage.removeItem('remainingTime_{{ course.id }}');
 
-            setTimeout(function () {
-                window.location.reload();
-            }, 1000);
-        },
-        error: function (xhr, status, error) {
-            console.error("Error submitting quiz:", error);
+          clearInterval(window.timerInterval);
+
+          setTimeout(function () {
+              window.location.reload();
+          }, 1000);
+      },
+        error: function(xhr, status, error) {
+            console.error("Error:", error);
         }
     });
 }
@@ -718,7 +738,6 @@ function submitQuiz() {
 
 
 </script>
-
 
 
 <!-- inactive working codes -->

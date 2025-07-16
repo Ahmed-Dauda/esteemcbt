@@ -139,16 +139,22 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
+class StudentExamSession(models.Model):
+    student = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    question_order = models.JSONField()
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.course}"
+
 
 class Question(models.Model):
     course = models.ForeignKey(
         'Course', on_delete=models.CASCADE, blank=True, null=True, db_index=True
     )  # ✅ index added
 
-    marks = models.PositiveIntegerField(
-        null=True,
-        default=1,
-        validators=[MinValueValidator(1), MaxValueValidator(1)],
+    marks = models.PositiveIntegerField(null=True,default=1,validators=[MinValueValidator(1), MaxValueValidator(1)],
         help_text="This field is locked to 1 mark."
     )
 
