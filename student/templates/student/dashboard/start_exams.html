@@ -285,16 +285,18 @@ div.quiz p {
               {% endif %}
               
               <h6 style="text-align: right;">[marks {{q.marks}}]</h6>
+
+              
   
               {% if q.option1 %}
                 <div class="quiz">
                     <div class="radio-container">
                         <input class="radio-button" 
                             type="radio" 
-                            name="{{ forloop.counter }}" 
-                            id="option1-{{ forloop.counter }}" 
+                            name="{{ q.id }}" 
+                            id="option1-{{ q.id }}" 
                             value="Option1" required>
-                        <label for="option1-{{ forloop.counter }}">
+                        <label for="option1-{{ q.id }}">
                             {{ q.option1|safe }}
                         </label>
                     </div>
@@ -306,10 +308,10 @@ div.quiz p {
                     <div class="radio-container">
                         <input class="radio-button" 
                             type="radio" 
-                            name="{{ forloop.counter }}" 
-                            id="option2-{{ forloop.counter }}" 
+                            name="{{ q.id }}" 
+                            id="option2-{{ q.id }}" 
                             value="Option2" required>
-                        <label for="option2-{{ forloop.counter }}">
+                        <label for="option2-{{ q.id }}">
                             {{ q.option2|safe }}
                         </label>
                     </div>
@@ -321,10 +323,10 @@ div.quiz p {
                     <div class="radio-container">
                         <input class="radio-button" 
                             type="radio" 
-                            name="{{ forloop.counter }}" 
-                            id="option3-{{ forloop.counter }}" 
+                            name="{{ q.id }}" 
+                            id="option3-{{ q.id }}" 
                             value="Option3" required>
-                        <label for="option3-{{ forloop.counter }}">
+                        <label for="option3-{{ q.id }}">
                             {{ q.option3|safe }}
                         </label>
                     </div>
@@ -336,17 +338,16 @@ div.quiz p {
                     <div class="radio-container">
                         <input class="radio-button" 
                             type="radio" 
-                            name="{{ forloop.counter }}" 
-                            id="option4-{{ forloop.counter }}" 
+                            name="{{ q.id }}" 
+                            id="option4-{{ q.id }}" 
                             value="Option4" required>
-                        <label for="option4-{{ forloop.counter }}">
+                        <label for="option4-{{ q.id }}">
                             {{ q.option4|safe }}
                         </label>
                     </div>
                 </div>
                 {% endif %}
 
-              <!-- <h1>{{ q.answer}}</h1> -->
             </td>
 
         </tr>
@@ -481,15 +482,6 @@ $(document).ready(function () {
     renderCustomPagination(table);
 });
 
-// $(document).ready(function () {
-//     const storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
-//     Object.keys(storedAnswers).forEach(function (questionId) {
-//         const value = storedAnswers[questionId];
-//         $(`input[name="${questionId}"][value="${value}"]`).prop('checked', true);
-//     });
-//     renderCustomPagination(table);
-// });
-
 
 $('#example tbody').on('change', 'input[type=checkbox], input[type=radio]', function () {
     const questionId = $(this).attr('name');
@@ -599,59 +591,6 @@ function updateTimer(time, timerElement) {
     updateTimer({{ course.duration_minutes }}, timerElement);
 
     // Event handler for manual submit button
-
-// Manual submit button handler
-// $('#submit').on('click', function (e) {
-//     var confirmation = confirm("Are you sure you want to submit the quiz?");
-//     if (confirmation) {
-//         e.preventDefault();
-
-//         if (window.timerInterval) {
-//             clearInterval(window.timerInterval);
-//         }
-
-//         let courseKey = 'remainingTime_{{ course.id }}';
-//         localStorage.removeItem(courseKey);
-
-//         // Reset tabSwitchCount to 0 on manual submit
-//         localStorage.setItem('tabSwitchCount', 0);
-        
-
-//         // Gather form data and submit
-//         // var formData = table.$('input, select').serialize();
-//         var formData = table.$('input, select', { page: 'all' }).serialize();
-
-//         var dataArray = formData.split('&');
-//         var quizData = {};
-//         for (var i = 0; i < dataArray.length; i++) {
-//             var keyValue = dataArray[i].split('=');
-//             var questionIndex = parseInt(keyValue[0]);
-//             var answer = keyValue[1];
-//             quizData[questionIndex] = answer;
-//         }
-//         var jsonData = JSON.stringify(quizData);
-
-//         $.ajax({
-//             type: "POST",
-//             url: "/student/calculate_marks",
-//             contentType: "application/json",
-//             data: jsonData,
-//             success: function(response) {
-//                 alert("Quiz submitted successfully!");
-//                 localStorage.clear();
-//                 clearInterval(window.timerInterval);
-
-//                 setTimeout(function() {
-//                     window.location.reload();
-//                 }, 1000);
-//             },
-//             error: function(xhr, status, error) {
-//                 console.error("Error:", error);
-//             }
-//         });
-//     }
-// });
-
     
 });
 
@@ -826,57 +765,6 @@ function inactivesubmitQuiz() {
         }
     });
 }
-
-// function inactivesubmitQuiz() {
-//     const finalTabSwitchCount = parseInt(localStorage.getItem('tabSwitchCount')) || 0;
-
-//     // Clear the timer interval when tab switch limit is reached
-//     if (window.timerInterval) {
-//         clearInterval(window.timerInterval);
-//     }
-
-//     // Do not clear localStorage until after the value is captured
-//     // var formData = table.$('input, select').serialize();
-//     var formData = table.$('input, select', { page: 'all' }).serialize();
-
-//     var dataArray = formData.split('&');
-//     var quizData = {};
-
-//     for (var i = 0; i < dataArray.length; i++) {
-//         var keyValue = dataArray[i].split('=');
-//         var questionIndex = parseInt(keyValue[0]);
-//         var answer = keyValue[1];
-//         quizData[questionIndex] = answer;
-//     }
-
-//     // ✅ Include tab switch count in submission payload
-//     quizData['tabSwitchCount'] = finalTabSwitchCount;
-
-//     var jsonData = JSON.stringify(quizData);
-//     console.log("jsonData", jsonData);
-
-//     $.ajax({
-//         type: "POST",
-//         url: "/student/calculate_marks",
-//         contentType: "application/json",
-//         data: jsonData,
-//         success: function(response) {
-//             alert("Quiz submitted automatically due to reaching tab switch limit!");
-            
-//             // ✅ Now safe to clear storage
-//             localStorage.clear();  
-//             localStorage.removeItem('quizStartedForCourse_{{ course.id }}');  // Reset for next student
-
-
-//             setTimeout(function () {
-//                 window.location.href = "{% url 'student:view_result' %}";
-//             }, 1000);
-//         },
-//         error: function(xhr, status, error) {
-//             console.error("Error:", error);
-//         }
-//     });
-// }
 
 
 </script>
