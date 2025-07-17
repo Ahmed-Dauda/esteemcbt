@@ -4183,8 +4183,11 @@ async def _calculate_marks_async(request):
         return JsonResponse({'success': False, 'error': 'Result already exists.'})
 
     total_marks = 0
-    for i, question in enumerate(questions, start=1):
-        selected = answers_dict.get(str(i))
+
+    for question in questions:
+        qid = str(question.id)
+        selected = answers_dict.get(qid)
+
         if selected and selected == question.answer:
             total_marks += question.marks or 0
 
@@ -4229,7 +4232,6 @@ def save_result(course, student, total_marks):
             student=student,
             result_class=student.student_class
         )
-
 
 #working async now
 # @csrf_exempt
