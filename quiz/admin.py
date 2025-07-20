@@ -13,7 +13,9 @@ from django.db.models import Prefetch
 from .models import CourseGrade
 from quiz.forms import CourseGradeForm
 from django.contrib import admin
-from quiz.models import StudentAnswer
+from quiz.models import StudentAnswer,StudentExamSession
+
+admin.site.register(StudentExamSession)
 
 @admin.register(StudentAnswer)
 class StudentAnswerAdmin(admin.ModelAdmin):
