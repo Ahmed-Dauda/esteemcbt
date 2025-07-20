@@ -345,7 +345,7 @@ div.quiz p {
                             {{ q.option4|safe }}
                         </label>
                     </div>
-                </div>
+               </div>
                 {% endif %}
 
             </td>
@@ -361,8 +361,8 @@ div.quiz p {
 
 <!-- Button with inline CSS -->
 
-<div onclick="resetTabSwitchCount(); manualSubmitQuiz();" class="container buttonheight" style="display: flex; justify-content: center; align-items: center; padding: 20px;">
-    <button  onclick="manualSubmitQuiz()" class="submit-button" id="submit" type="submit" 
+<div onclick="resetTabSwitchCount();" class="container buttonheight" style="display: flex; justify-content: center; align-items: center; padding: 20px;">
+    <button   class="submit-button" id="submit" type="submit" 
         style="background-color: #28a745; max-height: 50px; border-radius: 10px; border: none; color: white; font-size: 16px; padding: 10px 20px; margin: 0 5px; cursor: pointer; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); transition: background-color 0.3s ease, transform 0.2s ease;"
         onmouseover="this.style.backgroundColor='#218838';"
         onmouseout="this.style.backgroundColor='#28a745';"
@@ -530,9 +530,6 @@ table.on('draw', function () {
 });
 
 
-$('#submit').on('click', function () {
-    localStorage.removeItem('quizAnswers');
-});
 
 </script>
 
@@ -603,49 +600,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 <script>
-function manualSubmitQuiz() {
-    var confirmation = confirm("Are you sure you want to submit the quiz?");
-    if (!confirmation) return;
+// manual submission
+document.getElementById('submit').addEventListener('click', function () {
+    const confirmed = confirm("Are you sure you want to submit the quiz?");
+    if (!confirmed) return;
 
     if (window.timerInterval) {
         clearInterval(window.timerInterval);
     }
 
-    let courseKey = 'remainingTime_{{ course.id }}';
-    localStorage.removeItem(courseKey);
-
     const finalTabSwitchCount = parseInt(localStorage.getItem('tabSwitchCount')) || 0;
+    const courseKey = 'remainingTime_{{ course.id }}';
 
-    var storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+    const storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
     storedAnswers['tabSwitchCount'] = finalTabSwitchCount;
 
-    var jsonData = JSON.stringify(storedAnswers);
+    const jsonData = JSON.stringify(storedAnswers);
 
     $.ajax({
         type: "POST",
         url: "/student/calculate_marks",
         contentType: "application/json",
         data: jsonData,
-        success: function(response) {
-          alert("Quiz submitted successfully!");
-          
-          // Clear all stored quiz data
-          localStorage.removeItem('quizAnswers');
-          localStorage.removeItem('lastVisitedPage');
-          localStorage.removeItem('tabSwitchCount');
-          localStorage.removeItem('remainingTime_{{ course.id }}');
+        success: function (response) {
+            alert("Quiz submitted successfully!");
+            localStorage.removeItem('quizAnswers');
+            localStorage.removeItem('lastVisitedPage');
+            localStorage.removeItem('tabSwitchCount');
+            localStorage.removeItem(courseKey);
+            localStorage.removeItem('quizStartedForCourse_{{ course.id }}');
 
-          clearInterval(window.timerInterval);
-
-          setTimeout(function () {
-              window.location.reload();
-          }, 1000);
-      },
-        error: function(xhr, status, error) {
-            console.error("Error:", error);
+            setTimeout(function () {
+                window.location.reload();
+            }, 1000);
+        },
+        error: function (xhr, status, error) {
+            console.error("Submission error:", error);
         }
     });
-}
+});
+
 
 // quiz submit due to time expiration
 function submitQuiz() {
