@@ -547,15 +547,6 @@ TINYMCE_JS_URL = 'https://cdn.tiny.cloud/1/r5ebxl5femg5gy8yvid6alg59ohekm45qlmxp
 TINYMCE_COMPRESSOR = False
 
 
-# live api
-# problem of hosting to heroku and solution
-# error: failed to push some refs to 'https://git.heroku.com/codethinkers.git'
-# git checkout -b master
-# git add .
-# git commit -m "your commit message"
-# git push -u origin master
-# git push heroku master
-
 # # solution to django.db.utils.OperationalError: no such table: auth_user
 # python manage.py migrate --run-syncdb
 
