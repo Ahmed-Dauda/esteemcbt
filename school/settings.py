@@ -372,25 +372,25 @@ USE_TZ = True
 # ADDITIONAL SITEs SECURITY
 # HTTPS and secure headers
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_SSL_REDIRECT = True
+# SECURE_BROWSER_XSS_FILTER = True
+# SECURE_CONTENT_TYPE_NOSNIFF = True
+# X_FRAME_OPTIONS = 'DENY'
 
-# HSTS (HTTP Strict Transport Security)
-SECURE_HSTS_SECONDS = 3600  # You can increase to 31536000 (1 year) in production
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+# # HSTS (HTTP Strict Transport Security)
+# SECURE_HSTS_SECONDS = 3600  # You can increase to 31536000 (1 year) in production
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
 
-# Cookies and sessions
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-SESSION_COOKIE_HTTPONLY = True
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# # Cookies and sessions
+# CSRF_COOKIE_SECURE = True
+# SESSION_COOKIE_SECURE = True
+# SESSION_COOKIE_HTTPONLY = True
+# SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-# Optional - block embedding your site in iframes entirely
-SECURE_FRAME_DENY = True  # Already handled by X_FRAME_OPTIONS = 'DENY'
+# # Optional - block embedding your site in iframes entirely
+# SECURE_FRAME_DENY = True  # Already handled by X_FRAME_OPTIONS = 'DENY'
 
 # end of new security
 
@@ -408,12 +408,23 @@ HITCOUNT_HITS_PER_IP_LIMIT = 0
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
+# STATIC_URL = '/static/'
+# MEDIA_URL = '/media/'
+
+# STATIC_ROOT =os.path.join(BASE_DIR, 'static')
+# MEDIA_ROOT =os.path.join(BASE_DIR, 'media')
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
+# ✅ Where Django will collect static files for production
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-STATIC_ROOT =os.path.join(BASE_DIR, 'static')
-MEDIA_ROOT =os.path.join(BASE_DIR, 'media')
+# ✅ Where you manually put static files like robots.txt, custom JS, etc.
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 # Default primary key field type
@@ -470,7 +481,6 @@ DEFAULT_FILE_STORAGE = env('DEFAULT_FILE_STORAGE')
 
 
 # STATIC_ROOT = BASE_DIR / 'staticfiles'
-# STATIC_URL = '/static/'
 
 # Simplified static file serving.
 # https://warehouse.python.org/project/whitenoise/

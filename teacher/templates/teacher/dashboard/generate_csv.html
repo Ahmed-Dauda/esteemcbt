@@ -42,6 +42,7 @@
 
                     <pre class="bg-white p-3 border rounded" id="sample{{ forloop.counter }}">
 <code>
+    
 {% if 'MATH' in subject|upper or 'MATHEMATICS' in subject|upper or 'MATHS' in subject|upper %}
 Give me <strong>{{ ai_question_num }}</strong> MCQs and answers for {{ subject.course_name }} on these objectives:
 <strong>{{ learning_objectives }}</strong>.

@@ -52,7 +52,7 @@ def delete_unused_placeholder_courses(modeladmin, request, queryset):
 
 
 class CourseAdmin(admin.ModelAdmin):    
-    list_display = ['get_school_name', 'show_questions', 'course_name', 'session','term','exam_type','question_number', 'total_marks', 'num_attemps', 'duration_minutes', 'created']
+    list_display = ['get_school_name', 'full_screen','show_questions', 'course_name', 'session','term','exam_type','question_number', 'total_marks', 'num_attemps', 'duration_minutes', 'created']
     search_fields = ['course_name__title', 'schools__school_name','term__name', 'exam_type__name']  # Add search field for course name and school name
     autocomplete_fields = ['schools']
     actions = [delete_unused_placeholder_courses]
@@ -308,31 +308,6 @@ class QuestionResource(resources.ModelResource):
         fields = ('course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer', 'created', 'updated', 'id')
 
     
-# real codes
-# class QuestionResource(resources.ModelResource):
-#     course = fields.Field(
-#         column_name='course',
-#         attribute='course',
-#         widget=ForeignKeyWidget(Course, 'course_name__title')
-#     )
-
-#     class Meta:
-#         model = Question
-#         fields = ('course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer', 'created', 'updated', 'id')
-   
-# class QuestionAdmin(ImportExportModelAdmin, ExportActionMixin):
-#     list_display = ['course', 'marks', 'question','option1','option2','option3','option4' ,'answer']
-#     list_filter = ['course', 'marks', 'question']  
-#     search_fields = ['course__course_name__title', 'marks', 'question']
-#     ordering = ['id']  
-#     resource_class = QuestionResource   
-
-#     def get_queryset(self, request):
-#         queryset = super().get_queryset(request)
-#         queryset = queryset.select_related('course')
-#         return queryset
-    
-# admin.site.register(Question, QuestionAdmin)
 
 
 

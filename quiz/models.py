@@ -21,6 +21,7 @@ class Course(models.Model):
     course_name = models.ForeignKey(Courses, on_delete=models.CASCADE, blank=True, null=True, db_index=True)
     question_number = models.PositiveIntegerField(blank=True, null=True)
     course_pay = models.BooleanField(default=False)
+    full_screen = models.BooleanField(default=False)
     total_marks = models.PositiveIntegerField(blank=True, null=True)
     session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
     term = models.ForeignKey(Term, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
