@@ -59,7 +59,7 @@ INSTALLED_APPS = [
     'django_social_share',
     'import_export',
     'django_mathjax',
-    "debug_toolbar",
+
     
     
     
@@ -274,23 +274,6 @@ TEMPLATES = [
     },
 ]
 
-# TEMPLATES = [
-#     {
-#         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-#         'DIRS': [os.path.join(BASE_DIR, 'templates')],  # Add any template directories here
-#         'APP_DIRS': True,
-#         'OPTIONS': {
-#             'context_processors': [
-#                 'django.template.context_processors.debug',
-#                 'django.template.context_processors.request',
-                
-#                 'django.contrib.auth.context_processors.auth',
-#                 'django.contrib.messages.context_processors.messages',
-                
-#             ],
-#         },
-#     },
-# ]
 
 WSGI_APPLICATION = 'school.wsgi.application'
 
@@ -298,14 +281,6 @@ WSGI_APPLICATION = 'school.wsgi.application'
 
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 PROJECT_PATH =os.path.dirname(os.path.abspath(__file__))
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(PROJECT_PATH, 'school.sqlite3'),
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 
 import os
 
@@ -437,23 +412,9 @@ DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
-# ASGI application
-ASGI_APPLICATION = 'school.asgi.application'
-
-# DATABASES = {
-#     'default': env.db()
-# }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'esteemcbt',
-#         'USER': 'esteemuser',
-#         'PASSWORD': '0806',
-#         'HOST': 'localhost',
-#         'PORT': '5432',
-#     }
-# }
+if DEBUG:
+    INSTALLED_APPS += ["debug_toolbar"]
+    MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
 
 
 #CLOUDINARY SETTINGS
@@ -465,6 +426,9 @@ cloudinary.config(
 )
 CLOUDINARY_URL = env('CLOUDINARY_URL')
 DEFAULT_FILE_STORAGE = env('DEFAULT_FILE_STORAGE')
+
+# ASGI application
+ASGI_APPLICATION = 'school.asgi.application'
 
 # import dj_database_url
 # Update database configuration from $DATABASE_URL.

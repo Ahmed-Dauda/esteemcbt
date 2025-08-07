@@ -1,0 +1,9 @@
+*.log
+*.csv
+*.md
+*.sqlite3
+__pycache__/
+media/
+static/
+.env
+node_modules/
