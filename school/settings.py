@@ -561,8 +561,6 @@ PAYSTACK_SECRET_KEY = 'sk_test_75e53acfea9e04b0c52c3c3c6c46281c844a706a'
 PAYSTACK_PUBLIC_KEY = 'pk_test_72337ad2f9419ff6eb3204519bb884067c075ed8'
 
 # live api
-# PAYSTACK_SECRET_KEY = 'sk_live_ecb915cd648ffcea0578361a08ac369122f02754'
-# PAYSTACK_PUBLIC_KEY = 'pk_live_010265c77983e11a700678d34d476b1ce1c48fb1'
 
 
 # problem of hosting to heroku and solution
