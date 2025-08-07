@@ -563,9 +563,6 @@ TINYMCE_COMPRESSOR = False
 
 # using ngov to test webhooks
 
-# change the webhook to a test mode in paystack
-# login to the ngrov website and copy and paste ngrok config add-authtoken 2SL4rhAyqYBNfeHZvWsCan18Pcz_71B7staheJejM8eL6husJ
-# ngrok http 8000 --host-header=rewrite
 
 
 # migration folder issues
