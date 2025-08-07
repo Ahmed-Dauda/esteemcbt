@@ -564,7 +564,6 @@ TINYMCE_COMPRESSOR = False
 # using ngov to test webhooks
 
 
-
 # migration folder issues
 
 # if table is referencing deleted column, just remove the table from migration folder
