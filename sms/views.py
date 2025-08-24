@@ -478,7 +478,7 @@ class Ebooks(HitCountDetailView,DetailView):
         related_payments = EbooksPayment.objects.filter(email=user, content_type=course, amount=course.price)
         # related_payments = Payment.objects.filter(email=user, courses__title=object.title, amount=object.price)
         context['related_payments'] = related_payments
-        context['paystack_public_key']  = settings.PAYSTACK_PUBLIC_KEY
+        # context['paystack_public_key']  = settings.PAYSTACK_PUBLIC_KEY
 
         
         return context

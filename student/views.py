@@ -3766,9 +3766,6 @@ from django.http import HttpRequest
 import random
 from quiz.models import Question,StudentExamSession
 
-from django.shortcuts import render, redirect
-from asgiref.sync import sync_to_async, async_to_sync
-from django.contrib.auth.decorators import login_required
 
 @csrf_exempt
 def start_exams_view(request: HttpRequest, pk: int) -> HttpResponse:
@@ -3859,6 +3856,8 @@ def get_or_create_shuffled_questions(student, course, all_questions):
 # Django sync views wrapped in async
 async_render = sync_to_async(render, thread_sensitive=True)
 async_redirect = sync_to_async(redirect, thread_sensitive=True)
+
+
 
 #working code
 # @csrf_exempt
@@ -4323,6 +4322,8 @@ def save_result(course, student, total_marks):
             student=student,
             result_class=student.student_class
         )
+
+
 
 #working async now
 # @csrf_exempt
@@ -5026,7 +5027,7 @@ def exam_warning_view(request):
 
 #     return render(request,'student/dashboard/view_result.html', context = context)
 
-@cache_page(60 * 60 * 24)
+# @cache_page(60 * 60 * 24)
 @login_required
 def view_result_view(request):
     qcourses = Course.objects.only('id').order_by('id')

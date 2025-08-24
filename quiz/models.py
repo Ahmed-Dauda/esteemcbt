@@ -306,6 +306,7 @@ class Result(models.Model):
     def __str__(self):
         return f"{self.student}---{self.exam.course_name}---{self.exam_type}---{self.marks}"
 
+
 # models.py
 
 class StudentAnswer(models.Model):
