@@ -8,6 +8,7 @@
 {% block title %} Courses list view page {% endblock %}
 
 {% block content %} 
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
@@ -21,6 +22,7 @@
  <!-- Load MathJax for MathML rendering -->
   
 <style>
+  
 div.quiz p {
   text-align: left;
 }
@@ -208,7 +210,34 @@ div.quiz p {
   }
 </style>
 
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <style>
 
+    .exam-container {
+      text-align: center;
+    }
+
+    #fullscreenPopup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      color: #fff;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 9999;
+    }
+
+   
+
+    button:hover {
+      background: #0b5ed7;
+    }
+  </style>
 <!-- MathJax for math rendering -->
 
 <form novalidate autocomplete="off" class="no-copy" id="quizf" action="/student/calculate_marks" onsubmit="return saveAns()" enctype="multipart/form-data"  method="POST">
@@ -232,10 +261,8 @@ div.quiz p {
                     <div class="col-12 col-md-4" style="padding: 10px;">
                 <p style="color: red;text-align: center;"><span id="tabCount">0</span> / {{ course.num_attemps }} attempts to leave the exam page detected.</p>
 
-
                         <!-- <h6 style="color: #dc3545; font-weight: bold; font-size: 16px;" id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</h6>
                         <h5 id="attempts" style="color:red; font-size:24px;">Allow attempts: 0</h5> -->
-
 
                         <div id="timer" style="font-size: 24px; font-weight: bold; color: #333; text-align: center; margin: 10px 0;">00:00</div>
                         <!-- <div class="progress mt-3" style="height: 20px; border-radius: 10px;">
@@ -253,7 +280,7 @@ div.quiz p {
         </div>
     </div>
 
-    <table id="example" class="display question-table" style="width:98%;">
+    <table  id="example" class="display question-table" style="width:98%;">
 
       <thead>
           <tr>
@@ -261,7 +288,7 @@ div.quiz p {
           </tr>
       </thead>
      
-      <tbody>
+      <tbody >
     
         {% for q in  page_obj %}
         <tr>
@@ -287,16 +314,15 @@ div.quiz p {
               <h6 style="text-align: right;">[marks {{q.marks}}]</h6>
 
               
-  
               {% if q.option1 %}
                 <div class="quiz">
-                    <div class="radio-container">
-                        <input class="radio-button" 
+                    <div  class="radio-container">
+                        <input  class="radio-button" 
                             type="radio" 
                             name="{{ q.id }}" 
                             id="option1-{{ q.id }}" 
                             value="Option1" required>
-                        <label for="option1-{{ q.id }}">
+                        <label  for="option1-{{ q.id }}">
                             {{ q.option1|safe }}
                         </label>
                     </div>
@@ -305,13 +331,13 @@ div.quiz p {
 
                 {% if q.option2 %}
                 <div class="quiz">
-                    <div class="radio-container">
-                        <input class="radio-button" 
+                    <div  class="radio-container">
+                        <input  class="radio-button" 
                             type="radio" 
                             name="{{ q.id }}" 
                             id="option2-{{ q.id }}" 
                             value="Option2" required>
-                        <label for="option2-{{ q.id }}">
+                        <label  for="option2-{{ q.id }}">
                             {{ q.option2|safe }}
                         </label>
                     </div>
@@ -321,12 +347,12 @@ div.quiz p {
                 {% if q.option3 %}
                 <div class="quiz">
                     <div class="radio-container">
-                        <input class="radio-button" 
+                        <input  class="radio-button" 
                             type="radio" 
                             name="{{ q.id }}" 
                             id="option3-{{ q.id }}" 
                             value="Option3" required>
-                        <label for="option3-{{ q.id }}">
+                        <label  for="option3-{{ q.id }}">
                             {{ q.option3|safe }}
                         </label>
                     </div>
@@ -334,14 +360,14 @@ div.quiz p {
                 {% endif %}
 
                 {% if q.option4 %}
-                <div class="quiz">
-                    <div class="radio-container">
-                        <input class="radio-button" 
+                <div  class="quiz">
+                    <div  class="radio-container">
+                        <input  class="radio-button" 
                             type="radio" 
                             name="{{ q.id }}" 
                             id="option4-{{ q.id }}" 
                             value="Option4" required>
-                        <label for="option4-{{ q.id }}">
+                        <label  for="option4-{{ q.id }}">
                             {{ q.option4|safe }}
                         </label>
                     </div>
@@ -358,6 +384,86 @@ div.quiz p {
     </table>
     
 </form> 
+<div class="exam-container">
+  <h1>Exam Mode</h1>
+  <p>Click below to enter fullscreen exam mode.</p>
+  <button id="startExamBtn" onclick="startExam()">Start Exam</button>
+</div>
+
+<div id="fullscreenPopup" style="display: none; justify-content: center; align-items: center; flex-direction: column; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.92); color: white; z-index: 9999;">
+  <h2>⚠️ Exam Paused</h2>
+  <p>You exited fullscreen. Please return to continue your exam.</p>
+  <button onclick="returnToFullscreen()">Re-enter Fullscreen</button>
+</div>
+
+<script>
+  const elem = document.documentElement;
+
+  function openFullscreen() {
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) { // Safari
+      elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) { // IE11
+      elem.msRequestFullscreen();
+    }
+    localStorage.setItem("examFullscreen", "true");
+  }
+
+  function startExam() {
+    openFullscreen();
+    const btn = document.getElementById("startExamBtn");
+    if (btn) btn.style.display = "none";
+  }
+
+  function returnToFullscreen() {
+    openFullscreen();
+    document.getElementById("fullscreenPopup").style.display = "none";
+  }
+
+  // Detect exiting fullscreen
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement) {
+      localStorage.setItem("examFullscreen", "false");
+      document.getElementById("fullscreenPopup").style.display = "flex";
+    }
+  });
+
+  // Auto re-enter on reload if last session was fullscreen
+  window.addEventListener("load", () => {
+    const wasFull = localStorage.getItem("examFullscreen") === "true";
+    if (wasFull) {
+      setTimeout(() => openFullscreen(), 500);
+    }
+
+    // Attach listener to radio buttons
+    const radios = document.querySelectorAll(".radio-button");
+    radios.forEach(radio => {
+      radio.addEventListener("click", () => {
+        startExam(); // Trigger fullscreen + hide button
+      });
+    });
+  });
+
+  // Optional: detect tab switch or window blur
+  window.addEventListener("blur", () => {
+    document.getElementById("fullscreenPopup").style.display = "flex";
+  });
+
+  // Block F11, Esc, Ctrl+R, F5
+  document.addEventListener("keydown", (e) => {
+    if (
+      e.key === "F11" ||
+      e.key === "Escape" ||
+      (e.ctrlKey && e.key === "r") ||
+      e.key === "F5"
+    ) {
+      e.preventDefault();
+      alert("🚫 Fullscreen mode is required during the exam!");
+      return false;
+    }
+  });
+</script>
 
 <!-- Button with inline CSS -->
 

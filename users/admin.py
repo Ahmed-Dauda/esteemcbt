@@ -10,9 +10,10 @@ from quiz.models import Course, Question, Result
 # from django.contrib.auth import get_user_model
 # User = get_user_model()
 
-from import_export.admin import ImportExportModelAdmin
+
 from import_export import fields,resources
 from import_export.widgets import ForeignKeyWidget
+from import_export.admin import ImportExportModelAdmin, ExportActionMixin
 
 
 class NewUserResource(resources.ModelResource):
@@ -20,9 +21,9 @@ class NewUserResource(resources.ModelResource):
         model = NewUser
         # fields = ('title',)
 
-class NewUserAdmin(ImportExportModelAdmin):
+class NewUserAdmin(ImportExportModelAdmin, ExportActionMixin):
     list_display = [
-        'id', 'email', 'username', 'phone_number', 'first_name', 'last_name',
+        'email', 'username', 'phone_number', 'first_name', 'last_name',
         'student_class', 'school', 'countries', 'is_staff', 'is_superuser',
         'is_active', 'last_login', 'date_joined'
     ]
@@ -33,10 +34,6 @@ class NewUserAdmin(ImportExportModelAdmin):
     search_fields = [
         'email',
         'username',
-        'first_name',
-        'last_name',
-        'phone_number',
-        'admission_no',
         'school__school_name',
         'student_class'
     ]  # ✅ Removed 'title'
@@ -47,24 +44,50 @@ class NewUserAdmin(ImportExportModelAdmin):
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         return queryset.select_related('school')
+    
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        # The built-in “export_selected_objects” action is automatically available
+        return actions
 
 admin.site.register(NewUser, NewUserAdmin)
-   
+
+# class NewUserResource(resources.ModelResource):
+#     class Meta:
+#         model = NewUser
+#         # fields = ('title',)
+
 # class NewUserAdmin(ImportExportModelAdmin):
-#     list_display = ['id', 'email', 'username', 'phone_number', 'first_name', 'last_name', 'student_class', 'school', 'countries', 'is_staff', 'is_superuser', 'is_active', 'last_login', 'date_joined']
-#     list_filter = ['email', 'username', 'school', 'phone_number', 'first_name', 'last_login', 'student_class']
-#     search_fields = ['email', 'title','username', 'school__school_name', 'phone_number', 'first_name', 'last_login', 'student_class']  # Use school__name to search by school name
+#     list_display = [
+#         'email', 'username', 'phone_number', 'first_name', 'last_name',
+#         'student_class', 'school', 'countries', 'is_staff', 'is_superuser',
+#         'is_active', 'last_login', 'date_joined'
+#     ]
+#     list_filter = [
+#         'email', 'username', 'school', 'phone_number',
+#         'first_name', 'last_login', 'student_class'
+#     ]
+#     search_fields = [
+#         'email',
+#         'username',
+#         'school__school_name',
+#         'student_class'
+#     ]  # ✅ Removed 'title'
 #     ordering = ['date_joined']
 #     autocomplete_fields = ['school']
-    
 #     resource_class = NewUserResource
 
 #     def get_queryset(self, request):
 #         queryset = super().get_queryset(request)
-#         queryset = queryset.select_related('school')  # Assuming school is a ForeignKey field in NewUser
-#         return queryset
+#         return queryset.select_related('school')
+    
+#     def get_actions(self, request):
+#         actions = super().get_actions(request)
+#         # The built-in “export_selected_objects” action is automatically available
+#         return actions
 
 # admin.site.register(NewUser, NewUserAdmin)
+
 
 
 from import_export.widgets import ForeignKeyWidget

@@ -158,12 +158,7 @@ class ResultResource(resources.ModelResource):
     
     class Meta:
         model = Result
-        # fields = (
-        #     'exam', 'student_username', 'marks', 
-        #     'result_class', 'session', 'term', 'exam_type', 
-        #     'created', 'id')
-        # export_order = ('exam_course_name', 'student_username', 'marks', 'result_class', 'session', 'term', 'exam_type', 'created', 'id')
-        
+
         fields = (
              
             'id', 'exam_course_name','result_class', 'session__name', 'term__name', 
