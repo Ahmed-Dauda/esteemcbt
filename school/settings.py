@@ -351,7 +351,7 @@ SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-# Optional - block embedding your site in iframes entirely
+# Optional - block embedding your site in iframe entirely
 SECURE_FRAME_DENY = True  # Already handled by X_FRAME_OPTIONS = 'DENY'
 
 # end of new security
