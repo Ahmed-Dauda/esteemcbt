@@ -44,6 +44,9 @@ from teacher import forms as QFORM
 from quiz import models as QMODEL
 from django.contrib import messages
 from .forms import CourseGradeForm 
+from django.contrib import messages
+from django.shortcuts import redirect
+
 
 @login_required(login_url='teacher:teacher_login')
 def teacher_list_view(request):
@@ -1467,6 +1470,7 @@ def examiner_dashboard_view(request):
 
         return render(request, 'teacher/dashboard/examiner_dashboard.html', context)
 
+
 @login_required(login_url='teacher:teacher_login')
 def student_lists_view(request):
     students = NewUser.objects.filter(
@@ -1509,25 +1513,6 @@ def student_lists_view(request):
         'all_classes': all_classes,
     }
     return render(request, 'teacher/dashboard/student_lists.html', context)
-
-
-from django.contrib import messages
-from django.shortcuts import redirect
-
-def bulk_delete_students(request):
-    if request.method == 'POST':
-        selected_ids = request.POST.getlist('selected_students')
-        if selected_ids:
-            deleted_count, _ = NewUser.objects.filter(
-                id__in=selected_ids,
-                school=request.user.school,
-            ).exclude(student_class__isnull=True).exclude(student_class__exact='').delete()
-
-            messages.success(request, f"{deleted_count} student(s) deleted successfully.")
-        else:
-            messages.warning(request, "No students selected for deletion.")
-    
-    return redirect('teacher:student_lists')
 
 def bulk_move_students(request):
     if request.method == 'POST':
@@ -1584,6 +1569,22 @@ def bulk_action_students(request):
 
     return redirect('teacher:student_lists')
 
+
+
+def bulk_delete_students(request):
+    if request.method == 'POST':
+        selected_ids = request.POST.getlist('selected_students')
+        if selected_ids:
+            deleted_count, _ = NewUser.objects.filter(
+                id__in=selected_ids,
+                school=request.user.school,
+            ).exclude(student_class__isnull=True).exclude(student_class__exact='').delete()
+
+            messages.success(request, f"{deleted_count} student(s) deleted successfully.")
+        else:
+            messages.warning(request, "No students selected for deletion.")
+    
+    return redirect('teacher:student_lists')
 
 @login_required(login_url='teacher:teacher_login')
 def edit_student(request, student_id):

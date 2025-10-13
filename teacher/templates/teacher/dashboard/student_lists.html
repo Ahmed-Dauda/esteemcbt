@@ -88,44 +88,47 @@
       </tbody>
     </table>
   </form>
+<script>
+const searchInput = document.getElementById("searchInput");
+const table = document.getElementById("studentsTable");
+const rows = table.getElementsByTagName("tr");
+const selectAll = document.getElementById("selectAll");
 
-  <script>
-    const searchInput = document.getElementById("searchInput");
-    const table = document.getElementById("studentsTable");
-    const rows = table.getElementsByTagName("tr");
-    const selectAll = document.getElementById("selectAll");
+// Select/Deselect visible rows only
+selectAll.addEventListener("change", function() {
+  const visibleCheckboxes = table.querySelectorAll("tbody tr:not([style*='display: none']) input[type='checkbox']");
+  visibleCheckboxes.forEach(cb => cb.checked = selectAll.checked);
+});
 
-    // 🔘 Select/Deselect All
-    selectAll.addEventListener("change", function() {
-      const checkboxes = table.querySelectorAll("tbody input[type='checkbox']");
-      checkboxes.forEach(cb => cb.checked = selectAll.checked);
-    });
+// Filter visible rows and automatically uncheck hidden ones
+searchInput.addEventListener("keyup", function() {
+  const filter = searchInput.value.toLowerCase();
+  let visibleCount = 0;
 
-    // 🔍 Live Search
-    function removeHighlights(el) { el.innerHTML = el.textContent; }
-    function highlightMatch(el, filter) {
-      const text = el.textContent;
-      const regex = new RegExp(`(${filter})`, "gi");
-      el.innerHTML = text.replace(regex, '<span class="highlight">$1</span>');
-    }
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const searchableCells = row.querySelectorAll(".searchable");
+    let match = false;
 
-    searchInput.addEventListener("keyup", function() {
-      const filter = searchInput.value.toLowerCase();
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        const searchableCells = row.querySelectorAll(".searchable");
-        let match = false;
-        searchableCells.forEach(cell => {
-          removeHighlights(cell);
-          if (cell.textContent.toLowerCase().includes(filter)) {
-            match = true;
-            if (filter) highlightMatch(cell, filter);
-          }
-        });
-        row.style.display = match || !filter ? "" : "none";
+    searchableCells.forEach(cell => {
+      if (cell.textContent.toLowerCase().includes(filter)) {
+        match = true;
       }
     });
-  </script>
+
+    if (match || !filter) {
+      row.style.display = "";
+      visibleCount++;
+    } else {
+      row.style.display = "none";
+      row.querySelector("input[type='checkbox']").checked = false;
+    }
+  }
+
+  // Reset Select All if no visible rows
+  if (visibleCount === 0) selectAll.checked = false;
+});
+</script>
 
 </body>
 </html>
