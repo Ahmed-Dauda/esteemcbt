@@ -1450,25 +1450,22 @@ from django.contrib.auth.decorators import login_required
 
 @login_required(login_url='teacher:teacher_login')
 def examiner_dashboard_view(request):
- 
-    # Check if the user is authenticated
-    if request.user.is_authenticated:
-        # user = NewUser.objects.get(id=request.user.id)
-        user = NewUser.objects.select_related('school').get(id=request.user.id)
-        user_school = user.school
-     
-        # Filter CourseGrade objects based on the user's school
-        from django.db.models import Q
+    user = NewUser.objects.select_related('school').get(id=request.user.id)
+    user_school = user.school
 
-        course_grades = CourseGrade.objects.filter(
-            Q(students__school=user_school) | Q(students__isnull=True)
-        ).distinct().prefetch_related('students', 'subjects')
+    # Show ALL classes in this school (even empty ones)
+    course_grades = (
+        CourseGrade.objects.filter(schools=user_school)
+        .prefetch_related('students', 'subjects')
+        .order_by('name')
+    )
 
-        context = {     
-            'course_grades': course_grades,
-        }
+    context = {
+        'course_grades': course_grades,
+    }
 
-        return render(request, 'teacher/dashboard/examiner_dashboard.html', context)
+    return render(request, 'teacher/dashboard/examiner_dashboard.html', context)
+    
 
 
 @login_required(login_url='teacher:teacher_login')
@@ -1632,6 +1629,36 @@ def delete_student(request, student_id):
 
 
 
+# @login_required(login_url='teacher:teacher_login')
+# def edit_coursegrade_view(request, pk):
+#     user = NewUser.objects.select_related('school').get(id=request.user.id)
+#     user_school = user.school
+
+#     course_grade = get_object_or_404(
+#         CourseGrade.objects.prefetch_related('students', 'subjects'),
+#         pk=pk,
+#         schools=user_school  # Ensures teachers can't access other schools' data
+#     )
+
+#     if request.method == 'POST':
+#         form = CourseGradeForm(request.POST, instance=course_grade, user_school=user_school)
+#         if form.is_valid():
+#             form.save()
+           
+#             messages.success(request, "Changes saved successfully!")
+#             return redirect(request.path)  # reloads same page
+#             # return redirect('teacher:examiner_dashboard')
+#     else:
+#         form = CourseGradeForm(instance=course_grade, user_school=user_school)
+
+#     context = {
+#         'form': form,
+#         'course_grade': course_grade,
+#     }
+
+#     return render(request, 'teacher/dashboard/edit_coursegrade.html', context)
+
+
 @login_required(login_url='teacher:teacher_login')
 def edit_coursegrade_view(request, pk):
     user = NewUser.objects.select_related('school').get(id=request.user.id)
@@ -1647,10 +1674,8 @@ def edit_coursegrade_view(request, pk):
         form = CourseGradeForm(request.POST, instance=course_grade, user_school=user_school)
         if form.is_valid():
             form.save()
-           
-            messages.success(request, "Changes saved successfully!")
-            return redirect(request.path)  # reloads same page
-            # return redirect('teacher:examiner_dashboard')
+            messages.success(request, "Course grade updated successfully.")
+            return redirect('teacher:examiner_dashboard')
     else:
         form = CourseGradeForm(instance=course_grade, user_school=user_school)
 
@@ -1660,32 +1685,6 @@ def edit_coursegrade_view(request, pk):
     }
 
     return render(request, 'teacher/dashboard/edit_coursegrade.html', context)
-
-
-# @login_required(login_url='teacher:teacher_login')
-# def edit_coursegrade_view(request, pk):
-#     user = NewUser.objects.select_related('school').get(id=request.user.id)
-#     user_school = user.school
-
-#     course_grade = get_object_or_404(
-#         CourseGrade.objects.prefetch_related('students', 'subjects'), 
-#         pk=pk)
-        
-  
-#     # print(course_grade.subjects, 'ttt')
-#     if request.method == 'POST':
-#         form = CourseGradeForm(request.POST, instance=course_grade, user_school=user_school)
-#         if form.is_valid():
-#             form.save()
-#             return redirect('teacher:examiner_dashboard')  # Redirect to the dashboard after saving
-#     else:
-#         form = CourseGradeForm(instance=course_grade, user_school=user_school)
-
-#     context = {
-#         'form': form
-#     }
-
-#     return render(request, 'teacher/dashboard/edit_coursegrade.html', context)
 
 
 # @login_required(login_url='teacher:teacher_login')

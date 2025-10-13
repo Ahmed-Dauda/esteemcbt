@@ -1,28 +1,53 @@
 {% load crispy_forms_tags %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Edit Class Assignment</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
-  <!-- ✅ DataTables -->
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 
   <style>
-    .form-label { font-weight: 600; }
-    .dataTables_wrapper .dataTables_filter input {
-      border-radius: 8px;
-      border: 1px solid #ced4da;
-      padding: 5px 10px;
+    .form-label {
+      font-weight: 600;
     }
-    table.dataTable tbody tr.selected {
-      background-color: #d1e7dd !important;
+
+    .row.flex-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .row.flex-form > .col-md-6 {
+      flex: 1 1 45%;
+      min-width: 300px;
+    }
+
+    .submit-btn {
+      padding: 12px 40px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .row.flex-form > .col-md-6 {
+        flex: 1 1 100%;
+      }
     }
   </style>
 </head>
 <body>
+
+{% if messages %}
+  <div class="container mt-3">
+    {% for message in messages %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
 
 <div class="container mt-5">
   <div class="card shadow-lg border-0 rounded-4">
@@ -31,133 +56,50 @@
     </div>
 
     <div class="card-body px-4 py-5">
-      
-      <!-- ✅ SUCCESS MESSAGE -->
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
-            <i class="bi bi-check-circle-fill"></i> {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
-   <!-- ✅ Back Button -->
-      <div class="text-center mt-4">
-        <a href="{% url 'teacher:examiner_dashboard' %}" class="btn btn-secondary">
-          <i class="bi bi-arrow-left"></i> Back to Dashboard
-        </a>
-      </div>
-      <!-- ✅ Currently Assigned Subjects -->
-      <!-- {% if course_grade.subjects.all %}
-      <div class="mb-5">
-        <div class="card shadow-sm border-0 rounded-4">
-          <div class="card-body">
-            <h5 class="text-center mb-3 text-success">
-              <i class="bi bi-book"></i> Currently Assigned Subjects
-            </h5>
-            <ul class="list-group list-group-flush">
-              {% for subject in course_grade.subjects.all %}
-              <li class="list-group-item">{{ subject.course_name }}</li>
-              {% endfor %}
-            </ul>
-          </div>
-        </div>
-      </div>
-      {% endif %} -->
-
-      <!-- ✅ Form Section -->
-      <form method="post" id="assignmentForm">
+      <form method="post">
         {% csrf_token %}
-        <div class="row">
-          <!-- ✅ Students Table -->
-          <!-- <div class="col-md-6 mb-4">
-            <label class="form-label">Select Students</label>
-            <table id="studentsTable" class="table table-bordered table-striped table-hover">
-              <thead class="table-success text-center">
-                <tr>
-                  <th>Select</th>
-                  <th>Student Name</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for student in form.students.field.queryset %}
-                <tr>
-                  <td class="text-center">
-                    <input type="checkbox" name="students" value="{{ student.id }}"
-                      {% if student in form.initial.students %}checked{% endif %}>
-                  </td>
-                  <td>{{ student }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div> -->
 
-          <!-- ✅ Subjects Table -->
+        <div class="row flex-form">
+          <!-- Students -->
           <div class="col-md-6 mb-4">
-            <label class="form-label">Select Subjects</label>
-            <table id="subjectsTable" class="table table-bordered table-striped table-hover">
-              <thead class="table-success text-center">
-                <tr>
-                  <th>Select</th>
-                  <th>Subject Info</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for subject in form.subjects.field.queryset %}
-                <tr>
-                  <td class="text-center">
-                    <input type="checkbox" name="subjects" value="{{ subject.id }}"
-                      {% if subject in form.initial.subjects %}checked{% endif %}>
-                  </td>
-                  <td>{{ subject.course_name }} - {{ subject.term }} - {{ subject.session }} - {{ subject.exam_type }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+            <label for="{{ form.students.id_for_label }}" class="form-label">Select Students</label>
+            {{ form.students|as_crispy_field }}
+          </div>
+
+          <!-- Subjects -->
+          <div class="col-md-6 mb-4">
+            <label for="{{ form.subjects.id_for_label }}" class="form-label">Select Subjects</label>
+            {{ form.subjects|as_crispy_field }}
           </div>
         </div>
 
         <div class="text-center mt-4">
-          <button type="submit" class="btn btn-success btn-lg">Save Changes</button>
+          <button type="submit" class="btn btn-success btn-lg submit-btn">Save Changes</button>
         </div>
       </form>
-
-   
     </div>
   </div>
 </div>
 
-<!-- ✅ JS -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+{% if course_grade.subjects.all %}
+  <div class="container mt-5">
+    <div class="card shadow-sm border-0 rounded-4">
+      <div class="card-body">
+        <h5 class="text-center mb-3">Currently Assigned Subjects</h5>
+        <ul class="list-group list-group-flush">
+          {% for subject in course_grade.subjects.all %}
+            <li class="list-group-item">{{ subject.course_name }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="container mt-4 text-center">
+    <p class="text-muted">No subjects assigned yet.</p>
+  </div>
+{% endif %}
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-$(document).ready(function() {
-  // Initialize DataTables
-  const studentTable = $('#studentsTable').DataTable({
-    paging: true,
-    pageLength: 5,
-    lengthChange: false,
-    order: [],
-    language: { search: "Search students:" }
-  });
-
-  const subjectTable = $('#subjectsTable').DataTable({
-    paging: true,
-    pageLength: 5,
-    lengthChange: false,
-    order: [],
-    language: { search: "Search subjects:" }
-  });
-
-  // Highlight selected rows
-  $('table input[type="checkbox"]').on('change', function() {
-    $(this).closest('tr').toggleClass('selected', this.checked);
-  });
-});
-</script>
 </body>
 </html>
