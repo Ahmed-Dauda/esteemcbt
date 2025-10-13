@@ -5,7 +5,11 @@ from django.contrib.auth.views import LoginView
 app_name = 'teacher'
 
 urlpatterns = [
+path('student-lists/', views.student_lists_view, name='student_lists'),
+    path('students/bulk-action/', views.bulk_action_students, name='bulk_action_students'),
     path('questions/bulk-delete/', views.bulk_delete_questions_view, name='bulk_delete_questions'),
+path('edit-student/<int:student_id>/', views.edit_student, name='edit_student'),
+    path('delete-student/<int:student_id>/', views.delete_student, name='delete_student'),
 
     # path('teacher/results/', views.teacher_result_list_view, name='teacher_result_list'),
     path('teacher/results/<int:course_id>/', views.teacher_course_results_view, name='teacher_course_results'),

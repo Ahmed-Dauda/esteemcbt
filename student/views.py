@@ -41,45 +41,45 @@ from django.db.models import Min, Max, Avg, Sum
 from django.db import models
 
 
-@login_required
-def student_list_view(request):
-    students = NewUser.objects.filter(
-        school=request.user.school,
-        is_staff=False,
-        is_superuser=False,
-        is_active=True,
-        first_name__isnull=False,
-        last_name__isnull=False,
-        student_class__isnull=False
-    ).exclude(
-        first_name='', last_name='', student_class=''
-    )
-    return render(request, 'student/dashboard/student_list.html', {'students': students})
+# @login_required
+# def student_list_view(request):
+#     students = NewUser.objects.filter(
+#         school=request.user.school,
+#         is_staff=False,
+#         is_superuser=False,
+#         is_active=True,
+#         first_name__isnull=False,
+#         last_name__isnull=False,
+#         student_class__isnull=False
+#     ).exclude(
+#         first_name='', last_name='', student_class=''
+#     )
+#     return render(request, 'student/dashboard/student_list.html', {'students': students})
 
 
-# views.py
-from .forms import StudentEditForm
+# # views.py
+# from .forms import StudentEditForm
 
-@login_required
-def student_edit_view(request, pk):
-    student = get_object_or_404(NewUser, pk=pk, school=request.user.school, is_staff=False)
-    if request.method == 'POST':
-        form = StudentEditForm(request.POST, request.FILES, instance=student)
-        if form.is_valid():
-            form.save()
-            return redirect('student:student_list')
-    else:
-        form = StudentEditForm(instance=student)
-    return render(request, 'student/dashboard/student_edit.html', {'form': form})
+# @login_required
+# def student_edit_view(request, pk):
+#     student = get_object_or_404(NewUser, pk=pk, school=request.user.school, is_staff=False)
+#     if request.method == 'POST':
+#         form = StudentEditForm(request.POST, request.FILES, instance=student)
+#         if form.is_valid():
+#             form.save()
+#             return redirect('student:student_list')
+#     else:
+#         form = StudentEditForm(instance=student)
+#     return render(request, 'student/dashboard/student_edit.html', {'form': form})
 
 
-@login_required
-def student_delete_view(request, pk):
-    student = get_object_or_404(NewUser, pk=pk, school=request.user.school, is_staff=False)
-    if request.method == 'POST':
-        student.delete()
-        return redirect('student:student_list')
-    return render(request, 'student/dashboard/student_confirm_delete.html', {'student': student})
+# @login_required
+# def student_delete_view(request, pk):
+#     student = get_object_or_404(NewUser, pk=pk, school=request.user.school, is_staff=False)
+#     if request.method == 'POST':
+#         student.delete()
+#         return redirect('student:student_list')
+#     return render(request, 'student/dashboard/student_confirm_delete.html', {'student': student})
 
   
 

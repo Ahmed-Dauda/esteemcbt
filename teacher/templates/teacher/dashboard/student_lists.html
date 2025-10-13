@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Lists</title>
+  <style>
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; }
+    button { padding: 6px 12px; cursor: pointer; border: none; border-radius: 4px; }
+    .btn-danger { background-color: red; color: white; }
+    .btn-success { background-color: green; color: white; }
+    select { padding: 4px; }
+    .msg { color: green; margin-bottom: 10px; }
+    #searchInput { margin-bottom: 10px; padding: 6px; width: 250px; border: 1px solid #aaa; border-radius: 4px; }
+    .highlight { background-color: yellow; font-weight: bold; }
+    .checkbox-col { width: 40px; text-align: center; }
+    .top-buttons { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; padding-top: 15px; }
+    form.inline { display: inline; }
+  </style>
+</head>
+<body>
+
+  <h2>Student Lists</h2>
+
+  <!-- 🔍 Search -->
+  <input type="text" id="searchInput" placeholder="Search students...">
+
+  {% if messages %}
+    <div class="msg">
+      {% for message in messages %}
+        <p>{{ message }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Top buttons -->
+  <div class="top-buttons">
+    <a href="{% url 'quiz:move_group' %}"><button class="btn-success">Promote Students</button></a>
+    <a href="{% url 'users:schoolstudentview' %}"><button class="btn-success">Add Students</button></a>
+    <a href="{% url 'teacher:examiner_dashboard' %}"><button class="btn-success">Back to Assigned Exams</button></a>
+  </div>
+
+  
+  <!-- Bulk Move Form -->
+  <form id="studentsForm" method="POST" action="{% url 'teacher:bulk_action_students' %}">
+    {% csrf_token %}
+    <div style="margin: 15px 0;">
+      <select name="bulk_new_class_id" required>
+        <option value="">-- Select Class to Move --</option>
+        {% for c in all_classes %}
+          <option value="{{ c.id }}">{{ c.name }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" name="bulk_move" class="btn-success">Move Selected</button>
+      <button type="submit" name="bulk_delete" class="btn-danger" onclick="return confirm('Delete selected students?')">Delete Selected</button>
+    </div>
+
+    <table id="studentsTable">
+      <thead>
+        <tr>
+          <th class="checkbox-col"><input type="checkbox" id="selectAll"></th>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Current Class</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        <tr>
+          <td class="checkbox-col"><input type="checkbox" name="selected_students" value="{{ student.id }}"></td>
+          <td>{{ student.id }}</td>
+          <td class="searchable">{{ student.first_name }} {{ student.last_name }}</td>
+          <td class="searchable">{{ student.email }}</td>
+          <td class="searchable">{{ student.student_class|default:"—" }}</td>
+          <td>
+            <a href="{% url 'teacher:edit_student' student.id %}">Edit</a> |
+            <form method="POST" action="{% url 'teacher:delete_student' student.id %}" class="inline">
+              {% csrf_token %}
+              <button type="submit" class="btn-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </form>
+
+  <script>
+    const searchInput = document.getElementById("searchInput");
+    const table = document.getElementById("studentsTable");
+    const rows = table.getElementsByTagName("tr");
+    const selectAll = document.getElementById("selectAll");
+
+    // 🔘 Select/Deselect All
+    selectAll.addEventListener("change", function() {
+      const checkboxes = table.querySelectorAll("tbody input[type='checkbox']");
+      checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    });
+
+    // 🔍 Live Search
+    function removeHighlights(el) { el.innerHTML = el.textContent; }
+    function highlightMatch(el, filter) {
+      const text = el.textContent;
+      const regex = new RegExp(`(${filter})`, "gi");
+      el.innerHTML = text.replace(regex, '<span class="highlight">$1</span>');
+    }
+
+    searchInput.addEventListener("keyup", function() {
+      const filter = searchInput.value.toLowerCase();
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const searchableCells = row.querySelectorAll(".searchable");
+        let match = false;
+        searchableCells.forEach(cell => {
+          removeHighlights(cell);
+          if (cell.textContent.toLowerCase().includes(filter)) {
+            match = true;
+            if (filter) highlightMatch(cell, filter);
+          }
+        });
+        row.style.display = match || !filter ? "" : "none";
+      }
+    });
+  </script>
+
+</body>
+</html>

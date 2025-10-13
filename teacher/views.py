@@ -15,6 +15,7 @@ from .forms import JSONForm, TeacherSignupForm, TeacherLoginForm, QuestionForm, 
 from django.views.decorators.cache import cache_page
 import csv
 import json
+from django.http import JsonResponse
 from sms.models import Courses
 from django.forms import formset_factory
 from import_export import resources
@@ -27,6 +28,7 @@ from quiz.admin import QuestionResource
 import codecs
 import io
 import logging
+from django.views.decorators.http import require_POST
 from django.contrib import messages
 from docx import Document
 import latex2mathml.converter
@@ -41,6 +43,7 @@ logger = logging.getLogger(__name__)
 from teacher import forms as QFORM
 from quiz import models as QMODEL
 from django.contrib import messages
+from .forms import CourseGradeForm 
 
 @login_required(login_url='teacher:teacher_login')
 def teacher_list_view(request):
@@ -1452,18 +1455,180 @@ def examiner_dashboard_view(request):
         user_school = user.school
      
         # Filter CourseGrade objects based on the user's school
+        from django.db.models import Q
+
         course_grades = CourseGrade.objects.filter(
-                students__school=user_school
-            ).distinct().prefetch_related('students', 'subjects')
-        
+            Q(students__school=user_school) | Q(students__isnull=True)
+        ).distinct().prefetch_related('students', 'subjects')
+
         context = {     
             'course_grades': course_grades,
         }
 
         return render(request, 'teacher/dashboard/examiner_dashboard.html', context)
 
+@login_required(login_url='teacher:teacher_login')
+def student_lists_view(request):
+    students = NewUser.objects.filter(
+        is_staff=False, 
+        is_superuser=False, 
+        school=request.user.school
+    )
+    
+    # All active classes in this school
+    all_classes = CourseGrade.objects.filter(schools=request.user.school, is_active=True).order_by('name')
 
-from .forms import CourseGradeForm 
+    if request.method == 'POST':
+        student_id = request.POST.get('student_id')
+        new_class_id = request.POST.get('new_class_id')
+
+        if student_id and new_class_id:
+            student = get_object_or_404(NewUser, id=student_id)
+            new_class = get_object_or_404(CourseGrade, id=new_class_id)
+
+            # Check if the target class already has students
+            if new_class.students.exists():
+                messages.error(request, f"Cannot move {student.first_name} to {new_class.name}. Class is not empty.")
+            else:
+                # Remove from old classes
+                old_classes = CourseGrade.objects.filter(students=student)
+                for c in old_classes:
+                    c.students.remove(student)
+
+                # Add to new class
+                new_class.students.add(student)
+                student.student_class = new_class.name
+                student.save()
+
+                messages.success(request, f"{student.first_name} moved to {new_class.name}")
+
+            return redirect('teacher:student_lists')
+
+    context = {
+        'students': students,
+        'all_classes': all_classes,
+    }
+    return render(request, 'teacher/dashboard/student_lists.html', context)
+
+
+from django.contrib import messages
+from django.shortcuts import redirect
+
+def bulk_delete_students(request):
+    if request.method == 'POST':
+        selected_ids = request.POST.getlist('selected_students')
+        if selected_ids:
+            deleted_count, _ = NewUser.objects.filter(
+                id__in=selected_ids,
+                school=request.user.school,
+            ).exclude(student_class__isnull=True).exclude(student_class__exact='').delete()
+
+            messages.success(request, f"{deleted_count} student(s) deleted successfully.")
+        else:
+            messages.warning(request, "No students selected for deletion.")
+    
+    return redirect('teacher:student_lists')
+
+def bulk_move_students(request):
+    if request.method == 'POST':
+        selected_ids = request.POST.getlist('selected_students')
+        new_class_id = request.POST.get('new_class_id')
+
+        if selected_ids and new_class_id:
+            new_class = CourseGrade.objects.get(id=new_class_id)
+            students = NewUser.objects.filter(
+                id__in=selected_ids,
+                school=request.user.school,
+            )
+            for s in students:
+                s.student_class = new_class.name
+                s.save()
+            messages.success(request, f"{len(selected_ids)} student(s) moved to {new_class.name}.")
+        else:
+            messages.warning(request, "Please select at least one student and a destination class.")
+
+    return redirect('teacher:student_lists')
+
+@login_required(login_url='teacher:teacher_login')
+def bulk_action_students(request):
+    if request.method == 'POST':
+        selected_ids = request.POST.getlist('selected_students')
+        if not selected_ids:
+            messages.warning(request, "No students selected.")
+            return redirect('teacher:student_lists')
+
+        # Handle bulk delete
+        if 'bulk_delete' in request.POST:
+            students_to_delete = NewUser.objects.filter(id__in=selected_ids, school=request.user.school)
+            count = students_to_delete.count()
+            students_to_delete.delete()
+            messages.success(request, f"{count} student(s) deleted successfully.")
+            return redirect('teacher:student_lists')
+
+        # Handle bulk move
+        if 'bulk_move' in request.POST:
+            selected_ids = request.POST.getlist('selected_students')
+            new_class_id = request.POST.get('bulk_new_class_id')
+            if selected_ids and new_class_id:
+                new_class = get_object_or_404(CourseGrade, id=new_class_id)
+                for student in NewUser.objects.filter(id__in=selected_ids):
+                    old_classes = CourseGrade.objects.filter(students=student)
+                    for c in old_classes:
+                        c.students.remove(student)
+                    new_class.students.add(student)
+                    student.student_class = new_class.name
+                    student.save()
+                messages.success(request, f"{len(selected_ids)} student(s) moved to {new_class.name}.")
+
+            return redirect('teacher:student_lists')
+
+    return redirect('teacher:student_lists')
+
+
+@login_required(login_url='teacher:teacher_login')
+def edit_student(request, student_id):
+    student = get_object_or_404(NewUser, id=student_id, school=request.user.school)
+    all_classes = CourseGrade.objects.filter(schools=request.user.school, is_active=True)
+
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        gender = request.POST.get('gender')
+        student_class_id = request.POST.get('student_class')
+
+        # Update basic info
+        student.first_name = first_name
+        student.last_name = last_name
+        student.email = email
+        student.gender = gender
+
+        # Update class if changed
+        if student_class_id:
+            new_class = get_object_or_404(CourseGrade, id=student_class_id)
+            old_classes = CourseGrade.objects.filter(students=student)
+            for c in old_classes:
+                c.students.remove(student)
+            new_class.students.add(student)
+            student.student_class = new_class.name
+
+        student.save()
+        messages.success(request, "Student information updated successfully.")
+        return redirect('teacher:student_lists')
+
+    context = {
+        'student': student,
+        'all_classes': all_classes,
+    }
+    return render(request, 'teacher/dashboard/edit_student.html', context)
+
+
+def delete_student(request, student_id):
+    student = get_object_or_404(NewUser, id=student_id)
+    student.delete()
+    messages.success(request, "Student deleted successfully.")
+    return redirect('teacher:student_lists')
+
 
 
 @login_required(login_url='teacher:teacher_login')
@@ -1481,8 +1646,10 @@ def edit_coursegrade_view(request, pk):
         form = CourseGradeForm(request.POST, instance=course_grade, user_school=user_school)
         if form.is_valid():
             form.save()
-            messages.success(request, "Course grade updated successfully.")
-            return redirect('teacher:examiner_dashboard')
+           
+            messages.success(request, "Changes saved successfully!")
+            return redirect(request.path)  # reloads same page
+            # return redirect('teacher:examiner_dashboard')
     else:
         form = CourseGradeForm(instance=course_grade, user_school=user_school)
 

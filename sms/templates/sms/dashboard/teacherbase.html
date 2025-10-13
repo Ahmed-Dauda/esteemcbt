@@ -171,9 +171,9 @@
              {% if request.user.is_authenticated and request.user.is_superuser %}
              {% if teacher_school|lower == user_school|lower %}
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:examiner_dashboard' %}">
+                <a class="nav-link" href="{% url 'teacher:student_lists' %}">
                     <i class="fas fa-fw fa-book"></i>
-                    <span>Manage Students</span>
+                    <span>manage students</span>
                 </a>
              </li>
              {% endif %}

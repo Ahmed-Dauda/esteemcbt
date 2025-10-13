@@ -143,6 +143,102 @@
             </div>
         </div>
         <div class="col-md-6 mb-4">
+  <div class="card h-100 shadow-sm">
+    <div class="card-header text-center bg-success text-white">
+      <h5 class="mb-0">Subjects Taught</h5>
+    </div>
+
+    <div class="card-body">
+      <!-- 🔍 Search Bar -->
+      <div class="input-group mb-3">
+        <span class="input-group-text bg-success text-white">
+          <i class="bi bi-search"></i>
+        </span>
+        <input
+          type="text"
+          id="subjectSearch"
+          class="form-control"
+          placeholder="Search subjects..."
+        >
+      </div>
+
+      {% if request.user.is_authenticated and request.user.is_superuser %}
+      <ul class="list-group list-group-flush" id="subjectList">
+  {% for course in courses %}
+  <li class="list-group-item search-item"
+      style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+    <div class="fw-bold" style="font-size: 13px;">
+      {{ course }} - {{ course.term }} - {{ course.session }} - {{ course.exam_type }}
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 4px;">
+      <a href="{% url 'teacher:edit_subjects_view' course.id %}"
+         class="btn btn-sm btn-outline-primary"
+         style="display: flex; align-items: center; gap: 4px;">
+        <i class="bi bi-pencil-square"></i> Edit
+      </a>
+      <a href="{% url 'teacher:delete_subject_view' course.id %}"
+         class="btn btn-sm btn-outline-danger"
+         style="display: flex; align-items: center; gap: 4px;">
+        <i class="bi bi-trash"></i> Delete
+      </a>
+    </div>
+  </li>
+  {% empty %}
+  <li class="list-group-item text-muted">No subjects found.</li>
+  {% endfor %}
+</ul>
+
+{% else %}
+
+<ul class="list-group list-group-flush" id="subjectList">
+  {% for subject in teacher_subjects %}
+  <li class="list-group-item search-item"
+      style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; font-size: 14px;">
+    <div>
+      {{ subject.course_name }} - {{ subject.term }} - {{ subject.session }} - {{ subject.exam_type }}
+    </div>
+  </li>
+  {% empty %}
+  <li class="list-group-item text-muted">No subjects found.</li>
+  {% endfor %}
+</ul>
+
+      {% endif %}
+
+      <div id="noResults" class="text-center text-muted mt-2" style="display:none;">
+        No matching subjects found.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ JavaScript -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const searchInput = document.getElementById("subjectSearch");
+  const listItems = document.querySelectorAll("#subjectList .search-item");
+  const noResults = document.getElementById("noResults");
+
+  searchInput.addEventListener("input", function() {
+    const query = this.value.toLowerCase().trim();
+    let visibleCount = 0;
+
+    listItems.forEach(item => {
+      const text = item.textContent.toLowerCase();
+      if (text.includes(query)) {
+        item.style.display = "";
+        visibleCount++;
+      } else {
+        item.style.display = "none";
+      }
+    });
+
+    noResults.style.display = visibleCount === 0 ? "block" : "none";
+  });
+});
+</script>
+
+        <!-- <div class="col-md-6 mb-4">
             <div class="card h-100 shadow-sm">
                 <div class="card-header text-center bg-success">
                     <h5 class="mb-0">Subjects Taught</h5>
@@ -175,18 +271,13 @@
                     </ul>         
                     {% endif %}
 
-                    <!-- <ul class="list-group list-group-flush">
-                        {% for subject in teacher_subjects %}
-                        <li style="font-size: 14px;" class="list-group-item">{{ subject.course_name }}</li>
-                           
-                        {% endfor %}
-                    </ul> -->
                 </div>
                 <div class="card-footer text-center">
-                    <!-- Optional footer content -->
+                  
                 </div>
             </div>
         </div>
+         -->
     </div>
 </div>
 

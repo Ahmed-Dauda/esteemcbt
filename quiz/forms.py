@@ -4,6 +4,7 @@ from .models import CourseGrade, Course
 from users.models import NewUser
 from .models import School
 from django.contrib import admin
+from django.db.models import Count
 
 
 class CourseGradeForm(forms.ModelForm):
@@ -23,51 +24,36 @@ class CourseGradeForm(forms.ModelForm):
         self.fields['subjects'].queryset = Course.objects.all()
 
 
-# class CourseGradeForm(forms.ModelForm):
-#     class Meta:
-#         model = CourseGrade
-#         fields = '__all__'
-
-#     # Override widgets for ManyToManyField to use checkboxes
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-
-#         # You can add the `search_fields` for students and subjects if needed
-#         self.fields['students'].queryset = NewUser.objects.all()
-#         self.fields['subjects'].queryset = Course.objects.all()
-
-
-# class CourseGradeForm(forms.ModelForm):
-#     class Meta:
-#         model = CourseGrade
-#         fields = '__all__'
-    
-#     # Override widgets for ManyToManyField to use checkboxes
-#     students = forms.ModelMultipleChoiceField(
-#         queryset=NewUser.objects.all(),
-#         widget=forms.CheckboxSelectMultiple(attrs={'class': 'checkbox-multiple'}),  # Add custom class
-#         required=False
-#     )
-    
-#     subjects = forms.ModelMultipleChoiceField(
-#         queryset=Course.objects.all(),
-#         widget=forms.CheckboxSelectMultiple(attrs={'class': 'checkbox-multiple'}),  # Add custom class
-#         required=False
-#     )
-
-
 class MoveGroupForm(forms.Form):
     from_group = forms.ModelChoiceField(queryset=CourseGrade.objects.none(), label='From Group')
-    to_group = forms.ModelChoiceField(queryset=CourseGrade.objects.none(), empty_label="Move group", label='To Group', required=False)
+    to_group = forms.ModelChoiceField(
+        queryset=CourseGrade.objects.none(), 
+        empty_label="Select target class (must be empty)", 
+        label='To Group',
+        required=True
+    )
 
     def __init__(self, *args, **kwargs):
-        user_school = kwargs.pop('user_school', None)  # Get user_school from the passed kwargs
+        user_school = kwargs.pop('user_school', None)
         super(MoveGroupForm, self).__init__(*args, **kwargs)
 
         if user_school:
-            # Filter CourseGrade based on the user's school and order by the 'name' field
-            self.fields['from_group'].queryset = CourseGrade.objects.filter(schools=user_school).distinct().order_by('name')
-            self.fields['to_group'].queryset = CourseGrade.objects.filter(schools=user_school).distinct().order_by('name')
+            self.fields['from_group'].queryset = CourseGrade.objects.filter(schools=user_school).order_by('name')
+            # Only allow empty classes as target
+            self.fields['to_group'].queryset = CourseGrade.objects.filter(schools=user_school).filter(students__isnull=True).order_by('name')
+            
 
-  
+# class MoveGroupForm(forms.Form):
+#     from_group = forms.ModelChoiceField(queryset=CourseGrade.objects.none(), label='From Group')
+#     to_group = forms.ModelChoiceField(queryset=CourseGrade.objects.none(), empty_label="Move group", label='To Group', required=False)
+
+#     def __init__(self, *args, **kwargs):
+#         user_school = kwargs.pop('user_school', None)  # Get user_school from the passed kwargs
+#         super(MoveGroupForm, self).__init__(*args, **kwargs)
+
+#         if user_school:
+#             # Filter CourseGrade based on the user's school and order by the 'name' field
+#             self.fields['from_group'].queryset = CourseGrade.objects.filter(schools=user_school).distinct().order_by('name')
+#             self.fields['to_group'].queryset = CourseGrade.objects.filter(schools=user_school).distinct().order_by('name')
+
+

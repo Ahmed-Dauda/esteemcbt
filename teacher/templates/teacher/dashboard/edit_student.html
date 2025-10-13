@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Student</title>
+</head>
+<body>
+
+  <h2>Edit Student: {{ student.first_name }} {{ student.last_name }}</h2>
+
+  <form method="POST">
+    {% csrf_token %}
+    <label>First Name:</label><br>
+    <input type="text" name="first_name" value="{{ student.first_name }}" required><br><br>
+
+    <label>Last Name:</label><br>
+    <input type="text" name="last_name" value="{{ student.last_name }}" required><br><br>
+
+    <label>Email:</label><br>
+    <input type="email" name="email" value="{{ student.email }}" required><br><br>
+
+    <label>Gender:</label><br>
+    <select name="gender">
+      <option value="">— Select —</option>
+      <option value="Male" {% if student.gender == "Male" %}selected{% endif %}>Male</option>
+      <option value="Female" {% if student.gender == "Female" %}selected{% endif %}>Female</option>
+    </select><br><br>
+
+    <label>Class:</label><br>
+    <select name="student_class" required>
+      {% for c in all_classes %}
+        <option value="{{ c.id }}" {% if c.name == student.student_class %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select><br><br>
+
+    <button type="submit">Save Changes</button>
+    <a href="{% url 'teacher:student_lists' %}">Cancel</a>
+  </form>
+
+</body>
+</html>

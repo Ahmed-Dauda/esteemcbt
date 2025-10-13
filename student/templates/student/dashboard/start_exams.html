@@ -384,17 +384,45 @@ div.quiz p {
     </table>
     
 </form> 
-<div class="exam-container">
+
+<div style="display: none;" class="exam-container">
   <h1>Exam Mode</h1>
   <p>Click below to enter fullscreen exam mode.</p>
   <button id="startExamBtn" onclick="startExam()">Start Exam</button>
 </div>
 
-<div id="fullscreenPopup" style="display: none; justify-content: center; align-items: center; flex-direction: column; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.92); color: white; z-index: 9999;">
-  <h2>⚠️ Exam Paused</h2>
-  <p>You exited fullscreen. Please return to continue your exam.</p>
-  <button onclick="returnToFullscreen()">Re-enter Fullscreen</button>
+<div id="fullscreenPopup" style="
+  display: none;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  position: fixed;
+  inset: 0;
+  background: #000; /* Fully opaque black */
+  color: #fff;
+  z-index: 999999;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  transition: opacity 0.3s ease;
+">
+  <h2 style="font-size: 2rem; margin-bottom: 1rem;">⚠️ Exam Paused</h2>
+  <p style="font-size: 1.2rem; margin-bottom: 2rem;">
+    You exited fullscreen. Please return to continue your exam.
+  </p>
+  <button onclick="returnToFullscreen()" style="
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+  ">
+    Re-enter Fullscreen
+  </button>
 </div>
+
 
 <script>
   const elem = document.documentElement;

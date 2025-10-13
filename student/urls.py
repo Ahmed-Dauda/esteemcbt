@@ -10,9 +10,9 @@ urlpatterns = [
     
     # path('results/', views.student_result_list, name='student_result_list'),
     # path('answers/<int:result_id>/', views.student_answers_view, name='student_answers_view'),
-    path('students/', views.student_list_view, name='student_list'),
-    path('students/<int:pk>/edit/', views.student_edit_view, name='student_edit'),
-    path('students/<int:pk>/delete/', views.student_delete_view, name='student_delete'),
+    # path('students/', views.student_list_view, name='student_list'),
+    # path('students/<int:pk>/edit/', views.student_edit_view, name='student_edit'),
+    # path('students/<int:pk>/delete/', views.student_delete_view, name='student_delete'),
     
     path('exams-conducted-statistics/', views.exams_conducted_statistics_view, name='exams_conducted_statistics'),
     path('download-statistics/', views.download_statistics_view, name='download_statistics'),

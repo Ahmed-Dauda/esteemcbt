@@ -65,6 +65,7 @@ class CourseGrade(models.Model):
     schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='coursegrade', blank=True, null=True, db_index=True)  # 🔍 Faster lookup by school
     name = models.CharField(max_length=140, blank=True, null=True, db_index=True)  # 🔍 Faster filtering/searching by class name
     students = models.ManyToManyField(NewUser, related_name='course_grades', blank=True)
+    # session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
     subjects = models.ManyToManyField(Course, related_name='course_grade')
     is_active = models.BooleanField(default=True, db_index=True)  # 🔍 Fast filtering of active classes
     id = models.AutoField(primary_key=True)

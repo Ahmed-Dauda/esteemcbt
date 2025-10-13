@@ -9,7 +9,7 @@
         justify-content: center;
         align-items: center;
         padding: 20px;
-        min-height: 100vh;
+        min-height: 100vh; /* Full viewport height */
     }
 
     .course-grid {
@@ -92,78 +92,40 @@
     h4 {
         font-weight: 600;
         font-size: 1.5rem;
-        margin: 0 0 10px 0;
+        margin: 0 0 10px 0;  /* Adjusted margin here */
         text-align: center;
-    }
-
-    .highlight {
-        background-color: yellow;
-        font-weight: bold;
-        color: black;
-    }
-
-    /* Search box style */
-    .search-container {
-        text-align: center;
-        margin: 20px auto;
-    }
-
-    .search-container input {
-        width: 50%;
-        padding: 10px;
-        font-size: 1rem;
-        border-radius: 6px;
-        border: 1px solid #ccc;
-        outline: none;
-        transition: 0.3s;
-    }
-
-    .search-container input:focus {
-        border-color: #007bff;
-        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-    }
-
-    @media (max-width: 768px) {
-        .search-container input {
-            width: 90%;
-        }
     }
 </style>
 
 <br>
 
-<h4>Available Exams for {{ user.school.school_name }}</h4>
 
+<h4>Available Exams for {{ user.school.school_name }}</h4>
 <div style="display: flex; justify-content: center; align-items: center; margin: 0 auto; text-align: center;">
     <a class="nav-link" href="{% url 'teacher:create_examiner_exam' %}" style="margin-right: 10px;">
-        <button class="btn btn-success">Create Exams</button>
+        <button class="btn btn-success"> Create Exams </button>
     </a>
     <a class="nav-link" href="{% url 'teacher:control-list' %}">
-        <button class="btn btn-success">Lock Exams</button>
+        <button class="btn btn-success"> Lock Exams </button>
     </a>
     <a class="nav-link" href="{% url 'student:list-student-results' %}">
-        <button class="btn btn-success">Print Exams</button>
-    </a>
-    <a class="nav-link" href="{% url 'teacher:examiner_dashboard' %}">
-        <button class="btn btn-success">Assign Exams</button>
+        <button class="btn btn-success"> Print Exams </button>
     </a>
 
-    
-</div>
-
-<!-- 🔍 Search bar -->
-<div class="search-container">
-    <input type="text" id="searchInput" placeholder="Search exams by name...">
+   
 </div>
 
 <div class="container">
-    <div class="course-grid" id="courseGrid">
+   
+    <div class="course-grid">
+        
         {% if courses.exists %}
             {% for course in courses %}
                 <div class="course-item">
                     <a href="{% url 'teacher:edit_examiner_exam' course.id %}" style="text-decoration: none;">
-                        <h6 class="course-title">{{ course.course_name|upper }}</h6>
+                        <h6 style="font-size: 12px;">{{ course.course_name|upper }}</h6>
                     </a>
+                    
                     {% if course.schools %}
                         <p style="color: green;">Exam enabled</p>
                     {% else %}
@@ -172,12 +134,13 @@
                     <p>Created: {{ course.created }}</p>
                     <p>Number of Questions: {{ course.question_number }}</p>
                     <p>Total Marks: {{ course.total_marks }}</p>
-                    <p>Attempts Allowed: {{ course.num_attemps }}</p>
+                    <p>Attempts Allowed: {{ course.num_attemps }}</p>  <!-- Fixed typo here -->
                     <p>Duration: {{ course.duration_minutes }} minutes</p>
 
                     <div class="button-group">
                         <a href="{% url 'teacher:edit_examiner_exam' course.id %}" class="update-button">Update Exam</a>
                         <a href="{% url 'teacher:delete_examiner_exam' course.id %}" class="delete-button">Delete</a>
+                        
                     </div>
                 </div>
             {% endfor %}
@@ -186,39 +149,5 @@
         {% endif %}
     </div>
 </div>
-
-<!-- 🔧 JS for search and highlight -->
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.getElementById("searchInput");
-    const courses = document.querySelectorAll(".course-item");
-
-    searchInput.addEventListener("input", function () {
-        const query = this.value.trim().toLowerCase();
-
-        courses.forEach(course => {
-            const titleElement = course.querySelector(".course-title");
-            const titleText = titleElement.textContent || "";
-
-            // Remove previous highlights
-            titleElement.innerHTML = titleText;
-
-            if (titleText.toLowerCase().includes(query) || query === "") {
-                // Show card
-                course.style.display = "flex";
-
-                // Highlight match
-                if (query !== "") {
-                    const regex = new RegExp(`(${query})`, "gi");
-                    titleElement.innerHTML = titleText.replace(regex, '<span class="highlight">$1</span>');
-                }
-            } else {
-                // Hide unmatched cards
-                course.style.display = "none";
-            }
-        });
-    });
-});
-</script>
 
 {% endblock %}
