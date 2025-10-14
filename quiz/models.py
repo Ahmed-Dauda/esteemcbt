@@ -147,8 +147,12 @@ class StudentExamSession(models.Model):
     question_order = models.JSONField()
     created = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        unique_together = ('student', 'course')
+
     def __str__(self):
         return f"{self.course}"
+    
 
 
 class Question(models.Model):

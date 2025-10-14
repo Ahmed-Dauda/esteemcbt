@@ -286,7 +286,7 @@ import os
 
 # settings.py
 import dj_database_url
-
+CONN_MAX_AGE = 0
 
 DATABASES = {
     'default': dj_database_url.config(

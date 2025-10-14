@@ -3831,24 +3831,37 @@ def check_result_exists(profile, course):
         'exam__id', 'exam__course_name'
     ).filter(student=profile, exam=course).exists()
 
+
 @sync_to_async
 def get_or_create_shuffled_questions(student, course, all_questions):
     all_question_ids = [q.id for q in all_questions]
 
-    session, created = StudentExamSession.objects.get_or_create(
-        student=student,
-        course=course,
-        defaults={
-            'question_order': random.sample(all_question_ids, len(all_question_ids))
-        }
-    )
+    # Try to get the latest valid session
+    existing_sessions = StudentExamSession.objects.filter(student=student, course=course)
 
-    # Refresh the question order if mismatched (e.g. new questions added)
-    if not created and set(session.question_order) != set(all_question_ids):
+    if existing_sessions.count() > 1:
+        # Clean up duplicates — keep the latest one
+        latest = existing_sessions.order_by('-created_at').first()
+        existing_sessions.exclude(id=latest.id).delete()
+        session = latest
+        created = False
+    elif existing_sessions.exists():
+        session = existing_sessions.first()
+        created = False
+    else:
+        session = StudentExamSession.objects.create(
+            student=student,
+            course=course,
+            question_order=random.sample(all_question_ids, len(all_question_ids))
+        )
+        created = True
+
+    # Ensure the question order matches the current question list
+    if set(session.question_order) != set(all_question_ids):
         session.question_order = random.sample(all_question_ids, len(all_question_ids))
         session.save()
 
-    # Fetch the ordered questions
+    # Return ordered question objects
     ordered_questions = list(Question.objects.filter(id__in=session.question_order))
     ordered_questions.sort(key=lambda q: session.question_order.index(q.id))
     return ordered_questions
