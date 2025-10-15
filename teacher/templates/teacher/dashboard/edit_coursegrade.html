@@ -41,11 +41,16 @@
 
 <div class="container mt-5">
   <div class="card shadow-lg border-0 rounded-4">
+
     <div class="card-header bg-primary text-white text-center rounded-top-4">
       <h4 class="mb-0">
         Edit Class Assignment: <strong>{{ course_grade.name }}</strong>
       </h4>
+      
     </div>
+    <button class="btn btn-success btn-lg submit-btn">
+<a class="btn  text-white" href="{% url 'teacher:examiner_dashboard' %}">Back  manage subjects</a>      
+    </button>
 <div class="card-body px-4 py-5">
   <form method="post">
     {% csrf_token %}

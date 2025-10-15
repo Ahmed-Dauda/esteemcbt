@@ -36,15 +36,51 @@
             <span class="badge badge-info">Updated {{ results|length }} records</span>
         </div>
 
-<h2>Teacher Result List</h2>
-<ul>
-  {% for course in courses %}
-    <li>
-      <a href="{% url 'teacher:teacher_course_results' course.id %}">
-        {{ course.course_name }}
-      </a>
-    </li>
-  {% endfor %}
-</ul>
+        <div class="card-body">
+            <h5 class="mb-3">Teacher Result List</h5>
+
+            <div class="table-responsive">
+                <table id="courseTable" class="table table-bordered table-striped">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>#</th>
+                            <th>Course Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for course in courses %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <a href="{% url 'teacher:teacher_course_results' course.id %}">
+                                    {{ course.course_name }}
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DataTables Scripts -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $('#courseTable').DataTable({
+            pageLength: 10,
+            ordering: true,
+            language: {
+                search: "Search courses:",
+                searchPlaceholder: "Type to filter..."
+            }
+        });
+    });
+</script>
 
 {% endblock %}

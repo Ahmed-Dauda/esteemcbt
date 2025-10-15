@@ -11,7 +11,7 @@ from users.models import NewUser
 from quiz.models import Course, Result, Question
 from django.utils.datastructures import MultiValueDictKeyError
 from .models import SampleCodes, Teacher
-from .forms import JSONForm, TeacherSignupForm, TeacherLoginForm, QuestionForm, UploadCSVForm
+from .forms import EditSubjectFormId, JSONForm, TeacherSignupForm, TeacherLoginForm, QuestionForm, UploadCSVForm
 from django.views.decorators.cache import cache_page
 import csv
 import json
@@ -245,17 +245,78 @@ def edit_subjects_view(request, course_id):
     ))
 
     if request.method == 'POST':
-        form = EditSubjectForm(request.POST, instance=course, user_school=user_school)
+        form = EditSubjectFormId(request.POST, instance=course, user_school=user_school)
         if form.is_valid():
             form.save()
             return redirect('teacher:teacher-dashboard')
     else:
-        form = EditSubjectForm(instance=course, user_school=user_school)
+        form = EditSubjectFormId(instance=course, user_school=user_school)
 
     return render(request, 'teacher/dashboard/edit_subjects.html', {
         'form': form,
         'course': course
     })
+
+
+# @login_required(login_url='teacher:teacher_login')
+# def edit_subjects_view(request, course_id):
+#     user = NewUser.objects.select_related('school').get(id=request.user.id)
+#     user_school = user.school
+
+#     course = get_object_or_404(
+#         Courses.objects.prefetch_related('schools').filter(schools=user_school, id=course_id)
+#     )
+
+#     if request.method == 'POST':
+#         form = EditSubjectForm(request.POST, instance=course, user_school=user_school)
+#         if form.is_valid():
+#             form.save()
+#             messages.success(request, "Course updated successfully.")
+#             return redirect('teacher:teacher-dashboard')
+#     else:
+#         form = EditSubjectForm(instance=course, user_school=user_school)
+
+#     return render(request, 'teacher/dashboard/edit_subjects.html', {
+#         'form': form,
+#         'course': course
+#     })
+
+
+@login_required(login_url='teacher:teacher_login')
+def bulk_update_courses(request):
+    user = NewUser.objects.select_related('school').get(id=request.user.id)
+    user_school = user.school
+
+    # All courses for this school
+    courses = Courses.objects.filter(schools=user_school)
+
+    if request.method == 'POST':
+        form = EditSubjectForm(request.POST, user_school=user_school)
+        if form.is_valid():
+            session = form.cleaned_data.get('session')
+            term = form.cleaned_data.get('term')
+            exam_type = form.cleaned_data.get('exam_type')
+
+            # Update all
+            for course in courses:
+                if session:
+                    course.session = session
+                if term:
+                    course.term = term
+                if exam_type:
+                    course.exam_type = exam_type
+                course.save()
+
+            messages.success(request, "All subjects updated successfully.")
+            return redirect('teacher:teacher-dashboard')
+    else:
+        form = EditSubjectForm(user_school=user_school)
+
+    return render(request, 'teacher/dashboard/bulk_update_courses.html', {
+        'form': form,
+        'courses': courses
+    })
+
 
 @login_required(login_url='teacher:teacher_login')
 def delete_subject_view(request, course_id):
@@ -1685,6 +1746,7 @@ def edit_coursegrade_view(request, pk):
     }
 
     return render(request, 'teacher/dashboard/edit_coursegrade.html', context)
+
 
 
 # @login_required(login_url='teacher:teacher_login')

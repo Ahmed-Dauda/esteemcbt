@@ -1,10 +1,9 @@
-{% extends 'sms/dashboard/teacherbase.html' %}
-
-{% block title %} Student lists {% endblock %}
-
-{% block content %}
-
-<style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Lists</title>
+  <style>
     table { width: 100%; border-collapse: collapse; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     th { background: #f0f0f0; }
@@ -20,6 +19,8 @@
     form.inline { display: inline; }
   </style>
   
+</head>
+<body>
 
   <h2>Student Lists</h2>
 
@@ -130,4 +131,5 @@ searchInput.addEventListener("keyup", function() {
 });
 </script>
 
-{% endblock %}
+</body>
+</html>

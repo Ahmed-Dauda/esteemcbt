@@ -1,0 +1,32 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %}Bulk Update Subjects{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h4 class="text-center text-success mb-4">Bulk Update Subjects</h4>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label fw-bold">Session (Year)</label>
+        {{ form.session }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold">Term</label>
+        {{ form.term }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold">Exam Type</label>
+        {{ form.exam_type }}
+      </div>
+    </div>
+
+    <div class="text-center">
+      <button type="submit" class="btn btn-success">Update All</button>
+      <a href="{% url 'teacher:teacher-dashboard' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

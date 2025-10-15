@@ -10,13 +10,35 @@ from .models import Teacher
 from django.contrib.auth.forms import UserCreationForm
 from users.models import NewUser, Profile
 from allauth.account.forms import SignupForm
-from quiz.models import School, Course, CourseGrade, Question
+from quiz.models import ExamType, School, Course, CourseGrade, Question
 from django.contrib.auth.forms import AuthenticationForm
-from sms.models import Courses
+from sms.models import Courses, Session, Term
 from quiz.models import Result
 
 
-class EditSubjectForm(forms.ModelForm):
+class EditSubjectForm(forms.Form):
+    session = forms.ModelChoiceField(
+        queryset=Session.objects.all(),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    term = forms.ModelChoiceField(
+        queryset=Term.objects.all(),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    exam_type = forms.ModelChoiceField(
+        queryset=ExamType.objects.all(),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.user_school = kwargs.pop('user_school', None)
+        super().__init__(*args, **kwargs)
+
+
+class EditSubjectFormId(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user_school = kwargs.pop('user_school', None)
         super().__init__(*args, **kwargs)

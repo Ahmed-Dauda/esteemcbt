@@ -101,7 +101,7 @@
                 <thead class="thead-blue">
                     <tr>
                         <th class="text-center">Class Name</th>
-                        <th class="text-center">Students</th>
+                        <!-- <th class="text-center">Students</th> -->
                         <th class="text-center">Subjects</th>
                         <th class="text-center" style="padding: 10px;">Actions</th>
                     </tr>
@@ -113,7 +113,7 @@
                             <td class="align-middle text-center">{{ course_grade.name }}</td>
 
                             <!-- Students -->
-                            <td class="align-middle">
+                            <!-- <td class="align-middle">
                                 {% if course_grade.students.all.count > 0 %}
                                     {% for student in course_grade.students.all %}
                                         {{ student.first_name }} {{ student.last_name }} -
@@ -122,7 +122,7 @@
                                 {% else %}
                                     <span class="empty-state">No students yet</span>
                                 {% endif %}
-                            </td>
+                            </td> -->
 
                             <!-- Subjects -->
                             <td class="align-middle">
