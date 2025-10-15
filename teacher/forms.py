@@ -206,12 +206,12 @@ from .models import CourseGrade, NewUser, Course
 class CourseGradeForm(forms.ModelForm):
     students = forms.ModelMultipleChoiceField(
         queryset=NewUser.objects.none(),
-        widget=forms.CheckboxSelectMultiple,
+        widget=forms.SelectMultiple(attrs={'class': 'form-control select2'}),
         required=False
     )
     subjects = forms.ModelMultipleChoiceField(
         queryset=Course.objects.none(),
-        widget=forms.CheckboxSelectMultiple,
+        widget=forms.SelectMultiple(attrs={'class': 'form-control select2'}),
         required=False
     )
 
@@ -227,14 +227,83 @@ class CourseGradeForm(forms.ModelForm):
 
         self.fields['students'].queryset = NewUser.objects.filter(
             school=user_school, is_active=True, is_staff=False
-        )
+        ).order_by('first_name')
 
         self.fields['subjects'].queryset = Course.objects.filter(
             schools=user_school
-        )
+        ).order_by('course_name')
 
         self.fields['students'].label = "Select Students"
         self.fields['subjects'].label = "Assign Subjects"
+
+
+# love this
+# class CourseGradeForm(forms.ModelForm):
+#     students = forms.ModelMultipleChoiceField(
+#         queryset=NewUser.objects.none(),
+#         widget=forms.SelectMultiple(attrs={'class': 'form-control select2'}),
+#         required=False
+#     )
+#     subjects = forms.ModelMultipleChoiceField(
+#         queryset=Course.objects.none(),
+#         widget=forms.SelectMultiple(attrs={'class': 'form-control select2'}),
+#         required=False
+#     )
+
+#     class Meta:
+#         model = CourseGrade
+#         fields = ['students', 'subjects']
+
+#     def __init__(self, *args, **kwargs):
+#         user_school = kwargs.pop('user_school', None)
+#         if not user_school:
+#             raise ValueError("CourseGradeForm requires 'user_school'")
+#         super().__init__(*args, **kwargs)
+
+#         self.fields['students'].queryset = NewUser.objects.filter(
+#             school=user_school, is_active=True, is_staff=False
+#         ).order_by('first_name')
+
+#         self.fields['subjects'].queryset = Course.objects.filter(
+#             schools=user_school
+#         ).order_by('course_name')
+
+#         self.fields['students'].label = "Select Students"
+#         self.fields['subjects'].label = "Assign Subjects"
+
+# real form
+# class CourseGradeForm(forms.ModelForm):
+#     students = forms.ModelMultipleChoiceField(
+#         queryset=NewUser.objects.none(),
+#         widget=forms.CheckboxSelectMultiple,
+#         required=False
+#     )
+#     subjects = forms.ModelMultipleChoiceField(
+#         queryset=Course.objects.none(),
+#         widget=forms.CheckboxSelectMultiple,
+#         required=False
+#     )
+
+#     class Meta:
+#         model = CourseGrade
+#         fields = ['students', 'subjects']
+
+#     def __init__(self, *args, **kwargs):
+#         user_school = kwargs.pop('user_school', None)
+#         if not user_school:
+#             raise ValueError("CourseGradeForm requires 'user_school'")
+#         super().__init__(*args, **kwargs)
+
+#         self.fields['students'].queryset = NewUser.objects.filter(
+#             school=user_school, is_active=True, is_staff=False
+#         )
+
+#         self.fields['subjects'].queryset = Course.objects.filter(
+#             schools=user_school
+#         )
+
+#         self.fields['students'].label = "Select Students"
+#         self.fields['subjects'].label = "Assign Subjects"
 
 # class CourseGradeForm(forms.ModelForm):
 

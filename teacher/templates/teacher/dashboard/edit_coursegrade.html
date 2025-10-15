@@ -11,9 +11,6 @@
   <!-- Select2 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-  <!-- DataTables CSS -->
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-
   <style>
     .form-label { font-weight: 600; }
     .row.flex-form { display: flex; flex-wrap: wrap; gap: 20px; }
@@ -49,19 +46,40 @@
         Edit Class Assignment: <strong>{{ course_grade.name }}</strong>
       </h4>
     </div>
+<div class="card-body px-4 py-5">
+  <form method="post">
+    {% csrf_token %}
 
-    <div class="card-body px-4 py-5">
+   <div class="form-group mb-3">
+
+    <div class="form-group mb-3">
+  <label>{{ form.subjects.label }}</label>
+  {{ form.subjects }}
+</div>
+<div class="form-group mb-3">
+  <label>{{ form.students.label }}</label>
+  {{ form.students }}
+</div>
+
+    <div class="text-center mt-4">
+      <button type="submit" class="btn btn-success btn-lg submit-btn">Save Changes</button>
+    </div>
+  </form>
+</div>
+
+
+    <!-- <div class="card-body px-4 py-5">
       <form method="post">
         {% csrf_token %}
 
         <div class="row flex-form">
-          <!-- Students -->
+         Students
           <div class="col-md-6 mb-4">
             <label for="{{ form.students.id_for_label }}" class="form-label">Select Students</label>
             {{ form.students|as_crispy_field }}
           </div>
 
-          <!-- Subjects -->
+          Subjects
           <div class="col-md-6 mb-4">
             <label for="{{ form.subjects.id_for_label }}" class="form-label">Select Subjects</label>
             {{ form.subjects|as_crispy_field }}
@@ -72,67 +90,45 @@
           <button type="submit" class="btn btn-success btn-lg submit-btn">Save Changes</button>
         </div>
       </form>
-    </div>
+    </div> -->
   </div>
 </div>
 
-{% if course_grade.subjects.all %}
-<div class="container mt-5">
-  <div class="card shadow-sm border-0 rounded-4">
-    <div class="card-body">
-      <h5 class="text-center mb-3">Currently Assigned Subjects & Students</h5>
-      <table id="assignedTable" class="display table table-bordered table-striped">
-        <thead>
-          <tr>
-            <th>Student Name</th>
-            <th>Email / Username</th>
-            <th>Subjects</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for student in course_grade.students.all %}
-          <tr>
-            <td>{{ student.first_name }} {{ student.last_name }}</td>
-            <td>{{ student.email }} ({{ student.username }})</td>
-            <td>
-              {% for subject in course_grade.subjects.all %}
-                {{ subject.course_name }}<br>
-              {% endfor %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-{% endif %}
 
-<!-- JS Libraries -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- jQuery (required for Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-<!-- DataTables JS -->
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
 <script>
   $(document).ready(function() {
-    // Apply Select2 to all multiple select fields
-    $('select[multiple]').select2({
-      width: '100%',
-      placeholder: "Search and select...",
+    $('.select2').select2({
+      placeholder: "Search and select multiple options",
+      closeOnSelect: false,   // ✅ keeps dropdown open
       allowClear: true,
-      closeOnSelect: false
+      width: '100%',
+      templateResult: function (option) {
+        if (!option.id) return option.text;
+        return $('<span><input type="checkbox"/> ' + option.text + '</span>');
+      },
+      templateSelection: function (option) {
+        return option.text;
+      }
     });
 
-    // Initialize DataTable for assigned subjects/students
-    $('#assignedTable').DataTable({
-      paging: true,
-      searching: true,
-      info: true,
-      lengthMenu: [5, 10, 25, 50],
-      order: [[0, 'asc']]
+    // ✅ Check already selected items
+    $('.select2').on('select2:select', function (e) {
+      var el = $(e.target);
+      var selectedEl = $(e.params.data.element);
+      selectedEl.prop('selected', true);
+    });
+
+    $('.select2').on('select2:unselect', function (e) {
+      var el = $(e.target);
+      var selectedEl = $(e.params.data.element);
+      selectedEl.prop('selected', false);
     });
   });
 </script>
