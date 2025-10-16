@@ -345,7 +345,7 @@ SECURE_HSTS_SECONDS = 3600  # You can increase to 31536000 (1 year) in productio
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
-# Cookies and sessions
+# Cookies and sessions1
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True
