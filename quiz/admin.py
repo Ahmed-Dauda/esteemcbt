@@ -181,15 +181,28 @@ class ResultResource(resources.ModelResource):
         )
         
 
-
 class ResultAdmin(ImportExportModelAdmin, ExportActionMixin):    
     resource_class = ResultResource
-    list_display = ['student', 'exam','schools', 'marks', 'exam_type', 'result_class', 'session', 'term', 'created']
-    list_filter = ['schools','exam', 'student', 'exam_type', 'session', 'term', 'created']
-    search_fields = ['schools','exam__course_name__title', 'created']
+    list_display = ['student', 'exam', 'schools', 'marks', 'exam_type', 'result_class', 'session', 'term', 'created']
+    list_filter = ['schools', 'exam', 'exam_type', 'session', 'term', 'created']
+    search_fields = [
+        'student__first_name',
+        'student__last_name',
+        'exam__course_name__title',
+        'schools__school_name',  # or 'schools__name' if that's your field
+    ]
     ordering = ['exam__course_name']
- 
+
 admin.site.register(Result, ResultAdmin)
+
+# class ResultAdmin(ImportExportModelAdmin, ExportActionMixin):    
+#     resource_class = ResultResource
+#     list_display = ['student', 'exam','schools', 'marks', 'exam_type', 'result_class', 'session', 'term', 'created']
+#     list_filter = ['schools','exam', 'student', 'exam_type', 'session', 'term', 'created']
+#     search_fields = ['schools','exam__course_name__title','student__first_name','student__last_name','created']
+#     ordering = ['exam__course_name']
+ 
+# admin.site.register(Result, ResultAdmin)
 
 
 

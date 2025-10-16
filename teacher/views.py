@@ -2328,23 +2328,6 @@ def exam_statistics_view(request, course_id):
     return render(request, 'teacher/dashboard/exam_statistics.html', context)
 
 
-# @login_required
-# def teacher_result_list_view(request):
-#     user = request.user
-
-#     try:
-#         teacher = Teacher.objects.select_related('user').get(user=user)
-#     except Teacher.DoesNotExist:
-#         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
-
-#     courses = teacher.subjects_taught.all()  # Assuming ManyToMany to Course
-
-#     return render(request, 'teacher/dashboard/teacher_result_list.html', {
-#         'teacher': teacher,
-#         'courses': courses,
-#     })
-
-
 @login_required
 def teacher_course_results_view(request, course_id):
     user = request.user
@@ -2392,7 +2375,7 @@ def teacher_results_view(request):
 
         if not results:
             results = Result.objects.select_related('exam', 'student', 'session', 'term', 'exam_type').filter(exam=selected_course)
-            cache.set(cache_key, results, 60 * 1)
+            
             logger.info(f"Results cached for teacher {teacher.id} and course {course_id}")
         else:
             logger.info(f"Results fetched from cache for teacher {teacher.id} and course {course_id}")
@@ -2404,49 +2387,6 @@ def teacher_results_view(request):
         'selected_course': selected_course,
     }
     return render(request, 'teacher/dashboard/teacher_results.html', context)
-
-# @login_required
-# def teacher_results_view(request):
-#     user = request.user
-
-#     # Check if the user is authenticated
-#     if not user.is_authenticated:
-#         return redirect('login')  # Redirect to login if user is not authenticated
-
-#     # Get the teacher instance associated with the user
-#     try:
-#         teacher = Teacher.objects.select_related('user').get(user=user)
-#     except Teacher.DoesNotExist:
-#         # Handle the case where the user is not a teacher
-#         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
-
-#     # Cache key for the teacher's results
-#     cache_key = f"teacher_results_{teacher.id}"
-#     results = cache.get(cache_key)
-
-#     if not results:
-#         # Get the subjects (Courses) taught by the teacher
-#         subjects_taught = teacher.subjects_taught.all()  # This should be related to the "Course" model
-
-#         # If you want to filter by `course_name`, extract the names:
-#         subjects_taught_titles = [course.course_name for course in subjects_taught]
-
-#         # Use actual Course instances in the filter
-#         results = Result.objects.select_related('exam', 'student').only(
-#                 'id', 'marks', 'schools','exam__id', 'exam__course_name', 'student__id'
-#             ).filter(exam__course_name__in=subjects_taught_titles)
-        
-#         # Cache the results for 5 minutes
-#         cache.set(cache_key, results, 60 * 1)
-#         logger.info(f"Results cached for teacher {teacher.id}")
-#     else:
-#         logger.info(f"Results fetched from cache for teacher {teacher.id}")
-
-#     context = {
-#         'teacher': teacher,
-#         'results': results,
-#     }
-#     return render(request, 'teacher/dashboard/teacher_results.html', context)
 
 
 
@@ -2527,161 +2467,6 @@ def delete_teacher_result_view(request, course_id, result_id):
 
     # Redirect back to the course results view
     return redirect(reverse('teacher:teacher_course_results', args=[course.id]))
-
-
-# @login_required
-# def edit_teacher_results_view(request, result_id):
-#     user = request.user
-
-#     # Ensure the user is a teacher
-#     try:
-#         teacher = Teacher.objects.get(user=user)
-#     except Teacher.DoesNotExist:
-#         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
-
-#     # Fetch the specific result to be edited
-#     result = get_object_or_404(Result, id=result_id)
-
-#     # Check if the teacher is allowed to edit this result (e.g., if the result is for one of the teacher's subjects)
-#     if result.exam.course_name not in [course.course_name for course in teacher.subjects_taught.all()]:
-#         return render(request, 'error_page.html', {'message': 'You are not authorized to edit this result.'})
-
-#     # Initialize the form with the current data if it's a GET request
-#     if request.method == 'GET':
-#         form = ResultEditForm(instance=result)
-
-#     # Handle form submission
-#     if request.method == 'POST':
-#         form = ResultEditForm(request.POST, instance=result)
-#         if form.is_valid():
-#             # Save the updated result
-#             form.save()
-
-#             # Show success message
-#             messages.success(request, f"Result for {result.student} updated successfully!")
-
-#             # Clear the cache for the teacher's results to refresh the data
-#             cache_key = f"teacher_results_{teacher.id}"
-#             cache.delete(cache_key)
-
-#             # Redirect back to the teacher's result page after updating
-#             return redirect('teacher:teacher_results')
-
-#     # Render the edit result page with the form
-#     context = {
-#         'teacher': teacher,
-#         'form': form,
-#         'result': result,
-#     }
-#     return render(request, 'teacher/dashboard/edit_teacher_results.html', context)
-
-
-
-# @login_required
-# def teacher_results_view(request):
-#     user = request.user
-
-#     # Check if the user is authenticated
-#     if not user.is_authenticated:
-#         return redirect('login')  # Redirect to login if user is not authenticated
-
-#     # Get the teacher instance associated with the user
-#     try:
-#         # teacher = Teacher.objects.get(user=user)
-#         teacher = Teacher.objects.select_related('user').get(user=user)
-#     except Teacher.DoesNotExist:
-#         # Handle the case where the user is not a teacher
-#         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
-
-#     # Cache key for the teacher's results
-#     cache_key = f"teacher_results_{teacher.id}"
-#     results = cache.get(cache_key)
-    
-#     if not results:
-#         # Get the subjects taught by the teacher
-#         subjects_taught = teacher.subjects_taught.all()
-#         subjects_taught_titles = [course for course in subjects_taught]
-        
-#         # Retrieve the results associated with the subjects taught by the teacher
-#         # results = Result.objects.filter(exam__course_name__in=subjects_taught_titles)
-#         # Optimize the query with select_related and only for Result
-#         results = Result.objects.select_related('exam', 'student').only(
-#                 'id', 'marks','exam__id', 'exam__course_name','student__id',
-#             ).filter(exam__course_name__in=subjects_taught_titles)
-            
-        
-#         # Cache the results for 15 minutes
-#         cache.set(cache_key, results, 60 * 5)
-#         logger.info(f"Results cached for teacher {teacher.id}")
-#     else:
-#         logger.info(f"Results fetched from cache for teacher {teacher.id}")
-
-#     context = {
-#         'teacher': teacher,
-#         'results': results,
-#     }
-#     return render(request, 'teacher/dashboard/teacher_results.html', context)
-
-
-# @login_required
-# def teacher_results_view(request):
-#     user = request.user
-
-#     # Check if the user is authenticated
-#     if not user.is_authenticated:
-#         return redirect('login')  # Redirect to login if user is not authenticated
-
-#     # Get the teacher instance associated with the user
-#     try:
-#         teacher = Teacher.objects.get(user=user)
-#     except Teacher.DoesNotExist:
-#         # Handle the case where the user is not a teacher
-#         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
-
-#     # Get the subjects taught by the teacher
-#     subjects_taught = teacher.subjects_taught.all()
-    
-#     subjects_taught_titles = [course.course_name for course in subjects_taught]
-#     print("subjects_taught66", subjects_taught_titles)
-    
-#     # Retrieve the results associated with the subjects taught by the teacher
-#     results = Result.objects.filter(exam__course_name__in=subjects_taught_titles)
-#     print('results', results)
-
-#     context = {
-#         'teacher': teacher,
-#         'results': results,
-#     }
-#     return render(request, 'teacher/dashboard/teacher_results.html', context)
-
-
-# @cache_page(60 * 15)
-# def teacher_results_view(request):
-#     # Retrieve the currently logged-in user
-#     user = request.user
-
-#     # Get the teacher instance associated with the user
-#     try:
-#         teacher = Teacher.objects.get(user=user)
-#     except Teacher.DoesNotExist:
-#         # Handle the case where the user is not a teacher
-#         # Redirect to an error page or return an appropriate response
-#         return render(request, 'error_page.html', {'message': 'You are not a teacher'})
-
-#     # Get the subjects taught by the teacher
-#     subjects_taught = teacher.subjects_taught.all()
-    
-#     subjects_taught_titles = [course.course_name for course in subjects_taught]
-#     print("subjects_taught66", subjects_taught_titles)
-#     # Retrieve the results associated with the subjects taught by the teacher
-#     results = Result.objects.filter(exam__course_name__in=subjects_taught_titles)
-#     print('results', results)
-
-#     context = {
-#         'teacher': teacher,
-#         'results': results,
-#     }
-#     return render(request, 'teacher/dashboard/teacher_results.html', context)
 
 
 
