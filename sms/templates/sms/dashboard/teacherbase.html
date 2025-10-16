@@ -145,12 +145,7 @@
            
             {% if request.user.is_authenticated and request.user.is_superuser %}
             {% if teacher_school|lower == user_school|lower %}
-            <!-- <li class="nav-item">
-                <a class="nav-link" href="{% url 'student:examiner-report-card-list' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Report Card List</span>
-                </a>
-             </li> -->
+       
              {% endif %}
              {% endif %} 
 
@@ -203,6 +198,11 @@
                     <i class="fas fa-fw fa-book"></i>
                     <span>Manage Results </span>
                 </a>
+                 <a class="nav-link" href="{% url 'teacher:examiner_results_list' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Manage Results Examiner </span>
+                </a>
+                
              </li>
 
              

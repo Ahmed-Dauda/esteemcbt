@@ -5,6 +5,8 @@ from django.contrib.auth.views import LoginView
 app_name = 'teacher'
 
 urlpatterns = [
+     path('examiner/results/', views.examiner_results_list_view, name='examiner_results_list'),
+    # path('examiner/results/<int:result_id>/', views.examiner_result_detail_view, name='examiner_result_detail'),
     path('bulk-update-courses/', views.bulk_update_courses, name='bulk_update_courses'),
 
 path('student-lists/', views.student_lists_view, name='student_lists'),

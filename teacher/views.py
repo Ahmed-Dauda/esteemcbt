@@ -2389,6 +2389,53 @@ def teacher_results_view(request):
     return render(request, 'teacher/dashboard/teacher_results.html', context)
 
 
+@login_required(login_url='teacher:teacher_login')
+def examiner_results_list_view(request):
+    """List all available subjects (courses) that have results for the examiner's school."""
+    user = request.user
+    try:
+        school = user.school  # assuming your NewUser model has school FK
+    except AttributeError:
+        return render(request, 'error_page.html', {'message': 'No school associated with your account.'})
+
+    # Only show Courses linked to this examiner's school that have results
+    courses = Course.objects.filter(schools=school, result__isnull=False).distinct().order_by('course_name')
+
+    return render(request, 'teacher/dashboard/examiner_results_list.html', {
+        'courses': courses,
+        'school': school,
+    })
+
+
+# @login_required(login_url='teacher:teacher_login')
+# def examiner_result_detail_view(request, course_id):
+#     """Show results of students for a specific course within the examiner's school."""
+#     user = request.user
+
+#     # Get the teacher and their associated school
+#     teacher = getattr(user, 'teacher', None)
+#     if not teacher or not hasattr(teacher, 'school'):
+#         return render(request, 'error_page.html', {'message': 'You are not associated with any school.'})
+
+#     school = teacher.school
+
+#     # Get the course that belongs to this teacher's school
+#     course = get_object_or_404(Course, id=course_id, schools=school)
+
+#     # Filter results for that course and school
+#     results = Result.objects.filter(
+#         exam=course,
+#         schools=school
+#     ).select_related('student', 'term', 'session', 'exam_type')
+
+#     context = {
+#         'course': course,
+#         'results': results,
+#         'school': school,
+#         'teacher': teacher,
+#     }
+#     return render(request, 'teacher/dashboard/result_detail.html', context)
+
 
 from .forms import ResultEditForm
 
