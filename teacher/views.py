@@ -2332,20 +2332,13 @@ def exam_statistics_view(request, course_id):
 def teacher_course_results_view(request, course_id):
     user = request.user
 
-    try:
-        teacher = Teacher.objects.get(user=user)
-    except Teacher.DoesNotExist:
-        return render(request, 'error_page.html', {'message': 'You are not a teacher'})
 
     course = get_object_or_404(Course, id=course_id)
-
-    if course not in teacher.subjects_taught.all():
-        return render(request, 'error_page.html', {'message': 'Unauthorized access to this course.'})
 
     results = Result.objects.select_related('student', 'exam').filter(exam__course_name=course.course_name)
 
     return render(request, 'teacher/dashboard/course_results_detail.html', {
-        'teacher': teacher,
+   
         'course': course,
         'results': results,
     })
