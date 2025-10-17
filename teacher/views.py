@@ -2351,6 +2351,7 @@ def teacher_course_results_view(request, course_id):
     })
 
 
+
 @login_required
 def teacher_results_view(request):
     user = request.user
@@ -2405,6 +2406,31 @@ def examiner_results_list_view(request):
         'courses': courses,
         'school': school,
     })
+
+@login_required(login_url='teacher:teacher_login')
+def examiner_result_detail_view(request, course_id):
+    """Show detailed results for a specific subject (course) within the examiner's school."""
+    user = request.user
+    try:
+        school = user.school
+    except AttributeError:
+        return render(request, 'error_page.html', {'message': 'No school associated with your account.'})
+
+    course = get_object_or_404(Course, id=course_id, schools=school)
+
+    # Fetch all results for this course within the examiner’s school
+    results = (
+        Result.objects.filter(exam__course=course, schools=school)
+        .select_related('student', 'term', 'session', 'exam_type')
+        .order_by('-id')
+    )
+
+    return render(request, 'teacher/dashboard/examiner_result_detail.html', {
+        'course': course,
+        'results': results,
+        'school': school,
+    })
+
 
 
 # @login_required(login_url='teacher:teacher_login')

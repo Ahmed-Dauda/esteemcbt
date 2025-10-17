@@ -21,9 +21,10 @@
       <tr>
         <td>{{ forloop.counter }}</td>
         <td>
-          <a href="{% url 'teacher:teacher_course_results' course.id %}">
-            {{ course.course_name }}
-          </a>
+       <a href="{% url 'teacher:teacher_course_results' course.id %}">
+  {{ course.course_name }}
+</a>
+
         </td>
         <td>{{ course.schools }}</td>
       </tr>
