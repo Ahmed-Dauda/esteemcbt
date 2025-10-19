@@ -88,26 +88,27 @@
     </style>
 <style>
  /* button roller    */
- /* Reusable button loader spinner */
+/* Reusable roller for links and buttons */
 
-.btn-roller {
+.btn-roller, .link-roller {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.3s ease;
 }
 
-.btn-roller.loading {
+.loading {
   pointer-events: none;
   opacity: 0.8;
 }
 
-.btn-roller.loading::after {
+.loading::after {
   content: "";
   position: absolute;
-  right: 12px;
-  top: 50%;
+  right: 10px;
   width: 16px;
   height: 16px;
-  margin-top: -8px;
   border: 2px solid currentColor;
   border-top-color: transparent;
   border-radius: 50%;
@@ -142,23 +143,29 @@
     
 
 <script>
- // Reusable Roller Loader
-function startRoller(button) {
-  if (!button.classList.contains('btn-roller')) return;
-  button.classList.add('loading');
-  button.disabled = true;
+// Reusable Roller for both buttons and links
+function startRoller(el) {
+  if (!el.classList.contains('btn-roller') && !el.classList.contains('link-roller')) return;
+  el.classList.add('loading');
+  el.style.pointerEvents = 'none';
 }
 
-function stopRoller(button) {
-  if (!button.classList.contains('btn-roller')) return;
-  button.classList.remove('loading');
-  button.disabled = false;
+function stopRoller(el) {
+  el.classList.remove('loading');
+  el.style.pointerEvents = 'auto';
 }
 
-// Optional: Auto stop after a delay (for demo/testing)
-function simulateRoller(button, delay = 2000) {
-  startRoller(button);
-  setTimeout(() => stopRoller(button), delay);
+// Simulate or delay navigation (for links)
+function simulateRoller(el, delay = 400) {
+  startRoller(el);
+
+  // For <a> tags with href, delay navigation slightly
+  if (el.tagName === 'A' && el.href) {
+    const url = el.href;
+    setTimeout(() => {
+      window.location.href = url;
+    }, delay);
+  }
 }
    
 </script>
@@ -188,29 +195,27 @@ function simulateRoller(button, delay = 2000) {
             {% if item|lower == subj|lower %}
                 {% if sub_grade|lower == student_class|lower and item.schools.school_name|lower == school_name|lower %}
                 
-                <a onclick="simulateRoller(this)" href="{% url 'student:start-exam' item.id %}" class="text-decoration-none text-dark d-block mb-4">
+                <a onclick="simulateRoller(this)" 
+                    href="{% url 'student:start-exam' item.id %}" 
+                    class="link-roller text-decoration-none text-dark d-block mb-4">
                     <div class="d-flex border border-light rounded shadow-sm overflow-hidden">
-                        <div onclick="simulateRoller(this)" class="bg-primary text-white d-flex align-items-center justify-content-center font-weight-bold animated-start" style="width: 100px; font-size: 24px;">
-                            Start   <!-- {{ item|make_list|first }} -->
+                        <div class="bg-primary text-white d-flex align-items-center justify-content-center font-weight-bold" style="width: 100px; font-size: 24px;">
+                        Start
                         </div>
-                        
                         <div class="flex-grow-1 p-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div onclick="simulateRoller(this)" class="text-primary font-weight-bold">
-                                
-                               {{ item.course_name }} {{ item.session }} {{ item.term }} {{ item.exam_type }}
-                                </div>
-                                {% for result in user_results %}
-
-                                {% if result.exam|lower == item|lower  %}
-                                <span class="badge badge-danger">Exam Taken</span>
-                                {% endif %}
-                                {% endfor %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-primary font-weight-bold">
+                            {{ item.course_name }} {{ item.session }} {{ item.term }} {{ item.exam_type }}
                             </div>
+                            {% for result in user_results %}
+                            {% if result.exam|lower == item|lower %}
+                                <span class="badge badge-danger">Exam Taken</span>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
                         </div>
                     </div>
-                </a>
-                
+                </a>                
 
                 {% else %}
                 
