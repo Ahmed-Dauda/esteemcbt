@@ -2,7 +2,12 @@
 
 {% block title %} Start the Quiz {% endblock %}
 
+    {% load static %}
+
   {% block content %} 
+  <link rel="stylesheet" href="{% static 'student/css/roller.css' %}">
+<script src="{% static 'student/js/roller.js' %}"></script>
+
   <style>
     /* Animation for the Start text */
     .animated-start {
@@ -81,7 +86,41 @@
         color: #007bff;
     }
     </style>
-    
+<style>
+ /* button roller    */
+ /* Reusable button loader spinner */
+
+.btn-roller {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.btn-roller.loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.btn-roller.loading::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: roller-spin 0.6s linear infinite;
+}
+
+@keyframes roller-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+</style>    
     <!--Products-->
     <div class="d-flex mb-3 container">
         <a class="btn btn-primary d-flex align-items-center" href="{% url 'teacher:student-logout' %}">
@@ -101,7 +140,37 @@
 
     </div>
     
-    
+
+<script>
+ // Reusable Roller Loader
+function startRoller(button) {
+  if (!button.classList.contains('btn-roller')) return;
+  button.classList.add('loading');
+  button.disabled = true;
+}
+
+function stopRoller(button) {
+  if (!button.classList.contains('btn-roller')) return;
+  button.classList.remove('loading');
+  button.disabled = false;
+}
+
+// Optional: Auto stop after a delay (for demo/testing)
+function simulateRoller(button, delay = 2000) {
+  startRoller(button);
+  setTimeout(() => stopRoller(button), delay);
+}
+   
+</script>
+
+<!-- <button class="btn btn-primary btn-roller" onclick="simulateRoller(this)">
+  Submit
+</button>
+
+<button class="btn btn-success btn-roller" onclick="startRoller(this)">
+  Save
+</button> -->
+
 
 {% if course_pay %}
 
@@ -119,17 +188,17 @@
             {% if item|lower == subj|lower %}
                 {% if sub_grade|lower == student_class|lower and item.schools.school_name|lower == school_name|lower %}
                 
-                <a href="{% url 'student:start-exam' item.id %}" class="text-decoration-none text-dark d-block mb-4">
+                <a onclick="simulateRoller(this)" href="{% url 'student:start-exam' item.id %}" class="text-decoration-none text-dark d-block mb-4">
                     <div class="d-flex border border-light rounded shadow-sm overflow-hidden">
-                        <div class="bg-primary text-white d-flex align-items-center justify-content-center font-weight-bold animated-start" style="width: 100px; font-size: 24px;">
+                        <div onclick="simulateRoller(this)" class="bg-primary text-white d-flex align-items-center justify-content-center font-weight-bold animated-start" style="width: 100px; font-size: 24px;">
                             Start   <!-- {{ item|make_list|first }} -->
                         </div>
                         
                         <div class="flex-grow-1 p-3">
                             <div class="d-flex justify-content-between align-items-center">
-                                <div class="text-primary font-weight-bold">
+                                <div onclick="simulateRoller(this)" class="text-primary font-weight-bold">
                                 
-                        {{ item.course_name }} {{ item.session }} {{ item.term }} {{ item.exam_type }}
+                               {{ item.course_name }} {{ item.session }} {{ item.term }} {{ item.exam_type }}
                                 </div>
                                 {% for result in user_results %}
 

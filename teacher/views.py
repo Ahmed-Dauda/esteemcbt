@@ -2331,12 +2331,8 @@ def exam_statistics_view(request, course_id):
 @login_required
 def teacher_course_results_view(request, course_id):
     user = request.user
-
-
     course = get_object_or_404(Course, id=course_id)
-
     results = Result.objects.select_related('student', 'exam').filter(exam__course_name=course.course_name)
-
     return render(request, 'teacher/dashboard/course_results_detail.html', {
    
         'course': course,
