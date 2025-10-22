@@ -1,0 +1,72 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Manage Academic Setup</h3>
+  <div class="grid grid-cols-3 gap-4 mt-3">
+
+    <!-- Sessions -->
+    <div class="card p-3 shadow-sm">
+      <h5>Sessions. Eg - 2023-2024, 2024-2025</h5>
+      <ul>
+        {% for session in sessions %}
+          <li>
+            {{ session.name }}
+            <a href="{% url 'teacher:edit_session' session.id %}" class="text-info ms-2">Edit</a>
+            <a href="{% url 'teacher:delete_session' session.id %}" class="text-danger ms-1">Delete</a>
+          </li>
+        {% empty %}
+          <li>No sessions yet.</li>
+        {% endfor %}
+      </ul>
+      <form method="post" class="mt-2">
+        {% csrf_token %}
+        {{ session_form.as_p }}
+        <button name="add_session" class="btn btn-primary btn-sm">Add Session</button>
+      </form>
+    </div>
+
+    <!-- Terms -->
+    <div class="card p-3 shadow-sm">
+      <h5>Terms. Eg - FIRST, SECOND,THIRD</h5>
+      <ul>
+        {% for term in terms %}
+          <li>
+            {{ term.name }}
+            <a href="{% url 'teacher:edit_term' term.id %}" class="text-info ms-2">Edit</a>
+            <a href="{% url 'teacher:delete_term' term.id %}" class="text-danger ms-1">Delete</a>
+          </li>
+        {% empty %}
+          <li>No terms yet.</li>
+        {% endfor %}
+      </ul>
+      <form method="post" class="mt-2">
+        {% csrf_token %}
+        {{ term_form.as_p }}
+        <button name="add_term" class="btn btn-primary btn-sm">Add Term</button>
+      </form>
+    </div>
+
+    <!-- Exam Types -->
+    <div class="card p-3 shadow-sm">
+      <h5>Exam Types. Eg-Exam, CA, MID-TERM</h5>
+      <ul>
+        {% for exam_type in exam_types %}
+          <li>
+            {{ exam_type.name }}
+            <a href="{% url 'teacher:edit_exam_type' exam_type.id %}" class="text-info ms-2">Edit</a>
+            <a href="{% url 'teacher:delete_exam_type' exam_type.id %}" class="text-danger ms-1">Delete</a>
+          </li>
+        {% empty %}
+          <li>No exam types yet.</li>
+        {% endfor %}
+      </ul>
+      <form method="post" class="mt-2">
+        {% csrf_token %}
+        {{ exam_type_form.as_p }}
+        <button name="add_exam_type" class="btn btn-primary btn-sm">Add Exam Type</button>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

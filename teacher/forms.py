@@ -3,6 +3,9 @@ from users.models import NewUser
 from . import models
 from django.contrib.auth.forms import UserCreationForm
 from django import forms
+from django import forms
+from sms.models import Courses
+
 # from .models import Teacher
 from quiz import models as QMODEL
 from django import forms
@@ -10,52 +13,96 @@ from .models import Teacher
 from django.contrib.auth.forms import UserCreationForm
 from users.models import NewUser, Profile
 from allauth.account.forms import SignupForm
-from quiz.models import ExamType, School, Course, CourseGrade, Question
+from quiz.models import School, Course, CourseGrade, Question
 from django.contrib.auth.forms import AuthenticationForm
-from sms.models import Courses, Session, Term
+from sms.models import Courses, Session, Term, ExamType
 from quiz.models import Result
-
 
 class EditSubjectForm(forms.Form):
     session = forms.ModelChoiceField(
-        queryset=Session.objects.all(),
+        queryset=Session.objects.none(),
         required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})
+        label="Session"
     )
     term = forms.ModelChoiceField(
-        queryset=Term.objects.all(),
+        queryset=Term.objects.none(),
         required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})
+        label="Term"
     )
     exam_type = forms.ModelChoiceField(
-        queryset=ExamType.objects.all(),
+        queryset=ExamType.objects.none(),
         required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})
+        label="Exam Type"
     )
 
     def __init__(self, *args, **kwargs):
-        self.user_school = kwargs.pop('user_school', None)
+        user_school = kwargs.pop('user_school', None)
         super().__init__(*args, **kwargs)
+
+        if user_school:
+            self.fields['session'].queryset = Session.objects.filter(school=user_school)
+            self.fields['term'].queryset = Term.objects.filter(school=user_school)
+            self.fields['exam_type'].queryset = ExamType.objects.filter(school=user_school)
+
+# class EditSubjectForm(forms.Form):
+#     session = forms.ModelChoiceField(
+#         queryset=Session.objects.all(),
+#         required=False,
+#         widget=forms.Select(attrs={'class': 'form-control'})
+#     )
+#     term = forms.ModelChoiceField(
+#         queryset=Term.objects.all(),
+#         required=False,
+#         widget=forms.Select(attrs={'class': 'form-control'})
+#     )
+#     exam_type = forms.ModelChoiceField(
+#         queryset=ExamType.objects.all(),
+#         required=False,
+#         widget=forms.Select(attrs={'class': 'form-control'})
+#     )
+
+#     def __init__(self, *args, **kwargs):
+#         self.user_school = kwargs.pop('user_school', None)
+#         super().__init__(*args, **kwargs)
+
+
+
+# class EditSubjectFormId(forms.ModelForm):
+#     def __init__(self, *args, **kwargs):
+#         self.user_school = kwargs.pop('user_school', None)
+#         super().__init__(*args, **kwargs)
+
+#         if self.user_school:
+#             self.fields['schools'].queryset = self.fields['schools'].queryset.filter(id=self.user_school.id)
+
+#     class Meta:
+#         model = Courses
+#         fields = ['title', 'schools', 'session', 'term', 'exam_type']
+#         widgets = {
+#             'title': forms.TextInput(attrs={'class': 'form-control'}),
+#             'schools': forms.CheckboxSelectMultiple(),
+#             'session': forms.Select(attrs={'class': 'form-control'}),
+#             'term': forms.Select(attrs={'class': 'form-control'}),
+#             'exam_type': forms.Select(attrs={'class': 'form-control'}),
+#         }
 
 
 class EditSubjectFormId(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        self.user_school = kwargs.pop('user_school', None)
-        super().__init__(*args, **kwargs)
-
-        if self.user_school:
-            self.fields['schools'].queryset = self.fields['schools'].queryset.filter(id=self.user_school.id)
-
     class Meta:
         model = Courses
-        fields = ['title', 'schools', 'session', 'term', 'exam_type']
-        widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'schools': forms.CheckboxSelectMultiple(),
-            'session': forms.Select(attrs={'class': 'form-control'}),
-            'term': forms.Select(attrs={'class': 'form-control'}),
-            'exam_type': forms.Select(attrs={'class': 'form-control'}),
-        }
+        fields = ['title', 'session', 'term','schools']
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        # Lazy import to avoid circular import issue
+        from sms.models import ExamType
+
+
+        if user:
+            self.fields['schools'].queryset = School.objects.filter(id=user.school.id)
+            self.fields['exam_type'].queryset = ExamType.objects.filter(school=user.school)
 
 
 class ResultEditForm(forms.ModelForm):
@@ -82,7 +129,6 @@ class TeacherUpdateForm(forms.ModelForm):
         widgets = {
             'ai_question_num': forms.NumberInput(attrs={'min': 1, 'max': 500}),
             'learning_objectives': forms.Textarea(attrs={'rows': 6, 'cols': 50}),
-
         }
 
 
@@ -390,6 +436,117 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+class SchoolForm(forms.ModelForm):
+    class Meta:
+        model = School
+        fields = [
+            'school_name', 'school_motto', 'school_address', 'portfolio',
+            'logo', 'principal_signature'
+        ]
+        widgets = {
+            'school_motto': forms.TextInput(attrs={'placeholder': 'Enter school motto'}),
+            'school_address': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Enter school address'}),
+        }
+
+
+class OnboardingSignupForm(UserCreationForm):
+    first_name = forms.CharField(max_length=200, label='First Name')
+    last_name = forms.CharField(max_length=200, label='Last Name')
+    email = forms.EmailField(max_length=254, label='Email')
+    username = forms.CharField(max_length=35, label='Username')
+    school = forms.ModelChoiceField(queryset=School.objects.none(), label='School', required=False)
+
+    subjects_taught = forms.ModelMultipleChoiceField(
+        queryset=Courses.objects.all().order_by('title'),
+        label='Subjects Taught',
+        required=False,
+        widget=forms.CheckboxSelectMultiple
+    )
+
+    classes_taught = forms.ModelMultipleChoiceField(
+        queryset=CourseGrade.objects.all(),
+        label='Classes Taught',
+        required=False,
+        widget=forms.CheckboxSelectMultiple
+    )
+
+    # 🟢 Add this superuser checkbox
+    make_superuser = forms.BooleanField(
+        required=False,
+        label="Grant Superuser Access",
+        help_text="If checked, this user will have full administrative privileges."
+    )
+
+    class Meta:
+        model = NewUser
+        fields = [
+            'first_name', 'last_name', 'email', 'username',
+            'password1', 'password2', 'school',
+            'subjects_taught', 'classes_taught', 'make_superuser'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(OnboardingSignupForm, self).__init__(*args, **kwargs)
+
+        if user and user.school:
+            self.fields['school'].queryset = School.objects.all()
+            self.fields['school'].initial = user.school
+            self.fields['subjects_taught'].queryset = Course.objects.filter(schools=user.school)
+            self.fields['classes_taught'].queryset = CourseGrade.objects.filter(schools=user.school).distinct()
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if Teacher.objects.filter(email=email).exists():
+            raise ValidationError("A teacher with this email already exists.")
+        return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data['email']
+
+        # 🟢 Apply the superuser and staff flags if checked
+        if self.cleaned_data.get('make_superuser'):
+            user.is_superuser = True
+            # user.is_staff = True
+
+        if commit:
+            user.save()
+        return user
+
+    def save_teacher(self, user):
+        first_name = self.cleaned_data['first_name']
+        last_name = self.cleaned_data['last_name']
+        email = user.email
+        username = user.username
+        school = self.cleaned_data.get('school', None)
+        subjects_taught = self.cleaned_data.get('subjects_taught', [])
+        classes_taught = self.cleaned_data.get('classes_taught', [])
+
+        teacher = Teacher.objects.create(
+            user=user,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            username=username,
+            school=school,
+        )
+        teacher.subjects_taught.add(*subjects_taught)
+        teacher.classes_taught.add(*classes_taught)
+        return teacher
+
+
+class SchoolOnboardingForm(forms.ModelForm):
+    class Meta:
+        model = School
+        fields = ['school_name', 'school_address', 'school_motto', 'portfolio', 'logo', 'principal_signature']
+        widgets = {
+            'school_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter school name'}),
+            'school_address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter school address'}),
+            'school_motto': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter motto (optional)'}),
+            'portfolio': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Portfolio / category'}),
+        }
+
 
 class TeacherSignupForm(UserCreationForm):
     first_name = forms.CharField(max_length=200, label='First Name')
@@ -404,12 +561,6 @@ class TeacherSignupForm(UserCreationForm):
         widget=forms.CheckboxSelectMultiple
     )
     
-    # subjects_taught = forms.ModelMultipleChoiceField(
-    #     queryset=Courses.objects.all(),  # Ensure courses are properly loaded
-    #     label='Subjects Taught',
-    #     required=False,
-    #     widget=forms.CheckboxSelectMultiple
-    # )
 
     classes_taught = forms.ModelMultipleChoiceField(
         queryset=CourseGrade.objects.all(),  # Ensure classes are properly loaded
@@ -421,26 +572,6 @@ class TeacherSignupForm(UserCreationForm):
     class Meta:
         model = NewUser
         fields = ['first_name', 'last_name', 'email', 'username', 'password1', 'password2', 'school', 'subjects_taught', 'classes_taught']
-
-    # def __init__(self, *args, **kwargs):
-    #     user = kwargs.pop('user', None)  # ✅ Pop 'user' first
-    #     super(TeacherSignupForm, self).__init__(*args, **kwargs)  # THEN call super
-
-    #     if user and user.school:
-    #         self.fields['school'].queryset = School.objects.filter(id=user.school.id)
-    #         self.fields['school'].initial = user.school
-    #         self.fields['subjects_taught'].queryset = Course.objects.filter(
-    #             schools=user.school
-    #         ).order_by('course_name__title')  # or 'title'
-    #         self.fields['subjects_taught'].label_from_instance = lambda obj: str(obj)
-
-    #         self.fields['classes_taught'].queryset = CourseGrade.objects.filter(
-    #             schools=user.school
-    #         ).distinct()
-
-    #     self.fields['school'].widget.attrs['readonly'] = True
-    #     self.fields['school'].disabled = True
-
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -494,77 +625,17 @@ class TeacherSignupForm(UserCreationForm):
         return teacher
 
 
-# class TeacherSignupForm(UserCreationForm):
-#     first_name = forms.CharField(max_length=200, label='First Name')
-#     last_name = forms.CharField(max_length=200, label='Last Name')
-#     email = forms.EmailField(max_length=254, label='Email')
-#     username = forms.CharField(max_length=35, label='Username')
-#     school = forms.ModelChoiceField(queryset=School.objects.none(), label='School', required=False)
+from django import forms
+from .models import Course  # or whatever your subject model is called
 
-#     subjects_taught = forms.ModelMultipleChoiceField(
-#         queryset=Courses.objects.all(),  # Ensure courses are properly loaded
-#         label='Subjects Taught',
-#         required=False,
-#         widget=forms.CheckboxSelectMultiple
-#     )
-
-#     classes_taught = forms.ModelMultipleChoiceField(
-#         queryset=CourseGrade.objects.all(),  # Ensure classes are properly loaded
-#         label='Classes Taught',
-#         required=False,
-#         widget=forms.CheckboxSelectMultiple
-#     )
-
-#     class Meta:
-#         model = NewUser
-#         fields = ['first_name', 'last_name', 'email', 'username', 'password1', 'password2', 'school', 'subjects_taught', 'classes_taught']
-
-#     def __init__(self, *args, **kwargs):
-#         user = kwargs.pop('user', None)
-#         super(TeacherSignupForm, self).__init__(*args, **kwargs)
-
-
-#         # Populate dropdowns with data related to the user's school
-#         if user and user.school:
-#             self.fields['school'].queryset = School.objects.filter(name=user.school.name)
-#             self.fields['subjects_taught'].queryset = Course.objects.filter(schools=user.school)
-#             self.fields['classes_taught'].queryset = CourseGrade.objects.filter(schools=user.school).distinct()
-
-#         self.fields['school'].initial = user.school if user else None
-
-#     def clean_email(self):
-#         email = self.cleaned_data.get('email')
-#         if Teacher.objects.filter(email=email).exists():
-#             raise ValidationError("A teacher with this email already exists.")
-#         return email
-
-#     def save(self, commit=True):
-#         user = super().save(commit=False)
-#         user.email = self.cleaned_data['email']
-#         if commit:
-#             user.save()
-#         return user
-    
-#     def save_teacher(self, user):
-#         first_name = self.cleaned_data['first_name']
-#         last_name = self.cleaned_data['last_name']
-#         email = user.email
-#         username = user.username
-#         school = self.cleaned_data.get('school', None)
-#         subjects_taught = self.cleaned_data.get('subjects_taught', [])
-#         classes_taught = self.cleaned_data.get('classes_taught', [])
-
-#         teacher = Teacher.objects.create(
-#             user=user,
-#             first_name=first_name,
-#             last_name=last_name,
-#             email=email,
-#             username=username,
-#             school=school,
-#         )
-#         teacher.subjects_taught.add(*subjects_taught)
-#         teacher.classes_taught.add(*classes_taught)
-#         return teacher
+class SubjectEditForm(forms.ModelForm):
+    class Meta:
+        model = Course
+        fields = ['learning_objectives', 'ai_question_num']
+        widgets = {
+            'learning_objectives': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'ai_question_num': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 500}),
+        }
 
   
 

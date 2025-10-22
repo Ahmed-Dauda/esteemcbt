@@ -119,9 +119,12 @@
              <div class="text-center d-none d-md-inline">
                 <button class="rounded-circle border-0" id="sidebarToggle"></button>
             </div>
-        
+
+
+
             <!-- Divider -->
             <hr class="sidebar-divider">
+
             {% if request.user.is_authenticated and request.user.is_teacher %}
             {% if teacher_school|lower == user_school|lower %}
  
@@ -130,6 +133,20 @@
     <!-- Add other teacher-specific links here -->
             {% endif %}
             {% endif %}
+
+                    {% if request.user.is_authenticated and request.user.is_superuser or request.user.is_staff %}
+
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'teacher:onboarding_dashboard' %}">
+                    <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
+                    <span>Onboarding</span>
+                </a>
+            </li>
+            <!-- {% if request.user.is_authenticated and request.user.is_superuser or request.user.is_staff %}
+    <a href="{% url 'teacher:onboarding_dashboard' %}">Onboarding</a>
+{% endif %} -->
+
+            {% endif %} 
 
 
             {% if request.user.is_authenticated and request.user.is_superuser %}
@@ -205,7 +222,6 @@
                 
              </li>
 
-             
              {% endif %}
              {% endif %}   
              

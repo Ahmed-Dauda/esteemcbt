@@ -11,12 +11,12 @@ from users.models import NewUser
 from quiz.models import Course, Result, Question
 from django.utils.datastructures import MultiValueDictKeyError
 from .models import SampleCodes, Teacher
-from .forms import EditSubjectFormId, JSONForm, TeacherSignupForm, TeacherLoginForm, QuestionForm, UploadCSVForm
+from .forms import EditSubjectFormId, JSONForm, SchoolForm, SchoolOnboardingForm, SubjectEditForm, TeacherSignupForm, TeacherLoginForm, QuestionForm, UploadCSVForm
 from django.views.decorators.cache import cache_page
 import csv
 import json
 from django.http import JsonResponse
-from sms.models import Courses
+from sms.models import Courses, Session, ExamType, Term
 from django.forms import formset_factory
 from import_export import resources
 from tablib import Dataset
@@ -36,7 +36,7 @@ from django.contrib.auth import authenticate, login
 from django.core.cache import cache
 import logging
 logger = logging.getLogger(__name__)
-
+from sms.forms import SessionForm, TermForm, ExamTypeForm
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -47,29 +47,47 @@ from .forms import CourseGradeForm
 from django.contrib import messages
 from django.shortcuts import redirect
 
-
 @login_required(login_url='teacher:teacher_login')
 def teacher_list_view(request):
-    # Get the school of the logged-in user
     user_school = request.user.school
 
-    # Filter teachers by school and prefetch related subjects and classes for optimization
+    # Get all teachers in this school with their subjects and classes
     teachers = Teacher.objects.filter(school=user_school).prefetch_related('subjects_taught', 'classes_taught')
 
-    # Print subjects taught for each teacher
-    for teacher in teachers:
-        # print(f"Teacher: {teacher.first_name} {teacher.last_name}")
-        subjects = teacher.subjects_taught.all()
-        # for subject in subjects:
-        #     print(f"Subject Taught3: {subject.course_name}")
-    
-    context = {
-        'subject_taught':subjects,
-        'teachers': teachers,  # Pass the filtered teachers to the template
+    # Create a dictionary mapping each teacher to their subjects
+    teacher_subjects = {
+        teacher.id: teacher.subjects_taught.all()
+        for teacher in teachers
     }
 
-    # Render the template and pass the context with teachers data
+    context = {
+        'teachers': teachers,
+        'teacher_subjects': teacher_subjects,  # Pass all subjects per teacher
+    }
+
     return render(request, 'teacher/dashboard/teacher_list.html', context)
+
+
+# @login_required(login_url='teacher:teacher_login')
+# def teacher_list_view(request):
+#     # Get the school of the logged-in user
+#     user_school = request.user.school
+
+#     # Filter teachers by school and prefetch related subjects and classes for optimization
+#     teachers = Teacher.objects.filter(school=user_school).prefetch_related('subjects_taught', 'classes_taught')
+
+#     # Print subjects taught for each teacher
+#     for teacher in teachers:
+#         # print(f"Teacher: {teacher.first_name} {teacher.last_name}")
+#         subjects = teacher.subjects_taught.all()
+
+#     context = {
+#         'subject_taught':subjects,
+#         'teachers': teachers,  # Pass the filtered teachers to the template
+#     }
+
+#     # Render the template and pass the context with teachers data
+#     return render(request, 'teacher/dashboard/teacher_list.html', context)
 
 
 # @login_required(login_url='teacher:teacher_login')
@@ -119,28 +137,6 @@ def teacher_delete_view(request, pk):
     return render(request, 'teacher/dashboard/teacher_confirm_delete.html', {'teacher': teacher})
 
 
-# def teacher_signup_view(request):
-#     if request.method == 'POST':
-#         form = TeacherSignupForm(request.POST)
-#         if form.is_valid():
-#             username = form.cleaned_data.get('username')
-#             email = form.cleaned_data.get('email')
-
-#             if NewUser.objects.exclude(pk=form.instance.pk).filter(username=username).exists():
-#                 form.add_error('username', "A user with this Username already exists.")
-#             if NewUser.objects.exclude(pk=form.instance.pk).filter(email=email).exists():
-#                 form.add_error('email', "A user with this Email already exists.")
-
-#             if not form.errors:
-#                 user = form.save(commit=False)
-#                 form.save_teacher(user)
-#                 return redirect('success_url')
-# # Redirect to a success page or teacher list
-#     else:
-#         form = TeacherSignupForm()  # Provide an empty form for GET request
-
-#     return render(request, 'teacher/dashboard/teacher_signup.html', {'form': form})
-
 # real codes3
 from django.core.exceptions import ValidationError
 
@@ -161,7 +157,91 @@ def teacher_signup_view(request):
  
     return render(request, 'teacher/dashboard/teacher_signup.html', {'form': form})
 
-   
+
+from teacher.forms import OnboardingSignupForm
+
+@login_required(login_url='teacher:teacher_login')
+@user_passes_test(lambda u: u.is_superuser and u.is_staff)
+def onboarding_signup_view(request):
+    if request.method == 'POST':
+        form = OnboardingSignupForm(request.POST, user=request.user)
+        if form.is_valid():
+            user = form.save(commit=True)  # Save the user
+            form.save_teacher(user)  # Save the teacher details and relationships
+            messages.success(request, 'Teacher registered successfully!')
+            return redirect('teacher:onboarding_signup')  # Redirect to another page
+        else:
+            print(form.errors)  # Log errors for debugging
+    else:
+        form = OnboardingSignupForm(user=request.user)
+ 
+    return render(request, 'teacher/dashboard/onboarding_signup.html', {'form': form})
+
+
+@login_required(login_url='teacher:teacher_login')
+@user_passes_test(lambda u: u.is_superuser and u.is_staff)
+def onboard_school_view(request):
+    if request.method == 'POST':
+        form = SchoolOnboardingForm(request.POST, request.FILES)
+        if form.is_valid():
+            new_school = form.save()
+            messages.success(request, f"✅ {new_school.school_name} onboarded successfully.")
+            return redirect('teacher:onboard_school')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = SchoolOnboardingForm()
+
+    schools = School.objects.all().order_by('-created')
+    return render(request, 'teacher/dashboard/onboard_school.html', {
+        'form': form,
+        'schools': schools
+    })
+
+@login_required(login_url='teacher:teacher_login')
+@user_passes_test(lambda u: u.is_superuser and u.is_staff)
+def edit_school_view(request, pk):
+    """Edit existing school"""
+    school = get_object_or_404(School, pk=pk)
+    form = SchoolForm(request.POST or None, request.FILES or None, instance=school)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, f"✏️ {school.school_name} has been updated successfully.")
+        return redirect('teacher:onboarding_dashboard')
+
+    return render(request, 'teacher/dashboard/school_edit.html', {'form': form, 'school': school})
+
+
+@login_required(login_url='teacher:teacher_login')
+@user_passes_test(lambda u: u.is_superuser and u.is_staff)
+def delete_school_view(request, pk):
+    """Delete school"""
+    school = get_object_or_404(School, pk=pk)
+    name = school.school_name
+    school.delete()
+    messages.warning(request, f"🗑️ {name} has been deleted successfully.")
+    return redirect('teacher:onboarding')
+
+
+@login_required(login_url='teacher:teacher_login')
+@user_passes_test(lambda u: u.is_superuser and u.is_staff)
+def onboarding_dashboard_view(request):
+    # Basic statistics for overview
+    schools_count = School.objects.count()
+    teachers_count = Teacher.objects.count()
+    sessions_count = Session.objects.count()
+    terms_count = Term.objects.count()
+    exam_types_count = ExamType.objects.count()
+
+    context = {
+        'schools_count': schools_count,
+        'teachers_count': teachers_count,
+        'sessions_count': sessions_count,
+        'terms_count': terms_count,
+        'exam_types_count': exam_types_count,
+    }
+    return render(request, 'teacher/dashboard/onboarding_dashboard.html', context)
 
 @cache_page(60 * 15)
 def teacher_logout_view(request):
@@ -281,7 +361,6 @@ def edit_subjects_view(request, course_id):
 #         'course': course
 #     })
 
-
 @login_required(login_url='teacher:teacher_login')
 def bulk_update_courses(request):
     user = NewUser.objects.select_related('school').get(id=request.user.id)
@@ -297,7 +376,18 @@ def bulk_update_courses(request):
             term = form.cleaned_data.get('term')
             exam_type = form.cleaned_data.get('exam_type')
 
-            # Update all
+            # ✅ Ensure these selections belong to the user's school
+            if session and session.school != user_school:
+                messages.error(request, "Invalid session selection.")
+                return redirect('teacher:bulk_update_courses')
+            if term and term.school != user_school:
+                messages.error(request, "Invalid term selection.")
+                return redirect('teacher:bulk_update_courses')
+            if exam_type and exam_type.school != user_school:
+                messages.error(request, "Invalid exam type selection.")
+                return redirect('teacher:bulk_update_courses')
+
+            # ✅ Bulk update safely
             for course in courses:
                 if session:
                     course.session = session
@@ -307,7 +397,7 @@ def bulk_update_courses(request):
                     course.exam_type = exam_type
                 course.save()
 
-            messages.success(request, "All subjects updated successfully.")
+            messages.success(request, "All subjects updated successfully for your school.")
             return redirect('teacher:teacher-dashboard')
     else:
         form = EditSubjectForm(user_school=user_school)
@@ -316,6 +406,164 @@ def bulk_update_courses(request):
         'form': form,
         'courses': courses
     })
+
+
+@login_required(login_url='teacher:teacher_login')
+def manage_academic_setup_view(request):
+    user = NewUser.objects.select_related('school').get(id=request.user.id)
+    user_school = user.school
+
+    # ✅ Ensure defaults exist
+   
+    # Fetch all data after ensuring defaults
+    sessions = Session.objects.filter(school=user_school)
+    terms = Term.objects.filter(school=user_school)
+    exam_types = ExamType.objects.filter(school=user_school)
+
+    if request.method == 'POST':
+        if 'add_session' in request.POST:
+            session_form = SessionForm(request.POST)
+            if session_form.is_valid():
+                new_session = session_form.save(commit=False)
+                new_session.school = user_school
+                new_session.save()
+                messages.success(request, "Session added successfully.")
+                return redirect('teacher:manage_academic_setup')
+
+        elif 'add_term' in request.POST:
+            term_form = TermForm(request.POST)
+            if term_form.is_valid():
+                new_term = term_form.save(commit=False)
+                new_term.school = user_school
+                new_term.save()
+                messages.success(request, "Term added successfully.")
+                return redirect('teacher:manage_academic_setup')
+
+        elif 'add_exam_type' in request.POST:
+            exam_type_form = ExamTypeForm(request.POST)
+            if exam_type_form.is_valid():
+                new_exam_type = exam_type_form.save(commit=False)
+                new_exam_type.school = user_school
+                new_exam_type.save()
+                messages.success(request, "Exam type added successfully.")
+                return redirect('teacher:manage_academic_setup')
+    else:
+        session_form = SessionForm()
+        term_form = TermForm()
+        exam_type_form = ExamTypeForm()
+
+    context = {
+        'sessions': sessions,
+        'terms': terms,
+        'exam_types': exam_types,
+        'session_form': session_form,
+        'term_form': term_form,
+        'exam_type_form': exam_type_form,
+    }
+
+    return render(request, 'teacher/dashboard/manage_academic_setup.html', context)
+
+# --- Edit Views ---
+@login_required(login_url='teacher:teacher_login')
+def edit_session_view(request, pk):
+    session = get_object_or_404(Session, pk=pk, school=request.user.school)
+    if request.method == 'POST':
+        form = SessionForm(request.POST, instance=session)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Session updated successfully.")
+            return redirect('teacher:manage_academic_setup')
+    else:
+        form = SessionForm(instance=session)
+    return render(request, 'teacher/dashboard/edit_item.html', {'form': form, 'title': 'Edit Session'})
+
+
+@login_required(login_url='teacher:teacher_login')
+def edit_term_view(request, pk):
+    term = get_object_or_404(Term, pk=pk, school=request.user.school)
+    if request.method == 'POST':
+        form = TermForm(request.POST, instance=term)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Term updated successfully.")
+            return redirect('teacher:manage_academic_setup')
+    else:
+        form = TermForm(instance=term)
+    return render(request, 'teacher/dashboard/edit_item.html', {'form': form, 'title': 'Edit Term'})
+
+
+@login_required(login_url='teacher:teacher_login')
+def edit_exam_type_view(request, pk):
+    exam_type = get_object_or_404(ExamType, pk=pk, school=request.user.school)
+    if request.method == 'POST':
+        form = ExamTypeForm(request.POST, instance=exam_type)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Exam type updated successfully.")
+            return redirect('teacher:manage_academic_setup')
+    else:
+        form = ExamTypeForm(instance=exam_type)
+    return render(request, 'teacher/dashboard/edit_item.html', {'form': form, 'title': 'Edit Exam Type'})
+
+
+# --- Delete Views ---
+@login_required(login_url='teacher:teacher_login')
+def delete_session_view(request, pk):
+    session = get_object_or_404(Session, pk=pk, school=request.user.school)
+    session.delete()
+    messages.success(request, "Session deleted successfully.")
+    return redirect('teacher:manage_academic_setup')
+
+
+@login_required(login_url='teacher:teacher_login')
+def delete_term_view(request, pk):
+    term = get_object_or_404(Term, pk=pk, school=request.user.school)
+    term.delete()
+    messages.success(request, "Term deleted successfully.")
+    return redirect('teacher:manage_academic_setup')
+
+
+@login_required(login_url='teacher:teacher_login')
+def delete_exam_type_view(request, pk):
+    exam_type = get_object_or_404(ExamType, pk=pk, school=request.user.school)
+    exam_type.delete()
+    messages.success(request, "Exam type deleted successfully.")
+    return redirect('teacher:manage_academic_setup')
+
+# @login_required(login_url='teacher:teacher_login')
+# def bulk_update_courses(request):
+#     user = NewUser.objects.select_related('school').get(id=request.user.id)
+#     user_school = user.school
+
+#     # All courses for this school
+#     courses = Courses.objects.filter(schools=user_school)
+
+#     if request.method == 'POST':
+#         form = EditSubjectForm(request.POST, user_school=user_school)
+#         if form.is_valid():
+#             session = form.cleaned_data.get('session')
+#             term = form.cleaned_data.get('term')
+#             exam_type = form.cleaned_data.get('exam_type')
+
+#             # Update all
+#             for course in courses:
+#                 if session:
+#                     course.session = session
+#                 if term:
+#                     course.term = term
+#                 if exam_type:
+#                     course.exam_type = exam_type
+#                 course.save()
+
+#             messages.success(request, "All subjects updated successfully.")
+#             return redirect('teacher:teacher-dashboard')
+#     else:
+#         form = EditSubjectForm(user_school=user_school)
+
+#     return render(request, 'teacher/dashboard/bulk_update_courses.html', {
+#         'form': form,
+#         'courses': courses
+#     })
 
 
 @login_required(login_url='teacher:teacher_login')
@@ -382,7 +630,7 @@ from django.db.models import Prefetch
 
 from django.db.models import Q
 
-from quiz.models import Session, Term  # Import your models
+from sms.models import Session, Term  # Import your models
 
 
 def class_list_view(request):
@@ -479,7 +727,6 @@ def class_list_view(request):
 
 
 from django.shortcuts import render, redirect, get_object_or_404
-from quiz.models import ExamType
 from django.db import transaction
 from teacher.models import ColumnLock
 
@@ -2609,7 +2856,7 @@ def export_results_csv(request):
     return redirect('export_results_csv')
 
 
-from quiz.models import Session, Term  # Import your models
+ # Import your models
 from .forms import UploadFileForm  
 from tablib import Dataset
 
@@ -3302,24 +3549,59 @@ def extract_equations_from_paragraph(paragraph):
 
 from .forms import TeacherUpdateForm
 
+from django.forms import modelformset_factory
+
+@login_required(login_url='teacher:teacher_login')
 def update_teacher_settings(request):
-    teacher = Teacher.objects.select_related('user', 'school').get(user__username=request.user.username)
+    teacher = Teacher.objects.select_related('user', 'school').prefetch_related('subjects_taught').get(user=request.user)
 
     if request.method == 'POST':
-        form = TeacherUpdateForm(request.POST, instance=teacher)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Teacher settings updated successfully!')
-            return redirect('teacher:update_teacher_settings')  # Redirect to the same page to see changes
-    else:
-        form = TeacherUpdateForm(instance=teacher)
+        # Update each subject's learning objectives and AI question number
+        for subject in teacher.subjects_taught.all():
+            learning_obj = request.POST.get(f'learning_objectives_{subject.id}')
+            ai_num = request.POST.get(f'ai_question_num_{subject.id}')
+
+            if learning_obj is not None:
+                subject.learning_objectives = learning_obj
+
+            if ai_num:
+                try:
+                    subject.ai_question_num = int(ai_num)
+                except ValueError:
+                    pass
+
+            subject.save()
+
+        messages.success(request, 'Subjects updated successfully!')
+        return redirect('teacher:update_teacher_settings')
+
+    subjects = teacher.subjects_taught.all()
 
     context = {
-        'form': form,
         'teacher': teacher,
+        'subjects': subjects,
     }
 
     return render(request, 'teacher/dashboard/update_teacher_settings.html', context)
+
+# def update_teacher_settings(request):
+#     teacher = Teacher.objects.select_related('user', 'school').get(user__username=request.user.username)
+
+#     if request.method == 'POST':
+#         form = TeacherUpdateForm(request.POST, instance=teacher)
+#         if form.is_valid():
+#             form.save()
+#             messages.success(request, 'Teacher settings updated successfully!')
+#             return redirect('teacher:update_teacher_settings')  # Redirect to the same page to see changes
+#     else:
+#         form = TeacherUpdateForm(instance=teacher)
+
+#     context = {
+#         'form': form,
+#         'teacher': teacher,
+#     }
+
+#     return render(request, 'teacher/dashboard/update_teacher_settings.html', context)
 
 
 
@@ -3374,19 +3656,72 @@ def write_to_csv(data, file):
         writer.writerow(data_row)
 
 
+# def generate_csv(request):
+#     sample_codes = SampleCodes.objects.all()
+
+#     user_school = request.user.school
+    
+#     # Optimize query to fetch related objects
+#     teacher = Teacher.objects.select_related('user', 'school').prefetch_related('subjects_taught', 'classes_taught').get(user__username=request.user.username)
+    
+#     # Prefetch subjects and retrieve additional teacher details
+#     teacher_subjects = teacher.subjects_taught.all()
+#     ai_question_num = teacher.ai_question_num
+#     learning_objectives = teacher.learning_objectives
+
+
+#     if request.method == 'POST':
+#         form = JSONForm(request.POST)
+#         if form.is_valid():
+#             # Parse JSON data
+#             json_data = form.cleaned_data['json_data']
+#             try:
+#                 data = json.loads(json_data)
+#             except json.JSONDecodeError:
+#                 return render(request, 'teacher/dashboard/error.html', {'message': 'Invalid JSON data'})
+
+#             # Generate CSV
+#             try:
+#                 # Create a dynamic filename with a timestamp
+#                 filename = f"generated_questions_{now().strftime('%Y%m%d%H%M%S')}.csv"
+#                 # Prepare the response with appropriate CSV headers
+#                 response = HttpResponse(content_type='text/csv')
+#                 response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+#                 # Write CSV data to the response
+#                 write_to_csv(data, response)
+#                 return response
+#             except Exception as e:
+#                 return render(request, 'teacher/dashboard/error.html', {'message': str(e)})
+
+#     else:
+#         form = JSONForm()
+        
+
+#     context = {
+#         'school': user_school,
+#         'teacher_subjects': teacher_subjects,
+#         'ai_question_num': ai_question_num,
+#         'learning_objectives': learning_objectives,
+#         'form1': form  # Include the JSON form
+#     }  
+#     return render(request, 'teacher/dashboard/generate_csv.html', context = context)
+
 def generate_csv(request):
     sample_codes = SampleCodes.objects.all()
-
     user_school = request.user.school
-    
+
     # Optimize query to fetch related objects
-    teacher = Teacher.objects.select_related('user', 'school').prefetch_related('subjects_taught', 'classes_taught').get(user__username=request.user.username)
-    
+    teacher = Teacher.objects.select_related('user', 'school').prefetch_related(
+        'subjects_taught', 'classes_taught'
+    ).get(user__username=request.user.username)
+
     # Prefetch subjects and retrieve additional teacher details
     teacher_subjects = teacher.subjects_taught.all()
-    ai_question_num = teacher.ai_question_num
-    learning_objectives = teacher.learning_objectives
 
+    # Debugging (optional)
+    for course in teacher_subjects:
+        print(course.course_name, course.learning_objectives, course.ai_question_num)
 
     if request.method == 'POST':
         form = JSONForm(request.POST)
@@ -3398,15 +3733,11 @@ def generate_csv(request):
             except json.JSONDecodeError:
                 return render(request, 'teacher/dashboard/error.html', {'message': 'Invalid JSON data'})
 
-            # Generate CSV
             try:
-                # Create a dynamic filename with a timestamp
                 filename = f"generated_questions_{now().strftime('%Y%m%d%H%M%S')}.csv"
-                # Prepare the response with appropriate CSV headers
                 response = HttpResponse(content_type='text/csv')
                 response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
-                # Write CSV data to the response
                 write_to_csv(data, response)
                 return response
             except Exception as e:
@@ -3414,16 +3745,14 @@ def generate_csv(request):
 
     else:
         form = JSONForm()
-        
 
     context = {
         'school': user_school,
-        'teacher_subjects': teacher_subjects,
-        'ai_question_num': ai_question_num,
-        'learning_objectives': learning_objectives,
-        'form1': form  # Include the JSON form
-    }  
-    return render(request, 'teacher/dashboard/generate_csv.html', context = context)
+        'teacher_subjects': teacher_subjects,  # each subject now includes learning_objectives + ai_question_num
+        'form1': form
+    }
+
+    return render(request, 'teacher/dashboard/generate_csv.html', context)
 
 
 

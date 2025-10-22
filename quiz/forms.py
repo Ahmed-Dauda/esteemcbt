@@ -5,7 +5,10 @@ from users.models import NewUser
 from .models import School
 from django.contrib import admin
 from django.db.models import Count
-
+try:
+    from sms.models import Courses
+except Exception:
+    Courses = None
 
 class CourseGradeForm(forms.ModelForm):
     class Meta:
@@ -42,18 +45,5 @@ class MoveGroupForm(forms.Form):
             # Only allow empty classes as target
             self.fields['to_group'].queryset = CourseGrade.objects.filter(schools=user_school).filter(students__isnull=True).order_by('name')
             
-
-# class MoveGroupForm(forms.Form):
-#     from_group = forms.ModelChoiceField(queryset=CourseGrade.objects.none(), label='From Group')
-#     to_group = forms.ModelChoiceField(queryset=CourseGrade.objects.none(), empty_label="Move group", label='To Group', required=False)
-
-#     def __init__(self, *args, **kwargs):
-#         user_school = kwargs.pop('user_school', None)  # Get user_school from the passed kwargs
-#         super(MoveGroupForm, self).__init__(*args, **kwargs)
-
-#         if user_school:
-#             # Filter CourseGrade based on the user's school and order by the 'name' field
-#             self.fields['from_group'].queryset = CourseGrade.objects.filter(schools=user_school).distinct().order_by('name')
-#             self.fields['to_group'].queryset = CourseGrade.objects.filter(schools=user_school).distinct().order_by('name')
 
 

@@ -1,0 +1,75 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="text-success text-center">🏫 Onboard a New School</h3>
+
+  {% if messages %}
+  <div id="message-container">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="mt-4">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <div class="text-center mt-3">
+      <button type="submit" class="btn btn-primary px-4">Create School</button>
+    </div>
+  </form>
+
+  <hr>
+
+  <h5 class="mt-5">Existing Schools</h5>
+  <table class="table table-bordered table-striped align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>#</th>
+        <th>School Name</th>
+        <th>Motto</th>
+        <th>Address</th>
+        <th>Date Created</th>
+        <th class="text-center">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for school in schools %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ school.school_name }}</td>
+        <td>{{ school.school_motto|default:"-" }}</td>
+        <td>{{ school.school_address|default:"-" }}</td>
+        <td>{{ school.created|date:"M d, Y" }}</td>
+        <td class="text-center">
+          <a href="{% url 'teacher:edit_school' school.id %}" class="btn btn-sm btn-warning me-2">
+            <i class="bi bi-pencil-square"></i> Edit
+          </a>
+          <a href="{% url 'teacher:delete_school' school.id %}" class="btn btn-sm btn-danger"
+             onclick="return confirm('Are you sure you want to delete {{ school.school_name }}?');">
+            <i class="bi bi-trash"></i> Delete
+          </a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="text-center text-muted">No schools onboarded yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  setTimeout(function() {
+    const msg = document.getElementById('message-container');
+    if (msg) {
+      msg.style.transition = 'opacity 0.5s ease';
+      msg.style.opacity = '0';
+      setTimeout(() => msg.remove(), 500);
+    }
+  }, 3000);
+</script>
+{% endblock %}

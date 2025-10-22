@@ -82,8 +82,7 @@ from sms.models import (Categories, Courses,
                         Gallery,
                           FrequentlyAskQuestions,
                           CourseFrequentlyAskQuestions,
-                          CourseLearnerReviews, 
-
+                          CourseLearnerReviews, Session, Term, ExamType,
                         )
 
 

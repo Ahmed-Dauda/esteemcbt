@@ -1,0 +1,14 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% block content %}
+<div class="container mt-5 col-md-5">
+  <div class="card p-4 shadow-sm">
+    <h4>{{ title }}</h4>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn btn-success">Save Changes</button>
+      <a href="{% url 'teacher:manage_academic_setup' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

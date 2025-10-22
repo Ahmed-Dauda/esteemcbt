@@ -5,7 +5,17 @@ from django.contrib.auth.views import LoginView
 app_name = 'teacher'
 
 urlpatterns = [
-    
+    path('setup/', views.manage_academic_setup_view, name='manage_academic_setup'),
+    # Edit
+    path('session/edit/<int:pk>/', views.edit_session_view, name='edit_session'),
+    path('term/edit/<int:pk>/', views.edit_term_view, name='edit_term'),
+    path('exam-type/edit/<int:pk>/', views.edit_exam_type_view, name='edit_exam_type'),
+
+    # Delete
+    path('session/delete/<int:pk>/', views.delete_session_view, name='delete_session'),
+    path('term/delete/<int:pk>/', views.delete_term_view, name='delete_term'),
+    path('exam-type/delete/<int:pk>/', views.delete_exam_type_view, name='delete_exam_type'),
+
  path('examiner/results/', views.examiner_results_list_view, name='examiner_results_list'),
 
     # Detail view for a specific course's result
@@ -44,6 +54,11 @@ path('edit-student/<int:student_id>/', views.edit_student, name='edit_student'),
     path('update-teacher-settings/', views.update_teacher_settings, name='update_teacher_settings'),
     
     path('generate-csv/', views.generate_csv, name='generate_csv'),
+    path('onboarding/edit/<int:pk>/', views.edit_school_view, name='edit_school'),
+path('onboarding/delete/<int:pk>/', views.delete_school_view, name='delete_school'),
+path('onboard-school/', views.onboard_school_view, name='onboard_school'),
+path('onboarding/', views.onboarding_dashboard_view, name='onboarding_dashboard'),
+    path('onboarding-signup/', views.onboarding_signup_view, name='onboarding_signup'),
     path('teacher-signup/', views.teacher_signup_view, name='teacher_signup'),
     path('teacher_login/', views.teacher_login_view, name='teacher_login'),
     path('teacher_logout/', views.teacher_logout_view, name='teacher_logout'),

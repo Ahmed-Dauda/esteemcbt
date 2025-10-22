@@ -1,0 +1,26 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="text-success mb-4">🧭 Onboarding Dashboard</h2>
+
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm text-center p-3">
+        <h5>Schools</h5>
+        <p class="display-6">{{ schools_count }}</p>
+        <a href="{% url 'teacher:onboard_school' %}" class="btn btn-outline-success btn-sm">Onboard School</a>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm text-center p-3">
+        <h5>Teachers</h5>
+        <p class="display-6">{{ teachers_count }}</p>
+        <a href="{% url 'teacher:onboarding_signup' %}" class="btn btn-outline-primary btn-sm">Onboard Teacher</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

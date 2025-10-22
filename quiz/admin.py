@@ -7,7 +7,8 @@ from users.models import Profile
 from quiz.models import (Question, Course, Result,School)
 from import_export import fields, resources
 from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
-from .models import Question, Course, Session, Term, ExamType  # Import required models
+from .models import Question, Course  # Import required models
+from sms.models import Session, Term, ExamType
 from import_export.fields import Field
 from django.db.models import Prefetch
 from .models import CourseGrade
@@ -52,7 +53,7 @@ def delete_unused_placeholder_courses(modeladmin, request, queryset):
 
 
 class CourseAdmin(admin.ModelAdmin):    
-    list_display = ['get_school_name', 'full_screen','show_questions', 'course_name', 'session','term','exam_type','question_number', 'total_marks', 'num_attemps', 'duration_minutes', 'created']
+    list_display = ['get_school_name', 'full_screen','show_questions', 'course_name', 'session','term','exam_type','question_number', 'total_marks', 'num_attemps', 'duration_minutes','learning_objectives', 'ai_question_num','created']
     search_fields = ['course_name__title', 'schools__school_name','term__name', 'exam_type__name']  # Add search field for course name and school name
     autocomplete_fields = ['schools']
     actions = [delete_unused_placeholder_courses]
@@ -95,43 +96,9 @@ class CourseGradeAdmin(admin.ModelAdmin):
 admin.site.register(CourseGrade, CourseGradeAdmin)
 
 
-# class CourseGradeAdmin(admin.ModelAdmin):
-#     form = CourseGradeForm
-#     autocomplete_fields = ['students', 'subjects']
-#     list_display = ['name', 'schools', 'get_students_details', 'get_subject_names', 'is_active']
-#     search_fields = ['name', 'schools__school_name','students__email', 'students__first_name', 'students__last_name']
-#     list_filter = ['schools', 'is_active', 'subjects']
-#     filter_horizontal = ('students', 'subjects')
-
-#     def get_students_details(self, obj):
-#         return ", ".join([f"{s.first_name} {s.last_name}" for s in obj.students.all()])
-#     get_students_details.short_description = "Students"
-
-#     def get_subject_names(self, obj):
-#         return ", ".join([s.title for s in obj.subjects.all()])
-#     get_subject_names.short_description = "Subjects"
-
-#     class Media:
-#         css = {
-#             'all': ('sms/css/admin_custom.css',)  # Load the custom CSS file
-#         }
-
-#     def get_students_details(self, obj):
-#         return '\n'.join(
-#             f"({student.school})-({student.first_name}-{student.last_name}, {student.student_class})"
-#             for student in obj.students.all()
-#         )
-#     get_students_details.short_description = 'Student Details'
-
-#     def get_subject_names(self, obj): 
-#         return '\n'.join(str(subject) for subject in obj.subjects.all())
-#     get_subject_names.short_description = 'Subject Names'
-
-# admin.site.register(CourseGrade, CourseGradeAdmin)
-
 
 # ResultResource
-from .models import Result, Course, Profile, ExamType
+from .models import Result, Course, Profile
 from import_export import resources, fields, widgets  # Importing widgets
 
 

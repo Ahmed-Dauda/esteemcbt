@@ -25,7 +25,6 @@ from sms.models import Courses
 
 from django.db import models, IntegrityError
 from django.core.exceptions import ValidationError
-from quiz.models import Courses  # Make sure to import your Courses model
 from django.utils.translation import gettext_lazy as _
 
      
@@ -64,3 +63,15 @@ class Teacher(models.Model):
 
     def __str__(self):
         return f"{self.school} - {self.first_name} {self.last_name}"
+
+
+class Subject_obj(models.Model):
+
+    user = models.OneToOneField(NewUser, on_delete=models.CASCADE, blank=True, null=True)
+    learning_objectives = models.TextField(blank=True,null=True,default='Input your learning objectives')
+    # learning_objectives = models.CharField(max_length=2000, blank=True, default='Input your learning objectives', null=True)
+    ai_question_num = models.PositiveIntegerField(default=500,verbose_name="Number of AI Questions", blank=True, null=True)
+    id = models.AutoField(primary_key=True)
+
+    def __str__(self):
+        return f"{self.user}"

@@ -2,30 +2,28 @@ from django.db import models
 # from student.models import Student
 from users.models import Profile, NewUser
 from cloudinary.models import CloudinaryField
-from sms.models import Courses as smscourses
+# from sms.models import Courses as smscourses
 from tinymce.models import HTMLField
-from sms.models import Courses
-from sms.models import Session, Term
-
-class ExamType(models.Model):
-    name = models.CharField(max_length=200, unique=True)
-    description = models.CharField(max_length=200, blank=True, null=True)
-
-    def __str__(self):
-        return self.name
+# from sms.models import Courses
+from sms.models import Session, Term, ExamType
 
 
 class Course(models.Model):
+
+
+    learning_objectives = models.TextField(blank=True,null=True,default='Input your learning objectives')
+    ai_question_num = models.PositiveIntegerField(default=500,verbose_name="Number of AI Questions", blank=True, null=True)
+    
     room_name = models.CharField(max_length=100, blank=True, null=True)
     schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='course', blank=True, null=True, db_index=True)
-    course_name = models.ForeignKey(Courses, on_delete=models.CASCADE, blank=True, null=True, db_index=True)
+    course_name = models.ForeignKey("sms.Courses", on_delete=models.CASCADE, blank=True, null=True, db_index=True)
     question_number = models.PositiveIntegerField(blank=True, null=True)
     course_pay = models.BooleanField(default=False)
     full_screen = models.BooleanField(default=False)
     total_marks = models.PositiveIntegerField(blank=True, null=True)
-    session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
-    term = models.ForeignKey(Term, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
-    exam_type = models.ForeignKey(ExamType, on_delete=models.CASCADE, blank=True, null=True, db_index=True)
+    session = models.ForeignKey("sms.Session", on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
+    term = models.ForeignKey("sms.Term", on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
+    exam_type = models.ForeignKey("sms.ExamType", on_delete=models.CASCADE, blank=True, null=True, db_index=True)
     num_attemps = models.PositiveIntegerField(default=4)
     show_questions = models.PositiveIntegerField(default=10)
     duration_minutes = models.PositiveIntegerField(default=10)
@@ -130,6 +128,16 @@ class School(models.Model):
             models.Index(fields=['customer']),
         ]
 
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+
+        # Create defaults only when the school is new
+        if is_new:
+            Session.create_defaults_for_school(self)
+            Term.create_defaults_for_school(self)
+            ExamType.create_defaults_for_school(self)    
+
 
 from django.db import models
 from django.db.models import F
@@ -230,9 +238,9 @@ class Result(models.Model):
     date = models.DateTimeField(auto_now=True)
 
     result_class = models.CharField(max_length=300, blank=True, null=True, db_index=True)
-    session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
-    term = models.ForeignKey(Term, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
-    exam_type = models.ForeignKey(ExamType, on_delete=models.CASCADE, blank=True, null=True, db_index=True)
+    session = models.ForeignKey("sms.Session", on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
+    term = models.ForeignKey("sms.Term", on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
+    exam_type = models.ForeignKey("sms.ExamType", on_delete=models.CASCADE, blank=True, null=True, db_index=True)
 
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     updated = models.DateTimeField(auto_now=True, blank=True, null=True)

@@ -11,20 +11,34 @@ from sms.models import (
     FrequentlyAskQuestions, CourseFrequentlyAskQuestions,
     # CourseLearnerReviews, 
  
-    CourseLearnerReviews,Session, Term)
+    CourseLearnerReviews,Session, Term, ExamType)
 
-from quiz.models import ExamType
+
 
 admin.site.site_header = 'Esteem dashboard'
 admin.site.site_title = 'Esteem super admin dashboard'
 # admin.site.register(Courses)
 admin.site.register(FrequentlyAskQuestions)
-admin.site.register(Session)
-admin.site.register(Term)
+# admin.site.register(Session)
+# admin.site.register(Term)
+
+class TermAdmin(admin.ModelAdmin):
+
+    list_display = ['name','school']
+    search_fields = ['name']  # Add search field for course name
+
+admin.site.register(Term, TermAdmin)
+
+class SessionAdmin(admin.ModelAdmin):
+
+    list_display = ['name','school']
+    search_fields = ['name']  # Add search field for course name
+
+admin.site.register(Session, SessionAdmin)
 
 class ExamTypeAdmin(admin.ModelAdmin):
 
-    list_display = ['name','description']
+    list_display = ['name','school','description']
     search_fields = ['name']  # Add search field for course name
 
 admin.site.register(ExamType, ExamTypeAdmin)
@@ -87,7 +101,7 @@ class CoursesResource(resources.ModelResource):
 
 
 class CoursesAdmin(ImportExportModelAdmin, ExportActionMixin):
-    list_display = ['title', 'created_by', 'session', 'term', 'exam_type', 'display_subjects_school', 'created']
+    list_display = ['title', 'created_by', 'display_subjects_school', 'created']
     list_filter = ['title']
     search_fields = ['title']
     ordering = ['title']

@@ -1,8 +1,8 @@
 from django.db import models
 
 # Create your models here.
-from quiz.models import School, Session, Term
-
+from quiz.models import School
+from sms.models import Session, Term
 from django.db import models
 from django.db.models import F
 from django.core.exceptions import ObjectDoesNotExist

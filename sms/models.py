@@ -12,6 +12,7 @@ from hitcount.models import HitCount, HitCountMixin
 from django.utils.text import slugify
 from tinymce.models import HTMLField
 import uuid
+# from quiz.models import Course, School
 # models.py
 
 class Awards(models.Model):
@@ -77,20 +78,81 @@ class Categories(models.Model, HitCountMixin):
 
 
 class Session(models.Model):
-    name = models.CharField(max_length=20, unique=True)  # E.g., '2022-2023', '2023-2024'
-    
+    school = models.ForeignKey("quiz.School", on_delete=models.CASCADE, null=True, blank=True, related_name='sessions')
+    name = models.CharField(max_length=20, blank=True, null=True)  # e.g., '2024-2025'
+
     def __str__(self):
-        return self.name
+        return f'{self.name}'
+
+    @staticmethod
+    def create_defaults_for_school(school):
+        defaults = ["2024-2025"]
+        for name in defaults:
+            Session.objects.get_or_create(school=school, name=name)
+
 
 class Term(models.Model):
-    name = models.CharField(max_length=20, unique=True)
-    order = models.PositiveIntegerField(default=1)  # e.g., 1 for "FIRST," 2 for "SECOND," 3 for "THIRD"
+    school = models.ForeignKey("quiz.School", on_delete=models.CASCADE, null=True, blank=True, related_name='terms')
+    name = models.CharField(max_length=20, blank=True, null=True)
+    order = models.PositiveIntegerField(default=1)
 
     class Meta:
-        ordering = ['order']  # Orders by the custom order field
+        ordering = ['order']
 
     def __str__(self):
-        return self.name
+        return f'{self.name}'
+
+    @staticmethod
+    def create_defaults_for_school(school):
+        defaults = [("First", 1), ("Second", 2), ("Third", 3)]
+        for name, order in defaults:
+            Term.objects.get_or_create(school=school, name=name, order=order)
+
+
+class ExamType(models.Model):
+    school = models.ForeignKey("quiz.School", on_delete=models.CASCADE, null=True, blank=True, related_name='exam_types')
+    name = models.CharField(max_length=200, blank=True, null=True)
+    description = models.CharField(max_length=200, blank=True, null=True)
+
+    def __str__(self):
+        return f'{self.name}'
+
+    @staticmethod
+    def create_defaults_for_school(school):
+        defaults = [
+            ("CA", "Continuous Assessment"),
+            ("Mid-Term", "Mid Term Examination"),
+            ("Exam", "End of Term Examination"),
+        ]
+        for name, desc in defaults:
+            ExamType.objects.get_or_create(school=school, name=name, description=desc)
+
+# class Session(models.Model):
+#     school = models.ForeignKey("quiz.School", on_delete=models.CASCADE , null=True, blank=True, related_name='sessions')
+#     name = models.CharField(max_length=20, blank=True, null=True)  # E.g., '2022-2023', '2023-2024'
+    
+#     def __str__(self):
+#         return f'{self.name}'
+
+# class Term(models.Model):
+#     school = models.ForeignKey("quiz.School", on_delete=models.CASCADE , null=True, blank=True, related_name='terms')
+#     name = models.CharField(max_length=20, blank=True, null=True)
+#     order = models.PositiveIntegerField(default=1)  # e.g., 1 for "FIRST," 2 for "SECOND," 3 for "THIRD"
+
+#     class Meta:
+#         ordering = ['order']  # Orders by the custom order field
+
+#     def __str__(self):
+#         return f'{self.name}'
+
+# class ExamType(models.Model):
+#     school = models.ForeignKey("quiz.School", on_delete=models.CASCADE, null=True, blank=True ,related_name='exam_types')
+#     name = models.CharField(max_length=200, blank=True, null=True)
+#     description = models.CharField(max_length=200, blank=True, null=True)
+
+#     def __str__(self):
+#         return f'{self.name}'
+    
 
 # class Term(models.Model):
 #     name = models.CharField(max_length=20, unique=True)  # E.g., 'First Term', 'Second Term', 'Third Term'
@@ -107,7 +169,7 @@ class Courses(models.Model):
     schools = models.ManyToManyField("quiz.School", related_name='courses', blank=True)
     session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True)  # ForeignKey to Session model
     term = models.ForeignKey(Term, on_delete=models.SET_NULL, blank=True, null=True) 
-    exam_type = models.ForeignKey('quiz.ExamType', on_delete=models.SET_NULL, blank=True, null=True)
+    exam_type = models.ForeignKey(ExamType, on_delete=models.SET_NULL, blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     updated = models.DateTimeField(auto_now=True, blank=True, null=True)
     hit_count_generic = GenericRelation(
@@ -127,12 +189,13 @@ class Courses(models.Model):
  
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
-from .models import Courses
-from quiz.models import Course
+
+
 
 @receiver(m2m_changed, sender=Courses.schools.through)
 def create_course_after_schools_added(sender, instance, action, **kwargs):
     if action == 'post_add':
+        from quiz.models import Course
         # Ensure required fields are not None before proceeding
         if not all([instance.session, instance.term, instance.exam_type, instance.title]):
             return  # Exit early if essential fields are missing

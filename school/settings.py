@@ -1,5 +1,6 @@
 
 from pathlib import Path
+import dj_database_url
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY
 
@@ -25,6 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ALLOWED_HOSTS = ['ctsaalms.herokuapp.com','codethinkers.org' ,'127.0.0.1']
 
 # wyswyg = ['grappelli', 'filebrowser']
+
 INSTALLED_APPS = [
   
     'django.contrib.admin',
@@ -60,10 +62,6 @@ INSTALLED_APPS = [
     'import_export',
     'django_mathjax',
 
-    
-    
-    
-    
 # the social providers
     # 'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.google',
@@ -282,20 +280,43 @@ WSGI_APPLICATION = 'school.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 PROJECT_PATH =os.path.dirname(os.path.abspath(__file__))
 
-import os
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-# settings.py
-import dj_database_url
-CONN_MAX_AGE = 0
+# Try to load from DATABASE_URL; fall back to SQLite
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-DATABASES = {
-    'default': dj_database_url.config(
-        conn_max_age=0,  # or even 10
-        ssl_require=False
-    )
-}
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=0,
+            ssl_require=False
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
-DATABASES['default']['CONN_MAX_AGE'] = 0  # For PgBouncer
+DATABASES['default']['CONN_MAX_AGE'] = 0  # For PgBouncer compatibility
+
+# import os
+
+# # settings.py
+# import dj_database_url
+# CONN_MAX_AGE = 0
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         conn_max_age=0,  # or even 10
+#         ssl_require=False
+#     )
+# }
+
+# DATABASES['default']['CONN_MAX_AGE'] = 0  # For PgBouncer
 
 
 # Password validation
