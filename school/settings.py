@@ -61,10 +61,6 @@ INSTALLED_APPS = [
     'import_export',
     'django_mathjax',
 
-    
-    
-    
-    
 # the social providers
     # 'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.google',
