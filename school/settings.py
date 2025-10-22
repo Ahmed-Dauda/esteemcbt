@@ -26,32 +26,75 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ALLOWED_HOSTS = ['ctsaalms.herokuapp.com','codethinkers.org' ,'127.0.0.1']
 
 # wyswyg = ['grappelli', 'filebrowser']
-INSTALLED_APPS = [
+
+# INSTALLED_APPS = [
   
+#     'django.contrib.admin',
+#     'django.contrib.auth',
+#     'django.contrib.contenttypes',
+#     'django.contrib.sessions',
+#     'django.contrib.messages',
+#     'django.contrib.staticfiles',
+#     'django.contrib.sites', # make sure sites is included
+#     'users',
+#     'sms',
+#     'student',
+#     'quiz',
+#     'teacher',
+#     'finance',
+#     'dal',
+#     'dal_select2',
+#     'academics',
+#     'sweetify',
+#     'widget_tweaks',
+#     'hitcount',
+#     'crispy_forms',
+#     'crispy_bootstrap5',
+#     'allauth',
+#     'allauth.account',
+#     'allauth.socialaccount',
+#     'cloudinary',
+#     'django_select2',
+#     'embed_video',
+#     'xhtml2pdf',
+#     'tinymce',
+#     'django_social_share',
+#     'import_export',
+#     'django_mathjax',
+
+# # the social providers
+#     # 'allauth.socialaccount.providers.facebook',
+#     'allauth.socialaccount.providers.google',
+#     # 'allauth.socialaccount.providers.twitter',
+# ]
+
+INSTALLED_APPS = [
+    # Django core apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites', # make sure sites is included
+    'django.contrib.sites',
+
+    # Your local apps (put users FIRST)
     'users',
-    'sms',
     'student',
-    'quiz',
     'teacher',
     'finance',
+    'quiz',
+    'sms',
+    'academics',
+
+    # Third-party apps
     'dal',
     'dal_select2',
-    'academics',
     'sweetify',
     'widget_tweaks',
     'hitcount',
     'crispy_forms',
     'crispy_bootstrap5',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
     'cloudinary',
     'django_select2',
     'embed_video',
@@ -61,10 +104,11 @@ INSTALLED_APPS = [
     'import_export',
     'django_mathjax',
 
-# the social providers
-    # 'allauth.socialaccount.providers.facebook',
+    # Allauth must come *after* users
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    # 'allauth.socialaccount.providers.twitter',
 ]
 
 MATHJAX_ENABLED=True
@@ -216,11 +260,6 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 # EMAIL_HOST_PASSWORD = 'techSupport@01'
 # DEFAULT_FROM_EMAIL = 'techsupport@esteemlearningcentre.com'
 
-
-# if DEBUG:
-#     EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
-# else:
-#     EMAIL_BACKED = 'django.core.mail.backends.smtp.EmailBackend'
 
 
 MIDDLEWARE = [
