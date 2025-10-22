@@ -145,6 +145,7 @@
         <div class="col-md-6 mb-4">
   <div class="card h-100 shadow-sm">
   <div class="text-center mt-3 d-flex justify-content-center gap-2">
+ {% if request.user.is_authenticated and request.user.is_superuser %}    
   <a href="{% url 'teacher:bulk_update_courses' %}" class="btn btn-success btn-sm">
     <i class="bi bi-arrow-repeat"></i> Bulk Update Subjects
   </a>
@@ -152,6 +153,7 @@
   <a href="{% url 'teacher:manage_academic_setup' %}" class="btn btn-success btn-sm">
     <i class="bi bi-arrow-repeat"></i> manage academic setup
   </a>
+   {% endif %}
  </div>
 
 <hr>

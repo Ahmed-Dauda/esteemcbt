@@ -228,7 +228,7 @@
                         <textarea name="learning_objectives_{{ subject.id }}" rows="3">{{ subject.learning_objectives }}</textarea>
                     </td>
                     <td>
-                        <input type="number" name="ai_question_num_{{ subject.id }}" value="{{ subject.ai_question_num }}" min="1" max="1000">
+                        <input type="number" name="ai_question_num_{{ subject.id }}" value="{{ subject.ai_question_num }}" min="0" max="1000">
                     </td>
                 </tr>
                 {% empty %}

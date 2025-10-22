@@ -297,7 +297,6 @@ def teacher_dashboard_view(request):
         # print(teacher_name)
         courses = Courses.objects.filter(schools=user_school)
 
-        # print('rrrrr', courses)
 
         context = {
             'school': user_school,
