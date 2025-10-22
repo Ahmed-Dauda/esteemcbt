@@ -26,7 +26,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ALLOWED_HOSTS = ['ctsaalms.herokuapp.com','codethinkers.org' ,'127.0.0.1']
 
 # wyswyg = ['grappelli', 'filebrowser']
-
 INSTALLED_APPS = [
   
     'django.contrib.admin',
@@ -62,6 +61,10 @@ INSTALLED_APPS = [
     'import_export',
     'django_mathjax',
 
+    
+    
+    
+    
 # the social providers
     # 'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.google',
