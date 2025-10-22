@@ -79,10 +79,12 @@ class Categories(models.Model, HitCountMixin):
 
 class Session(models.Model):
     school = models.ForeignKey("quiz.School", on_delete=models.CASCADE, null=True, blank=True, related_name='sessions')
-    name = models.CharField(max_length=20, blank=True, null=True)  # e.g., '2024-2025'
+    name = models.CharField(max_length=20, blank=True, null=True)
 
-    def __str__(self):
-        return f'{self.name}'
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['school', 'name'], name='unique_session_per_school')
+        ]
 
     @staticmethod
     def create_defaults_for_school(school):
@@ -98,6 +100,10 @@ class Term(models.Model):
 
     class Meta:
         ordering = ['order']
+        constraints = [
+            models.UniqueConstraint(fields=['school', 'name'], name='unique_term_per_school')
+        ]
+
 
     def __str__(self):
         return f'{self.name}'
@@ -108,15 +114,16 @@ class Term(models.Model):
         for name, order in defaults:
             Term.objects.get_or_create(school=school, name=name, order=order)
 
-
 class ExamType(models.Model):
     school = models.ForeignKey("quiz.School", on_delete=models.CASCADE, null=True, blank=True, related_name='exam_types')
     name = models.CharField(max_length=200, blank=True, null=True)
     description = models.CharField(max_length=200, blank=True, null=True)
 
-    def __str__(self):
-        return f'{self.name}'
-
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['school', 'name'], name='unique_examtype_per_school')
+        ]
+        
     @staticmethod
     def create_defaults_for_school(school):
         defaults = [
