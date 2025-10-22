@@ -97,6 +97,36 @@ class NewUser(AbstractBaseUser, PermissionsMixin):
 
 
 
+
+# class Profile(models.Model):
+#     PAYMENT_CHOICES = [
+#         ('Premium', 'PREMIUM'),
+#         ('Free', 'FREE'),
+#         ('Sponsored', 'SPONSORED'),
+#     ]
+
+#     gender_choice = [
+#         ('Male', 'MALE'),
+#         ('Female', 'FEMALE'),
+#     ]
+
+#     user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE, unique=True, related_name='profile',blank=True, null=True)
+#     username = models.CharField(max_length=225, blank=True, null=True)
+#     student_course = models.ForeignKey('sms.Courses', on_delete=models.SET_NULL, related_name='students', null=True)
+#     first_name = models.CharField(max_length=225, blank=True, null=True)
+#     last_name = models.CharField(max_length=225, blank=True, null=True)
+#     student_class = models.CharField(max_length=254, null=True, blank=True)
+#     status_type = models.CharField(choices=PAYMENT_CHOICES, default='Free', max_length=225)
+#     gender = models.CharField(choices=gender_choice, max_length=225, blank=True, null=True)
+#     admission_no = models.CharField(max_length=254, null=True, blank=True)
+#     phone_number = models.CharField(max_length=225, blank=True, null=True)
+#     countries = models.CharField(max_length=225, blank=True, null=True)
+#     pro_img = models.CharField(max_length=225, blank=True, null=True)
+    
+#     bio = models.TextField(max_length=600, blank=True, null=True)
+#     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+#     updated = models.DateTimeField(auto_now=True, blank=True, null=True)
+
 class Profile(models.Model):
     PAYMENT_CHOICES = [('Premium', 'PREMIUM'), ('Free', 'FREE'), ('Sponsored', 'SPONSORED')]
     gender_choice = [('Male', 'MALE'), ('Female', 'FEMALE')]
@@ -201,11 +231,3 @@ post_save.connect(userprofile_receiver, sender=settings.AUTH_USER_MODEL)
 #                                          countries =instance.countries,
 #                                          referral_code =instance.referral_code
 #                                          )
-
-
-
-
-
-
-
-
