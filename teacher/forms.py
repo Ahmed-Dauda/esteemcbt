@@ -18,31 +18,25 @@ from django.contrib.auth.forms import AuthenticationForm
 from sms.models import Courses, Session, Term, ExamType
 from quiz.models import Result
 
-class EditSubjectForm(forms.Form):
-    session = forms.ModelChoiceField(
-        queryset=Session.objects.none(),
-        required=False,
-        label="Session"
-    )
-    term = forms.ModelChoiceField(
-        queryset=Term.objects.none(),
-        required=False,
-        label="Term"
-    )
-    exam_type = forms.ModelChoiceField(
-        queryset=ExamType.objects.none(),
-        required=False,
-        label="Exam Type"
-    )
-
+class EditSubjectForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        user_school = kwargs.pop('user_school', None)
+        self.user_school = kwargs.pop('user_school', None)
         super().__init__(*args, **kwargs)
 
-        if user_school:
-            self.fields['session'].queryset = Session.objects.filter(school=user_school)
-            self.fields['term'].queryset = Term.objects.filter(school=user_school)
-            self.fields['exam_type'].queryset = ExamType.objects.filter(school=user_school)
+        if self.user_school:
+            self.fields['schools'].queryset = self.fields['schools'].queryset.filter(id=self.user_school.id)
+
+    class Meta:
+        model = Courses
+        fields = ['title', 'schools', 'session', 'term', 'exam_type']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'schools': forms.CheckboxSelectMultiple(),
+            'session': forms.Select(attrs={'class': 'form-control'}),
+            'term': forms.Select(attrs={'class': 'form-control'}),
+            'exam_type': forms.Select(attrs={'class': 'form-control'}),
+        }
+
 
 # class EditSubjectForm(forms.Form):
 #     session = forms.ModelChoiceField(

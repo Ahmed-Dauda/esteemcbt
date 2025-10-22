@@ -313,28 +313,32 @@ def teacher_dashboard_view(request):
 
 from .forms import EditSubjectForm
 
+
 @login_required(login_url='teacher:teacher_login')
 def edit_subjects_view(request, course_id):
     user = NewUser.objects.select_related('school').get(id=request.user.id)
     user_school = user.school
 
-    course = get_object_or_404(Courses.objects.prefetch_related('schools').filter(
+    # ✅ For ManyToManyField, use __in or exact match with filter
+    course = get_object_or_404(
+        Courses.objects.prefetch_related('schools'),
         schools=user_school,
         id=course_id
-    ))
+    )
 
     if request.method == 'POST':
-        form = EditSubjectFormId(request.POST, instance=course, user_school=user_school)
+        form = EditSubjectForm(request.POST, instance=course, user_school=user_school)
         if form.is_valid():
             form.save()
             return redirect('teacher:teacher-dashboard')
     else:
-        form = EditSubjectFormId(instance=course, user_school=user_school)
+        form = EditSubjectForm(instance=course, user_school=user_school)
 
     return render(request, 'teacher/dashboard/edit_subjects.html', {
         'form': form,
         'course': course
     })
+
 
 
 # @login_required(login_url='teacher:teacher_login')
@@ -359,6 +363,7 @@ def edit_subjects_view(request, course_id):
 #         'form': form,
 #         'course': course
 #     })
+
 
 @login_required(login_url='teacher:teacher_login')
 def bulk_update_courses(request):

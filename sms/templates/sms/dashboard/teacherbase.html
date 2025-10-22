@@ -134,7 +134,7 @@
             {% endif %}
             {% endif %}
 
-                    {% if request.user.is_authenticated and request.user.is_superuser or request.user.is_staff %}
+            {% if request.user.is_authenticated and request.user.is_superuser and request.user.is_staff %}
 
             <li class="nav-item" style="margin-bottom: -10px;">
                 <a class="nav-link" href="{% url 'teacher:onboarding_dashboard' %}">
