@@ -51,7 +51,16 @@ class Course(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f'{self.schools} - {self.course_name} - {self.session} - {self.term} - {self.exam_type}'
+        try:
+            school = self.schools or "No School"
+            course_name = self.course_name or "No Course"
+            session = self.session or "No Session"
+            term = self.term or "No Term"
+            exam_type = self.exam_type or "No Exam Type"
+            return f'{school} - {course_name} - {session} - {term} - {exam_type}'
+        except Exception:
+            return f'Course ID {self.id}'
+
 
     def get_questions(self):
         return self.question_set.all()[:self.show_questions]
