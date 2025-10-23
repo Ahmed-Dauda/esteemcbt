@@ -10,7 +10,6 @@ from sms.models import Session, Term, ExamType
 
 class Course(models.Model):
 
-
     learning_objectives = models.TextField(blank=True,null=True,default='Input your learning objectives')
     ai_question_num = models.PositiveIntegerField(default=500,verbose_name="Number of AI Questions", blank=True, null=True)
     
@@ -23,7 +22,8 @@ class Course(models.Model):
     total_marks = models.PositiveIntegerField(blank=True, null=True)
     session = models.ForeignKey("sms.Session", on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
     term = models.ForeignKey("sms.Term", on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
-    exam_type = models.ForeignKey("sms.ExamType", on_delete=models.CASCADE, blank=True, null=True, db_index=True)
+    exam_type = models.ForeignKey(ExamType, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
+
     num_attemps = models.PositiveIntegerField(default=4)
     show_questions = models.PositiveIntegerField(default=10)
     duration_minutes = models.PositiveIntegerField(default=10)
