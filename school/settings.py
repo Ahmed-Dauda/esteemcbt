@@ -1,6 +1,5 @@
 
 from pathlib import Path
-import dj_database_url
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY
 
@@ -27,74 +26,32 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # wyswyg = ['grappelli', 'filebrowser']
 
-# INSTALLED_APPS = [
-  
-#     'django.contrib.admin',
-#     'django.contrib.auth',
-#     'django.contrib.contenttypes',
-#     'django.contrib.sessions',
-#     'django.contrib.messages',
-#     'django.contrib.staticfiles',
-#     'django.contrib.sites', # make sure sites is included
-#     'users',
-#     'sms',
-#     'student',
-#     'quiz',
-#     'teacher',
-#     'finance',
-#     'dal',
-#     'dal_select2',
-#     'academics',
-#     'sweetify',
-#     'widget_tweaks',
-#     'hitcount',
-#     'crispy_forms',
-#     'crispy_bootstrap5',
-#     'allauth',
-#     'allauth.account',
-#     'allauth.socialaccount',
-#     'cloudinary',
-#     'django_select2',
-#     'embed_video',
-#     'xhtml2pdf',
-#     'tinymce',
-#     'django_social_share',
-#     'import_export',
-#     'django_mathjax',
-
-# # the social providers
-#     # 'allauth.socialaccount.providers.facebook',
-#     'allauth.socialaccount.providers.google',
-#     # 'allauth.socialaccount.providers.twitter',
-# ]
-
 INSTALLED_APPS = [
-    # Django core apps
+  
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',
-
-    # Your local apps (put users FIRST)
+    'django.contrib.sites', # make sure sites is included
     'users',
+    'sms',
     'student',
+    'quiz',
     'teacher',
     'finance',
-    'quiz',
-    'sms',
-    'academics',
-
-    # Third-party apps
     'dal',
     'dal_select2',
+    'academics',
     'sweetify',
     'widget_tweaks',
     'hitcount',
     'crispy_forms',
     'crispy_bootstrap5',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
     'cloudinary',
     'django_select2',
     'embed_video',
@@ -104,11 +61,10 @@ INSTALLED_APPS = [
     'import_export',
     'django_mathjax',
 
-    # Allauth must come *after* users
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
+
+    # 'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.google',
+    # 'allauth.socialaccount.providers.twitter',
 ]
 
 MATHJAX_ENABLED=True
@@ -187,9 +143,7 @@ SOCIALACCOUNT_PROVIDERS = {
 # unused url
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        # For each OAuth based provider, either add a ``SocialApp``
-        # (``socialaccount`` app) containing the required client
-        # credentials, or list them here:
+
         'APP': {
             'client_id': SOCIAL_AUTH_GOOGLE_KEY ,
             'secret': SOCIAL_AUTH_GOOGLE_SECRET,
@@ -261,6 +215,11 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 # DEFAULT_FROM_EMAIL = 'techsupport@esteemlearningcentre.com'
 
 
+# if DEBUG:
+#     EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
+# else:
+#     EMAIL_BACKED = 'django.core.mail.backends.smtp.EmailBackend'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -318,43 +277,20 @@ WSGI_APPLICATION = 'school.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 PROJECT_PATH =os.path.dirname(os.path.abspath(__file__))
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+import os
 
-# Try to load from DATABASE_URL; fall back to SQLite
-DATABASE_URL = os.environ.get("DATABASE_URL")
+# settings.py
+import dj_database_url
 
-if DATABASE_URL:
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=0,
-            ssl_require=False
-        )
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
 
-DATABASES['default']['CONN_MAX_AGE'] = 0  # For PgBouncer compatibility
+DATABASES = {
+    'default': dj_database_url.config(
+        conn_max_age=0,  # or even 10
+        ssl_require=False
+    )
+}
 
-# import os
-
-# # settings.py
-# import dj_database_url
-# CONN_MAX_AGE = 0
-
-# DATABASES = {
-#     'default': dj_database_url.config(
-#         conn_max_age=0,  # or even 10
-#         ssl_require=False
-#     )
-# }
-
-# DATABASES['default']['CONN_MAX_AGE'] = 0  # For PgBouncer
+DATABASES['default']['CONN_MAX_AGE'] = 0  # For PgBouncer
 
 
 # Password validation
@@ -393,25 +329,25 @@ USE_TZ = True
 # ADDITIONAL SITEs SECURITY
 # HTTPS and secure headers
 
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-# SECURE_SSL_REDIRECT = True
-# SECURE_BROWSER_XSS_FILTER = True
-# SECURE_CONTENT_TYPE_NOSNIFF = True
-# X_FRAME_OPTIONS = 'DENY'
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
 
-# # HSTS (HTTP Strict Transport Security)
-# SECURE_HSTS_SECONDS = 3600  # You can increase to 31536000 (1 year) in production
-# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-# SECURE_HSTS_PRELOAD = True
+# HSTS (HTTP Strict Transport Security)
+SECURE_HSTS_SECONDS = 3600  # You can increase to 31536000 (1 year) in production
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
-# # Cookies and sessions1
-# CSRF_COOKIE_SECURE = True
-# SESSION_COOKIE_SECURE = True
-# SESSION_COOKIE_HTTPONLY = True
-# SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# Cookies and sessions
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-# # Optional - block embedding your site in iframe entirely
-# SECURE_FRAME_DENY = True  # Already handled by X_FRAME_OPTIONS = 'DENY'
+# Optional - block embedding your site in iframe entirely
+SECURE_FRAME_DENY = True  # Already handled by X_FRAME_OPTIONS = 'DENY'
 
 # end of new security
 

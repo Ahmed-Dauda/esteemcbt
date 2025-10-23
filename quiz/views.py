@@ -7,9 +7,9 @@ from string import ascii_uppercase  # Import uppercase letters
 from django.contrib.sessions.models import Session
 from django.http import HttpResponse
 from .models import CourseGrade
-from users.models import Profile
+from users.models import Profile, NewUser
 from .forms import MoveGroupForm
-from .models import NewUser
+
 # from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.db.models import Max, Subquery, OuterRef

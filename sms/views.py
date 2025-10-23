@@ -43,8 +43,8 @@ from django.urls.base import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
 from hitcount.views import HitCountDetailView
-from django.contrib.auth import get_user_model
-User = get_user_model()
+# from django.contrib.auth import get_user_model
+# User = get_user_model()
 # cloudinary import libraries
 import cloudinary
 import cloudinary.uploader
@@ -450,10 +450,6 @@ class GalleryDetailView(HitCountDetailView,DetailView):
         context['document'] = document
       
         user = self.request.user
-        # related_payments = EbooksPayment.objects.filter(email=user, content_type=course, amount=course.price)
-        # # related_payments = Payment.objects.filter(email=user, courses__title=object.title, amount=object.price)
-        # context['related_payments'] = related_payments
-        # context['paystack_public_key']  = settings.PAYSTACK_PUBLIC_KEY
 
         return context
 
