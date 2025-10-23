@@ -5,6 +5,13 @@ from django.contrib.auth.views import LoginView
 app_name = 'teacher'
 
 urlpatterns = [
+# ✅ Examiner Class Management URLs
+    path('examiner/classes/', views.examiner_class_list_view, name='examiner_class_list'),
+    path('examiner/classes/create/', views.examiner_create_class_view, name='examiner_create_class'),
+path('examiner/classes/edit/<int:pk>/', views.examiner_edit_class_view, name='examiner_edit_class'),
+
+path('examiner/classes/delete/<int:class_id>/', views.examiner_delete_class_view, name='examiner_delete_class'),
+
     path('setup/', views.manage_academic_setup_view, name='manage_academic_setup'),
     # Edit
     path('session/edit/<int:pk>/', views.edit_session_view, name='edit_session'),

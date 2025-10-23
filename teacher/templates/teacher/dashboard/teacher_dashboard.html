@@ -145,7 +145,11 @@
         <div class="col-md-6 mb-4">
   <div class="card h-100 shadow-sm">
   <div class="text-center mt-3 d-flex justify-content-center gap-2">
- {% if request.user.is_authenticated and request.user.is_superuser %}    
+ {% if request.user.is_authenticated and request.user.is_superuser %} 
+
+   <a href="{% url 'teacher:examiner_class_list' %}" class="btn btn-success btn-sm">
+    <i class="bi bi-arrow-repeat"></i> Create classes
+  </a>   
   <a href="{% url 'teacher:bulk_update_courses' %}" class="btn btn-success btn-sm">
     <i class="bi bi-arrow-repeat"></i> Bulk Update Subjects
   </a>
@@ -155,7 +159,7 @@
   </a>
    {% endif %}
  </div>
-
+<hr>
     <div class="card-header text-center bg-success text-white">
       
       <h5 class="mb-0">Subjects Taught</h5>

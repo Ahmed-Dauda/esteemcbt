@@ -1,0 +1,17 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create Class{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h4 class="mb-3">Create New Class</h4>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-success mt-2">Save Class</button>
+        <a href="{% url 'teacher:examiner_class_list' %}" class="btn btn-secondary mt-2">Cancel</a>
+    </form>
+</div>
+{% endblock %}

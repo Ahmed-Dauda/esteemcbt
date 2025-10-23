@@ -11,7 +11,7 @@ from users.models import NewUser
 from quiz.models import Course, Result, Question
 from django.utils.datastructures import MultiValueDictKeyError
 from .models import SampleCodes, Teacher
-from .forms import EditSubjectFormId, JSONForm, SchoolForm, SchoolOnboardingForm, SubjectEditForm, TeacherSignupForm, TeacherLoginForm, QuestionForm, UploadCSVForm
+from .forms import EditSubjectFormId, ExaminerCreateClassForm, JSONForm, SchoolForm, SchoolOnboardingForm, SubjectEditForm, TeacherSignupForm, TeacherLoginForm, QuestionForm, UploadCSVForm
 from django.views.decorators.cache import cache_page
 import csv
 import json
@@ -339,6 +339,68 @@ def edit_subjects_view(request, course_id):
         'course': course
     })
 
+
+@login_required(login_url='teacher:teacher_login')
+def examiner_class_list_view(request):
+    """List all classes belonging to the examiner's school."""
+    user = NewUser.objects.select_related('school').get(id=request.user.id)
+    user_school = user.school
+
+    classes = CourseGrade.objects.filter(schools=user_school)
+    return render(request, 'teacher/dashboard/examiner_class_list.html', {'classes': classes})
+
+
+@login_required(login_url='teacher:teacher_login')
+def examiner_create_class_view(request):
+    user = request.user
+    school = getattr(user, 'school', None)
+
+    if request.method == 'POST':
+        form = ExaminerCreateClassForm(request.POST)
+        if form.is_valid():
+            new_class = form.save(commit=False)
+            new_class.schools = school  # assign the current teacher's school
+            new_class.save()
+            form.save_m2m()
+            messages.success(request, "Class created successfully!")
+            return redirect('teacher:examiner_class_list')
+    else:
+        form = ExaminerCreateClassForm()
+
+    return render(request, 'teacher/dashboard/examiner_create_class.html', {'form': form})
+
+
+
+def examiner_edit_class_view(request, pk):
+    user = request.user
+    school = getattr(user, 'school', None)
+
+    course_grade = get_object_or_404(CourseGrade, id=pk, schools=school)
+
+    if request.method == 'POST':
+        form = ExaminerCreateClassForm(request.POST, instance=course_grade, user_school=school)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Class updated successfully!")
+            return redirect('teacher:examiner_class_list')
+    else:
+        form = ExaminerCreateClassForm(instance=course_grade, user_school=school)
+
+    return render(request, 'teacher/dashboard/examiner_edit_class.html', {
+        'form': form,
+        'course_grade': course_grade
+    })
+
+
+@login_required(login_url='teacher:teacher_login')
+def examiner_delete_class_view(request, class_id):
+    user = NewUser.objects.select_related('school').get(id=request.user.id)
+    user_school = user.school
+
+    class_instance = get_object_or_404(CourseGrade, id=class_id, schools=user_school)
+    class_instance.delete()
+    messages.success(request, "Class deleted successfully.")
+    return redirect('teacher:examiner_class_list')
 
 
 # @login_required(login_url='teacher:teacher_login')

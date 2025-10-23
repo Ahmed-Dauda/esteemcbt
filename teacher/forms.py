@@ -18,6 +18,22 @@ from django.contrib.auth.forms import AuthenticationForm
 from sms.models import Courses, Session, Term, ExamType
 from quiz.models import Result
 
+
+class ExaminerCreateClassForm(forms.ModelForm):
+    class Meta:
+        model = CourseGrade
+        fields = ['name', 'students', 'subjects', 'is_active']
+
+    def __init__(self, *args, **kwargs):
+        user_school = kwargs.pop('user_school', None)
+        super().__init__(*args, **kwargs)
+
+        if user_school:
+            # ✅ adjust this filter depending on your user model
+            self.fields['students'].queryset = NewUser.objects.filter(school=user_school)
+            self.fields['subjects'].queryset = Course.objects.filter(schools=user_school)
+
+
 class EditSubjectForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user_school = kwargs.pop('user_school', None)
