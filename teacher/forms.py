@@ -12,7 +12,7 @@ from django import forms
 from .models import Teacher
 from django.contrib.auth.forms import UserCreationForm
 from users.models import NewUser, Profile
-from allauth.account.forms import SignupForm
+# from allauth.account.forms import SignupForm
 from quiz.models import School, Course, CourseGrade, Question
 from django.contrib.auth.forms import AuthenticationForm
 from sms.models import Courses, Session, Term, ExamType
