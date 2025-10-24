@@ -57,7 +57,7 @@ from student.models import EbooksPayment, PDFDocument, Payment, CertificatePayme
 from quiz import models as QMODEL
 from quiz.models import Result, Course
 from users.models import NewUser, Profile
-from users.forms import SimpleSignupForm
+# from users.forms import SimpleSignupForm
 from sms.forms import PaymentForm
 from student.models import Clubs
 from django.views.decorators.cache import cache_page
