@@ -19,7 +19,7 @@ from django.shortcuts import render, redirect
 from .forms import SimpleSignupForm, SchoolStudentSignupForm
 from django.http import HttpResponse
 
-from allauth.account.utils import perform_login
+# from allauth.account.utils import perform_login
 from allauth.socialaccount import signals
 from allauth.socialaccount.adapter import get_adapter
 from allauth.socialaccount.models import SocialAccount
