@@ -598,6 +598,9 @@ TINYMCE_COMPRESSOR = False
 # # magration issue on heroku, run this commad:
 # delete the miration folder and rerun migration again, push
 
+#allauth socialaccount migrations
+#if you have issue allauth socialaccount migrations, apply befor users.NewUser migration, them comment the allauth and apply the migrations before uncommenting again
+
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',

@@ -15,15 +15,15 @@ from users.models import Profile
 from django.views.decorators.cache import cache_page
 # views.py
 from django.shortcuts import render, redirect
-# from allauth.account.views import SignupView
+from allauth.account.views import SignupView
 from .forms import SimpleSignupForm, SchoolStudentSignupForm
 from django.http import HttpResponse
 
-# from allauth.account.utils import perform_login
-# from allauth.socialaccount import signals
-# from allauth.socialaccount.adapter import get_adapter
-# from allauth.socialaccount.models import SocialAccount
-# from allauth.account import app_settings
+from allauth.account.utils import perform_login
+from allauth.socialaccount import signals
+from allauth.socialaccount.adapter import get_adapter
+from allauth.socialaccount.models import SocialAccount
+from allauth.account import app_settings
 from django.http import HttpResponse
 from django.contrib import messages
 from django.http import JsonResponse
@@ -250,8 +250,7 @@ from django.utils.decorators import method_decorator
 
 
 
-
-class ReferralSignupView(CreateView):
+class ReferralSignupView(SignupView):
     template_name = 'users/referrer.html'  # Replace with your actual template path
     form_class = SimpleSignupForm
 
