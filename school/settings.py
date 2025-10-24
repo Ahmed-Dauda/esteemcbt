@@ -49,9 +49,9 @@ INSTALLED_APPS = [
     'hitcount',
     'crispy_forms',
     'crispy_bootstrap5',
-    # 'allauth',
-    # 'allauth.account',
-    # 'allauth.socialaccount',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
     'cloudinary',
     'django_select2',
     'embed_video',
@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     'django_mathjax',
 
 
-    # 'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.google',
     # 'allauth.socialaccount.providers.twitter',
 ]
 
