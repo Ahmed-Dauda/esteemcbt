@@ -15,7 +15,7 @@ from users.models import Profile
 from django.views.decorators.cache import cache_page
 # views.py
 from django.shortcuts import render, redirect
-from allauth.account.views import SignupView
+# from allauth.account.views import SignupView
 from .forms import SimpleSignupForm, SchoolStudentSignupForm
 from django.http import HttpResponse
 
@@ -220,7 +220,7 @@ class SchoolSignupView(CreateView):
 
         
 
-from allauth.account.views import SignupView
+
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 
@@ -248,7 +248,7 @@ from django.utils.decorators import method_decorator
 #         return response
   
 
-from allauth.account.views import SignupView
+
 
 
 class ReferralSignupView(SignupView):
