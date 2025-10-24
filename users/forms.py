@@ -5,7 +5,7 @@ from django.db import models
 from django.forms import ModelForm
 from student.models import ReferrerMentor
 from django.contrib.auth import get_user_model
-# from allauth.account.forms import SignupForm
+from allauth.account.forms import SignupForm
 from .models import *
 from users.models import NewUser
 
@@ -39,7 +39,7 @@ from django import forms
 
 from quiz.models import School
 
-class SimpleSignupForm(UserCreationForm):
+class SimpleSignupForm(SignupForm):
     first_name = forms.CharField(max_length=12, label='First-name')
     last_name = forms.CharField(max_length=225, label='Last-name')
     # referral_code = forms.CharField(max_length=20, required=False, label='Referral Code')
@@ -71,7 +71,7 @@ from django.utils import timezone
 
 
 
-class SchoolStudentSignupForm(UserCreationForm):
+class SchoolStudentSignupForm(SignupForm):
     first_name = forms.CharField(max_length=222, label='First-name')
     last_name = forms.CharField(max_length=225, label='Last-name')
     admission_no = forms.CharField(max_length=50, label='Admission Number')
