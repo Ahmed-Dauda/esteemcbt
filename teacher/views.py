@@ -2827,8 +2827,8 @@ def delete_teacher_result_view(request, course_id, result_id):
     course = get_object_or_404(Course, id=course_id)
 
     # Check if the teacher teaches this course
-    if course not in teacher.subjects_taught.all():
-        return render(request, 'error_page.html', {'message': 'Unauthorized access to this course.'})
+    # if course not in teacher.subjects_taught.all():
+    #     return render(request, 'error_page.html', {'message': 'Unauthorized access to this course.'})
 
     # Get the result to delete
     result_to_delete = get_object_or_404(Result, id=result_id, exam=course)
