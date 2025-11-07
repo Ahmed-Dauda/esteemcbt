@@ -2781,8 +2781,8 @@ def edit_teacher_results_view(request, course_id, result_id):
     course = get_object_or_404(Course, id=course_id)
 
     # Ensure course is taught by this teacher
-    if course not in teacher.subjects_taught.all():
-        return render(request, 'error_page.html', {'message': 'Unauthorized access to this course.'})
+    # if course not in teacher.subjects_taught.all():
+    #     return render(request, 'error_page.html', {'message': 'Unauthorized access to this course.'})
 
     # Validate and fetch result
     result = get_object_or_404(Result, id=result_id, exam=course)

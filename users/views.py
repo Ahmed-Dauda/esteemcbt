@@ -249,7 +249,6 @@ from django.utils.decorators import method_decorator
   
 
 
-
 class ReferralSignupView(SignupView):
     template_name = 'users/referrer.html'  # Replace with your actual template path
     form_class = SimpleSignupForm
