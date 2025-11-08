@@ -72,10 +72,16 @@ BASE_URL = 'https://codethinkers.org'
 
 AUTH_USER_MODEL = 'users.NewUser'
 # Application definition
-AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend', # existing backend
-    'allauth.account.auth_backends.AuthenticationBackend',
-)
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',                # normal Django login
+    'users.backends.UsernameOnlyBackend',                       # custom passwordless backend
+    'allauth.account.auth_backends.AuthenticationBackend',       # allauth backend
+]
+
+# AUTHENTICATION_BACKENDS = (
+#     'django.contrib.auth.backends.ModelBackend', # existing backend
+#     'allauth.account.auth_backends.AuthenticationBackend',
+# )
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
@@ -116,10 +122,9 @@ SITE_ID = 2
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = False
 ACCOUNT_USER_MODEL_EMAIL_FIELD = 'email'
 ACCOUNT_LOGIN_ON_PASSWORD_RESET = False
-ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_MIN_LENGTH = 3
 ACCOUNT_USER_MODEL_USERNAME_FIELD = "username"
-ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_FORMS = {'signup': 'users.forms.SimpleSignupForm'}

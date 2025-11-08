@@ -12,7 +12,7 @@
   </button>
 </form>
 
-<h2 class="mb-4">Results for {{ course.course_name }}</h2>
+<h2 class="mb-4">11Results for {{ course.course_name }}</h2>
 
 <!-- Results Table -->
 <div class="table-responsive">
@@ -61,7 +61,7 @@
 <script>
   $(document).ready(function () {
     $('#resultsTable').DataTable({
-      "order": [[6, "desc"]],  // Sort by created date by default
+      "order": [[0, "asc"]],  // Sort by first column (Student Name) ascending
       "pageLength": 10
     });
   });

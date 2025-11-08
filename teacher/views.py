@@ -2640,17 +2640,38 @@ def exam_statistics_view(request, course_id):
     }
     return render(request, 'teacher/dashboard/exam_statistics.html', context)
 
+from django.db.models.functions import Lower
 
-@login_required
+@login_required(login_url='teacher:teacher_login')
 def teacher_course_results_view(request, course_id):
-    user = request.user
+    """Display all student results for a given course, ordered alphabetically by name."""
     course = get_object_or_404(Course, id=course_id)
-    results = Result.objects.select_related('student', 'exam').filter(exam__course_name=course.course_name)
+
+    results = (
+        Result.objects
+        .select_related('student', 'exam', 'term', 'session', 'exam_type')
+        .filter(exam=course)
+        .order_by(Lower('student__first_name').asc(nulls_last=True), Lower('student__last_name').asc(nulls_last=True))
+
+    )
+    for r in Result.objects.order_by(Lower('student__first_name'), Lower('student__last_name')):
+        print(r.student.first_name, r.student.last_name)
+        
     return render(request, 'teacher/dashboard/course_results_detail.html', {
-   
         'course': course,
         'results': results,
     })
+
+# @login_required
+# def teacher_course_results_view(request, course_id):
+#     user = request.user
+#     course = get_object_or_404(Course, id=course_id)
+#     results = Result.objects.select_related('student', 'exam').filter(exam__course_name=course.course_name)
+#     return render(request, 'teacher/dashboard/course_results_detail.html', {
+   
+#         'course': course,
+#         'results': results,
+#     })
 
 
 
@@ -2709,6 +2730,31 @@ def examiner_results_list_view(request):
         'school': school,
     })
 
+# @login_required(login_url='teacher:teacher_login')
+# def examiner_result_detail_view(request, course_id):
+#     """Show detailed results for a specific subject (course) within the examiner's school."""
+#     user = request.user
+#     try:
+#         school = user.school
+#     except AttributeError:
+#         return render(request, 'error_page.html', {'message': 'No school associated with your account.'})
+
+#     # Get the course for the current school
+#     course = get_object_or_404(Course, id=course_id, schools=school)
+
+#     # Fetch and order results alphabetically by student name
+#     results = (
+#         Result.objects.filter(exam=course, schools=school)
+#         .select_related('student', 'term', 'session', 'exam_type')
+#         .order_by('student__first_name', 'student__last_name')  # ensures alphabetical order
+#     )
+
+#     return render(request, 'teacher/dashboard/examiner_result_detail.html', {
+#         'course': course,
+#         'results': results,
+#         'school': school,
+#     })
+
 @login_required(login_url='teacher:teacher_login')
 def examiner_result_detail_view(request, course_id):
     """Show detailed results for a specific subject (course) within the examiner's school."""
@@ -2724,7 +2770,7 @@ def examiner_result_detail_view(request, course_id):
     results = (
         Result.objects.filter(exam__course=course, schools=school)
         .select_related('student', 'term', 'session', 'exam_type')
-        .order_by('-id')
+        # .order_by('student__first_name', 'student__last_name')
     )
 
     return render(request, 'teacher/dashboard/examiner_result_detail.html', {
@@ -2734,35 +2780,6 @@ def examiner_result_detail_view(request, course_id):
     })
 
 
-
-# @login_required(login_url='teacher:teacher_login')
-# def examiner_result_detail_view(request, course_id):
-#     """Show results of students for a specific course within the examiner's school."""
-#     user = request.user
-
-#     # Get the teacher and their associated school
-#     teacher = getattr(user, 'teacher', None)
-#     if not teacher or not hasattr(teacher, 'school'):
-#         return render(request, 'error_page.html', {'message': 'You are not associated with any school.'})
-
-#     school = teacher.school
-
-#     # Get the course that belongs to this teacher's school
-#     course = get_object_or_404(Course, id=course_id, schools=school)
-
-#     # Filter results for that course and school
-#     results = Result.objects.filter(
-#         exam=course,
-#         schools=school
-#     ).select_related('student', 'term', 'session', 'exam_type')
-
-#     context = {
-#         'course': course,
-#         'results': results,
-#         'school': school,
-#         'teacher': teacher,
-#     }
-#     return render(request, 'teacher/dashboard/result_detail.html', context)
 
 
 from .forms import ResultEditForm

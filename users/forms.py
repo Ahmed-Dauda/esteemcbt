@@ -53,8 +53,7 @@ class SimpleSignupForm(SignupForm):
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
         user.countries = self.cleaned_data['countries']
-        # user.referral_code  = self.cleaned_data['referral_code']
-        # Check if the school field is empty
+  
         if not user.school:
             # Assign the user to the "Codethinkers Academy" school
             # Get or create the School instance for "Codethinkers Academy"
