@@ -1,5 +1,5 @@
 import io
-from tkinter import Image
+# from tkinter import Image
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.db.models import Avg, Sum
