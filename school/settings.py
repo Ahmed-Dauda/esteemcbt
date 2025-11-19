@@ -508,21 +508,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+import ssl
 import os
 
-# Always try to use Heroku Redis if available
-REDIS_URL = os.environ.get("REDIS_URL")
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
-# If running locally (no REDIS_URL), use a local Redis instance
-if not REDIS_URL:
-    REDIS_URL = "redis://127.0.0.1:6379/0"
-
-# Celery settings
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 
-CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 60 * 10  # 10 minutes
+if REDIS_URL.startswith("rediss://"):  # Heroku production
+    CELERY_BROKER_TRANSPORT_OPTIONS = {
+        "ssl": {"cert_reqs": ssl.CERT_NONE}
+    }
+    CELERY_REDIS_BACKEND_USE_SSL = {
+        "ssl_cert_reqs": ssl.CERT_NONE
+    }
 
 
 # TINYMCE_DEFAULT_CONFIG = {
