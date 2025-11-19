@@ -90,12 +90,13 @@ class CourseGrade(models.Model):
         return self.name if self.name else 'Unnamed Class'
 
 
-class School(models.Model):
-    name = models.CharField(max_length=255, db_index=True)  # Indexed for fast lookup
-    school_name = models.CharField(max_length=255, db_index=True)  # Often filtered/joined
 
-    course_pay = models.BooleanField(default=False, db_index=True)  # Useful for filtering
-    customer = models.BooleanField(default=True, db_index=True)     # Useful if used in business logic
+class School(models.Model):
+    name = models.CharField(max_length=255, db_index=True)
+    school_name = models.CharField(max_length=255, db_index=True)
+
+    course_pay = models.BooleanField(default=False, db_index=True)
+    customer = models.BooleanField(default=True, db_index=True)
 
     school_motto = models.CharField(max_length=255, blank=True, null=True)
     school_address = models.CharField(max_length=355, blank=True, null=True)
@@ -103,6 +104,19 @@ class School(models.Model):
 
     logo = CloudinaryField('school_logos', blank=True, null=True)
     principal_signature = CloudinaryField('principal_signatures', blank=True, null=True)
+
+    # -------------------------------
+    # Custom score parameters per school
+    # -------------------------------
+    max_ca_score = models.DecimalField(
+        max_digits=5, decimal_places=1, default=10.0, help_text="Maximum CA score"
+    )
+    max_midterm_score = models.DecimalField(
+        max_digits=5, decimal_places=1, default=30.0, help_text="Maximum Midterm score"
+    )
+    max_exam_score = models.DecimalField(
+        max_digits=5, decimal_places=1, default=60.0, help_text="Maximum Exam score"
+    )
 
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     updated = models.DateTimeField(auto_now=True, blank=True, null=True)
@@ -146,6 +160,27 @@ class School(models.Model):
             Session.create_defaults_for_school(self)
             Term.create_defaults_for_school(self)
             ExamType.create_defaults_for_school(self)    
+
+
+
+
+class GenerationJob(models.Model):
+    JOB_STATUS = (
+        ("pending", "Pending"),
+        ("processing", "Processing"),
+        ("completed", "Completed"),
+        ("failed", "Failed"),
+    )
+
+    job_id = models.CharField(max_length=100, unique=True)
+    status = models.CharField(max_length=20, choices=JOB_STATUS, default="pending")
+    result = models.JSONField(null=True, blank=True)  # store list of question dicts
+    error = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.job_id} - {self.status}"
 
 
 from django.db import models

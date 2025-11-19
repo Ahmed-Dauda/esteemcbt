@@ -62,6 +62,7 @@ gender_choice = [
   ('Female', 'Female')
 ]
 
+
 class NewUser(AbstractBaseUser, PermissionsMixin):
     email           = models.EmailField(max_length=254, unique=True, db_index=True)
     username        = models.CharField(max_length=35, blank=True, db_index=True)
@@ -74,7 +75,7 @@ class NewUser(AbstractBaseUser, PermissionsMixin):
     countries       = models.CharField(max_length=254, blank=True, null=True)
     pro_img         = CloudinaryField('profile_photos', blank=True, null=True, default='https://i.ibb.co/cx34WCc/logo.png')
     gender          = models.CharField(choices=gender_choice, max_length=225, blank=True, null=True)
-
+    # report_class = models.CharField(max_length=20, blank=True, null=True) # SS1A / SS1B / SS2A...
     is_staff        = models.BooleanField(default=False)
     is_superuser    = models.BooleanField(default=False)
     is_active       = models.BooleanField(default=True)

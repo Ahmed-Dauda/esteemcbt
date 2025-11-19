@@ -47,6 +47,8 @@ from .forms import CourseGradeForm
 from django.contrib import messages
 from django.shortcuts import redirect
 
+from portal.decorators import require_cbt_subscription, require_reportcard_subscription
+
 @login_required(login_url='teacher:teacher_login')
 def teacher_list_view(request):
     user_school = request.user.school
@@ -68,39 +70,6 @@ def teacher_list_view(request):
     return render(request, 'teacher/dashboard/teacher_list.html', context)
 
 
-# @login_required(login_url='teacher:teacher_login')
-# def teacher_list_view(request):
-#     # Get the school of the logged-in user
-#     user_school = request.user.school
-
-#     # Filter teachers by school and prefetch related subjects and classes for optimization
-#     teachers = Teacher.objects.filter(school=user_school).prefetch_related('subjects_taught', 'classes_taught')
-
-#     # Print subjects taught for each teacher
-#     for teacher in teachers:
-#         # print(f"Teacher: {teacher.first_name} {teacher.last_name}")
-#         subjects = teacher.subjects_taught.all()
-
-#     context = {
-#         'subject_taught':subjects,
-#         'teachers': teachers,  # Pass the filtered teachers to the template
-#     }
-
-#     # Render the template and pass the context with teachers data
-#     return render(request, 'teacher/dashboard/teacher_list.html', context)
-
-
-# @login_required(login_url='teacher:teacher_login')
-# def teacher_list_view(request):
-#     user_school = request.user.school  # Get the school of the logged-in user
-#     teachers = Teacher.objects.filter(school=user_school)  # Filter teachers by school
-
-#     context = {
-#         'teachers': teachers,
-#     }
-#     return render(request, 'teacher/dashboard/teacher_list.html', context)
-
-
 from teacher.forms import TeacherEditForm 
 
 
@@ -116,8 +85,8 @@ def teacher_edit_view(request, pk):
         form = TeacherEditForm(instance=teacher, user=request.user)
 
     # Check if the form is initialized with correct data
-    print("Subjects Taught1:", form.initial['subjects_taught'])
-    print("Classes Taught1:", form.initial['classes_taught'])
+    # print("Subjects Taught1:", form.initial['subjects_taught'])
+    # print("Classes Taught1:", form.initial['classes_taught'])
 
     context = {
         'form': form,
@@ -176,6 +145,7 @@ def onboarding_signup_view(request):
         form = OnboardingSignupForm(user=request.user)
  
     return render(request, 'teacher/dashboard/onboarding_signup.html', {'form': form})
+
 
 
 @login_required(login_url='teacher:teacher_login')
@@ -1674,6 +1644,7 @@ def save_results(request):
 
 from django.contrib import messages  # Add this import
 
+@require_cbt_subscription
 @login_required(login_url='teacher:teacher_login')
 def add_question_view(request):
     user = request.user
@@ -1708,92 +1679,6 @@ def add_question_view(request):
     }
     return render(request, 'teacher/dashboard/teacher_add_question.html', context)
 
-
-# @cache_page(60 * 15)
-# @login_required(login_url='teacher:teacher_login')
-# def add_question_view(request):
-
-#     user = request.user
-#     # Get the teacher instance associated with the user
-#     try:
-#         teacher = Teacher.objects.select_related('user', 'school').get(user=user)
-#     except Teacher.DoesNotExist:
-#         return redirect('teacher_login')
-
-#     # Get the subjects taught by the teacher
-#     subjects_taught = teacher.subjects_taught.all()
-
-#     # Get the course names associated with the subjects taught by the teacher
-#     subjects_taught_titles = [course for course in subjects_taught]
-  
-#     courses = teacher.subjects_taught.all()
-
-#     # Create a formset with QuestionForm
-#     QuestionFormSet = formset_factory(QuestionForm, extra=1)
- 
-#     if request.method == 'POST':
-#         formset = QuestionFormSet(request.POST, request.FILES)
-#         if formset.is_valid():
-#             for form in formset:
-#                 if form.is_valid():
-#                     question = form.save(commit=False)
-#                     question.teacher = teacher  # Associate the question with the teacher
-#                     question.save()
-#             return redirect('teacher:add_question')  # Redirect to teacher dashboard after successfully adding questions
-#     else:
-#         # Pass the courses queryset to each form in the formset
-#         formset = QuestionFormSet(form_kwargs={'courses': courses})
-
-#     context = {
-#         'formset': formset,
-#         'subjects_taught': subjects_taught,
-#     }
-#     return render(request, 'teacher/dashboard/teacher_add_question.html', context)
-
-
-# @login_required(login_url='teacher:teacher_login')
-# def add_question_view(request):
-#     # Retrieve the currently logged-in user
-#     user = request.user
-
-#     print('user', user)
-#     # Get the teacher instance associated with the user
-#     try:
-#         # teacher = Teacher.objects.get(user=user)
-#         teacher = Teacher.objects.select_related('user', 'school').only(
-#                 'id', 'user__username', 'user__email', 'school__name',
-#             ).get(user=user)
-#     except Teacher.DoesNotExist:
-#         # Redirect to some error page or handle the case where the user is not a teacher
-#         return redirect('teacher_login')
-
-#     # Get the subjects taught by the teacher
-#     subjects_taught = teacher.subjects_taught.all()
-#     print('subjects_taught', subjects_taught)
-
-#     subjects_taught_titles = [course.course_name.title for course in subjects_taught]
-#     print("subjects_taughty", subjects_taught_titles)
-#     courses = Courses.objects.filter(title__in=subjects_taught_titles).prefetch_related('schools').only('id', 'title')
-#     print('courses', courses)
-    
-#     # Create a formset with QuestionForm
-#     QuestionFormSet = formset_factory(QuestionForm, extra=1)
-
-#     if request.method == 'POST':
-#         formset = QuestionFormSet(request.POST, request.FILES)
-#         if formset.is_valid():
-#             for form in formset:
-#                 form.save()
-#             return redirect('teacher:add_question')  # Redirect to teacher dashboard after successfully adding questions
-#     else:
-#         # Pass the courses queryset to each form in the formset
-#         formset = QuestionFormSet(form_kwargs={'courses': courses})
-
-#     context = {
-#         'formset': formset,
-#         'subjects_taught': subjects_taught,
-#     }
-#     return render(request, 'teacher/dashboard/teacher_add_question.html', context)
 
 
 
@@ -2003,35 +1888,6 @@ def delete_student(request, student_id):
 
 
 
-# @login_required(login_url='teacher:teacher_login')
-# def edit_coursegrade_view(request, pk):
-#     user = NewUser.objects.select_related('school').get(id=request.user.id)
-#     user_school = user.school
-
-#     course_grade = get_object_or_404(
-#         CourseGrade.objects.prefetch_related('students', 'subjects'),
-#         pk=pk,
-#         schools=user_school  # Ensures teachers can't access other schools' data
-#     )
-
-#     if request.method == 'POST':
-#         form = CourseGradeForm(request.POST, instance=course_grade, user_school=user_school)
-#         if form.is_valid():
-#             form.save()
-           
-#             messages.success(request, "Changes saved successfully!")
-#             return redirect(request.path)  # reloads same page
-#             # return redirect('teacher:examiner_dashboard')
-#     else:
-#         form = CourseGradeForm(instance=course_grade, user_school=user_school)
-
-#     context = {
-#         'form': form,
-#         'course_grade': course_grade,
-#     }
-
-#     return render(request, 'teacher/dashboard/edit_coursegrade.html', context)
-
 
 @login_required(login_url='teacher:teacher_login')
 def edit_coursegrade_view(request, pk):
@@ -2061,31 +1917,6 @@ def edit_coursegrade_view(request, pk):
     return render(request, 'teacher/dashboard/edit_coursegrade.html', context)
 
 
-
-# @login_required(login_url='teacher:teacher_login')
-# def edit_coursegrade_view(request, pk):
-#     user = NewUser.objects.select_related('school').get(id=request.user.id)
-#     user_school = user.school
-
-#     course_grade = get_object_or_404(
-#         CourseGrade.objects.prefetch_related('students', 'subjects'), 
-#         pk=pk)
-        
-  
-#     # print(course_grade.subjects, 'ttt')
-#     if request.method == 'POST':
-#         form = CourseGradeForm(request.POST, instance=course_grade, user_school=user_school)
-#         if form.is_valid():
-#             form.save()
-#             return redirect('teacher:examiner_dashboard')  # Redirect to the dashboard after saving
-#     else:
-#         form = CourseGradeForm(instance=course_grade, user_school=user_school)
-
-#     context = {
-#         'form': form
-
-#     }
-#     return render(request, 'teacher/dashboard/edit_coursegrade.html', context)
 
 
 @login_required(login_url='teacher:teacher_login')
@@ -2463,94 +2294,6 @@ from django.dispatch import receiver
 from quiz.models import Course
 from teacher.models import Teacher  # Make sure the import is correct
 
-# @receiver(post_save, sender=Courses)
-# def create_course_for_subject(sender, instance, created, **kwargs):
-#     if created:
-#         # Use the first school (assuming one school per teacher)
-#         school = instance.schools.first()
-        
-#         # Create related Course
-#         course = Course.objects.create(
-#             course_name=instance,
-#             schools=school,
-#             session=instance.session,
-#             term=instance.term,
-#             exam_type=instance.exam_type,
-#             question_number=0,
-#             total_marks=0,
-#         )
-        
-#         # Find the teacher for this school and current user
-#         from django.contrib.auth import get_user_model
-#         User = get_user_model()
-        
-#         teacher = Teacher.objects.filter(user__school=school, user=instance.created_by).first()
-        
-#         if teacher:
-#             teacher.subjects_taught.add(course)
-
-
-# @login_required(login_url='teacher:teacher_login')
-# def exam_list_view(request):
-#     user = NewUser.objects.select_related('school').get(id=request.user.id)
-#     user_school = user.school
-
-#     # Get all results filtered by the user's school
-#     courses_results = Result.objects.filter(exam__course_name__schools=user_school)
-    
-#     # Extract unique courses from courses_results
-#     courses = Course.objects.filter(id__in=courses_results.values_list('exam__id', flat=True).distinct())
-
-#     # Get the selected course from the request (if any)
-#     selected_course_id = request.GET.get('course')
-#     selected_course = None
-#     filtered_courses_results = []
-
-#     if selected_course_id:
-#         selected_course = Course.objects.get(id=selected_course_id)
-#         # Filter results by the selected course
-#         filtered_courses_results = courses_results.filter(exam=selected_course)
-
-#     # Data for visualization
-#     student_names = [f"{result.student.user.first_name} {result.student.user.last_name}" for result in filtered_courses_results]
-#     marks = [result.marks for result in filtered_courses_results]
-
-#     context = {
-#         'courses': courses,
-#         'selected_course': selected_course,
-#         'total_students': len(filtered_courses_results),
-#         'average_score': filtered_courses_results.aggregate(Avg('marks'))['marks__avg'] if filtered_courses_results else None,
-#         'highest_score': filtered_courses_results.aggregate(Max('marks'))['marks__max'] if filtered_courses_results else None,
-#         'lowest_score': filtered_courses_results.aggregate(Min('marks'))['marks__min'] if filtered_courses_results else None,
-#         'courses_results': filtered_courses_results,
-#         'student_names': student_names,
-#         'marks': marks,
-#     }
-#     return render(request, 'teacher/dashboard/exam_list.html', context)
-
-
-# @login_required(login_url='teacher:teacher_login')
-# def exam_list_view(request):
-#     user = NewUser.objects.select_related('school').get(id=request.user.id)
-#     user_school = user.school
-
-#     courses_results = Result.objects.filter(exam__course_name__schools=user_school)
-#     print(courses_results)
-#     # Data for visualization
-#     student_names = [f"{result.student.user.first_name} {result.student.user.last_name}" for result in courses_results]
-#     marks = [result.marks for result in courses_results]
-
-#     context = {
-#         'total_students': courses_results.count(),
-#         'average_score': courses_results.aggregate(Avg('marks'))['marks__avg'],
-#         'highest_score': courses_results.aggregate(Max('marks'))['marks__max'],
-#         'lowest_score': courses_results.aggregate(Min('marks'))['marks__min'],
-#         'courses_results': courses_results,
-#         'student_names': student_names,
-#         'marks': marks,
-#     }
-#     return render(request, 'teacher/dashboard/exam_list.html', context)
-
 
 from .forms import ResultForm  
   
@@ -2559,12 +2302,12 @@ def edit_result_view(request, result_id):
     user = NewUser.objects.select_related('school').get(id=request.user.id)
     user_school = user.school
 
-    print(f"Attempting to edit Result ID: {result_id}")
-    print(f"User School: {user_school}")
+    # print(f"Attempting to edit Result ID: {result_id}")
+    # print(f"User School: {user_school}")
 
     result = get_object_or_404(Result, id=result_id, exam__course_name__schools=user_school)
 
-    print(f"Found result: {result}")
+    # print(f"Found result: {result}")
 
     if request.method == 'POST':
         form = ResultForm(request.POST, instance=result, user_school=user_school)
@@ -2662,18 +2405,6 @@ def teacher_course_results_view(request, course_id):
         'results': results,
     })
 
-# @login_required
-# def teacher_course_results_view(request, course_id):
-#     user = request.user
-#     course = get_object_or_404(Course, id=course_id)
-#     results = Result.objects.select_related('student', 'exam').filter(exam__course_name=course.course_name)
-#     return render(request, 'teacher/dashboard/course_results_detail.html', {
-   
-#         'course': course,
-#         'results': results,
-#     })
-
-
 
 @login_required
 def teacher_results_view(request):
@@ -2730,30 +2461,6 @@ def examiner_results_list_view(request):
         'school': school,
     })
 
-# @login_required(login_url='teacher:teacher_login')
-# def examiner_result_detail_view(request, course_id):
-#     """Show detailed results for a specific subject (course) within the examiner's school."""
-#     user = request.user
-#     try:
-#         school = user.school
-#     except AttributeError:
-#         return render(request, 'error_page.html', {'message': 'No school associated with your account.'})
-
-#     # Get the course for the current school
-#     course = get_object_or_404(Course, id=course_id, schools=school)
-
-#     # Fetch and order results alphabetically by student name
-#     results = (
-#         Result.objects.filter(exam=course, schools=school)
-#         .select_related('student', 'term', 'session', 'exam_type')
-#         .order_by('student__first_name', 'student__last_name')  # ensures alphabetical order
-#     )
-
-#     return render(request, 'teacher/dashboard/examiner_result_detail.html', {
-#         'course': course,
-#         'results': results,
-#         'school': school,
-#     })
 
 @login_required(login_url='teacher:teacher_login')
 def examiner_result_detail_view(request, course_id):
@@ -2870,7 +2577,7 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 
 
-  
+@require_cbt_subscription  
 def export_results_csv(request):
     if request.method == 'POST':
         file_type = request.POST.get('file-type')
@@ -2946,48 +2653,7 @@ from tablib import Dataset
 # Import logic  
 from django.contrib import messages
 
-# def import_results(request):
-#     if request.method == 'POST':
-#         form = UploadFileForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             uploaded_file = request.FILES['file']
-#             result_resource = ResultResource()
-#             dataset = Dataset()
-#             try:
-#                 dataset.load(uploaded_file.read().decode('utf-8'), format='csv')
-
-#                 # Check if 'exam_course_name' is present and rename it to 'exam'
-#                 if 'exam_course_name' in dataset.headers:
-#                     dataset.headers[dataset.headers.index('exam_course_name')] = 'exam'
-
-#                 # Perform a dry run to test the import
-#                 result = result_resource.import_data(dataset, dry_run=True)
-
-#                 if not result.has_errors():
-#                     result_resource.import_data(dataset, dry_run=False)
-                    
-#                     # Add success message
-#                     messages.success(request, 'Results imported successfully!')
-                    
-#                     return redirect("teacher:import-results")
-#                 else:
-#                     # Handle errors as before
-#                     error_messages = []
-#                     for row_num, error_details in result.row_errors():
-#                         for err in error_details:
-#                             field_name = getattr(err, 'field_name', 'Unknown field')
-#                             error_messages.append(f"Row {row_num}: {err} in field {field_name}")
-                    
-#                     return HttpResponse(f"Import failed due to errors: {', '.join(error_messages)}")
-#             except Exception as e:
-#                 return HttpResponse(f"An error occurred during import: {str(e)}")
-#         else:
-#             return HttpResponse("Form is not valid.")
-#     else:
-#         form = UploadFileForm()
-
-#     return render(request, 'teacher/dashboard/import_results.html', {'form': form})
-
+@require_cbt_subscription
 def import_results(request):
     if request.method == 'POST':
         # Check if it's a confirmation request (if 'confirm' is in POST)
@@ -3085,179 +2751,6 @@ def confirm_import(request):
 
     return redirect('teacher:import-results')
 
-# @cache_page(60 * 15)
-# def export_results_csv(request):
-#     if request.method == 'POST':
-#         file_type = request.POST.get('file-type')
-#         selected_course_id = request.POST.get('course')
-
-#         try:
-#             # Attempt to retrieve the selected course
-#             selected_course = Course.objects.get(course_name__id=selected_course_id)
-#             # print(f"Retrieved Course: {selected_course}")  # Debugging print
-
-#             # Fetch results associated with the selected course
-#             results = Result.objects.filter(exam=selected_course)
-
-#             if file_type == 'csv':
-#                 # Export to CSV
-#                 response = HttpResponse(content_type='text/csv')
-#                 response['Content-Disposition'] = 'attachment; filename="exam_results.csv"'
-
-#                 writer = csv.writer(response)
-#                 writer.writerow(['Student Name', 'Exam Score', 'Exam Subject'])
-
-#                 for result in results:
-#                     writer.writerow([result.student, result.marks, result.exam.course_name])
-
-#                 return response
-
-#             elif file_type == 'pdf':
-#                 # Export to PDF
-#                 response = HttpResponse(content_type='application/pdf')
-#                 response['Content-Disposition'] = 'attachment; filename="exam_results.pdf"'
-
-#                 buffer = BytesIO()
-#                 doc = SimpleDocTemplate(buffer, pagesize=letter)
-#                 elements = []
-
-#                 # Create table data
-#                 data = [['Student Name', 'Exam Score', 'Exam Subject']]
-#                 for result in results:
-#                     data.append([result.student, result.marks, result.exam.course_name])
-
-#                 # Create table and add style
-#                 table = Table(data)
-#                 style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-#                                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-#                                     ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-#                                     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-#                                     ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-#                                     ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-#                                     ('GRID', (0, 0), (-1, -1), 1, colors.black)])
-#                 table.setStyle(style)
-
-#                 elements.append(table)
-
-#                 # Build PDF
-#                 doc.build(elements)
-#                 pdf = buffer.getvalue()
-#                 buffer.close()
-#                 response.write(pdf)
-#                 return response
-
-#         except Course.DoesNotExist:
-            
-#             return HttpResponse("Course does not exist.", status=404)
-
-#     else:
-#         user = request.user
-#         # Get the teacher instance associated with the user
-#         teacher = Teacher.objects.get(user=user)
-#         # Get the subjects taught by the teacher
-#         subjects_taught = teacher.subjects_taught.all()
-
-#         return render(request, 'teacher/dashboard/export_results.html', {'subjects_taught': subjects_taught})
-
-#     return redirect('export_results_csv')
-
-
-
-# def export_results_csv(request):
-#     if request.method == 'POST':
-#         file_type = request.POST.get('file-type')
-#         selected_course_id = request.POST.get('course')
-
-#         # Retrieve the selected course object
-#         # selected_course = Course.objects.get(id=selected_course_id)
-#         selected_course = Course.objects.select_related('schools', 'course_name').only(
-#                 'id', 'room_name', 'schools__id', 'schools__name', 'course_name__id', 'course_name__title',
-#                 'question_number', 'course_pay', 'total_marks', 'num_attemps', 'show_questions', 'duration_minutes'
-#             ).get(id=selected_course_id)
-
-#         # results = Result.objects.filter(exam=selected_course)
-#         results = Result.objects.select_related('exam', 'student').only(
-#                 'id', 'marks', 'date', 'created', 'updated',
-#                 'exam__id', 'exam__course_name', 'exam__room_name',
-#                 'student__id', 'student__first_name', 'student__last_name'
-#             ).filter(exam=selected_course)
-
-
-#         if file_type == 'csv':
-#             # Export to CSV
-#             response = HttpResponse(content_type='text/csv')
-#             response['Content-Disposition'] = 'attachment; filename="exam_results.csv"'
-
-#             writer = csv.writer(response)
-#             writer.writerow(['Student Name', 'Exam Score', 'Exam Subject'])
-
-#             for result in results:
-#                 writer.writerow([result.student, result.marks, result.exam.course_name])
-
-#             return response
-
-#         elif file_type == 'pdf':
-#             # Export to PDF
-#             response = HttpResponse(content_type='application/pdf')
-#             response['Content-Disposition'] = 'attachment; filename="exam_results.pdf"'
-
-#             buffer = BytesIO()
-#             doc = SimpleDocTemplate(buffer, pagesize=letter)
-#             elements = []
-
-#             # Create table data
-#             data = [['Student Name', 'Exam Score', 'Exam Subject']]
-#             for result in results:
-#                 data.append([result.student, result.marks, result.exam.course_name])
-
-#             # Create table and add style
-#             table = Table(data)
-#             style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-#                                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-#                                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-#                                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-#                                 ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-#                                 ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-#                                 ('GRID', (0, 0), (-1, -1), 1, colors.black)])
-#             table.setStyle(style)
-
-#             elements.append(table)
-
-#             # Build PDF
-#             doc.build(elements)
-#             pdf = buffer.getvalue()
-#             buffer.close()
-#             response.write(pdf)
-#             return response
-
-#     else:
-#         user = request.user
-#         # Get the teacher instance associated with the user
-#         teacher = Teacher.objects.get(user=user)
-#         # Get the subjects taught by the teacher
-#         subjects_taught = teacher.subjects_taught.all()
-
-#         return render(request, 'teacher/dashboard/export_results.html', {'subjects_taught': subjects_taught})
-
-#     return redirect('export_results_csv')
-
-
-
-
-# def tex_to_mathml(tex_input):
-#     try:
-#         # Log the input being converted
-#         logger.debug(f"Converting TeX input: {tex_input}")
-#         # Attempt to convert only if input likely contains TeX
-#         if '$' in tex_input or '\\' in tex_input:
-#             mathml_output = latex2mathml.converter.convert(tex_input)
-#             logger.debug(f"Converted MathML output: {mathml_output}")
-#             return mathml_output
-#         return tex_input
-#     except Exception as e:
-#         logger.error(f"Error converting TeX to MathML: {e}, Input: {tex_input}")
-#         return tex_input  # If conversion fails, return the original TeX input
-
 logger = logging.getLogger(__name__)
 
 def tex_to_mathml(tex_input):
@@ -3281,95 +2774,11 @@ def tex_to_mathml(tex_input):
         return tex_input
     
 
-# @login_required(login_url='teacher:teacher_login')
-# def import_data(request):
-#     if request.method == 'POST':
-#         dataset = Dataset()
-#         new_file = request.FILES['myfile']
-
-#         allowed_formats = ['xlsx', 'xls', 'csv', 'docx']
-#         file_extension = new_file.name.split('.')[-1].lower()
-#         if file_extension not in allowed_formats:
-#             messages.error(request, 'File format not supported. Supported formats: XLSX, XLS, CSV, DOCX')
-#             return redirect(request.path_info)
-
-#         imported_data = None
-
-#         try:
-#             if file_extension == 'csv':
-#                 data = io.TextIOWrapper(new_file, encoding='utf-8')
-#                 imported_data = dataset.load(data, format=file_extension)
-#             elif file_extension in ['xlsx', 'xls']:
-#                 imported_data = dataset.load(new_file.read(), format=file_extension)
-#             elif file_extension == 'docx':
-#                 document = Document(new_file)
-#                 rows = []
-#                 for table in document.tables:
-#                     for row in table.rows:
-#                         row_data = [tex_to_mathml(cell.text) for cell in row.cells]
-#                         rows.append(row_data)
-#                 csv_data = io.StringIO()
-#                 writer = csv.writer(csv_data)
-#                 writer.writerows(rows)
-#                 csv_data.seek(0)
-#                 imported_data = dataset.load(csv_data, format='csv')
-#             else:
-#                 messages.error(request, 'An error occurred while importing the file.')
-#                 return redirect(request.path_info)
-
-#             # Normalize answers and convert TeX to MathML
-#             for row in imported_data.dict:
-#                 # Normalize answer field robustly
-#                 if 'answer' in row:
-#                     raw_answer = str(row['answer']).strip().replace('\n', '').replace('\r', '').replace(' ', '').lower()
-#                     if raw_answer in ['option1', 'option2', 'option3', 'option4']:
-#                         normalized_answer = 'Option' + raw_answer[-1]
-#                         print(f"Normalizing answer from '{row['answer']}' to '{normalized_answer}'")
-#                         row['answer'] = normalized_answer
-#                     else:
-#                         row['answer'] = str(row['answer']).strip()
-#                         print(f"Keeping original answer as '{row['answer']}'")
-
-#                 # Convert other keys (including question mark fix)
-#                 for key in ['question', 'img_quiz', 'option1', 'option2', 'option3', 'option4']:
-#                     if key in row and row[key]:
-#                         original_value = row[key]
-#                         if key == 'question' and original_value.endswith('?'):
-#                             processed_value = original_value[:-1].strip()
-#                         else:
-#                             processed_value = original_value
-#                         row[key] = tex_to_mathml(processed_value) + ('?' if key == 'question' else '')
-#                         print(f"Converted {key} from '{original_value}' to '{row[key]}'")
-
-#             resource = QuestionResource()
-#             result = resource.import_data(imported_data, dry_run=True)  # Dry run first
-
-#             if result.has_errors():
-#                 messages.error(request, "Errors occurred during import: {}".format(result.errors))
-#                 print(f"Import dry run errors: {result.errors}")
-#             else:
-#                 result = resource.import_data(imported_data, dry_run=False)
-#                 if result.has_errors():
-#                     messages.error(request, "Errors occurred during saving: {}".format(result.errors))
-#                     print(f"Import saving errors: {result.errors}")
-#                 else:
-#                     messages.success(request, "Data imported and saved successfully.")
-#                     print("Data saved successfully.")
-
-#             return redirect(request.path_info)
-
-#         except Exception as e:
-#             messages.error(request, "You do not have permission to import this subject, or the subject name does not match your assigned subject. Please check the dashboard for your assigned subjects.")
-#             print(f"An error occurred while processing the file: {e}")
-#             return redirect(request.path_info)
-
-#     return render(request, 'teacher/dashboard/import.html')
-
-
 
 # original codes
 logger = logging.getLogger(__name__)
 
+@require_cbt_subscription
 @login_required(login_url='teacher:teacher_login')
 def import_data(request):
     if request.method == 'POST':
@@ -3453,83 +2862,6 @@ def import_data(request):
     return render(request, 'teacher/dashboard/import.html')
 
 
-# @login_required(login_url='teacher:teacher_login')
-# def import_data(request):
-#     if request.method == 'POST':
-#         dataset = Dataset()
-#         new_file = request.FILES['myfile']
-
-#         # Check if the uploaded file format is supported
-#         allowed_formats = ['xlsx', 'xls', 'csv', 'docx']
-#         file_extension = new_file.name.split('.')[-1]
-#         if file_extension not in allowed_formats:
-#             messages.error(request, 'File format not supported. Supported formats: XLSX, XLS, CSV, DOCX')
-#             return redirect(request.path_info)
-
-#         imported_data = None
-
-#         try:
-#             if file_extension == 'csv':
-#                 # Handle CSV
-#                 data = io.TextIOWrapper(new_file, encoding='utf-8')
-#                 imported_data = dataset.load(data, format=file_extension)
-#             elif file_extension in ['xlsx', 'xls']:
-#                 # Handle Excel files
-#                 imported_data = dataset.load(new_file.read(), format=file_extension)
-#             elif file_extension == 'docx':
-#                 # Handle Word documents
-#                 document = Document(new_file)
-#                 rows = []
-#                 for table in document.tables:
-#                     for row in table.rows:
-#                         row_data = [tex_to_mathml(cell.text) for cell in row.cells]
-#                         rows.append(row_data)
-#                 csv_data = io.StringIO()
-#                 writer = csv.writer(csv_data)
-#                 writer.writerows(rows)
-#                 csv_data.seek(0)
-#                 imported_data = dataset.load(csv_data, format='csv')
-#             else:
-#                 messages.error(request, 'An error occurred while importing the file.')
-#                 return redirect(request.path_info)
-
-#             # Convert TeX to MathML for imported data
-#             for row in imported_data.dict:
-#                 for key in ['question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer']:
-#                     if key in row:
-#                         original_value = row[key]
-#                         # Handle the question mark for MathML questions
-#                         if key == 'question' and original_value.endswith('?'):
-#                             # Remove the question mark before conversion
-#                             processed_value = original_value[:-1].strip()
-#                         else:
-#                             processed_value = original_value
-
-#                         row[key] = tex_to_mathml(processed_value) + ('?' if key == 'question' else '')  # Add question mark back if it was a question
-#                         logger.debug(f"Converted {key} from {original_value} to {row[key]}")
-
-#             resource = QuestionResource()
-#             result = resource.import_data(imported_data, dry_run=True)  # Dry run first
-
-#             if result.has_errors():
-#                 messages.error(request, "Errors occurred during import: {}".format(result.errors))
-#             else:
-#                 result = resource.import_data(imported_data, dry_run=False)
-#                 if result.has_errors():
-#                     messages.error(request, "Errors occurred during saving: {}".format(result.errors))
-#                 else:
-#                     messages.success(request, "Data imported and saved successfully.")
-#                     logger.info("Data saved successfully.")
-
-#             return redirect(request.path_info)
-
-#         except Exception as e:
-#             messages.error(request, "You do not have permission to import this subject, or the subject name does not match your assigned subject. Please check the dashboard for your assigned subjects.")
-#             logger.error(f"An error occurred while processing the file: {e}")
-#             return redirect(request.path_info)
-
-#     return render(request, 'teacher/dashboard/import.html')
-
 
 
 
@@ -3556,77 +2888,6 @@ def extract_equations_from_paragraph(paragraph):
         else:
             equations.append(run.text.strip())
     return equations
-
-
-# def import_word(request):
-#     if request.method == 'POST':
-#         allowed_formats = ['docx']
-#         uploaded_file = request.FILES.get('myfile')
-
-#         if not uploaded_file:
-#             messages.error(request, 'No file uploaded.')
-#             return render(request, 'teacher/dashboard/importdocs.html')
-
-#         file_extension = uploaded_file.name.split('.')[-1]
-#         if file_extension.lower() not in allowed_formats:
-#             messages.error(request, 'File format not supported. Supported format: DOCX')
-#             return render(request, 'teacher/dashboard/importdocs.html')
-
-#         try:
-#             document = Document(uploaded_file)
-#             questions = []
-
-#             for table_idx, table in enumerate(document.tables):
-#                 for row_idx, row in enumerate(table.rows):
-#                     question_data = [cell.text.strip() for cell in row.cells]
-
-#                     if len(question_data) >= 8:  # Ensure there are enough data fields
-#                         equations = []
-#                         for cell in row.cells:
-#                             for paragraph in cell.paragraphs:
-#                                 equations.extend(extract_equations_from_paragraph(paragraph))
-
-#                         if equations:  # Check if any equations were found
-#                             question = Question(
-#                                 course=question_data[0],
-#                                 marks=int(question_data[1]),
-#                                 question_text=question_data[2],
-#                                 option1=question_data[3],
-#                                 option2=question_data[4],
-#                                 option3=question_data[5],
-#                                 option4=question_data[6],
-#                                 answer=question_data[7],
-#                                 equations=', '.join(equations)  # Store equations
-#                             )
-#                             question.save()
-#                             questions.append(question_data)
-#                         else:
-#                             logger.warning(f"No equations found for table {table_idx + 1}, row {row_idx + 1}.")
-
-#                     else:
-#                         messages.warning(request, f"Ignored invalid line in table {table_idx + 1}, row {row_idx + 1}: {', '.join(question_data)}")
-
-#             if questions:
-#                 response = HttpResponse(content_type='text/csv')
-#                 response['Content-Disposition'] = 'attachment; filename="imported_questions.csv"'
-
-#                 writer = csv.writer(response)
-#                 writer.writerow(['course', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4', 'answer', 'equations'])
-
-#                 for question in questions:
-#                     writer.writerow(question)
-
-#                 messages.success(request, "Data imported and saved successfully.")
-#                 return response
-#             else:
-#                 messages.warning(request, "No valid data found in the document.")
-
-#         except Exception as e:
-#             messages.error(request, f"An error occurred while processing the file: {str(e)}")
-#             logger.error(f"Error processing file: {str(e)}")
-#             return render(request, 'teacher/dashboard/importdocs.html')
-
-#     return render(request, 'teacher/dashboard/importdocs.html')
 
 
 
@@ -3667,24 +2928,6 @@ def update_teacher_settings(request):
 
     return render(request, 'teacher/dashboard/update_teacher_settings.html', context)
 
-# def update_teacher_settings(request):
-#     teacher = Teacher.objects.select_related('user', 'school').get(user__username=request.user.username)
-
-#     if request.method == 'POST':
-#         form = TeacherUpdateForm(request.POST, instance=teacher)
-#         if form.is_valid():
-#             form.save()
-#             messages.success(request, 'Teacher settings updated successfully!')
-#             return redirect('teacher:update_teacher_settings')  # Redirect to the same page to see changes
-#     else:
-#         form = TeacherUpdateForm(instance=teacher)
-
-#     context = {
-#         'form': form,
-#         'teacher': teacher,
-#     }
-
-#     return render(request, 'teacher/dashboard/update_teacher_settings.html', context)
 
 
 
@@ -3739,57 +2982,8 @@ def write_to_csv(data, file):
         writer.writerow(data_row)
 
 
-# def generate_csv(request):
-#     sample_codes = SampleCodes.objects.all()
-
-#     user_school = request.user.school
-    
-#     # Optimize query to fetch related objects
-#     teacher = Teacher.objects.select_related('user', 'school').prefetch_related('subjects_taught', 'classes_taught').get(user__username=request.user.username)
-    
-#     # Prefetch subjects and retrieve additional teacher details
-#     teacher_subjects = teacher.subjects_taught.all()
-#     ai_question_num = teacher.ai_question_num
-#     learning_objectives = teacher.learning_objectives
-
-
-#     if request.method == 'POST':
-#         form = JSONForm(request.POST)
-#         if form.is_valid():
-#             # Parse JSON data
-#             json_data = form.cleaned_data['json_data']
-#             try:
-#                 data = json.loads(json_data)
-#             except json.JSONDecodeError:
-#                 return render(request, 'teacher/dashboard/error.html', {'message': 'Invalid JSON data'})
-
-#             # Generate CSV
-#             try:
-#                 # Create a dynamic filename with a timestamp
-#                 filename = f"generated_questions_{now().strftime('%Y%m%d%H%M%S')}.csv"
-#                 # Prepare the response with appropriate CSV headers
-#                 response = HttpResponse(content_type='text/csv')
-#                 response['Content-Disposition'] = f'attachment; filename="{filename}"'
-
-#                 # Write CSV data to the response
-#                 write_to_csv(data, response)
-#                 return response
-#             except Exception as e:
-#                 return render(request, 'teacher/dashboard/error.html', {'message': str(e)})
-
-#     else:
-#         form = JSONForm()
-        
-
-#     context = {
-#         'school': user_school,
-#         'teacher_subjects': teacher_subjects,
-#         'ai_question_num': ai_question_num,
-#         'learning_objectives': learning_objectives,
-#         'form1': form  # Include the JSON form
-#     }  
-#     return render(request, 'teacher/dashboard/generate_csv.html', context = context)
-
+@require_cbt_subscription
+@login_required(login_url='teacher:teacher_login')
 def generate_csv(request):
     sample_codes = SampleCodes.objects.all()
     user_school = request.user.school
@@ -3850,6 +3044,7 @@ def download_csv(request):
         return response
        
 
+@require_cbt_subscription
 @login_required
 def export_data(request):
     if request.method == 'POST':

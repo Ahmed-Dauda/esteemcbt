@@ -1,0 +1,246 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- include Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <style>/* your styles from earlier */</style>
+</head>
+<body>
+<div class="form-section">
+  <h2>🤖 AI Summative Assessment</h2>
+
+  <form id="generate-form" method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="course">Select Course:</label>
+      <select name="course" id="course" required>
+        {% for c in courses %}
+          <option value="{{ c.id }}">{{ c.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="num_questions">Number of Questions:</label>
+      <input type="number" name="num_questions" id="num_questions" value="5" min="1" required>
+    </div>
+
+    <div class="form-group">
+      <label for="marks">Marks per Question:</label>
+      <input type="number" name="marks" id="marks" value="1" min="1" required>
+    </div>
+
+    <div class="form-group">
+      <label for="difficulty">Difficulty Level:</label>
+      <select id="difficulty" name="difficulty">
+        <option value="very_easy">Very Easy</option>
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+        <option value="very_hard">Very Hard</option>
+      </select>
+    </div>
+
+    <div class="form-group" style="text-align:center;">
+      <button type="submit" id="generate-btn">⚙️ Generate AI Questions</button>
+    </div>
+  </form>
+
+  <div id="loader" style="display:none; text-align:center; margin-top:20px;">
+    <p>Generating questions… <span id="progress_text"></span></p>
+  </div>
+
+  <div id="preview-area" style="margin-top:20px;"></div>
+</div>
+
+<!-- preview & manual save area will be injected here -->
+<div id="preview-save-container"></div>
+
+<!-- jQuery + Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+    $('#course').select2({ placeholder: 'Search or select a course...', width: '100%' });
+    $('#difficulty').select2({ placeholder: 'Select difficulty level...', width: '100%' });
+
+    const csrftoken = '{{ csrf_token }}';
+
+    $('#generate-form').on('submit', function(e) {
+      e.preventDefault();
+      $('#generate-btn').prop('disabled', true);
+      $('#loader').show();
+      $('#progress_text').text('');
+      $('#preview-area').empty();
+      $('#preview-save-container').empty();
+
+      const data = {
+        course: $('#course').val(),
+        num_questions: $('#num_questions').val(),
+        marks: $('#marks').val(),
+        difficulty: $('#difficulty').val()
+      };
+
+      // Start generation (POST)
+      fetch("{% url 'quiz:ai_generate_api' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify(data)
+      })
+      .then(r => r.json())
+      .then(resp => {
+        if (resp.job_id) {
+          pollStatus(resp.job_id);
+        } else {
+          $('#loader').hide();
+          $('#generate-btn').prop('disabled', false);
+          alert('Failed to start generation.');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Error starting generation.');
+        $('#loader').hide();
+        $('#generate-btn').prop('disabled', false);
+      });
+    });
+
+    function pollStatus(jobId) {
+      fetch(`/quiz/api/job-status/${jobId}/`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.status === 'processing') {
+            $('#progress_text').text(`Processing… (${data.result && data.result.partial_count ? data.result.partial_count : ''})`);
+            setTimeout(() => pollStatus(jobId), 2000);
+          } else if (data.status === 'completed') {
+            $('#loader').hide();
+            $('#generate-btn').prop('disabled', false);
+            renderPreview(data.result.questions || []);
+          } else if (data.status === 'failed') {
+            $('#loader').hide();
+            $('#generate-btn').prop('disabled', false);
+            alert('Generation failed: ' + (data.error || 'unknown'));
+          } else {
+            // pending / unknown
+            setTimeout(() => pollStatus(jobId), 1500);
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          setTimeout(() => pollStatus(jobId), 3000);
+        });
+    }
+
+    function renderPreview(questions) {
+      // Build a preview form identical to your earlier preview, allow edits then post confirm_save
+      if (!questions || questions.length === 0) {
+        $('#preview-area').html('<p>No questions returned.</p>');
+        return;
+      }
+
+      let html = `
+        <div class="form-section" style="margin-top:40px;">
+          <h3>✏️ Review and Edit Questions Before Saving</h3>
+          <form method="POST" id="preview-save-form">
+            <input type="hidden" name="confirm_save" value="1">
+            <input type="hidden" name="course_id" value="${$('#course').val()}">
+            <input type="hidden" name="marks" value="${$('#marks').val()}">
+            <input type="hidden" name="total_questions" value="${questions.length}">
+            <input type="hidden" name="difficulty" value="${$('#difficulty').val()}">
+      `;
+
+      questions.forEach((q, idx) => {
+        const i = idx + 1;
+        html += `
+          <div class="question-block">
+            <div class="form-group">
+              <label>Question ${i}</label>
+              <textarea name="question_${i}" rows="2">${escapeHtml(q.question)}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Option A:</label>
+              <input type="text" name="option1_${i}" value="${escapeHtml(q.option1)}">
+            </div>
+
+            <div class="form-group">
+              <label>Option B:</label>
+              <input type="text" name="option2_${i}" value="${escapeHtml(q.option2)}">
+            </div>
+
+            <div class="form-group">
+              <label>Option C:</label>
+              <input type="text" name="option3_${i}" value="${escapeHtml(q.option3)}">
+            </div>
+
+            <div class="form-group">
+              <label>Option D:</label>
+              <input type="text" name="option4_${i}" value="${escapeHtml(q.option4)}">
+            </div>
+
+            <div class="form-group">
+              <label>Correct Answer:</label>
+              <select name="answer_${i}">
+                <option value="Option1" ${q.answer === 'Option1' ? 'selected' : ''}>A</option>
+                <option value="Option2" ${q.answer === 'Option2' ? 'selected' : ''}>B</option>
+                <option value="Option3" ${q.answer === 'Option3' ? 'selected' : ''}>C</option>
+                <option value="Option4" ${q.answer === 'Option4' ? 'selected' : ''}>D</option>
+              </select>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+        <div class="form-group" style="text-align:center;">
+          <button type="submit">✅ Confirm & Save All</button>
+        </div>
+        </form>
+      </div>
+      `;
+
+      $('#preview-save-container').html(html);
+
+      // intercept confirm_save form submit and POST to existing page endpoint to save
+      $('#preview-save-form').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        // include CSRF
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch("{% url 'quiz:ai_summative_assessment' %}", {
+          method: 'POST',
+          body: formData
+        })
+        .then(r => {
+          if (r.redirected) {
+            window.location.href = r.url;
+          } else {
+            return r.text();
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Error saving questions.');
+        });
+      });
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+  });
+</script>
+</body>
+</html>

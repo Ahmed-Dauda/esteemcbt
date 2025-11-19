@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'django_social_share',
     'import_export',
     'django_mathjax',
+    'portal',
 
 
     'allauth.socialaccount.providers.google',
@@ -287,14 +288,28 @@ import os
 import dj_database_url
 
 
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         conn_max_age=0,  # or even 10
+#         ssl_require=False
+#     )
+# }
+
+# DATABASES['default']['CONN_MAX_AGE'] = 0  # For PgBouncer
+import dj_database_url
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 DATABASES = {
     'default': dj_database_url.config(
-        conn_max_age=0,  # or even 10
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=0,
         ssl_require=False
     )
 }
 
-DATABASES['default']['CONN_MAX_AGE'] = 0  # For PgBouncer
+DATABASES['default']['CONN_MAX_AGE'] = 0  # For PgBouncer if you switch to Postgres later
 
 
 # Password validation
@@ -483,6 +498,23 @@ TINYMCE_DEFAULT_CONFIG = {
     'valid_elements': '*[*]',  # Allow all elements
     'valid_children': '+body[style|link|script|iframe|section],+section[div|p],+div[math|mrow|mfrac|mi|mn|mo]',
 }
+
+# Now you can use:
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
+# Celery config
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 60*10
 
 
 # TINYMCE_DEFAULT_CONFIG = {

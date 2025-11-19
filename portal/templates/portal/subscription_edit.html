@@ -1,0 +1,10 @@
+<h2>Manage Subscription — {{ school.school_name }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type="submit">Save</button>
+</form>
+
+<a href="{% url 'portal:subscription_list' %}">Back</a>

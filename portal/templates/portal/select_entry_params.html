@@ -1,0 +1,79 @@
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <h3 class="mb-4 text-center">Enter Scores – Select Parameters</h3>
+
+    <form id="select-params-form" onsubmit="goToEntryPage(event)">
+
+        <!-- Select Class -->
+        <div class="mb-3">
+            <label class="form-label">Select Class</label>
+            <select name="class_id" id="class_id" class="form-select" required>
+                <option value="">-- Choose Class --</option>
+                {% for c in classes %}
+                    <option value="{{ c.id }}">{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Select Subject -->
+        <div class="mb-3">
+            <label class="form-label">Select Subject</label>
+            <select name="subject_id" id="subject_id" class="form-select" required>
+                <option value="">-- Choose Subject --</option>
+                {% for s in subjects %}
+                    <!-- s is Course instance, s.course_name is Courses instance -->
+                    <option value="{{ s.course_name.id }}">{{ s.course_name.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Select Session -->
+        <div class="mb-3">
+            <label class="form-label">Select Session</label>
+            <select name="session_id" id="session_id" class="form-select" required>
+                <option value="">-- Choose Session --</option>
+                {% for se in sessions %}
+                    <option value="{{ se.id }}">{{ se.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Select Term -->
+        <div class="mb-3">
+            <label class="form-label">Select Term</label>
+            <select name="term_id" id="term_id" class="form-select" required>
+                <option value="">-- Choose Term --</option>
+                {% for t in terms %}
+                    <option value="{{ t.id }}">{{ t.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="text-center">
+            <button class="btn btn-primary px-5">Continue</button>
+        </div>
+    </form>
+</div>
+
+<script>
+function goToEntryPage(event) {
+    event.preventDefault();
+
+    const classId = document.querySelector('#class_id').value;
+    const subjectId = document.querySelector('#subject_id').value;
+    const sessionId = document.querySelector('#session_id').value;
+    const termId = document.querySelector('#term_id').value;
+
+    if (!classId || !subjectId || !sessionId || !termId) {
+        alert("Please select all fields");
+        return;
+    }
+
+    // Redirect to the bulk entry page
+    const url = `/portal/enter/${classId}/${subjectId}/${sessionId}/${termId}/`;
+    window.location.href = url;
+}
+</script>
+{% endblock %}

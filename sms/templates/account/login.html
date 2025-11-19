@@ -42,6 +42,7 @@
       <div class="col-md-6 mb-3">
         <div class="card border-primary">
           <div class="card-body">
+            <h3 class="text-danger">Now you can login with only username</h3>
             <h3 class="card-title text-center"><i class="fas fa-user-graduate"></i> Login as Student</h3>
             <form method="POST" action="{% url 'account_login' %}">
               {% csrf_token %}

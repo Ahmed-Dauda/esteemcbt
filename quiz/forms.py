@@ -10,6 +10,34 @@ try:
 except Exception:
     Courses = None
 
+
+class SchoolForm(forms.ModelForm):
+    class Meta:
+        model = School
+        fields = [
+            'name',
+            'school_name',
+            'course_pay',
+            'customer',
+            'school_motto',
+            'school_address',
+            'portfolio',
+            'logo',
+            'principal_signature',
+            'max_ca_score',
+            'max_midterm_score',
+            'max_exam_score',
+            'A_min', 'A_max',
+            'B_min', 'B_max',
+            'C_min', 'C_max',
+            'P_min', 'P_max',
+            'F_min', 'F_max',
+            'A_comment', 'B_comment', 'C_comment', 'P_comment', 'F_comment',
+        ]
+        
+
+
+        
 class CourseGradeForm(forms.ModelForm):
     class Meta:
         model = CourseGrade

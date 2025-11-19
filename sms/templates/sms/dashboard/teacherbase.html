@@ -142,9 +142,14 @@
                     <span>Onboarding</span>
                 </a>
             </li>
-            <!-- {% if request.user.is_authenticated and request.user.is_superuser or request.user.is_staff %}
-    <a href="{% url 'teacher:onboarding_dashboard' %}">Onboarding</a>
-{% endif %} -->
+
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'portal:subscription_list' %}">
+                    <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
+                    <span>subscription</span>
+                </a>
+            </li>
+
 
             {% endif %} 
 
@@ -174,8 +179,18 @@
                     <span>Add subject</span>
                 </a>
              </li>
-
-         
+             <li class="nav-item">
+                <a class="nav-link" href="{% url 'portal:class_report_list' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>All report cards</span>
+                </a>
+             </li>
+             <li class="nav-item">
+                <a class="nav-link" href="{% url 'portal:report_card_list' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Student report cards</span>
+                </a>
+             </li>
             
              {% endif %}
              {% endif %} 
@@ -210,6 +225,13 @@
                     <span>Manage Teacher </span>
                 </a>
              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'quiz:edit_school' %}">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>Edit Profile </span>
+                </a>
+             </li>
+             
              <li class="nav-item">
                 <!-- <a class="nav-link" href="{% url 'teacher:teacher_results' %}">
                     <i class="fas fa-fw fa-book"></i>
@@ -243,7 +265,14 @@
                     <span>HOME</span>
                 </a>
             </li>
-                        <li class="nav-item" style="margin-bottom: -10px;">
+          
+        <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'portal:enter_select' %}">
+                    <i class="fas fa-fw fa-eye"></i> <!-- Icon for view questions -->
+                    <span>Input scores</span>
+                </a>
+            </li> 
+            <li class="nav-item" style="margin-bottom: -10px;">
                 <a class="nav-link" href="{% url 'teacher:teacher_subjects' %}">
                     <i class="fas fa-fw fa-eye"></i> <!-- Icon for view questions -->
                     <span>Manage Questions</span>

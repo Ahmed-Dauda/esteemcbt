@@ -1,0 +1,49 @@
+{% block content %}
+<h4>{{ student.username }}'s Report Card</h4>
+<p>Class: {{ result_class }}</p>
+<p>Session: {{ session.name }} | Term: {{ term.name }}</p>
+
+<table class="table table-bordered">
+ <thead>
+    <tr>
+      <th>Subject</th>
+      <th>CA ({{ max_ca }})</th>
+      <th>Mid-Term ({{ max_mid }})</th>
+      <th>Exam ({{ max_exam }})</th>
+      <th>Total (Normalized to 100)</th>
+      <th>Grade</th>
+      <th>Remark</th>
+    </tr>
+</thead>
+
+  <tbody>
+    {% for result in results %}
+      <tr>
+        <td>{{ result.subject.title }}</td>
+        <td>{{ result.ca_score }}</td>
+        <td>{{ result.midterm_score }}</td>
+        <td>{{ result.exam_score }}</td>
+        <td>{{ result.total_score }}</td>
+        <td>{{ result.grade_letter }}</td>
+        <td>{{ result.remark }}</td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="7">No subjects found for this report.</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="mt-3">
+    <p><b>Total Score:</b> {{ student_total }}</p>
+    <p><b>Average Score:</b> {{ student_average }}</p>
+    <p><b>Class Average:</b> {{ class_average }}</p>
+    <p><b>Position:</b> {{ position }} of {{ total_students }}</p>
+</div>
+
+<a href="{% url 'portal:download_term_report_pdf' student.id session.id term.id %}" class="btn btn-success mb-3">
+    📄 Download Full Term Report
+</a>
+<a href="{% url 'portal:report_card_list' %}" class="btn btn-secondary">← Back to list</a>
+{% endblock %}

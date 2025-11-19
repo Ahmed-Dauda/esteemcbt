@@ -1,0 +1,27 @@
+<h2>School Subscriptions</h2>
+
+<table border="1" cellpadding="6">
+    <tr>
+        <th>School</th>
+        <th>CBT</th>
+        <th>Report Card</th>
+        <th>Action</th>
+    </tr>
+
+    {% for school in schools %}
+    <tr>
+        <td>{{ school.school_name }}</td>
+        <td>
+            {{ school.subscription.cbt_active }}
+            {% if school.subscription.cbt_expiry %} ({{ school.subscription.cbt_expiry }}){% endif %}
+        </td>
+        <td>
+            {{ school.subscription.report_card_active }}
+            {% if school.subscription.report_card_expiry %} ({{ school.subscription.report_card_expiry }}){% endif %}
+        </td>
+        <td>
+            <a href="{% url 'portal:subscription_edit' school.id %}">Edit</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
