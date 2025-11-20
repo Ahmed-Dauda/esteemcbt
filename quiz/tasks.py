@@ -43,29 +43,121 @@ def parse_ai_output(output):
             })
     return parsed
 
+
+# @shared_task(bind=True)
+# def generate_ai_questions_task(self, job_id, course_id, num_questions, difficulty, marks):
+#     job = GenerationJob.objects.get(job_id=job_id)
+#     job.status = "processing"
+#     job.save()
+
+#     try:
+#         course_obj = Courses.objects.get(id=course_id)
+#         course_title = course_obj.title or ""
+#         course_detail = Course.objects.filter(course_name=course_obj).first()
+
+#         # Batch to keep token usage and runtime reasonable
+#         BATCH_SIZE = 10
+#         batches = math.ceil(int(num_questions) / BATCH_SIZE)
+#         all_questions = []
+
+#         for b in range(batches):
+#             batch_count = min(BATCH_SIZE, int(num_questions) - b * BATCH_SIZE)
+#             # build prompt; keep it concise
+#             prompt = f"""
+# You are an expert in learning assessment.
+# Generate {batch_count} {difficulty}-level multiple-choice questions strictly about '{course_title}'.
+# Format (no extra text):
+
+# Question: <question text>
+# A. <option>
+# B. <option>
+# C. <option>
+# D. <option>
+# Answer: <A|B|C|D>
+# """
+#             resp = client.chat.completions.create(
+#                 model="gpt-4o-mini",
+#                 messages=[
+#                     {"role":"system","content":"You are a helpful assistant that generates professional learning quiz questions."},
+#                     {"role":"user","content":prompt},
+#                 ],
+#                 max_tokens=1200,
+#                 temperature=0,
+#             )
+
+#             output = resp.choices[0].message.content
+#             parsed = parse_ai_output(output)
+#             all_questions.extend(parsed)
+
+#             # update job progress (approx)
+#             job.result = {"partial_count": len(all_questions)}
+#             job.save()
+
+#             # optional small sleep to avoid burst rate issues
+#             time.sleep(0.5)
+
+#         # Save resulting questions JSON into job.result
+#         job.result = {"questions": all_questions}
+#         job.status = "completed"
+#         job.save()
+
+#         # Optionally return created count
+#         return {"created": len(all_questions)}
+
+#     except Exception as exc:
+#         job.status = "failed"
+#         job.error = str(exc)
+#         job.save()
+#         raise
+
+
 @shared_task(bind=True)
-def generate_ai_questions_task(self, job_id, course_id, num_questions, difficulty, marks):
+def generate_ai_questions_task(
+    self, job_id, course_id, num_questions, difficulty, marks, learning_objectives
+):
     job = GenerationJob.objects.get(job_id=job_id)
     job.status = "processing"
     job.save()
 
     try:
+        # Fetch the course object
         course_obj = Courses.objects.get(id=course_id)
         course_title = course_obj.title or ""
-        course_detail = Course.objects.filter(course_name=course_obj).first()
 
-        # Batch to keep token usage and runtime reasonable
+        # Map to Course model and save learning objectives
+        course_detail = Course.objects.filter(course_name=course_obj).first()
+        if course_detail:
+            course_detail.learning_objectives = learning_objectives
+            course_detail.save()
+
+        # Batch generation settings
         BATCH_SIZE = 10
         batches = math.ceil(int(num_questions) / BATCH_SIZE)
         all_questions = []
 
         for b in range(batches):
-            batch_count = min(BATCH_SIZE, int(num_questions) - b * BATCH_SIZE)
-            # build prompt; keep it concise
+            batch_count = min(BATCH_SIZE, int(num_questions) - (b * BATCH_SIZE))
+
+            # Construct AI prompt using learning objectives
             prompt = f"""
-You are an expert in learning assessment.
-Generate {batch_count} {difficulty}-level multiple-choice questions strictly about '{course_title}'.
-Format (no extra text):
+You are a professional assessment specialist.
+
+Generate {batch_count} multiple-choice questions strictly based on the learning objectives below:
+
+Course: {course_title}
+
+Learning Objectives:
+{learning_objectives}
+
+Difficulty Level: {difficulty}
+
+Each question MUST:
+- Match the learning objectives
+- Be clear and unambiguous
+- Have 4 options (A–D)
+- Include one correct answer only
+
+Return ONLY text in this strict format:
 
 Question: <question text>
 A. <option>
@@ -74,13 +166,16 @@ C. <option>
 D. <option>
 Answer: <A|B|C|D>
 """
+
+            # Call AI API
             resp = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role":"system","content":"You are a helpful assistant that generates professional learning quiz questions."},
-                    {"role":"user","content":prompt},
+                    {"role": "system",
+                     "content": "You generate curriculum-aligned exam questions with high precision."},
+                    {"role": "user", "content": prompt},
                 ],
-                max_tokens=1200,
+                max_tokens=1800,
                 temperature=0,
             )
 
@@ -88,19 +183,17 @@ Answer: <A|B|C|D>
             parsed = parse_ai_output(output)
             all_questions.extend(parsed)
 
-            # update job progress (approx)
+            # Update job progress
             job.result = {"partial_count": len(all_questions)}
             job.save()
 
-            # optional small sleep to avoid burst rate issues
-            time.sleep(0.5)
+            time.sleep(0.5)  # optional rate-limit
 
-        # Save resulting questions JSON into job.result
+        # Final job update
         job.result = {"questions": all_questions}
         job.status = "completed"
         job.save()
 
-        # Optionally return created count
         return {"created": len(all_questions)}
 
     except Exception as exc:

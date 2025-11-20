@@ -86,6 +86,7 @@ pre {
 
                 <pre id="sample{{ forloop.counter }}">
 <code>
+    
 {% if 'MATH' in subject.course_name|upper or 'MATHEMATICS' in subject.course_name|upper or 'MATHS' in subject.course_name|upper %}
 Give me <strong>{{ subject.ai_question_num }}</strong> MCQs and answers for {{ subject.course_name }} on these objectives:
 <strong>{{ subject.learning_objectives }}</strong>.

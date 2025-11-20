@@ -153,23 +153,35 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from .models import GenerationJob
 from .tasks import generate_ai_questions_task
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+
 @login_required
 def ai_summative_assessment(request):
-    # Renders the page (the generation is triggered via AJAX)
-    courses = Courses.objects.all()
 
-    # Handle confirm_save post (user confirmed preview and wants to persist)
+    # Get teacher object
+    try:
+        teacher = request.user.teacher
+    except:
+        messages.error(request, "Teacher account not found.")
+        return redirect("dashboard")
+
+    # Teacher sees only the quiz Courses he teaches (subjects_taught)
+    courses = teacher.subjects_taught.all()
+
     if request.method == "POST" and request.POST.get("confirm_save") == "1":
         total_questions = int(request.POST.get("total_questions", 0))
         course_id = request.POST.get("course_id")
         marks = int(request.POST.get("marks", 1))
+
+        # Teacher must only save questions for HIS courses
         try:
-            course_obj = Courses.objects.get(id=course_id)
-        except Courses.DoesNotExist:
-            messages.error(request, "Invalid course selected.")
+            course_detail = Course.objects.get(id=course_id, teachers=teacher)
+        except Course.DoesNotExist:
+            messages.error(request, "You do not have permission to add questions to this course.")
             return redirect('quiz:ai_summative_assessment')
 
-        course_detail = Course.objects.filter(course_name=course_obj).first()
         saved = 0
         for i in range(1, total_questions + 1):
             question_text = request.POST.get(f"question_{i}", "").strip()
@@ -180,6 +192,7 @@ def ai_summative_assessment(request):
                 request.POST.get(f"option4_{i}", "").strip(),
             ]
             answer = request.POST.get(f"answer_{i}", "Option1").strip()
+
             if question_text and all(options):
                 Question.objects.create(
                     course=course_detail,
@@ -200,27 +213,116 @@ def ai_summative_assessment(request):
         "courses": courses
     })
 
+
+
+#working for all subjects
+
+# @login_required
+# def ai_summative_assessment(request):
+#     # Renders the page (the generation is triggered via AJAX)
+#     courses = Courses.objects.all()
+
+#     # Handle confirm_save post (user confirmed preview and wants to persist)
+#     if request.method == "POST" and request.POST.get("confirm_save") == "1":
+#         total_questions = int(request.POST.get("total_questions", 0))
+#         course_id = request.POST.get("course_id")
+#         marks = int(request.POST.get("marks", 1))
+#         try:
+#             course_obj = Courses.objects.get(id=course_id)
+#         except Courses.DoesNotExist:
+#             messages.error(request, "Invalid course selected.")
+#             return redirect('quiz:ai_summative_assessment')
+
+#         course_detail = Course.objects.filter(course_name=course_obj).first()
+#         saved = 0
+#         for i in range(1, total_questions + 1):
+#             question_text = request.POST.get(f"question_{i}", "").strip()
+#             options = [
+#                 request.POST.get(f"option1_{i}", "").strip(),
+#                 request.POST.get(f"option2_{i}", "").strip(),
+#                 request.POST.get(f"option3_{i}", "").strip(),
+#                 request.POST.get(f"option4_{i}", "").strip(),
+#             ]
+#             answer = request.POST.get(f"answer_{i}", "Option1").strip()
+#             if question_text and all(options):
+#                 Question.objects.create(
+#                     course=course_detail,
+#                     marks=marks,
+#                     question=question_text,
+#                     option1=options[0],
+#                     option2=options[1],
+#                     option3=options[2],
+#                     option4=options[3],
+#                     answer=answer
+#                 )
+#                 saved += 1
+
+#         messages.success(request, f"{saved} questions saved successfully.")
+#         return redirect('quiz:ai_summative_assessment')
+
+#     return render(request, "quiz/dashboard/ai_summative_assessment.html", {
+#         "courses": courses
+#     })
+
 @login_required
 def start_generation(request):
     if request.method != "POST":
         return HttpResponseBadRequest("Invalid method")
 
-    data = request.POST or request.body
-    # If fetch uses form data, read POST; if JSON, parse body
-    course_id = request.POST.get("course") or json.loads(request.body).get("course")
-    num_questions = request.POST.get("num_questions") or json.loads(request.body).get("num_questions")
-    difficulty = request.POST.get("difficulty") or json.loads(request.body).get("difficulty", "medium")
-    marks = request.POST.get("marks") or json.loads(request.body).get("marks", 1)
+    # Parse POST data (supporting both form-data and JSON)
+    try:
+        body_data = json.loads(request.body) if request.body else {}
+    except json.JSONDecodeError:
+        body_data = {}
 
-    if not course_id or not num_questions:
-        return JsonResponse({"error":"Missing course or num_questions"}, status=400)
+    course_id = request.POST.get("course") or body_data.get("course")
+    num_questions = request.POST.get("num_questions") or body_data.get("num_questions")
+    difficulty = request.POST.get("difficulty") or body_data.get("difficulty", "medium")
+    marks = request.POST.get("marks") or body_data.get("marks", 1)
+    learning_objectives = request.POST.get("learning_objectives") or body_data.get("learning_objectives", "")
 
+    if not course_id or not num_questions or not learning_objectives:
+        return JsonResponse({"error": "Missing course, num_questions, or learning objectives"}, status=400)
+
+    # Create a new generation job
     job_id = str(uuid.uuid4())
     GenerationJob.objects.create(job_id=job_id, status="pending")
-    # launch celery task
-    generate_ai_questions_task.delay(job_id, int(course_id), int(num_questions), difficulty, int(marks))
+
+    # Launch Celery task with learning objectives
+    generate_ai_questions_task.delay(
+        job_id, 
+        int(course_id), 
+        int(num_questions), 
+        difficulty, 
+        int(marks),
+        learning_objectives
+    )
 
     return JsonResponse({"job_id": job_id, "message": "Generation started"})
+
+# @login_required
+# def start_generation(request):
+#     if request.method != "POST":
+#         return HttpResponseBadRequest("Invalid method")
+
+#     data = request.POST or request.body
+#     # If fetch uses form data, read POST; if JSON, parse body
+#     course_id = request.POST.get("course") or json.loads(request.body).get("course")
+#     num_questions = request.POST.get("num_questions") or json.loads(request.body).get("num_questions")
+#     difficulty = request.POST.get("difficulty") or json.loads(request.body).get("difficulty", "medium")
+#     marks = request.POST.get("marks") or json.loads(request.body).get("marks", 1)
+
+#     if not course_id or not num_questions:
+#         return JsonResponse({"error":"Missing course or num_questions"}, status=400)
+
+#     job_id = str(uuid.uuid4())
+#     GenerationJob.objects.create(job_id=job_id, status="pending")
+#     # launch celery task
+#     generate_ai_questions_task.delay(job_id, int(course_id), int(num_questions), difficulty, int(marks))
+
+#     return JsonResponse({"job_id": job_id, "message": "Generation started"})
+
+
 
 @login_required
 def job_status(request, job_id):
