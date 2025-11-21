@@ -16,10 +16,46 @@
     #loader-container { display:none; margin-top:20px; text-align:center; }
     #progress-wrapper { background:#eee; width:100%; height:20px; border-radius:5px; overflow:hidden; margin-top:5px; }
     #progress-bar { width:0%; height:100%; background:#4caf50; border-radius:5px; transition: width 0.3s; }
+
+    /* Toast popup styles */
+    #toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+    .toast-message {
+      min-width: 250px;
+      margin-bottom: 10px;
+      padding: 12px 20px;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 14px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      opacity: 0.95;
+      animation: fadein 0.5s, fadeout 0.5s 3.5s;
+    }
+    .toast-success { background-color: #28a745; }
+    .toast-warning { background-color: #ffc107; color: #212529; }
+    .toast-error   { background-color: #dc3545; }
+
+    @keyframes fadein { from {opacity: 0; transform: translateY(-20px);} to {opacity: 0.95; transform: translateY(0);} }
+    @keyframes fadeout { from {opacity: 0.95;} to {opacity: 0; transform: translateY(-20px);} }
   </style>
 </head>
 <body>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
 <div class="form-section">
+  <h3>
+    Only Mathematics, Chemistry, and Physics Teachers should use this link: 
+    <a class="btn btn-info btn-lg d-flex align-items-center gap-2" href="{% url 'teacher:generate_csv' %}">
+      <i class="fas fa-robot"></i> Generate with AI
+    </a>
+  </h3>
+
   <h2>🤖 AI Summative Assessment</h2>
 
   <form id="generate-form" method="POST">
@@ -76,7 +112,14 @@
 $(document).ready(function() {
   $('#course').select2({width:'100%'});
   $('#difficulty').select2({width:'100%'});
+
   const csrftoken = '{{ csrf_token }}';
+
+  function showMessage(message, type='success') {
+    const toast = $(`<div class="toast-message toast-${type}">${message}</div>`);
+    $('#toast-container').append(toast);
+    setTimeout(() => toast.fadeOut(600, () => toast.remove()), 4000);
+  }
 
   $('#generate-form').on('submit', function(e){
     e.preventDefault();
@@ -99,9 +142,9 @@ $(document).ready(function() {
     .then(r => r.json())
     .then(resp => {
       if(resp.job_id) pollStatus(resp.job_id, parseInt(data.num_questions));
-      else { alert('Failed to start generation'); $('#loader-container').hide(); $('#generate-btn').prop('disabled',false);}
+      else { showMessage('Failed to start generation', 'error'); $('#loader-container').hide(); $('#generate-btn').prop('disabled',false); }
     })
-    .catch(err => { console.error(err); alert('Error'); $('#loader-container').hide(); $('#generate-btn').prop('disabled',false); });
+    .catch(err => { console.error(err); showMessage('Error generating questions', 'error'); $('#loader-container').hide(); $('#generate-btn').prop('disabled',false); });
   });
 
   function pollStatus(jobId, totalQuestions){
@@ -114,18 +157,27 @@ $(document).ready(function() {
           $('#progress-bar').css('width',percent+'%');
           $('#progress_text').text(`${partial}/${totalQuestions} generated`);
           setTimeout(()=>pollStatus(jobId,totalQuestions),1500);
-        } else if(data.status==='completed'){
-          $('#loader-container').hide(); $('#generate-btn').prop('disabled',false);
+        } 
+        else if(data.status==='completed'){
+          $('#loader-container').hide();
+          $('#generate-btn').prop('disabled',false);
           renderPreview(data.result.questions || []);
-        } else if(data.status==='failed'){
-          alert('Generation failed: '+(data.error||'unknown')); $('#loader-container').hide(); $('#generate-btn').prop('disabled',false);
-        } else setTimeout(()=>pollStatus(jobId,totalQuestions),1500);
+        } 
+        else if(data.status==='failed'){
+          showMessage('Generation failed: ' + (data.error||'unknown'), 'error');
+          $('#loader-container').hide();
+          $('#generate-btn').prop('disabled',false);
+        } 
+        else setTimeout(()=>pollStatus(jobId,totalQuestions),1500);
       })
       .catch(()=>setTimeout(()=>pollStatus(jobId,totalQuestions),3000));
   }
 
   function renderPreview(questions){
-    if(!questions.length){ $('#preview-area').html('<p>No questions returned</p>'); return; }
+    if(!questions.length){ 
+      $('#preview-area').html('<p>No questions returned</p>'); 
+      return; 
+    }
 
     let html = `<div class="form-section"><h3>✏️ Review Questions Before Saving</h3>
       <form id="preview-save-form" method="POST">
@@ -157,18 +209,34 @@ $(document).ready(function() {
     html+=`<div style="text-align:center;"><button type="submit">✅ Save All Questions</button></div></form></div>`;
     $('#preview-save-container').html(html);
 
-    $('#preview-save-form').on('submit', function(e){
+    $('#preview-save-form').off('submit').on('submit', function(e){
       e.preventDefault();
       const formData = new FormData(this);
       formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-      fetch("{% url 'quiz:ai_summative_assessment' %}", { method:'POST', body: formData })
-        .then(r=>window.location.reload())
-        .catch(err=>{console.error(err); alert('Error saving questions');});
+
+      fetch("{% url 'quiz:ai_summative_assessment' %}", {
+        method:'POST',
+        body: formData,
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+      })
+      .then(r => r.json())
+      .then(resp => {
+        showMessage(resp.message, resp.status || 'success');
+      })
+      .catch(err => { console.error(err); showMessage('Error saving questions', 'error'); });
     });
   }
 
-  function escapeHtml(text){ if(!text) return ''; return text.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
+  function escapeHtml(text){
+    if(!text) return '';
+    return text.replaceAll("&","&amp;")
+               .replaceAll("<","&lt;")
+               .replaceAll(">","&gt;")
+               .replaceAll('"',"&quot;")
+               .replaceAll("'","&#039;");
+  }
 });
 </script>
+
 </body>
 </html>

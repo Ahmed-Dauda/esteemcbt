@@ -110,6 +110,9 @@ def parse_ai_output(output):
 #         job.save()
 #         raise
 
+from celery import shared_task
+import math
+import time
 
 @shared_task(bind=True)
 def generate_ai_questions_task(
@@ -120,9 +123,9 @@ def generate_ai_questions_task(
     job.save()
 
     try:
-        # Fetch the course object
+        # Fetch course object
         course_obj = Courses.objects.get(id=course_id)
-        course_title = course_obj.title or ""
+        course_title = (course_obj.title or "").strip()
 
         # Map to Course model and save learning objectives
         course_detail = Course.objects.filter(course_name=course_obj).first()
@@ -130,15 +133,15 @@ def generate_ai_questions_task(
             course_detail.learning_objectives = learning_objectives
             course_detail.save()
 
-        # Batch generation settings
+        # Batch settings
         BATCH_SIZE = 10
-        batches = math.ceil(int(num_questions) / BATCH_SIZE)
+        total_questions = int(num_questions)
+        batches = math.ceil(total_questions / BATCH_SIZE)
         all_questions = []
 
         for b in range(batches):
-            batch_count = min(BATCH_SIZE, int(num_questions) - (b * BATCH_SIZE))
+            batch_count = min(BATCH_SIZE, total_questions - (b * BATCH_SIZE))
 
-            # Construct AI prompt using learning objectives
             prompt = f"""
 You are a professional assessment specialist.
 
@@ -166,13 +169,13 @@ C. <option>
 D. <option>
 Answer: <A|B|C|D>
 """
-
-            # Call AI API
             resp = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system",
-                     "content": "You generate curriculum-aligned exam questions with high precision."},
+                    {
+                        "role": "system",
+                        "content": "You generate curriculum-aligned exam questions with high precision."
+                    },
                     {"role": "user", "content": prompt},
                 ],
                 max_tokens=1800,
@@ -186,8 +189,7 @@ Answer: <A|B|C|D>
             # Update job progress
             job.result = {"partial_count": len(all_questions)}
             job.save()
-
-            time.sleep(0.5)  # optional rate-limit
+            time.sleep(0.5)
 
         # Final job update
         job.result = {"questions": all_questions}

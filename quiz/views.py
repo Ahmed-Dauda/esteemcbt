@@ -157,17 +157,26 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+
+from django.http import JsonResponse
+from django.contrib import messages
+from django.shortcuts import redirect, render
+from django.contrib.auth.decorators import login_required
+
 @login_required
 def ai_summative_assessment(request):
-
-    # Get teacher object
+    # Ensure teacher exists
     try:
         teacher = request.user.teacher
     except:
+        if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': 'Teacher account not found.'})
         messages.error(request, "Teacher account not found.")
         return redirect("dashboard")
 
-    # Teacher sees only the quiz Courses he teaches (subjects_taught)
     courses = teacher.subjects_taught.all()
 
     if request.method == "POST" and request.POST.get("confirm_save") == "1":
@@ -175,12 +184,13 @@ def ai_summative_assessment(request):
         course_id = request.POST.get("course_id")
         marks = int(request.POST.get("marks", 1))
 
-        # Teacher must only save questions for HIS courses
         try:
             course_detail = Course.objects.get(id=course_id, teachers=teacher)
         except Course.DoesNotExist:
+            if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': 'You do not have permission to add questions to this course.'})
             messages.error(request, "You do not have permission to add questions to this course.")
-            return redirect('quiz:ai_summative_assessment')
+            return redirect("quiz:ai_summative_assessment")
 
         saved = 0
         for i in range(1, total_questions + 1):
@@ -206,12 +216,87 @@ def ai_summative_assessment(request):
                 )
                 saved += 1
 
-        messages.success(request, f"{saved} questions saved successfully.")
-        return redirect('quiz:ai_summative_assessment')
+        message_text = f"{saved} question{'s' if saved != 1 else ''} saved successfully." if saved > 0 else "No questions were saved. Please check your entries."
+
+        if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'success' if saved > 0 else 'warning',
+                'message': message_text
+            })
+
+        if saved > 0:
+            messages.success(request, message_text)
+        else:
+            messages.warning(request, message_text)
+
+        return redirect("quiz:ai_summative_assessment")
 
     return render(request, "quiz/dashboard/ai_summative_assessment.html", {
-        "courses": courses
+        "courses": courses,
     })
+
+
+# @login_required
+# def ai_summative_assessment(request):
+
+#     # Get teacher object
+#     try:
+#         teacher = request.user.teacher
+#     except:
+#         messages.error(request, "Teacher account not found.")
+#         return redirect("dashboard")
+
+#     # Teacher sees only the quiz Courses he teaches (subjects_taught)
+#     courses = teacher.subjects_taught.all()
+
+#     if request.method == "POST" and request.POST.get("confirm_save") == "1":
+#         total_questions = int(request.POST.get("total_questions", 0))
+#         course_id = request.POST.get("course_id")
+#         marks = int(request.POST.get("marks", 1))
+
+#         # Teacher must only save questions for HIS courses
+#         try:
+#             course_detail = Course.objects.get(id=course_id, teachers=teacher)
+#         except Course.DoesNotExist:
+#             messages.error(request, "You do not have permission to add questions to this course.")
+#             return redirect('quiz:ai_summative_assessment')
+
+#         saved = 0
+
+#         for i in range(1, total_questions + 1):
+#             question_text = request.POST.get(f"question_{i}", "").strip()
+#             options = [
+#                 request.POST.get(f"option1_{i}", "").strip(),
+#                 request.POST.get(f"option2_{i}", "").strip(),
+#                 request.POST.get(f"option3_{i}", "").strip(),
+#                 request.POST.get(f"option4_{i}", "").strip(),
+#             ]
+#             answer = request.POST.get(f"answer_{i}", "Option1").strip()
+
+#             if question_text and all(options):
+#                 Question.objects.create(
+#                     course=course_detail,
+#                     marks=marks,
+#                     question=question_text,
+#                     option1=options[0],
+#                     option2=options[1],
+#                     option3=options[2],
+#                     option4=options[3],
+#                     answer=answer
+#                 )
+#                 saved += 1
+
+#         # SUCCESS MESSAGE
+#         if saved > 0:
+#             messages.success(request, f"{saved} questions saved successfully.")
+#         else:
+#             messages.warning(request, "No questions were saved. Please check your entries.")
+
+#         return redirect('quiz:ai_summative_assessment')
+
+#     return render(request, "quiz/dashboard/ai_summative_assessment.html", {
+#         "courses": courses
+#     })
 
 
 
