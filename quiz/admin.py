@@ -3,7 +3,8 @@ from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin, ExportActionMixin
 from import_export import fields,resources
 from import_export.widgets import ForeignKeyWidget
-from users.models import Profile
+from teacher.models import Teacher
+from users.models import NewUser, Profile
 from quiz.models import (Question, Course, Result,School)
 from import_export import fields, resources
 from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
@@ -70,17 +71,52 @@ class CourseAdmin(admin.ModelAdmin):
 admin.site.register(Course, CourseAdmin)
 
 
-#real codes
-
+@admin.register(CourseGrade)
 class CourseGradeAdmin(admin.ModelAdmin):
-    form = CourseGradeForm  # ✅ This must be a ModelForm
-    list_display = ['name', 'schools', 'get_students_details', 'get_subject_names', 'is_active']
-    search_fields = ['name', 'schools__school_name', 'students__email', 'students__first_name', 'students__last_name']
-    list_filter = ['schools', 'is_active', 'subjects']
-    
-    # filter_horizontal = ('students', 'subjects')
-    autocomplete_fields = ['students', 'subjects']
+    form = CourseGradeForm
+    list_display = [
+        'name',
+        'schools',
+        'session',
+        'term',
+        'get_form_teacher_name',
+        'get_students_details',
+        'get_subject_names',
+        'is_active'
+    ]
+    search_fields = [
+        'name',
+        'schools__school_name',
+        'students__email',
+        'students__first_name',
+        'students__last_name'
+    ]
+    list_filter = ['schools', 'is_active', 'subjects', 'session', 'term']
+    autocomplete_fields = ['students', 'subjects', 'form_teacher']
 
+    # -------------------------
+    # Display Form Teacher Name
+    # -------------------------
+    def get_form_teacher_name(self, obj):
+        if obj.form_teacher:
+            return f"{obj.form_teacher.first_name} {obj.form_teacher.last_name}"
+        return "-"
+    get_form_teacher_name.short_description = "Form Teacher"
+
+    # ---------------------------------
+    # Filter: Only teachers in same school
+    # ---------------------------------
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "form_teacher":
+            user_school = request.user.school  # School of admin user
+            kwargs["queryset"] = Teacher.objects.filter(
+                school=user_school  # Only teachers from the same school
+            )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    # ------------------------
+    # Student details in admin
+    # ------------------------
     def get_students_details(self, obj):
         return '\n'.join(
             f"({student.school})-({student.first_name}-{student.last_name}, {student.student_class})"
@@ -88,12 +124,38 @@ class CourseGradeAdmin(admin.ModelAdmin):
         )
     get_students_details.short_description = 'Student Details'
 
-    def get_subject_names(self, obj): 
+    # ------------------------
+    # Subject names
+    # ------------------------
+    def get_subject_names(self, obj):
         return '\n'.join(str(subject) for subject in obj.subjects.all())
     get_subject_names.short_description = 'Subject Names'
 
 
-admin.site.register(CourseGrade, CourseGradeAdmin)
+
+#real codes
+# class CourseGradeAdmin(admin.ModelAdmin):
+#     form = CourseGradeForm  # ✅ This must be a ModelForm
+#     list_display = ['name', 'schools', 'get_students_details', 'get_subject_names', 'is_active']
+#     search_fields = ['name', 'schools__school_name', 'students__email', 'students__first_name', 'students__last_name']
+#     list_filter = ['schools', 'is_active', 'subjects']
+    
+#     # filter_horizontal = ('students', 'subjects')
+#     autocomplete_fields = ['students', 'subjects']
+
+#     def get_students_details(self, obj):
+#         return '\n'.join(
+#             f"({student.school})-({student.first_name}-{student.last_name}, {student.student_class})"
+#             for student in obj.students.all()
+#         )
+#     get_students_details.short_description = 'Student Details'
+
+#     def get_subject_names(self, obj): 
+#         return '\n'.join(str(subject) for subject in obj.subjects.all())
+#     get_subject_names.short_description = 'Subject Names'
+
+
+# admin.site.register(CourseGrade, CourseGradeAdmin)
 
 
 

@@ -3,6 +3,7 @@ from django.utils import timezone
 from decimal import Decimal
 from quiz.models import School
 from sms.models import Courses, Session, Term
+from teacher.models import Teacher
 from users.models import NewUser
 
 
@@ -160,6 +161,50 @@ class Result_Portal(models.Model):
             'P': school.P_comment,
             'F': school.F_comment,
         }.get(letter, 'N/A')
+
+
+class StudentBehaviorRecord(models.Model):
+    student = models.ForeignKey(NewUser, on_delete=models.CASCADE, db_index=True)
+    school = models.ForeignKey(School, on_delete=models.CASCADE, null=True, blank=True)
+    term = models.ForeignKey(Term, on_delete=models.CASCADE, db_index=True)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, db_index=True)
+
+    # Use string reference to Teacher to avoid load order issues
+    form_teacher = models.ForeignKey(
+        'teacher.Teacher',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        limit_choices_to={'form_teacher_role': 'form_teacher'},
+        related_name='behavior_records'
+    )
+    form_teacher_comment = models.TextField(blank=True, null=True)
+    principal_comment = models.TextField(blank=True, null=True)
+
+    # Psychomotor
+    handwriting = models.IntegerField(default=0)
+    games = models.IntegerField(default=0)
+    sports = models.IntegerField(default=0)
+    drawing_painting = models.IntegerField(default=0)
+    crafts = models.IntegerField(default=0)
+
+    # Affective
+    punctuality = models.IntegerField(default=0)
+    attendance = models.IntegerField(default=0)
+    reliability = models.IntegerField(default=0)
+    neatness = models.IntegerField(default=0)
+    politeness = models.IntegerField(default=0)
+    honesty = models.IntegerField(default=0)
+    relationship_with_students = models.IntegerField(default=0)
+    self_control = models.IntegerField(default=0)
+    attentiveness = models.IntegerField(default=0)
+    perseverance = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ('student', 'term', 'session')
+
+    def __str__(self):
+        return f"{self.student} - {self.term} - {self.session}"
 
 
 

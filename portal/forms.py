@@ -11,9 +11,21 @@ from decimal import Decimal
 from django import forms
 from decimal import Decimal
 from django import forms
-
-
 from .models import SchoolSubscription
+
+# portal/forms.py
+from django import forms
+from portal.models import StudentBehaviorRecord
+
+class StudentBehaviorRecordForm(forms.ModelForm):
+    class Meta:
+        model = StudentBehaviorRecord
+        fields = ['form_teacher_comment', 'principal_comment']
+        widgets = {
+            'form_teacher_comment': forms.Textarea(attrs={'rows': 3}),
+            'principal_comment': forms.Textarea(attrs={'rows': 3}),
+        }
+
 
 class SubscriptionForm(forms.ModelForm):
     class Meta:
@@ -62,22 +74,4 @@ class ResultRowForm(forms.Form):
             self.add_error("exam_score", f"Exam score cannot exceed {self.max_exam}")
 
         return cleaned
-    
-# class ResultRowForm(forms.Form):
-#     """
-#     Single-row form for one student. We'll render a formset of these.
-#     """
-#     student_id = forms.IntegerField(widget=forms.HiddenInput)
-#     existing_result_id = forms.IntegerField(widget=forms.HiddenInput, required=False)
-#     ca_score = forms.DecimalField(max_digits=5, decimal_places=2, required=False, min_value=0)
-#     midterm_score = forms.DecimalField(max_digits=5, decimal_places=2, required=False, min_value=0)
-#     exam_score = forms.DecimalField(max_digits=5, decimal_places=2, required=False, min_value=0)
 
-#     def clean(self):
-#         cleaned = super().clean()
-#         # Normalize None -> 0
-#         for f in ("ca_score", "midterm_score", "exam_score"):
-#             if cleaned.get(f) in (None, ""):
-#                 cleaned[f] = Decimal("0.00")
-#         # Optionally add per-field validation (max score checks) here
-#         return cleaned

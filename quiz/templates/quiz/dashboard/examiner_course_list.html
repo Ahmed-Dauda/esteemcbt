@@ -9,7 +9,9 @@
 
 {% block content %}
   <div class="container my-4">
+
     <h2 class="mb-4">Courses for Your School</h2>
+        <h3><a href="{% url 'quiz:update_school_exam_settings' %}">Edit Exam Record</a></h3>
     {% if courses %}
       <table id="coursesTable" class="table table-striped table-bordered">
         <thead>

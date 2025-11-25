@@ -239,7 +239,7 @@
                 </a> -->
                  <a class="nav-link" href="{% url 'teacher:examiner_results_list' %}">
                     <i class="fas fa-fw fa-book"></i>
-                    <span>Manage Results E </span>
+                    <span>Manage Results </span>
                 </a>
                 
              </li>
@@ -265,13 +265,26 @@
                     <span>HOME</span>
                 </a>
             </li>
+            <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'portal:principal_dashboard' %}">
+                    <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
+                    <span>principal comments</span>
+                </a>
+            </li>
           
-        <li class="nav-item" style="margin-bottom: -10px;">
+            <li class="nav-item" style="margin-bottom: -10px;">
                 <a class="nav-link" href="{% url 'portal:enter_select' %}">
                     <i class="fas fa-fw fa-eye"></i> <!-- Icon for view questions -->
                     <span>Input scores</span>
                 </a>
             </li> 
+           <li class="nav-item" style="margin-bottom: -10px;">
+                <a class="nav-link" href="{% url 'portal:form_teacher_dashboard' %}">
+                    <i class="fas fa-fw fa-eye"></i> <!-- Icon for view questions -->
+                    <span>Class Teacher</span>
+                </a>
+            </li> 
+            
             <li class="nav-item" style="margin-bottom: -10px;">
                 <a class="nav-link" href="{% url 'teacher:teacher_subjects' %}">
                     <i class="fas fa-fw fa-eye"></i> <!-- Icon for view questions -->

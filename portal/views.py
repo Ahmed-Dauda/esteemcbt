@@ -6,6 +6,7 @@ from django.db.models import Avg, Sum
 import requests
 from portal.models import Result_Portal
 from sms.models import Term, Session, ExamType
+from users.models import NewUser
 from .utils import render_to_pdf
 from .decorators import require_cbt_subscription, require_reportcard_subscription
 
@@ -101,6 +102,7 @@ def report_card_list(request):
     }
     return render(request, 'portal/report_card_list.html', context)
 
+
 @require_reportcard_subscription
 def my_report_cards(request):
     """
@@ -136,10 +138,10 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
-from .models import Result_Portal
+from .models import Result_Portal,StudentBehaviorRecord
+
 
 EXAM_TYPES = ['CA', 'Mid-Term', 'Exam']
-
 
 def report_card_detail(request, student_id, session_id, term_id):
     # Fetch all results for the student in this session & term
@@ -212,8 +214,6 @@ from .models import Result_Portal
 from .constants import GRADING_SCALE
 from reportlab.lib.enums import TA_LEFT
 
-EXAM_COLUMNS = ['CA', 'Mid-Term', 'Exam']  # Table headers
-
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -223,6 +223,7 @@ from django.http import HttpResponse
 import io
 import requests
 from reportlab.lib.styles import ParagraphStyle
+from reportlab.platypus.flowables import HRFlowable
 
 
 def download_term_report_pdf(request, student_id, session_id, term_id):
@@ -313,6 +314,10 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     ]))
     elements.append(header_table)
     elements.append(Spacer(1, 10))
+
+    
+    hr = HRFlowable(width="100%", thickness=0.5, color=colors.blue)
+    elements.append(hr)
 
     # --- Title ---
     elements.append(Paragraph("<b><u>TERM REPORT CARD</u></b>", style_center))
@@ -412,15 +417,108 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     ]))
     elements += [result_table, Spacer(1, 15)]
 
+    elements.append(Paragraph(f"<b>Number of Subjects:</b> {num_subjects}", style_left))
+    elements.append(Spacer(1, 5))  # optional spacing after
+
+
     # --- Grading Scale ---
-    elements.append(Paragraph("<b>GRADING SCALE</b>", style_left))
-    elements.append(Spacer(1, 4))
-    elements.append(Paragraph("A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39", style_left))
+    grading_text = "<b>GRADING SCALE</b>: A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39"
+    elements.append(Paragraph(grading_text, style_left))
+    # elements.append(Paragraph("<b>GRADING SCALE</b>":"A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39", style_left))
     elements.append(Spacer(1, 15))
 
+    elements.append(hr)
+     
+    # --- Fetch behavior for 3rd term ---
+    if term.name.lower().strip() in ["3rd term","3rd-term","3rd_term","3rd" ,"third term",'third-term','third_term',"third"]:
+        behavior = StudentBehaviorRecord.objects.filter(
+            student_id=student_id,
+            session_id=session_id,
+            term_id=term_id
+        ).first()
+
+        if behavior:
+            # --- Psychomotor Table ---
+            psychomotor_data = [["Default Psychomotor", "Rating"]]
+            psychomotor_data += [
+                ["Handwriting", behavior.handwriting],
+                ["Games", behavior.games],
+                ["Sports", behavior.sports],
+                ["Drawing & Painting", behavior.drawing_painting],
+                ["Crafts", behavior.crafts]
+            ]
+            psychomotor_table = Table(
+                psychomotor_data,
+                colWidths=[120, 40],
+                rowHeights=[15] + [12]*5  # header = 15, body = 12
+            )
+            psychomotor_table.setStyle(TableStyle([
+                ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+                ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0,0), (-1,0), 8),
+                ('FONTSIZE', (0,1), (-1,-1), 7),
+                ('ALIGN', (1,1), (-1,-1), 'CENTER'),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE')
+            ]))
+
+            # --- Affective Table ---
+            affective_data = [["Default Affective Traits", "Rating"]]
+            affective_data += [
+                ["Punctuality", behavior.punctuality],
+                ["Attendance", behavior.attendance],
+                ["Reliability", behavior.reliability],
+                ["Neatness", behavior.neatness],
+                ["Politeness", behavior.politeness],
+                ["Honesty", behavior.honesty],
+                ["Relationship w/ Students", behavior.relationship_with_students],
+                ["Self Control", behavior.self_control],
+                ["Attentiveness", behavior.attentiveness],
+                ["Perseverance", behavior.perseverance]
+            ]
+            affective_table = Table(
+                affective_data,
+                colWidths=[150, 40],
+                rowHeights=[15] + [12]*10  # header = 15, body = 12
+            )
+            affective_table.setStyle(TableStyle([
+                ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+                ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0,0), (-1,0), 8),
+                ('FONTSIZE', (0,1), (-1,-1), 7),
+                ('ALIGN', (1,1), (-1,-1), 'CENTER'),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE')
+            ]))
+
+            # --- Scale Table ---
+            scale_data = [["SCALE"]]
+            scale_data += [["5 - Excellent"], ["4 - Good"], ["3 - Fair"], ["2 - Poor"], ["1 - Very Poor"]]
+            scale_table = Table(
+                scale_data,
+                colWidths=[100],
+                rowHeights=[15] + [12]*5  # header = 15, body = 12
+            )
+            scale_table.setStyle(TableStyle([
+                ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+                ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0,0), (-1,0), 8),
+                ('FONTSIZE', (0,1), (-1,-1), 7),
+                ('ALIGN', (0,1), (-1,-1), 'CENTER'),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE')
+            ]))
+
+            # --- Combine tables horizontally ---
+            combined = Table([[psychomotor_table, affective_table, scale_table]], colWidths=[160, 200, 120])
+            combined.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP')]))
+
+            elements.append(combined)
+            elements.append(Spacer(1, 10))  # tighter spacing
+    
+            elements.append(hr)
+
     # --- Comments & Signatures ---
-    elements.append(Paragraph("<b>Teacher’s Comment:</b> ____________________________________________", style_left))
-    elements.append(Spacer(1, 8))
     if school and getattr(school, 'teacher_signature', None):
         try:
             sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
@@ -430,19 +528,25 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
             pass
 
     elements.append(Spacer(1, 10))
-    elements.append(Paragraph("<b>Principal’s Comment:</b> ____________________________________________", style_left))
-    elements.append(Spacer(1, 8))
+
+    if behavior:
+        # append form teacher and principal comments
+        elements.append(Spacer(1, 10))
+        elements.append(Paragraph(f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}", style_left))
+        elements.append(Paragraph(f"<b>Form Teacher Comment:</b> {behavior.form_teacher_comment}", style_left))
+        elements.append(Spacer(1, 5))
+        elements.append(Paragraph(f"<b>Principal's Remark:</b> {behavior.principal_comment}", style_left))
+
+        elements.append(hr)
+
     if school and getattr(school, 'principal_signature', None):
-        try:
-            sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
-            sig_img = RLImage(sig_data, width=100, height=40)
-            elements.append(sig_img)
-        except Exception:
-            pass
-
-    elements.append(Spacer(1, 20))
-    elements.append(Paragraph("<b>End of Report</b>", style_center))
-
+            try:
+                sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
+                sig_img = RLImage(sig_data, width=100, height=40)
+                elements.append(sig_img)
+            except Exception:
+                pass
+    
     doc.build(elements)
     return response
 
@@ -914,6 +1018,644 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
         "max_exam": max_exam,
     })
 
+
+# portal/views.py
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from teacher.models import Teacher
+from quiz.models import CourseGrade
+from portal.models import StudentBehaviorRecord
+from portal.forms import StudentBehaviorRecordForm
+from django.contrib import messages
+
+
+# @login_required
+# def form_teacher_dashboard(request):
+#     teacher = get_object_or_404(Teacher, user=request.user)
+
+#     classes = CourseGrade.objects.filter(
+#         form_teacher=teacher,
+#         is_active=True
+#     ).select_related('session', 'term').prefetch_related('students')
+
+#     return render(request, "portal/form_teacher_dashboard.html", {
+#         "classes": classes,
+#     })
+
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from openai import OpenAI
+from django.conf import settings
+
+
+client = OpenAI(api_key="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")
+
+@login_required
+@login_required(login_url='teacher:teacher_login')
+def form_teacher_dashboard(request):
+    teacher = get_object_or_404(Teacher, user=request.user)
+    school = teacher.school
+
+    # ---- FILTER DATA ----
+    sessions = Session.objects.filter(school=school)
+    terms = Term.objects.filter(school=school)
+    classes = teacher.form_teacher_classes.filter(is_active=True)
+
+    # ---- SELECTED FILTERS ----
+    selected_session_id = request.GET.get("session")
+    selected_term_id = request.GET.get("term")
+    selected_class_id = request.GET.get("class")
+
+    selected_session = Session.objects.filter(id=selected_session_id, school=school).first() if selected_session_id else None
+    selected_term = Term.objects.filter(id=selected_term_id, school=school).first() if selected_term_id else None
+    selected_class = classes.filter(id=selected_class_id).first() if selected_class_id else None
+
+    records = []
+
+    if selected_session and selected_term and selected_class:
+        # Load behavior records
+        records = StudentBehaviorRecord.objects.filter(
+            session=selected_session,
+            term=selected_term,
+            student__course_grades=selected_class
+        ).select_related("student").distinct()
+
+        # ---- HANDLE POST SAVE ----
+        if request.method == "POST":
+            for r in records:
+                # Update form teacher comment
+                comment_field = f"comment_{r.student.id}"
+                new_comment = request.POST.get(comment_field)
+                if new_comment is not None:
+                    r.form_teacher_comment = new_comment
+
+                # Update psychomotor fields
+                r.handwriting = request.POST.get(f"handwriting_{r.student.id}", 0)
+                r.games = request.POST.get(f"games_{r.student.id}", 0)
+                r.sports = request.POST.get(f"sports_{r.student.id}", 0)
+                r.drawing_painting = request.POST.get(f"drawing_{r.student.id}", 0)
+                r.crafts = request.POST.get(f"crafts_{r.student.id}", 0)
+
+                # Update affective fields
+                r.punctuality = request.POST.get(f"punctuality_{r.student.id}", 0)
+                r.attendance = request.POST.get(f"attendance_{r.student.id}", 0)
+                r.reliability = request.POST.get(f"reliability_{r.student.id}", 0)
+                r.neatness = request.POST.get(f"neatness_{r.student.id}", 0)
+                r.politeness = request.POST.get(f"politeness_{r.student.id}", 0)
+                r.honesty = request.POST.get(f"honesty_{r.student.id}", 0)
+                r.relationship_with_students = request.POST.get(f"relationship_{r.student.id}", 0)
+                r.self_control = request.POST.get(f"self_control_{r.student.id}", 0)
+                r.attentiveness = request.POST.get(f"attentive_{r.student.id}", 0)
+                r.perseverance = request.POST.get(f"perseverance_{r.student.id}", 0)
+
+                # Save updated record
+                r.save()
+
+            messages.success(request, "Comments and behavior scores saved successfully.")
+            # Redirect to refresh the page with GET params
+            return redirect(f"{request.path}?session={selected_session.id}&term={selected_term.id}&class={selected_class.id}")
+
+        # Attach report card results
+        for r in records:
+            student_results = Result_Portal.objects.filter(
+                student=r.student,
+                session=selected_session,
+                term=selected_term,
+            ).select_related("subject")
+
+            r.results = student_results
+            if student_results.exists():
+                total = sum(float(x.total_score or 0) for x in student_results)
+                avg = total / student_results.count()
+                r.total_score = total
+                r.average_score = round(avg, 2)
+                r.final_grade = student_results.first().grade_letter
+            else:
+                r.total_score = None
+                r.average_score = None
+                r.final_grade = None
+
+    context = {
+        "sessions": sessions,
+        "terms": terms,
+        "classes": classes,
+        "records": records,
+        "selected_session": selected_session.id if selected_session else "",
+        "selected_term": selected_term.id if selected_term else "",
+        "selected_class": selected_class.id if selected_class else "",
+    }
+
+    return render(request, "portal/form_teacher_dashboard.html", context)
+
+
+# -----------------------------
+# AI COMMENT (single student)
+# -----------------------------
+@login_required
+@login_required(login_url='teacher:teacher_login')
+def generate_form_teacher_comment(request, student_id):
+    student = get_object_or_404(NewUser, id=student_id)
+
+    session_id = request.GET.get("session")
+    term_id = request.GET.get("term")
+    class_id = request.GET.get("class")
+
+    # ---- VALIDATE FILTERS ----
+    if not session_id or not session_id.isdigit():
+        return JsonResponse({"comment": "Invalid session ID."})
+
+    if not term_id or not term_id.isdigit():
+        return JsonResponse({"comment": "Invalid term ID."})
+
+    if not class_id or not class_id.isdigit():
+        return JsonResponse({"comment": "Invalid class ID."})
+
+    # ---- GET BEHAVIOR RECORD ----
+    behavior_record = StudentBehaviorRecord.objects.filter(
+        student=student,
+        session_id=int(session_id),
+        term_id=int(term_id),
+        student__course_grades__id=int(class_id)
+    ).first()
+
+    # If behavior record exists, pull latest values
+    if behavior_record:
+        hw = request.GET.get(f"handwriting_{student.id}", behavior_record.handwriting)
+        games = request.GET.get(f"games_{student.id}", behavior_record.games)
+        sports = request.GET.get(f"sports_{student.id}", behavior_record.sports)
+        drawing = request.GET.get(f"drawing_{student.id}", behavior_record.drawing_painting)
+        crafts = request.GET.get(f"crafts_{student.id}", behavior_record.crafts)
+
+        punctuality = request.GET.get(f"punctuality_{student.id}", behavior_record.punctuality)
+        attendance = request.GET.get(f"attendance_{student.id}", behavior_record.attendance)
+        reliability = request.GET.get(f"reliability_{student.id}", behavior_record.reliability)
+        neatness = request.GET.get(f"neatness_{student.id}", behavior_record.neatness)
+        politeness = request.GET.get(f"politeness_{student.id}", behavior_record.politeness)
+        honesty = request.GET.get(f"honesty_{student.id}", behavior_record.honesty)
+        relationship = request.GET.get(f"relationship_{student.id}", behavior_record.relationship_with_students)
+        self_control = request.GET.get(f"self_control_{student.id}", behavior_record.self_control)
+        attentive = request.GET.get(f"attentive_{student.id}", behavior_record.attentiveness)
+        perseverance = request.GET.get(f"perseverance_{student.id}", behavior_record.perseverance)
+
+        behavior_summary = (
+            f"Psychomotor - H/W: {hw}, Games: {games}, Sports: {sports}, Drawing: {drawing}, Crafts: {crafts}\n"
+            f"Affective - Punctuality: {punctuality}, Attendance: {attendance}, Reliability: {reliability}, "
+            f"Neatness: {neatness}, Politeness: {politeness}, Honesty: {honesty}, Relationship: {relationship}, "
+            f"Self-Control: {self_control}, Attentive: {attentive}, Perseverance: {perseverance}"
+        )
+    else:
+        behavior_summary = "No behavior records yet."
+
+    # ---- GET RESULTS ----
+    results = Result_Portal.objects.filter(
+        student=student,
+        session_id=int(session_id),
+        term_id=int(term_id)
+    ).select_related("subject")
+
+    if not results.exists():
+        return JsonResponse({"comment": "No results found for this student."})
+
+    # Build subject summary
+    subject_scores_text = "\n".join(
+        f"{r.subject.title}: Total={r.total_score}, Grade={r.grade_letter}"
+        for r in results
+    )
+
+    prompt = f"""
+You are a school form teacher. Write a short, clear, honest comment for this student.
+
+Student: {student.first_name} {student.last_name}
+
+Scores:
+{subject_scores_text}
+
+Behavior:
+{behavior_summary}
+
+Make the comment 2–3 sentences. Highlight strengths, mention one improvement.
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a helpful school teacher assistant."},
+                {"role": "user", "content": prompt},
+            ],
+        )
+
+        comment = response.choices[0].message.content.strip()
+        return JsonResponse({"comment": comment})
+
+    except Exception as e:
+        return JsonResponse({"comment": f"Error generating comment: {str(e)}"})
+                    
+
+# -----------------------------
+# AI FOR ALL STUDENTS
+# -----------------------------
+
+# @login_required
+# def generate_all_form_teacher_comments(request):
+#     session_id = request.GET.get("session")
+#     term_id = request.GET.get("term")
+#     class_id = request.GET.get("class")
+
+#     students = Student.objects.filter(class_applied_id=class_id)
+
+#     result_map = {}
+#     results = Result.objects.filter(
+#         session_id=session_id,
+#         term_id=term_id,
+#         student__in=students
+#     ).select_related("student", "subject")
+
+#     for r in results:
+#         result_map.setdefault(r.student_id, []).append(r)
+
+#     final_comments = {}
+
+#     for student in students:
+#         results_for_student = result_map.get(student.id, [])
+
+#         subject_summary = [
+#             f"{r.subject.title}: {r.total_score} ({r.grade_letter})"
+#             for r in results_for_student
+#         ]
+#         subject_text = "\n".join(subject_summary)
+
+#         prompt = f"""
+# Write a form teacher comment for {student.full_name()}.
+
+# Scores:
+# {subject_text}
+
+# Highlight strengths, weaknesses, and improvement advice.
+# """
+
+#         try:
+#             response = client.chat.completions.create(
+#                 model="gpt-4o-mini",
+#                 messages=[{"role": "user", "content": prompt}]
+#             )
+
+#             final_comments[student.id] = response.choices[0].message["content"]
+
+#         except:
+#             final_comments[student.id] = "Error generating comment."
+
+#     return JsonResponse({"comments": final_comments})
+
+
+@login_required
+def edit_student_behavior(request, student_id, term_id, session_id):
+
+    teacher = get_object_or_404(Teacher, user=request.user)
+    student = get_object_or_404(NewUser, id=student_id)
+    term = get_object_or_404(Term, id=term_id)
+    session = get_object_or_404(Session, id=session_id)
+
+    # Fetch or create behavior record automatically
+    record, created = StudentBehaviorRecord.objects.get_or_create(
+        student=student,
+        term=term,
+        session=session,
+        defaults={
+            "form_teacher": teacher,
+            "handwriting": 3,
+            "games": 3,
+            "sports": 3,
+            "drawing_painting": 3,
+            "crafts": 3,
+            "punctuality": 3,
+            "attendance": 3,
+            "reliability": 3,
+            "neatness": 3,
+            "politeness": 3,
+            "honesty": 3,
+            "relationship_with_students": 3,
+            "self_control": 3,
+            "attentiveness": 3,
+            "perseverance": 3,
+        }
+    )
+
+    if request.method == "POST":
+        # Psychomotor fields
+        record.handwriting = request.POST.get("handwriting")
+        record.games = request.POST.get("games")
+        record.sports = request.POST.get("sports")
+        record.drawing_painting = request.POST.get("drawing_painting")
+        record.crafts = request.POST.get("crafts")
+
+        # Affective fields
+        record.punctuality = request.POST.get("punctuality")
+        record.attendance = request.POST.get("attendance")
+        record.reliability = request.POST.get("reliability")
+        record.neatness = request.POST.get("neatness")
+        record.politeness = request.POST.get("politeness")
+        record.honesty = request.POST.get("honesty")
+        record.relationship_with_students = request.POST.get("relationship_with_students")
+        record.self_control = request.POST.get("self_control")
+        record.attentiveness = request.POST.get("attentiveness")
+        record.perseverance = request.POST.get("perseverance")
+
+        # Comment field
+        record.form_teacher_comment = request.POST.get("form_teacher_comment")
+
+        record.form_teacher = teacher  # ensure ownership
+        record.save()
+
+        messages.success(request, "Behavior record updated successfully.")
+        return redirect("portal:form_teacher_dashboard")
+
+    return render(request, "portal/edit_student_behavior.html", {
+        "record": record,
+        "student": student,
+        "term": term,
+        "session": session,
+    })
+
+from django.http import HttpResponseForbidden
+from django.db.models import Prefetch
+
+from django.http import JsonResponse
+
+from django.http import JsonResponse
+
+@login_required
+def principal_dashboard(request):
+    # Only principals allowed
+    if not getattr(request.user, "is_principal", False):
+        return HttpResponseForbidden("Access denied")
+
+    school = request.user.school
+    classes = CourseGrade.objects.filter(schools=school)
+    sessions = Session.objects.all()
+    terms = Term.objects.all()
+
+    selected_session_id = request.GET.get("session")
+    selected_term_id = request.GET.get("term")
+    selected_class_id = request.GET.get("class")
+
+    selected_session = Session.objects.filter(id=selected_session_id).first() if selected_session_id else None
+    selected_term = Term.objects.filter(id=selected_term_id).first() if selected_term_id else None
+    selected_class = CourseGrade.objects.filter(id=selected_class_id).first() if selected_class_id else None
+
+    records = []
+
+    if selected_session and selected_term and selected_class:
+        # Ensure all StudentBehaviorRecords exist
+        for student in selected_class.students.all():
+            StudentBehaviorRecord.objects.get_or_create(
+                student=student,
+                school=school,
+                session=selected_session,
+                term=selected_term,
+                defaults={'form_teacher': selected_class.form_teacher}
+            )
+
+        # Fetch behavior records
+        records = StudentBehaviorRecord.objects.filter(
+            student__course_grades=selected_class,
+            session=selected_session,
+            term=selected_term
+        ).select_related('student')
+
+        # Attach results and calculate totals, grades, and remarks
+        for record in records:
+            results = Result_Portal.objects.filter(
+                student=record.student,
+                session=selected_session,
+                term=selected_term,
+                schools=school
+            ).select_related('subject')
+
+            # Compute total, average, grade per student
+            total_score = sum(float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
+                              for r in results)
+            num_subjects = len(results)
+            average_score = round(total_score / num_subjects, 2) if num_subjects else 0
+            final_grade = results[0].grade_letter if results else ''
+            remarks = {r.subject.title: r.remark for r in results}
+
+            # Attach to record for template
+            record.results = results
+            record.total_score = total_score
+            record.average_score = average_score
+            record.final_grade = final_grade
+            record.subject_remarks = remarks
+
+        # Handle POST to save principal comments
+        if request.method == "POST":
+            for record in records:
+                comment_field = f"comment_{record.student.id}"
+                new_comment = request.POST.get(comment_field)
+                if new_comment is not None:
+                    record.principal_comment = new_comment
+                    record.save()
+            messages.success(request, "Principal comments saved successfully.")
+            # Redirect to refresh GET params
+            return redirect(request.path + f"?session={selected_session.id}&term={selected_term.id}&class={selected_class.id}")
+
+    context = {
+        "classes": classes,
+        "sessions": sessions,
+        "terms": terms,
+        "selected_session": selected_session,
+        "selected_term": selected_term,
+        "selected_class": selected_class,
+        "records": records,
+    }
+
+    return render(request, "portal/principal_dashboard.html", context)
+
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+
+
+@csrf_exempt
+def generate_principal_comment(request, student_id):
+    session_id = request.GET.get("session")
+    term_id = request.GET.get("term")
+    class_id = request.GET.get("class")
+
+    if not (session_id and term_id and class_id):
+        return JsonResponse({"error": "Missing parameters"}, status=400)
+
+    from portal.models import NewUser, Result_Portal
+
+    try:
+        student = NewUser.objects.get(id=student_id)
+    except NewUser.DoesNotExist:
+        return JsonResponse({"error": "Student not found"}, status=404)
+
+    results = Result_Portal.objects.filter(
+        student=student,
+        session_id=session_id,
+        term_id=term_id
+    ).select_related("subject")
+
+    result_lines = [
+        f"{r.subject.title}: Total={r.total_score}, Grade={r.grade_letter}, Remark={r.remark}"
+        for r in results
+    ]
+
+    result_text = "\n".join(result_lines) if result_lines else "No results yet."
+
+    prompt = f"""
+    You are an expert school principal.
+    Based on the following student's performance, write a detailed, professional principal comment.
+    
+    Student: {student.first_name} {student.last_name}
+    Results:
+    {result_text}
+
+    The comment must:
+    - Highlight strong subjects
+    - Highlight weak subjects
+    - Mention overall performance
+    - Be encouraging and actionable
+    - Be 2–3 sentences long
+    """
+
+    # Call OpenAI
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You generate principal comments with high precision."},
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=1800,
+            temperature=0.4,
+        )
+        ai_comment = resp.choices[0].message.content.strip()  # ✅ Correct
+    except Exception as e:
+        return JsonResponse({"comment": f"Error generating comment: {str(e)}"})
+
+    return JsonResponse({"comment": ai_comment})
+    
+
+
+@csrf_exempt
+def generate_all_principal_comments(request):
+    """
+    Generate AI principal comments using OpenAI GPT for all students
+    in a given session, term, and class.
+    """
+
+    session_id = request.GET.get("session")
+    term_id = request.GET.get("term")
+    class_id = request.GET.get("class")
+
+    if not (session_id and term_id and class_id):
+        return JsonResponse({"error": "Missing parameters: session, term, or class"}, status=400)
+
+    # Fetch students in the class
+    students = NewUser.objects.filter(course_grades__id=class_id).distinct()
+
+    # Fetch all results for the students in this session and term
+    results = Result_Portal.objects.filter(
+        session_id=session_id,
+        term_id=term_id,
+        student__in=students
+    ).select_related("subject", "student", "schools")
+
+    output_comments = {}
+
+    for student in students:
+        student_results = results.filter(student=student)
+
+        strong_subjects = []
+        weak_subjects = []
+        result_lines = []
+
+        for r in student_results:
+            # Determine strong/weak subjects
+            if r.total_score >= 70:
+                strong_subjects.append(r.subject.title)
+            elif r.total_score < 45:
+                weak_subjects.append(r.subject.title)
+
+            result_lines.append(
+                f"{r.subject.title}: Total={r.total_score}, Grade={r.grade_letter or '-'}, Remark={r.remark or '-'}"
+            )
+
+        result_text = "\n".join(result_lines) if result_lines else "No results yet."
+
+        prompt = f"""
+You are an expert school principal. Based on the following student's performance, write a professional principal comment.
+
+Student: {student.first_name} {student.last_name}
+Results:
+{result_text}
+
+Strong subjects: {', '.join(strong_subjects) if strong_subjects else 'None'}
+Weak subjects: {', '.join(weak_subjects) if weak_subjects else 'None'}
+
+The comment must:
+- Highlight strong subjects
+- Highlight weak subjects
+- Mention overall performance
+- Be encouraging and actionable
+- Be 2–3 sentences long
+"""
+
+        try:
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You generate curriculum-aligned principal comments with high precision."},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=1800,
+                temperature=0.4,
+            )
+
+            # Correct access to the message content
+            ai_comment = resp.choices[0].message.content.strip()
+
+        except Exception as e:
+            ai_comment = f"Error generating comment: {str(e)}"
+
+        output_comments[student.id] = ai_comment
+
+    return JsonResponse({"comments": output_comments}, status=200)
+
+
+@login_required
+@login_required(login_url='teacher:teacher_login')
+def principal_edit_behavior(request, record_id):
+    # Only superuser or principal can access
+    if not request.user.is_superuser and not getattr(request.user, "is_principal", False):
+        return HttpResponseForbidden("Access denied")
+
+    record = get_object_or_404(StudentBehaviorRecord, id=record_id)
+
+    if request.method == "POST":
+        comment = request.POST.get("principal_comment", "").strip()
+        record.principal_comment = comment
+        record.save()
+        messages.success(request, "Principal remark updated successfully.")
+
+        # Redirect back to dashboard, keep class selection if available
+        class_id = record.student.course_grades.first().id if record.student.course_grades.exists() else None
+        if class_id:
+            return redirect(f"/portal/principal-dashboard/?class={class_id}")
+        return redirect("portal:principal_dashboard")
+
+    context = {
+        "record": record
+    }
+    return render(request, "portal/principal_edit_behavior.html", context)
 
 
 # @login_required

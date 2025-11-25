@@ -69,25 +69,54 @@ class Course(models.Model):
 from django.core.exceptions import ValidationError
 
 class CourseGrade(models.Model):
-    schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='coursegrade', blank=True, null=True, db_index=True)  # 🔍 Faster lookup by school
-    name = models.CharField(max_length=140, blank=True, null=True, db_index=True)  # 🔍 Faster filtering/searching by class name
+    schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='coursegrade', blank=True, null=True, db_index=True)
+    name = models.CharField(max_length=140, blank=True, null=True, db_index=True)
+
+    # NEW: Session and Term
+    session = models.ForeignKey('sms.Session', on_delete=models.SET_NULL, null=True, blank=True)
+    term = models.ForeignKey('sms.Term', on_delete=models.SET_NULL, null=True, blank=True)
+
     students = models.ManyToManyField(NewUser, related_name='course_grades', blank=True)
-    # session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
     subjects = models.ManyToManyField(Course, related_name='course_grade')
-    is_active = models.BooleanField(default=True, db_index=True)  # 🔍 Fast filtering of active classes
+    form_teacher = models.ForeignKey(
+       'teacher.Teacher',  # <-- Teacher model
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='form_teacher_classes',
+        
+    )
+    is_active = models.BooleanField(default=True, db_index=True)
     id = models.AutoField(primary_key=True)
 
     class Meta:
         verbose_name = 'Student class'
         verbose_name_plural = 'student classes'
-        indexes = [
-            models.Index(fields=['schools']),
-            models.Index(fields=['name']),
-            models.Index(fields=['is_active']),
-        ]
 
     def __str__(self):
         return self.name if self.name else 'Unnamed Class'
+
+
+# class CourseGrade(models.Model):
+#     schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='coursegrade', blank=True, null=True, db_index=True)  # 🔍 Faster lookup by school
+#     name = models.CharField(max_length=140, blank=True, null=True, db_index=True)  # 🔍 Faster filtering/searching by class name
+#     students = models.ManyToManyField(NewUser, related_name='course_grades', blank=True)
+#     # session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
+#     subjects = models.ManyToManyField(Course, related_name='course_grade')
+#     is_active = models.BooleanField(default=True, db_index=True)  # 🔍 Fast filtering of active classes
+#     id = models.AutoField(primary_key=True)
+
+#     class Meta:
+#         verbose_name = 'Student class'
+#         verbose_name_plural = 'student classes'
+#         indexes = [
+#             models.Index(fields=['schools']),
+#             models.Index(fields=['name']),
+#             models.Index(fields=['is_active']),
+#         ]
+
+#     def __str__(self):
+#         return self.name if self.name else 'Unnamed Class'
 
 
 

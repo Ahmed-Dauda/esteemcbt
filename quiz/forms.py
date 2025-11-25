@@ -1,5 +1,7 @@
 
 from django import forms
+
+from sms.models import ExamType, Session, Term
 from .models import CourseGrade, Course
 from users.models import NewUser
 from .models import School
@@ -10,6 +12,23 @@ try:
 except Exception:
     Courses = None
 
+
+class BulkExamUpdateForm(forms.Form):
+    session = forms.ModelChoiceField(
+        queryset=Session.objects.all(),
+        required=False,
+        label="Session"
+    )
+    term = forms.ModelChoiceField(
+        queryset=Term.objects.all(),
+        required=False,
+        label="Term"
+    )
+    exam_type = forms.ModelChoiceField(
+        queryset=ExamType.objects.all(),
+        required=False,
+        label="Exam Type"
+    )
 
 class SchoolForm(forms.ModelForm):
     class Meta:

@@ -32,6 +32,62 @@ def examiner_course_list(request):
     courses = Course.objects.filter(schools=school)
     return render(request, 'quiz/dashboard/examiner_course_list.html', {'courses': courses})
 
+from .forms import BulkExamUpdateForm
+
+
+@login_required
+def update_school_exam_settings(request):
+    school = getattr(request.user, "school", None)
+
+    # If user has no school assigned
+    if not school:
+        messages.error(request, "You are not assigned to any school.")
+        return redirect("dashboard")  # Change to your correct dashboard URL
+
+    if request.method == "POST":
+        form = BulkExamUpdateForm(request.POST)
+
+        if form.is_valid():
+            session = form.cleaned_data.get("session")
+            term = form.cleaned_data.get("term")
+            exam_type = form.cleaned_data.get("exam_type")
+
+            courses = Course.objects.filter(schools=school)
+
+            # Build data dict only with selected fields
+            update_data = {}
+            if session:
+                update_data["session"] = session
+            if term:
+                update_data["term"] = term
+            if exam_type:
+                update_data["exam_type"] = exam_type
+
+            # If user selected something, update
+            if update_data:
+                courses.update(**update_data)
+
+                messages.success(
+                    request,
+                    "Exam settings updated successfully for all courses in your school."
+                )
+            else:
+                messages.warning(
+                    request,
+                    "No changes were made because no fields were selected."
+                )
+
+            return redirect("quiz:update_school_exam_settings")
+
+    else:
+        form = BulkExamUpdateForm()
+
+    return render(request, "quiz/dashboard/update_school_exam_settings.html", {
+        "form": form,
+        "school": school,
+    })
+
+
 def examiner_course_questions(request, course_id):
     school = request.user.school
     course = get_object_or_404(Course, pk=course_id, schools=school)
