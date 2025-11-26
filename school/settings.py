@@ -503,11 +503,18 @@ TINYMCE_DEFAULT_CONFIG = {
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(os.path.join(BASE_DIR, ".env"))
-
+# Now you can use:
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# BASE_DIR = Path(__file__).resolve().parent.parent
+# load_dotenv(os.path.join(BASE_DIR, ".env"))
+# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+
 import ssl
 import os
 

@@ -1048,8 +1048,10 @@ from django.views.decorators.csrf import csrf_exempt
 from openai import OpenAI
 from django.conf import settings
 
+# client = OpenAI(api_key="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")
 
-client = OpenAI(api_key="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")
+
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 @login_required
 @login_required(login_url='teacher:teacher_login')
@@ -1152,6 +1154,7 @@ def form_teacher_dashboard(request):
 # -----------------------------
 # AI COMMENT (single student)
 # -----------------------------
+
 @login_required
 @login_required(login_url='teacher:teacher_login')
 def generate_form_teacher_comment(request, student_id):
@@ -1239,7 +1242,7 @@ Make the comment 2–3 sentences. Highlight strengths, mention one improvement.
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a helpful school teacher assistant."},
                 {"role": "user", "content": prompt},
@@ -1252,61 +1255,6 @@ Make the comment 2–3 sentences. Highlight strengths, mention one improvement.
     except Exception as e:
         return JsonResponse({"comment": f"Error generating comment: {str(e)}"})
                     
-
-# -----------------------------
-# AI FOR ALL STUDENTS
-# -----------------------------
-
-# @login_required
-# def generate_all_form_teacher_comments(request):
-#     session_id = request.GET.get("session")
-#     term_id = request.GET.get("term")
-#     class_id = request.GET.get("class")
-
-#     students = Student.objects.filter(class_applied_id=class_id)
-
-#     result_map = {}
-#     results = Result.objects.filter(
-#         session_id=session_id,
-#         term_id=term_id,
-#         student__in=students
-#     ).select_related("student", "subject")
-
-#     for r in results:
-#         result_map.setdefault(r.student_id, []).append(r)
-
-#     final_comments = {}
-
-#     for student in students:
-#         results_for_student = result_map.get(student.id, [])
-
-#         subject_summary = [
-#             f"{r.subject.title}: {r.total_score} ({r.grade_letter})"
-#             for r in results_for_student
-#         ]
-#         subject_text = "\n".join(subject_summary)
-
-#         prompt = f"""
-# Write a form teacher comment for {student.full_name()}.
-
-# Scores:
-# {subject_text}
-
-# Highlight strengths, weaknesses, and improvement advice.
-# """
-
-#         try:
-#             response = client.chat.completions.create(
-#                 model="gpt-4o-mini",
-#                 messages=[{"role": "user", "content": prompt}]
-#             )
-
-#             final_comments[student.id] = response.choices[0].message["content"]
-
-#         except:
-#             final_comments[student.id] = "Error generating comment."
-
-#     return JsonResponse({"comments": final_comments})
 
 
 @login_required

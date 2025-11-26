@@ -9,8 +9,8 @@ import math
 import time
 
 # client = OpenAI(api_key=settings.OPENAI_API_KEY)
-client = OpenAI(api_key="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")
 
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 def parse_ai_output(output):
     """Parse AI text into list of question dicts (question, option1..4, answer)"""
