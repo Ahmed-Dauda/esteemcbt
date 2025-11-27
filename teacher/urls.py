@@ -36,7 +36,7 @@ path('student-lists/', views.student_lists_view, name='student_lists'),
 path('edit-student/<int:student_id>/', views.edit_student, name='edit_student'),
     path('delete-student/<int:student_id>/', views.delete_student, name='delete_student'),
 
-    # path('teacher/results/', views.teacher_result_list_view, name='teacher_result_list'),
+   
     path('teacher/results/<int:course_id>/', views.teacher_course_results_view, name='teacher_course_results'),
 
     path('control/<str:result_class>/<str:subject>/<str:session_name>/<str:term_name>/', views.control_view, name='control'),
@@ -94,7 +94,7 @@ path('onboarding/', views.onboarding_dashboard_view, name='onboarding_dashboard'
     path('teacher-results/', views.teacher_results_view, name='teacher_results'),
     path('teacher/results/edit/<int:course_id>/<int:result_id>/', views.edit_teacher_results_view, name='edit_teacher_results'),
 
-    # path('teacher/results/edit/<int:result_id>/',  views.edit_teacher_results_view, name='edit_teacher_results'),
+    
     path('teacher/results/delete/<int:course_id>/<int:result_id>/', views.delete_teacher_result_view, name='delete_teacher_result'),
 
     path('export-results-csv/', views.export_results_csv, name='export_results_csv'),

@@ -2384,26 +2384,55 @@ def exam_statistics_view(request, course_id):
     return render(request, 'teacher/dashboard/exam_statistics.html', context)
 
 from django.db.models.functions import Lower
-
 @login_required(login_url='teacher:teacher_login')
 def teacher_course_results_view(request, course_id):
     """Display all student results for a given course, ordered alphabetically by name."""
     course = get_object_or_404(Course, id=course_id)
 
+    # Handle bulk delete
+    if request.method == "POST":
+        selected_ids = request.POST.getlist('selected_results')
+        if selected_ids:
+            Result.objects.filter(id__in=selected_ids).delete()
+            messages.success(request, "Selected results deleted successfully.")
+        else:
+            messages.error(request, "No result was selected.")
+        return redirect('teacher:teacher_course_results', course_id=course_id)
+
     results = (
         Result.objects
         .select_related('student', 'exam', 'term', 'session', 'exam_type')
         .filter(exam=course)
-        .order_by(Lower('student__first_name').asc(nulls_last=True), Lower('student__last_name').asc(nulls_last=True))
-
+        .order_by(
+            Lower('student__first_name').asc(nulls_last=True),
+            Lower('student__last_name').asc(nulls_last=True)
+        )
     )
-    for r in Result.objects.order_by(Lower('student__first_name'), Lower('student__last_name')):
-        print(r.student.first_name, r.student.last_name)
-        
-    return render(request, 'teacher/dashboard/course_results_detail.html', {
+
+    return render(request, 'teacher/dashboard/teacher_results_detail.html', {
         'course': course,
         'results': results,
     })
+
+# @login_required(login_url='teacher:teacher_login')
+# def teacher_course_results_view(request, course_id):
+#     """Display all student results for a given course, ordered alphabetically by name."""
+#     course = get_object_or_404(Course, id=course_id)
+
+#     results = (
+#         Result.objects
+#         .select_related('student', 'exam', 'term', 'session', 'exam_type')
+#         .filter(exam=course)
+#         .order_by(Lower('student__first_name').asc(nulls_last=True), Lower('student__last_name').asc(nulls_last=True))
+
+#     )
+#     for r in Result.objects.order_by(Lower('student__first_name'), Lower('student__last_name')):
+#         print(r.student.first_name, r.student.last_name)
+        
+#     return render(request, 'teacher/dashboard/teacher_results_detail.html', {
+#         'course': course,
+#         'results': results,
+#     })
 
 
 @login_required
@@ -2503,10 +2532,6 @@ def edit_teacher_results_view(request, course_id, result_id):
 
     # Validate course
     course = get_object_or_404(Course, id=course_id)
-
-    # Ensure course is taught by this teacher
-    # if course not in teacher.subjects_taught.all():
-    #     return render(request, 'error_page.html', {'message': 'Unauthorized access to this course.'})
 
     # Validate and fetch result
     result = get_object_or_404(Result, id=result_id, exam=course)

@@ -61,41 +61,20 @@
   <label>{{ form.subjects.label }}</label>
   {{ form.subjects }}
 </div>
+ <div class="text-center mt-4">
+      <button type="submit" class="btn btn-success btn-lg submit-btn">Save Changes</button>
+  </div>
 <div class="form-group mb-3">
   <label>{{ form.students.label }}</label>
   {{ form.students }}
 </div>
 
-    <div class="text-center mt-4">
-      <button type="submit" class="btn btn-success btn-lg submit-btn">Save Changes</button>
-    </div>
+   <div class="text-center mt-4">
+      <button type="submit" class="btn btn-success btn-lg submit-btn">Update students record</button>
+    </div> 
   </form>
 </div>
 
-
-    <!-- <div class="card-body px-4 py-5">
-      <form method="post">
-        {% csrf_token %}
-
-        <div class="row flex-form">
-         Students
-          <div class="col-md-6 mb-4">
-            <label for="{{ form.students.id_for_label }}" class="form-label">Select Students</label>
-            {{ form.students|as_crispy_field }}
-          </div>
-
-          Subjects
-          <div class="col-md-6 mb-4">
-            <label for="{{ form.subjects.id_for_label }}" class="form-label">Select Subjects</label>
-            {{ form.subjects|as_crispy_field }}
-          </div>
-        </div>
-
-        <div class="text-center mt-4">
-          <button type="submit" class="btn btn-success btn-lg submit-btn">Save Changes</button>
-        </div>
-      </form>
-    </div> -->
   </div>
 </div>
 
