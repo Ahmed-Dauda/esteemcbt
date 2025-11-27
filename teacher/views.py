@@ -1905,7 +1905,7 @@ def edit_coursegrade_view(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, "Course grade updated successfully.")
-            return redirect('teacher:examiner_dashboard')
+            # return redirect('teacher:examiner_dashboard')
     else:
         form = CourseGradeForm(instance=course_grade, user_school=user_school)
 
@@ -2384,20 +2384,19 @@ def exam_statistics_view(request, course_id):
     return render(request, 'teacher/dashboard/exam_statistics.html', context)
 
 from django.db.models.functions import Lower
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
 @login_required(login_url='teacher:teacher_login')
 def teacher_course_results_view(request, course_id):
-    """Display all student results for a given course, ordered alphabetically by name."""
     course = get_object_or_404(Course, id=course_id)
 
-    # Handle bulk delete
-    if request.method == "POST":
-        selected_ids = request.POST.getlist('selected_results')
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        selected_ids = request.POST.getlist('selected_results[]')  # note the []
         if selected_ids:
-            Result.objects.filter(id__in=selected_ids).delete()
-            messages.success(request, "Selected results deleted successfully.")
-        else:
-            messages.error(request, "No result was selected.")
-        return redirect('teacher:teacher_course_results', course_id=course_id)
+            count = Result.objects.filter(id__in=selected_ids).delete()[0]
+            return JsonResponse({'status': 'success', 'deleted_count': count})
+        return JsonResponse({'status': 'error', 'message': 'No results selected.'})
 
     results = (
         Result.objects
@@ -2413,6 +2412,8 @@ def teacher_course_results_view(request, course_id):
         'course': course,
         'results': results,
     })
+
+
 
 # @login_required(login_url='teacher:teacher_login')
 # def teacher_course_results_view(request, course_id):

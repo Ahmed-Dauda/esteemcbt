@@ -77,40 +77,64 @@
 
 
 <!-- ========================= SCRIPTS ========================= -->
-
 <script>
-  $(document).ready(function () {
+$(document).ready(function () {
 
-    // Initialize DataTables first
     let table = $('#resultsTable').DataTable({
-      "order": [[1, "asc"]],  // sort by student name
+      "order": [[1, "asc"]],
       "pageLength": 10
     });
 
     // SELECT ALL
     $('#select-all').on('click', function () {
-      $('input.check-item').prop('checked', this.checked);
+        $('input.check-item').prop('checked', this.checked);
     });
 
-    // BULK DELETE CONFIRMATION WITH COUNT
-    $('#delete-btn').on('click', function (e) {
-      let count = $('input.check-item:checked').length;
+    // AJAX BULK DELETE
+    $('#delete-btn').on('click', function(e) {
+        e.preventDefault();  // prevent normal form submission
 
-      if (count === 0) {
-        alert("No results selected to delete.");
-        e.preventDefault();
-        return false;
-      }
+        let selected = $('input.check-item:checked');
+        let count = selected.length;
 
-      let confirmMsg = `Are you sure you want to delete ${count} selected result(s)?`;
+        if (count === 0) {
+            alert("No results selected to delete.");
+            return false;
+        }
 
-      if (!confirm(confirmMsg)) {
-        e.preventDefault();
-        return false;
-      }
+        if (!confirm(`Are you sure you want to delete ${count} selected result(s)?`)) {
+            return false;
+        }
+
+        // Prepare data
+        let ids = [];
+        selected.each(function() { ids.push($(this).val()); });
+
+        $.ajax({
+            url: "",  // same URL
+            type: "POST",
+            data: {
+                'selected_results[]': ids,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Remove deleted rows from DataTable
+                    selected.each(function() {
+                        table.row($(this).closest('tr')).remove().draw();
+                    });
+                    alert(`${response.deleted_count} result(s) deleted successfully.`);
+                } else {
+                    alert(response.message || 'Error deleting results.');
+                }
+            },
+            error: function() {
+                alert('AJAX request failed. Please try again.');
+            }
+        });
     });
 
-  });
+});
 </script>
 
 {% endblock %}
