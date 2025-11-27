@@ -1888,7 +1888,6 @@ def delete_student(request, student_id):
 
 
 
-
 @login_required(login_url='teacher:teacher_login')
 def edit_coursegrade_view(request, pk):
     user = NewUser.objects.select_related('school').get(id=request.user.id)

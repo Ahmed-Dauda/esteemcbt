@@ -1058,11 +1058,13 @@ client = OpenAI(api_key=settings.OPENAI_API_KEY)
 def form_teacher_dashboard(request):
     teacher = get_object_or_404(Teacher, user=request.user)
     school = teacher.school
-
+    
     # ---- FILTER DATA ----
     sessions = Session.objects.filter(school=school)
     terms = Term.objects.filter(school=school)
-    classes = teacher.form_teacher_classes.filter(is_active=True)
+    # Only get classes where teacher is assigned as form teacher
+    classes = teacher.classes_taught.all()  # all classes this teacher teaches
+    # print("Classes for teacher:", classes)
 
     # ---- SELECTED FILTERS ----
     selected_session_id = request.GET.get("session")

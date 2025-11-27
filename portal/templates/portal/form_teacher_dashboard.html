@@ -33,12 +33,15 @@
 
     <div class="col-md-3">
         <label class="form-label fw-bold">Class</label>
-        <select name="class" class="form-select" required>
-            <option value="">--Select--</option>
-            {% for cls in classes %}
-            <option value="{{ cls.id }}" {% if selected_class|default:'' == cls.id|stringformat:"s" %}selected{% endif %}>{{ cls.name }}</option>
-            {% endfor %}
-        </select>
+       <select name="class" class="form-select">
+    <option value="">Select Class</option>
+    {% for cls in classes %}
+        <option value="{{ cls.id }}" {% if cls.id|stringformat:"s" == selected_class|stringformat:"s" %}selected{% endif %}>
+            {{ cls.name }}
+        </option>
+    {% endfor %}
+</select>
+
     </div>
 
     <div class="col-md-3 d-flex align-items-end">
