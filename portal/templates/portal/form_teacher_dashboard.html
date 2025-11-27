@@ -10,40 +10,52 @@
 <h2 class="mb-4">Form Teacher – Behavior & Comments</h2>
 
 <!-- FILTER BAR -->
+<!-- FILTER BAR -->
 <form method="get" class="row g-3 mb-4">
+
+    <!-- SESSION FILTER -->
     <div class="col-md-3">
         <label class="form-label fw-bold">Session</label>
         <select name="session" class="form-select" required>
-            <option value="">--Select--</option>
+            <option value="">-- Select --</option>
             {% for s in sessions %}
-            <option value="{{ s.id }}" {% if selected_session|default:'' == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+                <option value="{{ s.id }}" 
+                    {% if selected_session|stringformat:"s" == s.id|stringformat:"s" %}selected{% endif %}>
+                    {{ s.name }}
+                </option>
             {% endfor %}
         </select>
     </div>
 
+    <!-- TERM FILTER -->
     <div class="col-md-3">
         <label class="form-label fw-bold">Term</label>
         <select name="term" class="form-select" required>
-            <option value="">--Select--</option>
+            <option value="">-- Select --</option>
             {% for t in terms %}
-            <option value="{{ t.id }}" {% if selected_term|default:'' == t.id|stringformat:"s" %}selected{% endif %}>{{ t.name }}</option>
+                <option value="{{ t.id }}"
+                    {% if selected_term|stringformat:"s" == t.id|stringformat:"s" %}selected{% endif %}>
+                    {{ t.name }}
+                </option>
             {% endfor %}
         </select>
     </div>
 
+    <!-- CLASS FILTER (Only teacher’s classes) -->
     <div class="col-md-3">
         <label class="form-label fw-bold">Class</label>
-       <select name="class" class="form-select">
-    <option value="">Select Class</option>
-    {% for cls in classes %}
-        <option value="{{ cls.id }}" {% if cls.id|stringformat:"s" == selected_class|stringformat:"s" %}selected{% endif %}>
-            {{ cls.name }}
-        </option>
-    {% endfor %}
-</select>
-
+        <select name="class" class="form-select" required>
+            <option value="">-- Select --</option>
+            {% for cls in classes %}
+                <option value="{{ cls.id }}" 
+                    {% if selected_class|stringformat:"s" == cls.id|stringformat:"s" %}selected{% endif %}>
+                    {{ cls.name }}
+                </option>
+            {% endfor %}
+        </select>
     </div>
 
+    <!-- SEARCH BUTTON -->
     <div class="col-md-3 d-flex align-items-end">
         <button class="btn btn-primary w-100">Search</button>
     </div>

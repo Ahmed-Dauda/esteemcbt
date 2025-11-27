@@ -1053,55 +1053,54 @@ from django.conf import settings
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-@login_required
 @login_required(login_url='teacher:teacher_login')
 def form_teacher_dashboard(request):
     teacher = get_object_or_404(Teacher, user=request.user)
     school = teacher.school
-    
-    # ---- FILTER DATA ----
+
+    # ---- FILTER OPTIONS ----
     sessions = Session.objects.filter(school=school)
     terms = Term.objects.filter(school=school)
-    # Only get classes where teacher is assigned as form teacher
-    classes = teacher.classes_taught.all()  # all classes this teacher teaches
-    # print("Classes for teacher:", classes)
+
+    # ✅ Only classes associated with this teacher
+    classes = teacher.classes_taught.all()
 
     # ---- SELECTED FILTERS ----
     selected_session_id = request.GET.get("session")
     selected_term_id = request.GET.get("term")
     selected_class_id = request.GET.get("class")
 
-    selected_session = Session.objects.filter(id=selected_session_id, school=school).first() if selected_session_id else None
-    selected_term = Term.objects.filter(id=selected_term_id, school=school).first() if selected_term_id else None
+    selected_session = sessions.filter(id=selected_session_id).first() if selected_session_id else None
+    selected_term = terms.filter(id=selected_term_id).first() if selected_term_id else None
     selected_class = classes.filter(id=selected_class_id).first() if selected_class_id else None
 
     records = []
 
     if selected_session and selected_term and selected_class:
-        # Load behavior records
+        # ---- LOAD RECORDS ----
         records = StudentBehaviorRecord.objects.filter(
             session=selected_session,
             term=selected_term,
             student__course_grades=selected_class
         ).select_related("student").distinct()
 
-        # ---- HANDLE POST SAVE ----
+        # ---- HANDLE SAVE (POST) ----
         if request.method == "POST":
             for r in records:
-                # Update form teacher comment
+                # Comment
                 comment_field = f"comment_{r.student.id}"
                 new_comment = request.POST.get(comment_field)
                 if new_comment is not None:
                     r.form_teacher_comment = new_comment
 
-                # Update psychomotor fields
+                # Psychomotor
                 r.handwriting = request.POST.get(f"handwriting_{r.student.id}", 0)
                 r.games = request.POST.get(f"games_{r.student.id}", 0)
                 r.sports = request.POST.get(f"sports_{r.student.id}", 0)
                 r.drawing_painting = request.POST.get(f"drawing_{r.student.id}", 0)
                 r.crafts = request.POST.get(f"crafts_{r.student.id}", 0)
 
-                # Update affective fields
+                # Affective
                 r.punctuality = request.POST.get(f"punctuality_{r.student.id}", 0)
                 r.attendance = request.POST.get(f"attendance_{r.student.id}", 0)
                 r.reliability = request.POST.get(f"reliability_{r.student.id}", 0)
@@ -1113,14 +1112,14 @@ def form_teacher_dashboard(request):
                 r.attentiveness = request.POST.get(f"attentive_{r.student.id}", 0)
                 r.perseverance = request.POST.get(f"perseverance_{r.student.id}", 0)
 
-                # Save updated record
                 r.save()
 
-            messages.success(request, "Comments and behavior scores saved successfully.")
-            # Redirect to refresh the page with GET params
-            return redirect(f"{request.path}?session={selected_session.id}&term={selected_term.id}&class={selected_class.id}")
+            messages.success(request, "Comments and scores saved successfully.")
+            return redirect(
+                f"{request.path}?session={selected_session.id}&term={selected_term.id}&class={selected_class.id}"
+            )
 
-        # Attach report card results
+        # ---- ATTACH RESULT DETAILS ----
         for r in records:
             student_results = Result_Portal.objects.filter(
                 student=r.student,
@@ -1143,7 +1142,7 @@ def form_teacher_dashboard(request):
     context = {
         "sessions": sessions,
         "terms": terms,
-        "classes": classes,
+        "classes": classes,   # only teacher classes
         "records": records,
         "selected_session": selected_session.id if selected_session else "",
         "selected_term": selected_term.id if selected_term else "",
