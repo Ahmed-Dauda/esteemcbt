@@ -895,16 +895,14 @@ def load_bulk_entry_page(request):
     return render(request, "portal/select_entry_params.html", context)
 
 
-
-
 @require_reportcard_subscription
 @login_required
 def enter_results_for_class_subject(request, class_id, subject_id, session_id, term_id):
     """
     Render table of students for a class/subject and handle POST to save all results.
-    Safely creates or updates Result_Portal entries using update_or_create.
-    Enforces school-specific max scores for CA, Midterm, and Exam.
+    Uses update_or_create to save results safely.
     """
+
     teacher = _get_teacher_for_request(request.user)
 
     # Fetch class, course, session, term
@@ -913,72 +911,21 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
     session = get_object_or_404(Session, id=session_id)
     term = get_object_or_404(Term, id=term_id)
 
-    # --- Robust permission checks ---
-    teacher_classes = teacher.classes_taught.all()
-    teacher_subjects = teacher.subjects_taught.all()
-
-    # Fetch students in the class
+    # Fetch all students for this class
     students = class_obj.students.all().order_by('id')
 
-    # School max score parameters
+    # School max scores
     school = getattr(class_obj, 'schools', None)
     max_ca = getattr(school, 'max_ca_score', Decimal('10.0')) if school else Decimal('10.0')
     max_midterm = getattr(school, 'max_midterm_score', Decimal('30.0')) if school else Decimal('30.0')
     max_exam = getattr(school, 'max_exam_score', Decimal('60.0')) if school else Decimal('60.0')
 
-    # Formset for bulk entry
+    # Formset
     ResultFormset = formset_factory(ResultRowForm, extra=0)
 
-    if request.method == "POST":
-        formset = ResultFormset(request.POST)
-        if formset.is_valid():
-            with transaction.atomic():
-                for form in formset:
-                    student_id = int(form.cleaned_data["student_id"])
-                    ca = min(Decimal(form.cleaned_data.get("ca_score") or 0), max_ca)
-                    mid = min(Decimal(form.cleaned_data.get("midterm_score") or 0), max_midterm)
-                    exam = min(Decimal(form.cleaned_data.get("exam_score") or 0), max_exam)
-                    total = ca + mid + exam
-
-                    # Safely create or update result
-                    Result_Portal.objects.update_or_create(
-                        student_id=student_id,
-                        subject=course_obj,
-                        term=term,
-                        session=session,
-                        result_class=class_obj.name,
-                        defaults={
-                            'schools': school,
-                            'ca_score': ca,
-                            'midterm_score': mid,
-                            'exam_score': exam,
-                            'total_score': total
-                        }
-                    )
-
-            return redirect(reverse('portal:enter_results', kwargs={
-                'class_id': class_id,
-                'subject_id': subject_id,
-                'session_id': session_id,
-                'term_id': term_id
-            }))
-        else:
-            forms_with_students = zip(formset.forms, students)
-            return render(request, "portal/enter_results.html", {
-                "formset": formset,
-                "forms_with_students": forms_with_students,
-                "class_obj": class_obj,
-                "subject_obj": course_obj,
-                "session": session,
-                "term": term,
-                "max_ca": max_ca,
-                "max_midterm": max_midterm,
-                "max_exam": max_exam,
-            })
-
-    # GET: prepare initial data for formset
+    # GET: prepare initial data
     existing_results = Result_Portal.objects.filter(
-        student_id__in=[s.id for s in students],
+        student_id__in=students.values_list('id', flat=True),
         subject=course_obj,
         session=session,
         term=term,
@@ -997,20 +944,182 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
             'exam_score': existing.exam_score if existing else Decimal('0.00'),
         })
 
-    formset = ResultFormset(initial=initial_data)
-    forms_with_students = zip(formset.forms, students)
+    if request.method == "POST":
+        formset = ResultFormset(request.POST)
+        if formset.is_valid():
+            with transaction.atomic():
+                for form in formset:
+                    student_id = form.cleaned_data.get('student_id')
+                    ca = min(Decimal(form.cleaned_data.get('ca_score') or 0), max_ca)
+                    mid = min(Decimal(form.cleaned_data.get('midterm_score') or 0), max_midterm)
+                    exam = min(Decimal(form.cleaned_data.get('exam_score') or 0), max_exam)
+                    total = ca + mid + exam
 
-    return render(request, "portal/enter_results.html", {
-        "formset": formset,
-        "forms_with_students": forms_with_students,
-        "class_obj": class_obj,
-        "subject_obj": course_obj,
-        "session": session,
-        "term": term,
-        "max_ca": max_ca,
-        "max_midterm": max_midterm,
-        "max_exam": max_exam,
-    })
+                    Result_Portal.objects.update_or_create(
+                        student_id=student_id,
+                        subject=course_obj,
+                        term=term,
+                        session=session,
+                        result_class=class_obj.name,
+                        defaults={
+                            'schools': school,
+                            'ca_score': ca,
+                            'midterm_score': mid,
+                            'exam_score': exam,
+                            'total_score': total
+                        }
+                    )
+            return redirect(reverse('portal:enter_results', kwargs={
+                'class_id': class_id,
+                'subject_id': subject_id,
+                'session_id': session_id,
+                'term_id': term_id
+            }))
+        else:
+            # Formset invalid: show errors
+            forms_with_students = zip(formset.forms, students)
+            return render(request, "portal/enter_results.html", {
+                "formset": formset,
+                "forms_with_students": forms_with_students,
+                "class_obj": class_obj,
+                "subject_obj": course_obj,
+                "session": session,
+                "term": term,
+                "max_ca": max_ca,
+                "max_midterm": max_midterm,
+                "max_exam": max_exam,
+            })
+    else:
+        # GET: display formset
+        formset = ResultFormset(initial=initial_data)
+        forms_with_students = zip(formset.forms, students)
+        return render(request, "portal/enter_results.html", {
+            "formset": formset,
+            "forms_with_students": forms_with_students,
+            "class_obj": class_obj,
+            "subject_obj": course_obj,
+            "session": session,
+            "term": term,
+            "max_ca": max_ca,
+            "max_midterm": max_midterm,
+            "max_exam": max_exam,
+        })
+
+
+# @require_reportcard_subscription
+# @login_required
+# def enter_results_for_class_subject(request, class_id, subject_id, session_id, term_id):
+#     """
+#     Render table of students for a class/subject and handle POST to save all results.
+#     Safely creates or updates Result_Portal entries using update_or_create.
+#     Enforces school-specific max scores for CA, Midterm, and Exam.
+#     """
+#     teacher = _get_teacher_for_request(request.user)
+
+#     # Fetch class, course, session, term
+#     class_obj = get_object_or_404(CourseGrade, id=class_id)
+#     course_obj = get_object_or_404(Courses, id=subject_id)
+#     session = get_object_or_404(Session, id=session_id)
+#     term = get_object_or_404(Term, id=term_id)
+
+#     # --- Robust permission checks ---
+#     teacher_classes = teacher.classes_taught.all()
+#     teacher_subjects = teacher.subjects_taught.all()
+
+#     # Fetch students in the class
+#     students = class_obj.students.all().order_by('id')
+
+#     # School max score parameters
+#     school = getattr(class_obj, 'schools', None)
+#     max_ca = getattr(school, 'max_ca_score', Decimal('10.0')) if school else Decimal('10.0')
+#     max_midterm = getattr(school, 'max_midterm_score', Decimal('30.0')) if school else Decimal('30.0')
+#     max_exam = getattr(school, 'max_exam_score', Decimal('60.0')) if school else Decimal('60.0')
+
+#     # Formset for bulk entry
+#     ResultFormset = formset_factory(ResultRowForm, extra=0)
+
+#     if request.method == "POST":
+#         formset = ResultFormset(request.POST)
+#         if formset.is_valid():
+#             with transaction.atomic():
+#                 for form in formset:
+#                     student_id = int(form.cleaned_data["student_id"])
+#                     ca = min(Decimal(form.cleaned_data.get("ca_score") or 0), max_ca)
+#                     mid = min(Decimal(form.cleaned_data.get("midterm_score") or 0), max_midterm)
+#                     exam = min(Decimal(form.cleaned_data.get("exam_score") or 0), max_exam)
+#                     total = ca + mid + exam
+
+#                     # Safely create or update result
+#                     Result_Portal.objects.update_or_create(
+#                         student_id=student_id,
+#                         subject=course_obj,
+#                         term=term,
+#                         session=session,
+#                         result_class=class_obj.name,
+#                         defaults={
+#                             'schools': school,
+#                             'ca_score': ca,
+#                             'midterm_score': mid,
+#                             'exam_score': exam,
+#                             'total_score': total
+#                         }
+#                     )
+
+#             return redirect(reverse('portal:enter_results', kwargs={
+#                 'class_id': class_id,
+#                 'subject_id': subject_id,
+#                 'session_id': session_id,
+#                 'term_id': term_id
+#             }))
+#         else:
+#             forms_with_students = zip(formset.forms, students)
+#             return render(request, "portal/enter_results.html", {
+#                 "formset": formset,
+#                 "forms_with_students": forms_with_students,
+#                 "class_obj": class_obj,
+#                 "subject_obj": course_obj,
+#                 "session": session,
+#                 "term": term,
+#                 "max_ca": max_ca,
+#                 "max_midterm": max_midterm,
+#                 "max_exam": max_exam,
+#             })
+
+#     # GET: prepare initial data for formset
+#     existing_results = Result_Portal.objects.filter(
+#         student_id__in=[s.id for s in students],
+#         subject=course_obj,
+#         session=session,
+#         term=term,
+#         result_class=class_obj.name
+#     )
+#     existing_by_student = {r.student_id: r for r in existing_results}
+
+#     initial_data = []
+#     for s in students:
+#         existing = existing_by_student.get(s.id)
+#         initial_data.append({
+#             'student_id': s.id,
+#             'existing_result_id': existing.id if existing else '',
+#             'ca_score': existing.ca_score if existing else Decimal('0.00'),
+#             'midterm_score': existing.midterm_score if existing else Decimal('0.00'),
+#             'exam_score': existing.exam_score if existing else Decimal('0.00'),
+#         })
+
+#     formset = ResultFormset(initial=initial_data)
+#     forms_with_students = zip(formset.forms, students)
+
+#     return render(request, "portal/enter_results.html", {
+#         "formset": formset,
+#         "forms_with_students": forms_with_students,
+#         "class_obj": class_obj,
+#         "subject_obj": course_obj,
+#         "session": session,
+#         "term": term,
+#         "max_ca": max_ca,
+#         "max_midterm": max_midterm,
+#         "max_exam": max_exam,
+#     })
 
 
 # portal/views.py
