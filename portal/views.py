@@ -225,6 +225,7 @@ import requests
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus.flowables import HRFlowable
 
+
 def download_term_report_pdf(request, student_id, session_id, term_id):
     # --- Fetch results ---
     results = Result_Portal.objects.filter(
@@ -241,8 +242,9 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     session = results.first().session
     term = results.first().term
     result_class = getattr(results.first(), 'result_class', '')
-
-    # Get school max scores from the first result
+    
+     # Get school max scores from the first result
+   
     # --- Class stats ---
     all_results = Result_Portal.objects.filter(
         result_class=result_class,
@@ -283,7 +285,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
 
     elements = []
 
-    # --- Header Section ---
+    # --- Header Section (Logo + Flex Layout) ---
     logo_img = None
     if school and getattr(school, 'logo', None):
         try:
@@ -313,6 +315,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     elements.append(header_table)
     elements.append(Spacer(1, 10))
 
+    
     hr = HRFlowable(width="100%", thickness=0.5, color=colors.blue)
     elements.append(hr)
 
@@ -320,7 +323,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     elements.append(Paragraph("<b><u>TERM REPORT CARD</u></b>", style_center))
     elements.append(Spacer(1, 10))
 
-    # --- Student Info Table ---
+    # --- Student Info (Grid Table) ---
     student_info_data = [
         [f"Student Name: {student.username}", f"Class: {result_class}", f"Term: {term.name}"],
         [f"Session: {session.name}", f"No. in Class: {total_students}", f"Position: {position} of {total_students}"],
@@ -340,8 +343,10 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     max_mid = school.max_midterm_score if school else 30
     max_exam = school.max_exam_score if school else 60
 
-    # --- Subject Table ---
+    # --- Subject Table (with Grid) ---
     header_style = ParagraphStyle(name='HeaderStyle', fontName='Helvetica-Bold', fontSize=7, alignment=1)
+
+    # Use f-strings to insert actual max values
     headers = [
         "Subject",
         f"CA<br/>({max_ca})",
@@ -359,6 +364,8 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     ]
 
     table_data = [[Paragraph(h, header_style) for h in headers]]
+
+
 
     for r in results:
         ca = float(r.ca_score or 0)
@@ -411,15 +418,17 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     elements += [result_table, Spacer(1, 15)]
 
     elements.append(Paragraph(f"<b>Number of Subjects:</b> {num_subjects}", style_left))
-    elements.append(Spacer(1, 5))
+    elements.append(Spacer(1, 5))  # optional spacing after
+
 
     # --- Grading Scale ---
     grading_text = "<b>GRADING SCALE</b>: A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39"
     elements.append(Paragraph(grading_text, style_left))
+    # elements.append(Paragraph("<b>GRADING SCALE</b>":"A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39", style_left))
     elements.append(Spacer(1, 15))
 
     elements.append(hr)
-
+     
     # --- Fetch behavior for 3rd term ---
     if term.name.lower().strip() in ["3rd term","3rd-term","3rd_term","3rd" ,"third term",'third-term','third_term',"third"]:
         behavior = StudentBehaviorRecord.objects.filter(
@@ -429,15 +438,20 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
         ).first()
 
         if behavior:
-            # Psychomotor Table
-            psychomotor_data = [["Default Psychomotor", "Rating"]] + [
+            # --- Psychomotor Table ---
+            psychomotor_data = [["Default Psychomotor", "Rating"]]
+            psychomotor_data += [
                 ["Handwriting", behavior.handwriting],
                 ["Games", behavior.games],
                 ["Sports", behavior.sports],
                 ["Drawing & Painting", behavior.drawing_painting],
                 ["Crafts", behavior.crafts]
             ]
-            psychomotor_table = Table(psychomotor_data, colWidths=[120, 40], rowHeights=[15] + [12]*5)
+            psychomotor_table = Table(
+                psychomotor_data,
+                colWidths=[120, 40],
+                rowHeights=[15] + [12]*5  # header = 15, body = 12
+            )
             psychomotor_table.setStyle(TableStyle([
                 ('GRID', (0,0), (-1,-1), 0.5, colors.black),
                 ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
@@ -448,8 +462,9 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE')
             ]))
 
-            # Affective Table
-            affective_data = [["Default Affective Traits", "Rating"]] + [
+            # --- Affective Table ---
+            affective_data = [["Default Affective Traits", "Rating"]]
+            affective_data += [
                 ["Punctuality", behavior.punctuality],
                 ["Attendance", behavior.attendance],
                 ["Reliability", behavior.reliability],
@@ -461,7 +476,11 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
                 ["Attentiveness", behavior.attentiveness],
                 ["Perseverance", behavior.perseverance]
             ]
-            affective_table = Table(affective_data, colWidths=[150, 40], rowHeights=[15] + [12]*10)
+            affective_table = Table(
+                affective_data,
+                colWidths=[150, 40],
+                rowHeights=[15] + [12]*10  # header = 15, body = 12
+            )
             affective_table.setStyle(TableStyle([
                 ('GRID', (0,0), (-1,-1), 0.5, colors.black),
                 ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
@@ -472,9 +491,14 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE')
             ]))
 
-            # Scale Table
-            scale_data = [["SCALE"]] + [["5 - Excellent"], ["4 - Good"], ["3 - Fair"], ["2 - Poor"], ["1 - Very Poor"]]
-            scale_table = Table(scale_data, colWidths=[100], rowHeights=[15] + [12]*5)
+            # --- Scale Table ---
+            scale_data = [["SCALE"]]
+            scale_data += [["5 - Excellent"], ["4 - Good"], ["3 - Fair"], ["2 - Poor"], ["1 - Very Poor"]]
+            scale_table = Table(
+                scale_data,
+                colWidths=[100],
+                rowHeights=[15] + [12]*5  # header = 15, body = 12
+            )
             scale_table.setStyle(TableStyle([
                 ('GRID', (0,0), (-1,-1), 0.5, colors.black),
                 ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
@@ -485,11 +509,13 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE')
             ]))
 
-            # Combine horizontally
+            # --- Combine tables horizontally ---
             combined = Table([[psychomotor_table, affective_table, scale_table]], colWidths=[160, 200, 120])
             combined.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP')]))
+
             elements.append(combined)
-            elements.append(Spacer(1, 10))
+            elements.append(Spacer(1, 10))  # tighter spacing
+    
             elements.append(hr)
 
     # --- Comments & Signatures ---
@@ -501,24 +527,26 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
         except Exception:
             pass
 
-    elements.append(Spacer(1, 10))
-
-    if behavior:
         elements.append(Spacer(1, 10))
-        elements.append(Paragraph(f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}", style_left))
-        elements.append(Paragraph(f"<b>Form Teacher Comment:</b> {behavior.form_teacher_comment}", style_left))
-        elements.append(Spacer(1, 5))
-        elements.append(Paragraph(f"<b>Principal's Remark:</b> {behavior.principal_comment}", style_left))
-        elements.append(hr)
+
+        if behavior:
+            # append form teacher and principal comments
+            elements.append(Spacer(1, 10))
+            elements.append(Paragraph(f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}", style_left))
+            elements.append(Paragraph(f"<b>Form Teacher Comment:</b> {behavior.form_teacher_comment}", style_left))
+            elements.append(Spacer(1, 5))
+            elements.append(Paragraph(f"<b>Principal's Remark:</b> {behavior.principal_comment}", style_left))
+
+            elements.append(hr)
 
     if school and getattr(school, 'principal_signature', None):
-        try:
-            sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
-            sig_img = RLImage(sig_data, width=100, height=40)
-            elements.append(sig_img)
-        except Exception:
-            pass
-
+            try:
+                sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
+                sig_img = RLImage(sig_data, width=100, height=40)
+                elements.append(sig_img)
+            except Exception:
+                pass
+    
     doc.build(elements)
     return response
 
