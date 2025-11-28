@@ -917,11 +917,11 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
     teacher_classes = teacher.classes_taught.all()
     teacher_subjects = teacher.subjects_taught.all()
 
-    if not any(c.id == class_obj.id for c in teacher_classes):
-        return HttpResponseForbidden("You are not assigned to this class.")
+    # if not any(c.id == class_obj.id for c in teacher_classes):
+    #     return HttpResponseForbidden("You are not assigned to this class.")
 
-    if not any(s.id == course_obj.id for s in teacher_subjects):
-        return HttpResponseForbidden("You are not assigned to this subject.")
+    # if not any(s.id == course_obj.id for s in teacher_subjects):
+    #     return HttpResponseForbidden("You are not assigned to this subject.")
 
     # Fetch students in the class
     students = class_obj.students.all().order_by('id')
@@ -1052,6 +1052,7 @@ from django.conf import settings
 
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
 
 @login_required(login_url='teacher:teacher_login')
 def form_teacher_dashboard(request):
