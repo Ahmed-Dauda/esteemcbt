@@ -2,7 +2,49 @@
 {% block content %}
 
 <style>
-/* (Style unchanged — keeping your original design) */
+    .results-header {
+        margin-bottom: 20px;
+        padding: 15px 20px;
+        background: #f8f9fa;
+        border-left: 4px solid #198754;
+        border-radius: 6px;
+    }
+    .results-card {
+        background: #fff;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        padding: 20px;
+    }
+    #scroll-container {
+        max-height: 450px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fff;
+    }
+    #results-table th {
+        position: sticky;
+        top: 0;
+        background: #343a40;
+        color: #fff;
+        font-size: 13px;
+        z-index: 10;
+        padding: 6px 4px !important;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+    #results-table td {
+        padding: 3px 4px !important;
+        font-size: 13px;
+        vertical-align: middle;
+    }
+    #results-table tbody tr:hover { background: #f1f7ff !important; }
+    #results-table input.form-control-sm {
+        height: 26px !important;
+        padding: 2px 4px !important;
+        font-size: 13px;
+    }
+    #student-search { height: 38px; font-size: 14px; }
 </style>
 
 <div class="results-header">
@@ -12,7 +54,6 @@
 
 <div class="results-card">
 
-    <!-- Search box -->
     <div class="mb-3">
         <input type="text" id="student-search" class="form-control" placeholder="Search student by name or username...">
     </div>
@@ -21,7 +62,6 @@
         {% csrf_token %}
         {{ formset.management_form }}
 
-        <!-- Virtual Scroll Container -->
         <div id="scroll-container">
             <table class="table table-sm table-striped" id="results-table">
                 <thead>
@@ -34,7 +74,22 @@
                     <th>Total</th>
                 </tr>
                 </thead>
-                <tbody id="results-tbody"></tbody>
+                <tbody>
+                {% for form, student in forms_with_students %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            {{ student.first_name|default:student.username }} {{ student.last_name }}
+                            {{ form.student_id }}
+                            {{ form.existing_result_id }}
+                        </td>
+                        <td>{{ form.ca_score }}</td>
+                        <td>{{ form.midterm_score }}</td>
+                        <td>{{ form.exam_score }}</td>
+                        <td class="row-total">0.00</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
             </table>
         </div>
 
@@ -50,94 +105,39 @@ const maxCA = parseFloat("{{ max_ca }}");
 const maxMid = parseFloat("{{ max_midterm }}");
 const maxExam = parseFloat("{{ max_exam }}");
 
-/* 
- * IMPORTANT UPDATE:
- * We add form_index for every student, coming directly from Django formset
- */
-const studentsData = [
-  {% for form, student in forms_with_students %}
-  {
-    id: {{ student.id }},
-    form_index: {{ forloop.counter0 }},
-    name: "{{ student.first_name|default:student.username }} {{ student.last_name }}",
-    ca_score: "{{ form.initial.ca_score|default_if_none:'0' }}",
-    mid_score: "{{ form.initial.midterm_score|default_if_none:'0' }}",
-    exam_score: "{{ form.initial.exam_score|default_if_none:'0' }}"
-  },
-  {% endfor %}
-];
+// Calculate row totals
+document.querySelectorAll('#results-table tbody tr').forEach(tr => {
+    const caInput = tr.querySelector('input[name$="ca_score"]');
+    const midInput = tr.querySelector('input[name$="midterm_score"]');
+    const examInput = tr.querySelector('input[name$="exam_score"]');
+    const totalCell = tr.querySelector('.row-total');
 
-const rowHeight = 18;
-const container = document.getElementById('scroll-container');
-const tbody = document.getElementById('results-tbody');
-let visibleRows = Math.ceil(container.offsetHeight / rowHeight) + 5;
-let filterText = '';
+    function updateTotal() {
+        let ca = parseFloat(caInput.value || 0);
+        let mid = parseFloat(midInput.value || 0);
+        let exam = parseFloat(examInput.value || 0);
 
-/*
- * FIXED: Use student.form_index instead of visible row position
- */
-function createRow(student, visibleIndex) {
-  const tr = document.createElement('tr');
-  tr.style.height = rowHeight + 'px';
+        if(ca > maxCA) caInput.value = maxCA;
+        if(mid > maxMid) midInput.value = maxMid;
+        if(exam > maxExam) examInput.value = maxExam;
 
-  let idx = student.form_index;
+        totalCell.textContent = (ca + mid + exam).toFixed(2);
+    }
 
-  tr.innerHTML = `
-    <td>${visibleIndex + 1}</td>
-
-    <td>
-        ${student.name}
-        <input type="hidden" name="form-${idx}-student_id" value="${student.id}">
-        <input type="hidden" name="form-${idx}-existing_result_id" value="">
-    </td>
-
-    <td><input type="number" step="0.01" name="form-${idx}-ca_score" value="${student.ca_score}" class="form-control form-control-sm"></td>
-    <td><input type="number" step="0.01" name="form-${idx}-midterm_score" value="${student.mid_score}" class="form-control form-control-sm"></td>
-    <td><input type="number" step="0.01" name="form-${idx}-exam_score" value="${student.exam_score}" class="form-control form-control-sm"></td>
-
-    <td class="row-total">0.00</td>
-  `;
-
-  return tr;
-}
-
-function updateRowTotal(tr) {
-  const ca = parseFloat(tr.querySelector('input[name$="ca_score"]').value || 0);
-  const mid = parseFloat(tr.querySelector('input[name$="midterm_score"]').value || 0);
-  const exam = parseFloat(tr.querySelector('input[name$="exam_score"]').value || 0);
-
-  tr.querySelector('.row-total').textContent = (ca + mid + exam).toFixed(2);
-}
-
-function renderVisibleRows() {
-  tbody.innerHTML = '';
-
-  const filtered = studentsData.filter(s =>
-    s.name.toLowerCase().includes(filterText)
-  );
-
-  const start = Math.floor(container.scrollTop / rowHeight);
-  const end = Math.min(start + visibleRows, filtered.length);
-
-  for (let i = start; i < end; i++) {
-    const tr = createRow(filtered[i], i);
-    updateRowTotal(tr);
-    tbody.appendChild(tr);
-  }
-
-  tbody.style.height = (filtered.length * rowHeight) + 'px';
-}
-
-container.addEventListener('scroll', renderVisibleRows);
-container.addEventListener('input', e => {
-  if (e.target.closest('tr')) updateRowTotal(e.target.closest('tr'));
+    [caInput, midInput, examInput].forEach(input => {
+        input.addEventListener('input', updateTotal);
+        updateTotal();  // initialize
+    });
 });
+
+// Simple search filter
 document.getElementById('student-search').addEventListener('input', e => {
-  filterText = e.target.value.toLowerCase();
-  renderVisibleRows();
+    const filter = e.target.value.toLowerCase();
+    document.querySelectorAll('#results-table tbody tr').forEach(tr => {
+        const name = tr.cells[1].textContent.toLowerCase();
+        tr.style.display = name.includes(filter) ? '' : 'none';
+    });
 });
-
-renderVisibleRows();
 </script>
 
 {% endblock %}
