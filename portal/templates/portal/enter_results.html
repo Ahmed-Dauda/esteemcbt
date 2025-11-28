@@ -2,49 +2,49 @@
 {% block content %}
 
 <style>
-    .results-header {
-        margin-bottom: 20px;
-        padding: 15px 20px;
-        background: #f8f9fa;
-        border-left: 4px solid #198754;
-        border-radius: 6px;
-    }
-    .results-card {
-        background: #fff;
-        border-radius: 6px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-        padding: 20px;
-    }
-    #scroll-container {
-        max-height: 450px;
-        overflow-y: auto;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        background: #fff;
-    }
-    #results-table th {
-        position: sticky;
-        top: 0;
-        background: #343a40;
-        color: #fff;
-        font-size: 13px;
-        z-index: 10;
-        padding: 6px 4px !important;
-        text-transform: uppercase;
-        letter-spacing: .5px;
-    }
-    #results-table td {
-        padding: 3px 4px !important;
-        font-size: 13px;
-        vertical-align: middle;
-    }
-    #results-table tbody tr:hover { background: #f1f7ff !important; }
-    #results-table input.form-control-sm {
-        height: 26px !important;
-        padding: 2px 4px !important;
-        font-size: 13px;
-    }
-    #student-search { height: 38px; font-size: 14px; }
+.results-header {
+    margin-bottom: 20px;
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-left: 4px solid #198754;
+    border-radius: 6px;
+}
+.results-card {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    padding: 20px;
+}
+#scroll-container {
+    max-height: 450px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+}
+#results-table th {
+    position: sticky;
+    top: 0;
+    background: #343a40;
+    color: #fff;
+    font-size: 13px;
+    z-index: 10;
+    padding: 6px 4px !important;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+#results-table td {
+    padding: 3px 4px !important;
+    font-size: 13px;
+    vertical-align: middle;
+}
+#results-table tbody tr:hover { background: #f1f7ff !important; }
+#results-table input.form-control-sm {
+    height: 26px !important;
+    padding: 2px 4px !important;
+    font-size: 13px;
+}
+#student-search { height: 38px; font-size: 14px; }
 </style>
 
 <div class="results-header">
@@ -74,9 +74,9 @@
                     <th>Total</th>
                 </tr>
                 </thead>
-                <tbody>
+                <tbody id="results-tbody">
                 {% for form, student in forms_with_students %}
-                    <tr>
+                    <tr data-name="{{ student.first_name|default:student.username }} {{ student.last_name }}">
                         <td>{{ forloop.counter }}</td>
                         <td>
                             {{ student.first_name|default:student.username }} {{ student.last_name }}
@@ -105,36 +105,31 @@ const maxCA = parseFloat("{{ max_ca }}");
 const maxMid = parseFloat("{{ max_midterm }}");
 const maxExam = parseFloat("{{ max_exam }}");
 
-// Calculate row totals
-document.querySelectorAll('#results-table tbody tr').forEach(tr => {
-    const caInput = tr.querySelector('input[name$="ca_score"]');
-    const midInput = tr.querySelector('input[name$="midterm_score"]');
-    const examInput = tr.querySelector('input[name$="exam_score"]');
-    const totalCell = tr.querySelector('.row-total');
+function updateTotals() {
+    document.querySelectorAll('#results-table tbody tr').forEach(tr => {
+        const ca = parseFloat(tr.querySelector('input[name$="ca_score"]').value || 0);
+        const mid = parseFloat(tr.querySelector('input[name$="midterm_score"]').value || 0);
+        const exam = parseFloat(tr.querySelector('input[name$="exam_score"]').value || 0);
 
-    function updateTotal() {
-        let ca = parseFloat(caInput.value || 0);
-        let mid = parseFloat(midInput.value || 0);
-        let exam = parseFloat(examInput.value || 0);
+        if(ca > maxCA) tr.querySelector('input[name$="ca_score"]').value = maxCA;
+        if(mid > maxMid) tr.querySelector('input[name$="midterm_score"]').value = maxMid;
+        if(exam > maxExam) tr.querySelector('input[name$="exam_score"]').value = maxExam;
 
-        if(ca > maxCA) caInput.value = maxCA;
-        if(mid > maxMid) midInput.value = maxMid;
-        if(exam > maxExam) examInput.value = maxExam;
-
-        totalCell.textContent = (ca + mid + exam).toFixed(2);
-    }
-
-    [caInput, midInput, examInput].forEach(input => {
-        input.addEventListener('input', updateTotal);
-        updateTotal();  // initialize
+        tr.querySelector('.row-total').textContent = (ca + mid + exam).toFixed(2);
     });
+}
+
+// Initialize totals and bind inputs
+updateTotals();
+document.querySelectorAll('#results-table tbody input').forEach(input => {
+    input.addEventListener('input', updateTotals);
 });
 
-// Simple search filter
+// Search filter
 document.getElementById('student-search').addEventListener('input', e => {
     const filter = e.target.value.toLowerCase();
     document.querySelectorAll('#results-table tbody tr').forEach(tr => {
-        const name = tr.cells[1].textContent.toLowerCase();
+        const name = tr.dataset.name.toLowerCase();
         tr.style.display = name.includes(filter) ? '' : 'none';
     });
 });
