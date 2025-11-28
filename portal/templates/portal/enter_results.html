@@ -1,53 +1,122 @@
 {% load static %}
 {% block content %}
-<h2>Enter Results — {{ class_obj.name }} — {{ subject_obj.title }}</h2>
-<p>Term: {{ term }} | Session: {{ session }}</p>
 
-<!-- Search box -->
-<div class="mb-3">
-  <input type="text" id="student-search" class="form-control" placeholder="Search student by name or username...">
+<style>
+    /* Page Styling */
+    .results-header {
+        margin-bottom: 20px;
+        padding: 15px 20px;
+        background: #f8f9fa;
+        border-left: 4px solid #198754;
+        border-radius: 6px;
+    }
+
+    /* Card container */
+    .results-card {
+        background: #ffffff;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        padding: 20px;
+    }
+
+    /* Scroll container styling */
+    #scroll-container {
+        height: 450px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fff;
+    }
+
+    /* Table Styling */
+    #results-table th {
+        position: sticky;
+        top: 0;
+        background: #343a40;
+        color: #fff;
+        font-size: 13px;
+        z-index: 10;
+        padding: 6px 4px !important;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+
+    #results-table td {
+        padding: 3px 4px !important;
+        font-size: 13px;
+        vertical-align: middle;
+    }
+
+    #results-table tbody tr:hover {
+        background: #f1f7ff !important;
+    }
+
+    /* Input fields slim */
+    #results-table input.form-control-sm {
+        height: 26px !important;
+        padding: 2px 4px !important;
+        font-size: 13px;
+    }
+
+    /* Search bar styling */
+    #student-search {
+        height: 38px;
+        font-size: 14px;
+    }
+</style>
+
+<div class="results-header">
+    <h4 class="mb-1">Enter Results – {{ class_obj.name }} / {{ subject_obj.title }}</h4>
+    <small class="text-muted">Term: {{ term }} — Session: {{ session }}</small>
 </div>
 
-<form method="post" id="bulk-results-form">
-  {% csrf_token %}
-  {{ formset.management_form }}
+<div class="results-card">
 
-  <!-- Virtual Scroll Container -->
-  <div id="scroll-container" style="height:500px; overflow-y:auto; border:1px solid #ccc; position:relative;">
-    <table class="table table-sm table-striped" id="results-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Student</th>
-          <th>CA (Max: {{ max_ca }})</th>
-          <th>Midterm (Max: {{ max_midterm }})</th>
-          <th>Exam (Max: {{ max_exam }})</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody id="results-tbody">
-        <!-- Rows will be rendered dynamically by JS -->
-      </tbody>
-    </table>
-  </div>
+    <!-- Search box -->
+    <div class="mb-3">
+        <input type="text" id="student-search" class="form-control" placeholder="Search student by name or username...">
+    </div>
 
-  <div class="mt-3">
-    <button type="submit" class="btn btn-success">Save All</button>
-    <a href="{% url 'portal:enter_select' %}" class="btn btn-secondary">Back</a>
-  </div>
-</form>
+    <form method="post" id="bulk-results-form">
+        {% csrf_token %}
+        {{ formset.management_form }}
+
+        <!-- Virtual Scroll Container -->
+        <div id="scroll-container">
+            <table class="table table-sm table-striped" id="results-table">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Student</th>
+                    <th>CA ({{ max_ca }})</th>
+                    <th>Midterm ({{ max_midterm }})</th>
+                    <th>Exam ({{ max_exam }})</th>
+                    <th>Total</th>
+                </tr>
+                </thead>
+                <tbody id="results-tbody">
+                <!-- JS renders rows -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-3 text-end">
+            <button type="submit" class="btn btn-success px-4">Save All</button>
+            <a href="{% url 'portal:enter_select' %}" class="btn btn-secondary px-4">Back</a>
+        </div>
+    </form>
+</div>
 
 <script>
 const maxCA = parseFloat("{{ max_ca }}");
 const maxMid = parseFloat("{{ max_midterm }}");
 const maxExam = parseFloat("{{ max_exam }}");
 
-// Data for virtual table
 const studentsData = [
   {% for form, student in forms_with_students %}
   {
     id: {{ student.id }},
-    name: "{{ student.get_full_name|default:student.username }}",
+    name: "{{ student.first_name|default:student.username }} {{ student.last_name }}",
     ca_score: "{{ form.initial.ca_score|default_if_none:'0.00' }}",
     mid_score: "{{ form.initial.midterm_score|default_if_none:'0.00' }}",
     exam_score: "{{ form.initial.exam_score|default_if_none:'0.00' }}",
@@ -55,23 +124,18 @@ const studentsData = [
   {% endfor %}
 ];
 
-// Config
-const rowHeight = 40; // approximate row height
+const rowHeight = 18;
 const container = document.getElementById('scroll-container');
 const tbody = document.getElementById('results-tbody');
 let visibleRows = Math.ceil(container.offsetHeight / rowHeight) + 5;
-let scrollTop = 0;
 let filterText = '';
 
-// --- Functions ---
 function createRow(student, index) {
   const tr = document.createElement('tr');
   tr.style.height = rowHeight + 'px';
-  tr.dataset.studentId = student.id;
-
   tr.innerHTML = `
     <td>${index + 1}</td>
-    <td class="student-name">
+    <td>
       ${student.name}
       <input type="hidden" name="form-${index}-student_id" value="${student.id}">
       <input type="hidden" name="form-${index}-existing_result_id" value="">
@@ -85,70 +149,46 @@ function createRow(student, index) {
 }
 
 function updateRowTotal(tr) {
-  const caInput = tr.querySelector('input[name$="ca_score"]');
-  const midInput = tr.querySelector('input[name$="midterm_score"]');
-  const examInput = tr.querySelector('input[name$="exam_score"]');
-  const totalCell = tr.querySelector('.row-total');
+  const ca = parseFloat(tr.querySelector('input[name$="ca_score"]').value || 0);
+  const mid = parseFloat(tr.querySelector('input[name$="midterm_score"]').value || 0);
+  const exam = parseFloat(tr.querySelector('input[name$="exam_score"]').value || 0);
 
-  [caInput, midInput, examInput].forEach(input => {
-    input.style.borderColor = '';
-    input.style.backgroundColor = '';
-  });
-
-  let ca = parseFloat(caInput.value || 0);
-  let mid = parseFloat(midInput.value || 0);
-  let exam = parseFloat(examInput.value || 0);
-
-  function showWarning(input, msg) {
-    input.value = '';
-    input.style.borderColor = 'red';
-    input.style.backgroundColor = '#ffe6e6';
-    alert(msg);
+  if (ca > maxCA || mid > maxMid || exam > maxExam) {
+    alert("Score exceeds maximum allowed");
   }
 
-  if (ca > maxCA) showWarning(caInput, `CA cannot exceed ${maxCA}`);
-  if (mid > maxMid) showWarning(midInput, `Midterm cannot exceed ${maxMid}`);
-  if (exam > maxExam) showWarning(examInput, `Exam cannot exceed ${maxExam}`);
-
-  if (totalCell) totalCell.textContent = (ca + mid + exam).toFixed(2);
+  tr.querySelector('.row-total').textContent = (ca + mid + exam).toFixed(2);
 }
 
 function renderVisibleRows() {
   tbody.innerHTML = '';
+  const filteredData = studentsData.filter(s =>
+    s.name.toLowerCase().includes(filterText)
+  );
+
   const startIdx = Math.floor(container.scrollTop / rowHeight);
-  const endIdx = Math.min(startIdx + visibleRows, studentsData.length);
-  const filteredData = studentsData.filter(s => s.name.toLowerCase().includes(filterText));
+  const endIdx = Math.min(startIdx + visibleRows, filteredData.length);
+
   for (let i = startIdx; i < endIdx; i++) {
-    const student = filteredData[i];
-    if (student) {
-      const tr = createRow(student, i);
-      updateRowTotal(tr);
-      tbody.appendChild(tr);
-    }
+    const tr = createRow(filteredData[i], i);
+    updateRowTotal(tr);
+    tbody.appendChild(tr);
   }
+
   tbody.style.height = (filteredData.length * rowHeight) + 'px';
 }
 
-// --- Event Listeners ---
 container.addEventListener('scroll', renderVisibleRows);
 container.addEventListener('input', e => {
-  const tr = e.target.closest('tr');
-  if (!tr) return;
-  updateRowTotal(tr);
+  if (e.target.closest('tr')) updateRowTotal(e.target.closest('tr'));
 });
 
-// Search filter
-const searchInput = document.getElementById('student-search');
-let searchTimeout;
-searchInput.addEventListener('input', () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    filterText = searchInput.value.toLowerCase();
-    renderVisibleRows();
-  }, 200);
+document.getElementById('student-search').addEventListener('input', e => {
+  filterText = e.target.value.toLowerCase();
+  renderVisibleRows();
 });
 
-// Initialize
 renderVisibleRows();
 </script>
+
 {% endblock %}
