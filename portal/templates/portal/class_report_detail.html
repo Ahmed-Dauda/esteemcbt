@@ -1,42 +1,48 @@
-
 {% block content %}
 <h3>{{ result_class }} Report – {{ session.name }} ({{ term.name }})</h3>
+
 <a href="{% url 'portal:download_class_reports_pdf' result_class session.id term.id %}" class="btn btn-success mb-3">
   Download All Reports (PDF)
 </a>
 
-{% for student_data in students.values %}
-<div class="card mb-4 p-3">
-  <h5>{{ student_data.student.username }}</h5>
-  <table class="table table-bordered">
-    <thead>
-      <tr>
-        <th>Subject</th>
-        <th>CA ({{ max_ca }})</th>
-        <th>Mid-Term ({{ max_mid }})</th>
-        <th>Exam ({{ max_exam }})</th>
-        <th>Total</th>
-        <th>Grade</th>
-        <th>Remark</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in student_data.records %}
-      <tr>
-        <td>{{ r.subject.title }}</td>
-        <td>{{ r.ca_score }}</td>
-        <td>{{ r.midterm_score }}</td>
-        <td>{{ r.exam_score }}</td>
-        <td>{{ r.total_score }}</td>
-        <td>{{ r.grade_letter }}</td>
-        <td>{{ r.remark }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <a href="{% url 'portal:report_card_detail' student_data.student.id session.id term.id %}" class="btn btn-sm btn-outline-primary">
-    View Full Report
-  </a>
-</div>
-{% endfor %}
+{% if message %}
+    <div class="alert alert-warning">
+        {{ message }}
+    </div>
+{% else %}
+    {% for student_data in students.values %}
+        <div class="card mb-4 p-3">
+            <h5>{{ student_data.student.username }}</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>CA ({{ max_ca }})</th>
+                        <th>Mid-Term ({{ max_mid }})</th>
+                        <th>Exam ({{ max_exam }})</th>
+                        <th>Total</th>
+                        <th>Grade</th>
+                        <th>Remark</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in student_data.records %}
+                        <tr>
+                            <td>{{ r.subject.title }}</td>
+                            <td>{{ r.ca_score }}</td>
+                            <td>{{ r.midterm_score }}</td>
+                            <td>{{ r.exam_score }}</td>
+                            <td>{{ r.total_score }}</td>
+                            <td>{{ r.grade_letter }}</td>
+                            <td>{{ r.remark }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <a href="{% url 'portal:report_card_detail' student_data.student.id session.id term.id %}" class="btn btn-sm btn-outline-primary">
+                View Full Report
+            </a>
+        </div>
+    {% endfor %}
+{% endif %}
 {% endblock %}
