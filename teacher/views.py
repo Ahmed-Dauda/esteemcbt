@@ -1686,25 +1686,6 @@ from .models import CourseGrade
 
 from django.contrib.auth.decorators import login_required
 
-# @login_required(login_url='teacher:teacher_login')
-# def examiner_dashboard_view(request):
-#     # Check if the user is authenticated
-#     if request.user.is_authenticated:
-#         user = NewUser.objects.select_related('school').get(id=request.user.id)
-#         user_school = user.school
-
-#         # Filter CourseGrade objects based on the user's school, without depending on the students relationship
-#         course_grades = CourseGrade.objects.filter(
-#             subjects__schools=user_school
-#         ).distinct().prefetch_related('students', 'subjects')
-
-#         context = {
-#             'course_grades': course_grades,
-#         }
-
-#         return render(request, 'teacher/dashboard/examiner_dashboard.html', context)
-
-
 
 
 @login_required(login_url='teacher:teacher_login')

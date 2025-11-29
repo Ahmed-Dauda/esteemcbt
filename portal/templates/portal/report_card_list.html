@@ -14,7 +14,7 @@
   <tbody>
     {% for report in reports %}
       <tr>
-        <td>{{ report.student.username }}</td>
+        <td>{{ report.student.first_name }} {{ report.student.last_name }}</td>
         <td>{{ report.result_class }}</td>
         <td>{{ report.session.name }}</td>
         <td>{{ report.term.name }}</td>

@@ -45,7 +45,34 @@
     font-size: 13px;
 }
 #student-search { height: 38px; font-size: 14px; }
+
+/* Success message auto-dismiss */
+.alert-success {
+    position: relative;
+    transition: opacity 0.5s ease-out;
+}
 </style>
+
+<!-- Success Messages -->
+{% if messages %}
+<div class="container mt-3">
+    {% for message in messages %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+</div>
+<script>
+    // Auto-dismiss success alerts after 4 seconds
+    setTimeout(() => {
+        document.querySelectorAll('.alert-success').forEach(alert => {
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        });
+    }, 4000);
+</script>
+{% endif %}
 
 <div class="results-header">
     <h4 class="mb-1">Enter Results – {{ class_obj.name }} / {{ subject_obj.title }}</h4>

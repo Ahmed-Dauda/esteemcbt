@@ -325,7 +325,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
 
     # --- Student Info (Grid Table) ---
     student_info_data = [
-        [f"Student Name: {student.username}", f"Class: {result_class}", f"Term: {term.name}"],
+        [f"Student Name: {student.first_name} {student.last_name}", f"Class: {result_class}", f"Term: {term.name}"],
         [f"Session: {session.name}", f"No. in Class: {total_students}", f"Position: {position} of {total_students}"],
         [f"Total Score: {student_total}", f"Average Score: {student_average}", f"Class Average: {class_average}"],
         [f"Highest in Class: {highest_in_class}", f"Lowest in Class: {lowest_in_class}", f"Final Grade: {final_grade}"],
@@ -715,12 +715,15 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
         elements.append(Spacer(1, 10))
 
         # --- Student Info (with Grid Borders) ---
+        full_name = f"{student.first_name or ''} {student.last_name or ''}".strip()
+
         student_info_data = [
-            [f"Student Name: {student.username}", f"Class: {result_class}", f"Term: {term.name}"],
+            [f"Student Name: {student.first_name} {student.last_name}", f"Class: {result_class}", f"Term: {term.name}"],
             [f"Session: {session.name}", f"No. in Class: {total_students}", f"Position: {position} of {total_students}"],
             [f"Total Score: {student_total}", f"Average Score: {student_average}", f"Class Average: {class_average}"],
             [f"Highest in Class: {highest_in_class}", f"Lowest in Class: {lowest_in_class}", f"Final Grade: {final_grade}"],
         ]
+
         student_table = Table(student_info_data, colWidths=[180, 180, 180])
         student_table.setStyle(TableStyle([
             ('GRID', (0, 0), (-1, -1), 0.6, colors.grey),
@@ -895,6 +898,8 @@ def load_bulk_entry_page(request):
     return render(request, "portal/select_entry_params.html", context)
 
 
+from django.contrib import messages
+
 @require_reportcard_subscription
 @login_required
 def enter_results_for_class_subject(request, class_id, subject_id, session_id, term_id):
@@ -902,9 +907,7 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
     Render table of students for a class/subject and handle POST to save all results.
     Uses update_or_create to save results safely.
     """
-
     teacher = _get_teacher_for_request(request.user)
-
     # Fetch class, course, session, term
     class_obj = get_object_or_404(CourseGrade, id=class_id)
     course_obj = get_object_or_404(Courses, id=subject_id)
@@ -969,6 +972,11 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
                             'total_score': total
                         }
                     )
+
+            # Add success message
+            messages.success(request, "All results have been saved successfully!")
+
+            # Redirect to same page to show message
             return redirect(reverse('portal:enter_results', kwargs={
                 'class_id': class_id,
                 'subject_id': subject_id,
