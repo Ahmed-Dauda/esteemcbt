@@ -567,6 +567,7 @@ def class_report_list(request):
     }
     return render(request, 'portal/class_report_list.html', context)
 
+
 def class_report_detail(request, result_class, session_id, term_id):
     # Fetch session and term objects
     session = get_object_or_404(Session, id=session_id)
