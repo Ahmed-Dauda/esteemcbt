@@ -567,20 +567,22 @@ def class_report_list(request):
     }
     return render(request, 'portal/class_report_list.html', context)
 
-
 def class_report_detail(request, result_class, session_id, term_id):
-    # Fetch session and term objects
+
+    # Always fetch session and term from URL
     session = get_object_or_404(Session, id=session_id)
     term = get_object_or_404(Term, id=term_id)
 
-    # Fetch results for the given class, session, and term
+    # Fetch results
     results = Result_Portal.objects.filter(
         result_class=result_class,
         session=session,
         term=term
-    ).select_related('student', 'subject', 'schools').order_by('student__username', 'subject__title')
+    ).select_related('student', 'subject', 'schools').order_by(
+        'student__username', 'subject__title'
+    )
 
-    # If no results exist, show a friendly message
+    # If no results found
     if not results.exists():
         context = {
             'students': {},
@@ -608,6 +610,7 @@ def class_report_detail(request, result_class, session_id, term_id):
             students[sid] = {'student': res.student, 'records': []}
         students[sid]['records'].append(res)
 
+    # Context
     context = {
         'students': students,
         'result_class': result_class,
@@ -620,6 +623,7 @@ def class_report_detail(request, result_class, session_id, term_id):
     }
 
     return render(request, 'portal/class_report_detail.html', context)
+
 
 # def class_report_detail(request, result_class, session_id, term_id):
 #     results = Result_Portal.objects.filter(
