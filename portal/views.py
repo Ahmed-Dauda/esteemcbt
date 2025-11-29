@@ -559,7 +559,6 @@ def class_report_list(request):
     teacher = request.user.teacher
     classes = teacher.classes_taught.all()
    
-
     context = {
         'sessions': sessions,
         'terms': terms,
@@ -567,14 +566,18 @@ def class_report_list(request):
     }
     return render(request, 'portal/class_report_list.html', context)
 
+
 def class_report_detail(request, result_class, session_id, term_id):
+    # Normalize class name from URL
+    result_class = result_class.strip()
+
     # Fetch session and term objects
     session = get_object_or_404(Session, id=session_id)
     term = get_object_or_404(Term, id=term_id)
 
-    # Filter results using exact match
+    # Filter results (case-insensitive)
     results = Result_Portal.objects.filter(
-        result_class__iexact=result_class,  # case-insensitive exact match
+        result_class__iexact=result_class,  # important: match ignoring case
         session=session,
         term=term
     ).select_related('student', 'subject', 'schools').order_by('student__username', 'subject__title')
@@ -592,7 +595,7 @@ def class_report_detail(request, result_class, session_id, term_id):
         }
         return render(request, 'portal/class_report_detail.html', context)
 
-    # Determine max scores from the school
+    # Determine max scores from school
     school = results.first().schools
     max_ca = school.max_ca_score if school else 10
     max_mid = school.max_midterm_score if school else 30
@@ -608,7 +611,7 @@ def class_report_detail(request, result_class, session_id, term_id):
 
     context = {
         'students': students,
-        'result_class': results.first().result_class,
+        'result_class': results.first().result_class,  # Use the DB value for consistent URL
         'session': session,
         'term': term,
         'max_ca': max_ca,
