@@ -1,12 +1,10 @@
-{% block content %}
 
+{% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold">
-        {{ result_class }} – Report for {{ session.name }} ({{ term.name }})
-    </h3>
+    <h3 class="fw-bold">{{ result_class }} – Report for {{ session.name }} ({{ term.name }})</h3>
 
     <a href="{% url 'portal:download_class_reports_pdf' result_class session.id term.id %}" 
-       class="btn btn-success">
+       class="btn btn-success btn-sm">
         <i class="bi bi-download"></i> Download All Reports (PDF)
     </a>
 </div>
@@ -21,7 +19,7 @@
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">{{ student_data.student.username }}</h5>
-                <a href="{% url 'portal:report_card_detail' student_data.student.id session.id term.id %}"
+                <a href="{% url 'portal:report_card_detail' student_data.student.id session.id term.id %}" 
                    class="btn btn-light btn-sm">
                     View Full Report
                 </a>
@@ -58,8 +56,7 @@
                 </div>
             </div>
         </div>
-
     {% endfor %}
-{% endif %}
 
+{% endif %}
 {% endblock %}

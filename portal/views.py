@@ -568,21 +568,17 @@ def class_report_list(request):
     return render(request, 'portal/class_report_list.html', context)
 
 def class_report_detail(request, result_class, session_id, term_id):
-
-    # Always fetch session and term from URL
+    # Fetch session and term objects
     session = get_object_or_404(Session, id=session_id)
     term = get_object_or_404(Term, id=term_id)
 
-    # Fetch results
+    # Filter results using exact match
     results = Result_Portal.objects.filter(
-        result_class=result_class,
+        result_class__iexact=result_class,  # case-insensitive exact match
         session=session,
         term=term
-    ).select_related('student', 'subject', 'schools').order_by(
-        'student__username', 'subject__title'
-    )
+    ).select_related('student', 'subject', 'schools').order_by('student__username', 'subject__title')
 
-    # If no results found
     if not results.exists():
         context = {
             'students': {},
@@ -596,7 +592,7 @@ def class_report_detail(request, result_class, session_id, term_id):
         }
         return render(request, 'portal/class_report_detail.html', context)
 
-    # Determine max scores from school settings
+    # Determine max scores from the school
     school = results.first().schools
     max_ca = school.max_ca_score if school else 10
     max_mid = school.max_midterm_score if school else 30
@@ -610,10 +606,9 @@ def class_report_detail(request, result_class, session_id, term_id):
             students[sid] = {'student': res.student, 'records': []}
         students[sid]['records'].append(res)
 
-    # Context
     context = {
         'students': students,
-        'result_class': result_class,
+        'result_class': results.first().result_class,
         'session': session,
         'term': term,
         'max_ca': max_ca,

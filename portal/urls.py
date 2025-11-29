@@ -17,23 +17,18 @@ urlpatterns = [
 
     path("principal-dashboard/", views.principal_dashboard, name="principal_dashboard"),
     path("principal-edit-behavior/<int:record_id>/", views.principal_edit_behavior, name="principal_edit_behavior"),
-
+    
     path('form-teacher-dashboard/', views.form_teacher_dashboard, name='form_teacher_dashboard'),
     path("generate-form-teacher-comment/<int:student_id>/", views.generate_form_teacher_comment, name="generate_form_teacher_comment"),
     # path("generate-all-form-teacher-comments/", views.generate_all_form_teacher_comments, name="generate_all_form_teacher_comments"),
     path('student/<int:student_id>/term/<int:term_id>/session/<int:session_id>/edit/', 
          views.edit_student_behavior, name='edit_student_behavior'),
-
      # superadmin
     path("subscriptions/", views.subscription_list, name="subscription_list"),
     path("subscriptions/<int:school_id>/", views.subscription_edit, name="subscription_edit"),
 
     # restricted access
     path("payment-required/", views.payment_required, name="payment_required"),
-
-    # examples
-    # path("cbt/", views.cbt_dashboard, name="cbt_dashboard"),
-    # path("report-card/", views.report_card_dashboard, name="report_card_dashboard"),
 
     path('reports/', views.class_report_list, name='class_report_list'),
     path('reports/<str:result_class>/<int:session_id>/<int:term_id>/', views.class_report_detail, name='class_report_detail'),
