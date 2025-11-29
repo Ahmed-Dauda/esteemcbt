@@ -567,40 +567,20 @@ def class_report_list(request):
     return render(request, 'portal/class_report_list.html', context)
 
 
+
+
 def class_report_detail(request, result_class, session_id, term_id):
-    # Normalize class name from URL
-    result_class = result_class.strip()
-
-    # Fetch session and term objects
-    session = get_object_or_404(Session, id=session_id)
-    term = get_object_or_404(Term, id=term_id)
-
-    # Filter results (case-insensitive)
     results = Result_Portal.objects.filter(
-        result_class__iexact=result_class,  # important: match ignoring case
-        session=session,
-        term=term
-    ).select_related('student', 'subject', 'schools').order_by('student__username', 'subject__title')
+        result_class=result_class,
+        session_id=session_id,
+        term_id=term_id
+    ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('student__username', 'subject__title')
 
-    if not results.exists():
-        context = {
-            'students': {},
-            'result_class': result_class,
-            'session': session,
-            'term': term,
-            'max_ca': 10,
-            'max_mid': 30,
-            'max_exam': 60,
-            'message': "No results found for this class for the selected session and term."
-        }
-        return render(request, 'portal/class_report_detail.html', context)
-
-    # Determine max scores from school
+    # Get school max scores from the first result
     school = results.first().schools
     max_ca = school.max_ca_score if school else 10
     max_mid = school.max_midterm_score if school else 30
     max_exam = school.max_exam_score if school else 60
-
     # Group results by student
     students = {}
     for res in results:
@@ -609,55 +589,18 @@ def class_report_detail(request, result_class, session_id, term_id):
             students[sid] = {'student': res.student, 'records': []}
         students[sid]['records'].append(res)
 
+    session = results.first().session
+    term = results.first().term
     context = {
         'students': students,
-        'result_class': results.first().result_class,  # Use the DB value for consistent URL
+        'result_class': result_class,
         'session': session,
         'term': term,
         'max_ca': max_ca,
         'max_mid': max_mid,
         'max_exam': max_exam,
-        'message': None
     }
-
     return render(request, 'portal/class_report_detail.html', context)
-
-
-# def class_report_detail(request, result_class, session_id, term_id):
-#     results = Result_Portal.objects.filter(
-#         result_class=result_class,
-#         session_id=session_id,
-#         term_id=term_id
-#     ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('student__username', 'subject__title')
-
-#     if not results.exists():
-#         return HttpResponse("1No results found for this class.", status=404)
-
-#     # Get school max scores from the first result
-#     school = results.first().schools
-#     max_ca = school.max_ca_score if school else 10
-#     max_mid = school.max_midterm_score if school else 30
-#     max_exam = school.max_exam_score if school else 60
-#     # Group results by student
-#     students = {}
-#     for res in results:
-#         sid = res.student_id
-#         if sid not in students:
-#             students[sid] = {'student': res.student, 'records': []}
-#         students[sid]['records'].append(res)
-
-#     session = results.first().session
-#     term = results.first().term
-#     context = {
-#         'students': students,
-#         'result_class': result_class,
-#         'session': session,
-#         'term': term,
-#         'max_ca': max_ca,
-#         'max_mid': max_mid,
-#         'max_exam': max_exam,
-#     }
-#     return render(request, 'portal/class_report_detail.html', context)
 
 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image as RLImage
