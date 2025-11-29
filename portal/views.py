@@ -556,7 +556,9 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
 def class_report_list(request):
     sessions = Session.objects.all()
     terms = Term.objects.all()
-    classes = Result_Portal.objects.values_list('result_class', flat=True).distinct()
+    teacher = request.user.teacher
+    classes = teacher.classes_taught.all()
+   
 
     context = {
         'sessions': sessions,
@@ -574,7 +576,7 @@ def class_report_detail(request, result_class, session_id, term_id):
     ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('student__username', 'subject__title')
 
     if not results.exists():
-        return HttpResponse("No results found for this class.", status=404)
+        return HttpResponse("1No results found for this class.", status=404)
 
     # Get school max scores from the first result
     school = results.first().schools
