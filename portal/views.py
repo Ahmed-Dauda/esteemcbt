@@ -567,11 +567,9 @@ def class_report_list(request):
     return render(request, 'portal/class_report_list.html', context)
 
 
-
-
 def class_report_detail(request, result_class, session_id, term_id):
     results = Result_Portal.objects.filter(
-        result_class=result_class,
+        result_class__iexact=result_class.strip(),
         session_id=session_id,
         term_id=term_id
     ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('student__username', 'subject__title')
@@ -601,6 +599,40 @@ def class_report_detail(request, result_class, session_id, term_id):
         'max_exam': max_exam,
     }
     return render(request, 'portal/class_report_detail.html', context)
+
+
+# def class_report_detail(request, result_class, session_id, term_id):
+#     results = Result_Portal.objects.filter(
+#         result_class=result_class,
+#         session_id=session_id,
+#         term_id=term_id
+#     ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('student__username', 'subject__title')
+
+#     # Get school max scores from the first result
+#     school = results.first().schools
+#     max_ca = school.max_ca_score if school else 10
+#     max_mid = school.max_midterm_score if school else 30
+#     max_exam = school.max_exam_score if school else 60
+#     # Group results by student
+#     students = {}
+#     for res in results:
+#         sid = res.student_id
+#         if sid not in students:
+#             students[sid] = {'student': res.student, 'records': []}
+#         students[sid]['records'].append(res)
+
+#     session = results.first().session
+#     term = results.first().term
+#     context = {
+#         'students': students,
+#         'result_class': result_class,
+#         'session': session,
+#         'term': term,
+#         'max_ca': max_ca,
+#         'max_mid': max_mid,
+#         'max_exam': max_exam,
+#     }
+#     return render(request, 'portal/class_report_detail.html', context)
 
 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image as RLImage
