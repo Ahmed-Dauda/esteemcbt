@@ -17,7 +17,7 @@ urlpatterns = [
 
     path("principal-dashboard/", views.principal_dashboard, name="principal_dashboard"),
     path("principal-edit-behavior/<int:record_id>/", views.principal_edit_behavior, name="principal_edit_behavior"),
-    
+
     path('form-teacher-dashboard/', views.form_teacher_dashboard, name='form_teacher_dashboard'),
     path("generate-form-teacher-comment/<int:student_id>/", views.generate_form_teacher_comment, name="generate_form_teacher_comment"),
     # path("generate-all-form-teacher-comments/", views.generate_all_form_teacher_comments, name="generate_all_form_teacher_comments"),
@@ -33,6 +33,7 @@ urlpatterns = [
     path('reports/', views.class_report_list, name='class_report_list'),
     path('reports/<str:result_class>/<int:session_id>/<int:term_id>/', views.class_report_detail, name='class_report_detail'),
     path('reports/pdf/<str:result_class>/<int:session_id>/<int:term_id>/', views.download_class_reports_pdf, name='download_class_reports_pdf'),
+    
     # class report card
     path('report-cards/', views.report_card_list, name='report_card_list'),
     path('my-report-cards/', views.my_report_cards, name='my_report_cards'),

@@ -550,21 +550,19 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     doc.build(elements)
     return response
 
-
-# download per class
-@require_reportcard_subscription
 def class_report_list(request):
-    sessions = Session.objects.all()
-    terms = Term.objects.all()
-    teacher = request.user.teacher
-    classes = teacher.classes_taught.all()
-   
-    context = {
-        'sessions': sessions,
-        'terms': terms,
-        'classes': classes,
-    }
-    return render(request, 'portal/class_report_list.html', context)
+    # Fetch distinct combinations
+    reports = Result_Portal.objects.values(
+        'result_class',
+        'session_id',
+        'session__name',
+        'term_id',
+        'term__name'
+    ).distinct()
+
+    return render(request, 'portal/class_report_list.html', {
+        'reports': reports
+    })
 
 
 def class_report_detail(request, result_class, session_id, term_id):

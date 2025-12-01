@@ -1,46 +1,20 @@
+<h4>Available Class Reports</h4>
 
-{% block content %}
-<h3>1Class Reports</h3>
+<ul class="list-group mt-3">
 
-<form id="reportForm">
-  <div>
-    <label>Session:</label>
-    <select name="session_id" id="sessionSelect">
-      {% for s in sessions %}
-      <option value="{{ s.id }}">{{ s.name }}</option>
-      {% endfor %}
-    </select>
+    {% for r in reports %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
 
-    <label>Term:</label>
-    <select name="term_id" id="termSelect">
-      {% for t in terms %}
-      <option value="{{ t.id }}">{{ t.name }}</option>
-      {% endfor %}
-    </select>
+            <span>
+                {{ r.result_class }} - {{ r.session__name }} - {{ r.term__name }}
+            </span>
 
-    <label>Class:</label>
-    <select name="result_class" id="classSelect">
-      {% for c in classes %}
-      <option value="{{ c }}">{{ c }}</option>
-      {% endfor %}
-    </select>
+            <a href="{% url 'portal:class_report_detail' r.result_class r.session_id r.term_id %}"
+               class="btn btn-primary btn-sm">
+                View Report
+            </a>
 
-    <button type="submit" class="btn btn-primary">View Reports</button>
-  </div>
-</form>
+        </li>
+    {% endfor %}
 
-<script>
-document.getElementById('reportForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const sessionId = document.getElementById('sessionSelect').value;
-  const termId = document.getElementById('termSelect').value;
-  const resultClass = document.getElementById('classSelect').value;
-
-  if (sessionId && termId && resultClass) {
-    window.location.href = `/portal/reports/${resultClass}/${sessionId}/${termId}/`;
-  } else {
-    alert("Please select all fields before proceeding.");
-  }
-});
-</script>
-{% endblock %}
+</ul>
