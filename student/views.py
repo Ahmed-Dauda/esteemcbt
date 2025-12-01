@@ -3599,18 +3599,12 @@ def exams_conducted_statistics_view(request):
 
 @login_required
 def take_exams_view(request):
-    # course = QMODEL.Course.objects.all()
-
-    # course = Course.objects.select_related('schools', 'course_name').only(
-    #     'id', 'schools__name', 'course_name__title'
-    # )  
+ 
     course = Course.objects.select_related('schools', 'course_name').only(
         'id', 'schools__name', 'course_name__title','session','term', 'exam_type__name'
     )
 
     current_user = request.user
-    # user_profile = get_object_or_404(Profile, user=request.user)
-    # user_profile = get_object_or_404(Profile.objects.select_related('user'), user=request.user)
     user_profile = get_object_or_404(
             Profile.objects.select_related('user').only(
                 'user__id', 'user__username', 'username', 'first_name', 'last_name'), user=request.user
@@ -3634,20 +3628,15 @@ def take_exams_view(request):
             # course_names = Course.objects.filter(course_pay=course_pay)
         else:
             school_name = "Default School Name"
-            # course_names = []
-            # course_pay = None
+
         student_class = user_newuser.student_class
     else:
         school_name = "Default School Name"
         student_class = "Default Class"
-        # course_names = []
-        # course_pay = None
 
     sub_grade = None  # Initialize sub_grade with a default value
     subjects = None  # Initialize subjects with a default value
     class_subj = []  # Initialize class_subj with a default value
-
-
 
     course_grade = QMODEL.CourseGrade.objects.prefetch_related('subjects').filter(students__in=[current_user]).first()
 
@@ -3667,9 +3656,6 @@ def take_exams_view(request):
         'school_name': school_name,
         "sub_grade": sub_grade,
         "subjects": subjects,
-        # "course_names": course_names,
-        # 'course_pay': course_pay,
-        # "grades": QMODEL.CourseGrade.objects.all(),
         'user_results':user_results,
     }
     return render(request, 'student/dashboard/take_exams.html', context=context)
@@ -3835,7 +3821,7 @@ def get_or_create_shuffled_questions(student, course, all_questions):
 
     if existing_sessions.count() > 1:
         # Clean up duplicates — keep the latest one
-        latest = existing_sessions.order_by('-created_at').first()
+        latest = existing_sessions.order_by('-created').first()
         existing_sessions.exclude(id=latest.id).delete()
         session = latest
         created = False
