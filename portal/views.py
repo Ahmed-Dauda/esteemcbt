@@ -299,10 +299,12 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     school_address = f"{getattr(school, 'school_address', 'Tunga')}"
 
     school_details = [
-        Paragraph(school_name, ParagraphStyle(name='SchoolName', fontSize=14, alignment=TA_LEFT)),
-        Paragraph(school_motto, ParagraphStyle(name='SchoolMotto', fontSize=10, alignment=TA_LEFT)),
-        Paragraph(school_address, ParagraphStyle(name='SchoolAddress', fontSize=9, alignment=TA_LEFT))
-    ]
+            Paragraph(school_name, ParagraphStyle(name='SchoolName', fontSize=14, alignment=TA_LEFT)),
+            Spacer(1, 8),  # 4 points of vertical space
+            Paragraph(school_motto, ParagraphStyle(name='SchoolMotto', fontSize=10, alignment=TA_LEFT)),
+            Spacer(1, 8),  # 2 points of vertical space
+            Paragraph(school_address, ParagraphStyle(name='SchoolAddress', fontSize=9, alignment=TA_LEFT))
+        ]
 
     header_table = Table([[logo_img if logo_img else "", school_details]], colWidths=[90, 400])
     header_table.setStyle(TableStyle([
@@ -325,7 +327,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
 
     # --- Student Info (Grid Table) ---
     student_info_data = [
-        [f"Student Name: {student.first_name} {student.last_name}", f"Class: {result_class}", f"Term: {term.name}"],
+        [f"Name: {student.first_name} {student.last_name}", f"Class: {result_class}", f"Term: {term.name}"],
         [f"Session: {session.name}", f"No. in Class: {total_students}", f"Position: {position} of {total_students}"],
         [f"Total Score: {student_total}", f"Average Score: {student_average}", f"Class Average: {class_average}"],
         [f"Highest in Class: {highest_in_class}", f"Lowest in Class: {lowest_in_class}", f"Final Grade: {final_grade}"],
@@ -353,7 +355,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
         f"Midterm<br/>({max_mid})",
         f"Exam<br/>({max_exam})",
         "Total",
-        "Per<br/>(%)",
+        "Per (%)",
         "Grade",
         "Class<br/>Ave",
         "POS",
@@ -396,7 +398,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
 
         row = [
             r.subject.title, str(ca), str(mid), str(exam), str(total),
-            f"{percentage}%", r.grade_letter, str(class_avg), str(pos),
+            f"{percentage}", r.grade_letter, str(class_avg), str(pos),
             str(len(subject_results)), str(high_in_class), str(low_in_class), r.remark
         ]
         table_data.append([Paragraph(str(x), style_center) for x in row])
@@ -549,6 +551,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     
     doc.build(elements)
     return response
+
 
 def class_report_list(request):
     # Fetch distinct combinations
@@ -730,6 +733,10 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
         elements.append(header_table)
         elements.append(Spacer(1, 10))
 
+        hr = HRFlowable(width="100%", thickness=0.5, color=colors.blue)
+        elements.append(hr)
+
+
         # --- Title ---
         elements.append(Paragraph("<b><u>TERM REPORT CARD</u></b>", style_center))
         elements.append(Spacer(1, 10))
@@ -766,7 +773,7 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
             f"Midterm<br/>({max_mid})",
             f"Exam<br/>({max_exam})",
             "Total",
-            "Per<br/>(%)",
+            "Per (%)",
             "Grade",
             "Class<br/>Ave",
             "POS",
@@ -807,7 +814,7 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
 
             row = [
                 r.subject.title, str(ca), str(mid), str(exam), str(total),
-                f"{percentage}%", r.grade_letter, str(class_avg), str(pos),
+                f"{percentage}", r.grade_letter, str(class_avg), str(pos),
                 str(len(subject_results)), str(high_in_class), str(low_in_class), r.remark
             ]
             table_data.append([Paragraph(str(x), style_center) for x in row])
@@ -834,9 +841,23 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
         elements.append(Paragraph("A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39", style_left))
         elements.append(Spacer(1, 15))
 
+        behavior = StudentBehaviorRecord.objects.filter(
+           
+            session_id=session_id,
+            term_id=term_id
+        ).first()
+
+        elements.append(hr)
+
+        if behavior:
+            # append form teacher and principal comments
+            elements.append(Spacer(1, 10))
+            elements.append(Paragraph(f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}", style_left))
+
+        
+        elements.append(hr)
+
         # --- Comments & Signatures ---
-        elements.append(Paragraph("<b>Teacher’s Comment:</b> ____________________________________________", style_left))
-        elements.append(Spacer(1, 8))
         if school and getattr(school, 'teacher_signature', None):
             try:
                 sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
@@ -846,8 +867,7 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
                 pass
 
         elements.append(Spacer(1, 10))
-        elements.append(Paragraph("<b>Principal’s Comment:</b> ____________________________________________", style_left))
-        elements.append(Spacer(1, 8))
+
         if school and getattr(school, 'principal_signature', None):
             try:
                 sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
@@ -856,8 +876,6 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
             except Exception:
                 pass
 
-        elements.append(Spacer(1, 20))
-        elements.append(Paragraph("<b>End of Report</b>", style_center))
         elements.append(PageBreak())
 
     doc.build(elements)
