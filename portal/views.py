@@ -619,39 +619,6 @@ def class_report_detail(request, result_class, session_id, term_id):
     return render(request, 'portal/class_report_detail.html', context)
 
 
-# def class_report_detail(request, result_class, session_id, term_id):
-#     results = Result_Portal.objects.filter(
-#         result_class=result_class,
-#         session_id=session_id,
-#         term_id=term_id
-#     ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('student__username', 'subject__title')
-
-#     # Get school max scores from the first result
-#     school = results.first().schools
-#     max_ca = school.max_ca_score if school else 10
-#     max_mid = school.max_midterm_score if school else 30
-#     max_exam = school.max_exam_score if school else 60
-#     # Group results by student
-#     students = {}
-#     for res in results:
-#         sid = res.student_id
-#         if sid not in students:
-#             students[sid] = {'student': res.student, 'records': []}
-#         students[sid]['records'].append(res)
-
-#     session = results.first().session
-#     term = results.first().term
-#     context = {
-#         'students': students,
-#         'result_class': result_class,
-#         'session': session,
-#         'term': term,
-#         'max_ca': max_ca,
-#         'max_mid': max_mid,
-#         'max_exam': max_exam,
-#     }
-#     return render(request, 'portal/class_report_detail.html', context)
-
 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image as RLImage
 from reportlab.lib.pagesizes import A4
@@ -741,9 +708,12 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
 
         school_details = [
             Paragraph(school_name, ParagraphStyle(name='SchoolName', fontSize=14, alignment=TA_LEFT)),
+            Spacer(1, 8),  # 4 points of vertical space
             Paragraph(school_motto, ParagraphStyle(name='SchoolMotto', fontSize=10, alignment=TA_LEFT)),
+            Spacer(1, 8),  # 2 points of vertical space
             Paragraph(school_address, ParagraphStyle(name='SchoolAddress', fontSize=9, alignment=TA_LEFT))
         ]
+
 
         # Simulate flexbox with table (Logo | School Info)
         header_table = Table(
@@ -768,7 +738,7 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
         full_name = f"{student.first_name or ''} {student.last_name or ''}".strip()
 
         student_info_data = [
-            [f"Student Name: {student.first_name} {student.last_name}", f"Class: {result_class}", f"Term: {term.name}"],
+            [f"Name: {student.first_name} {student.last_name}", f"Class: {result_class}", f"Term: {term.name}"],
             [f"Session: {session.name}", f"No. in Class: {total_students}", f"Position: {position} of {total_students}"],
             [f"Total Score: {student_total}", f"Average Score: {student_average}", f"Class Average: {class_average}"],
             [f"Highest in Class: {highest_in_class}", f"Lowest in Class: {lowest_in_class}", f"Final Grade: {final_grade}"],
