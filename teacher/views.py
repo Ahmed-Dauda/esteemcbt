@@ -326,18 +326,41 @@ def examiner_create_class_view(request):
     school = getattr(user, 'school', None)
 
     if request.method == 'POST':
-        form = ExaminerCreateClassForm(request.POST)
+        form = ExaminerCreateClassForm(request.POST, user_school=school)
         if form.is_valid():
             new_class = form.save(commit=False)
-            new_class.schools = school  # assign the current teacher's school
+            new_class.schools = school
             new_class.save()
             form.save_m2m()
             messages.success(request, "Class created successfully!")
             return redirect('teacher:examiner_class_list')
     else:
-        form = ExaminerCreateClassForm()
+        form = ExaminerCreateClassForm(user_school=school)
 
-    return render(request, 'teacher/dashboard/examiner_create_class.html', {'form': form})
+    return render(
+        request,
+        'teacher/dashboard/examiner_create_class.html',
+        {'form': form}
+    )
+
+# @login_required(login_url='teacher:teacher_login')
+# def examiner_create_class_view(request):
+#     user = request.user
+#     school = getattr(user, 'school', None)
+
+#     if request.method == 'POST':
+#         form = ExaminerCreateClassForm(request.POST)
+#         if form.is_valid():
+#             new_class = form.save(commit=False)
+#             new_class.schools = school  # assign the current teacher's school
+#             new_class.save()
+#             form.save_m2m()
+#             messages.success(request, "Class created successfully!")
+#             return redirect('teacher:examiner_class_list')
+#     else:
+#         form = ExaminerCreateClassForm()
+
+#     return render(request, 'teacher/dashboard/examiner_create_class.html', {'form': form})
 
 
 
