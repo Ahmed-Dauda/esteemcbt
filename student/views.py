@@ -4112,105 +4112,38 @@ from django.db import transaction
 # redis_conn = get_redis_connection("default")
 
 
-# yourapp/tasks.py
-from celery import shared_task
-from django.db import transaction
 
-
-@shared_task(bind=True)
-def save_exam_result_task(self, course_id, student_id, total_marks):
-    """
-    Celery task to save exam result asynchronously.
-    """
-    try:
-        course = QMODEL.Course.objects.select_related(
-            'schools', 'session', 'term', 'exam_type'
-        ).get(id=course_id)
-        student = QMODEL.Profile.objects.get(id=student_id)
-
-        with transaction.atomic():
-            QMODEL.Result.objects.create(
-                schools=course.schools,
-                marks=total_marks,
-                exam=course,
-                session=course.session,
-                term=course.term,
-                exam_type=course.exam_type,
-                student=student,
-                result_class=student.student_class
-            )
-        return True
-    except QMODEL.Result.DoesNotExist:
-        return False
-    except Exception as e:
-        raise self.retry(exc=e, countdown=5, max_retries=3)
-
-
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from asgiref.sync import async_to_sync, sync_to_async
-import json
-from quiz.tasks import save_exam_result_task
-
-# -----------------------------
-# Calculate Marks View
-# -----------------------------
 @csrf_exempt
 def calculate_marks_view(request):
-    """Sync wrapper that allows async view inside."""
     if not request.user.is_authenticated:
-        return JsonResponse(
-            {'success': False, 'error': 'Authentication required.'},
-            status=401
-        )
-
-    # run async view
+        return JsonResponse({'success': False, 'error': 'Authentication required.'}, status=401)
     return async_to_sync(_calculate_marks_async)(request)
 
-
-# -----------------------------
-# ASYNC VIEW (REAL WORK HAPPENS HERE)
-# -----------------------------
 async def _calculate_marks_async(request):
     if request.method != 'POST':
-        return JsonResponse(
-            {'success': False, 'error': 'Invalid request method.'}
-        )
+        return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 
-    # --- GET COURSE ID FROM COOKIE ---
     course_id = request.COOKIES.get('course_id')
     if not course_id:
-        return JsonResponse(
-            {'success': False, 'error': 'Course ID not found in cookies.'}
-        )
+        return JsonResponse({'success': False, 'error': 'Course ID not found in cookies.'})
 
-    # --- GET ANSWERS JSON ---
     try:
         answers_dict = json.loads(request.body)
     except json.JSONDecodeError:
-        return JsonResponse(
-            {'success': False, 'error': 'Invalid JSON format.'}
-        )
+        return JsonResponse({'success': False, 'error': 'Invalid JSON format.'})
 
-    # --- FETCH COURSE, STUDENT, QUESTIONS ---
     try:
-        course, student, result_exists, questions = await get_course_student_questions(
-            course_id, request.user.id
-        )
-    except Course.DoesNotExist:
+        course, student, result_exists, questions = await get_course_and_student_and_questions(course_id, request.user.id)
+    except QMODEL.Course.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Course not found.'})
     except Profile.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Student profile not found.'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'})
 
-    # --- PREVENT MULTIPLE SUBMISSIONS ---
     if result_exists:
-        return JsonResponse(
-            {'success': False, 'error': 'Result already exists.'}
-        )
+        return JsonResponse({'success': False, 'error': 'Result already exists.'})
 
-    # --- CALCULATE SCORE ---
     total_marks = 0
 
     for question in questions:
@@ -4220,28 +4153,21 @@ async def _calculate_marks_async(request):
         if selected and selected == question.answer:
             total_marks += question.marks or 0
 
-    # --- SAVE USING CELERY (NON-BLOCKING) ---
-    save_exam_result_task.delay(course.id, student.id, total_marks)
+    try:
+        await save_result(course, student, total_marks)
+        return JsonResponse({'success': True, 'message': 'Quiz graded and saved ✅'})
+    except IntegrityError:
+        return JsonResponse({'success': False, 'error': 'Result already exists.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'})
 
-    return JsonResponse({
-        'success': True,
-        'message': 'Quiz graded ✅. Saving to database in background.'
-    })
 
-
-# -----------------------------
-# ASYNC HELPER FUNCTION
-# -----------------------------
 @sync_to_async
-def get_course_student_questions(course_id, user_id):
-    """Fetch course, student, questions, and check existing result."""
-    course = Course.objects.select_related(
-        'schools', 'session', 'term', 'exam_type'
-    ).get(id=course_id)
-
+def get_course_and_student_and_questions(course_id, user_id):
+    course = QMODEL.Course.objects.select_related('schools', 'session', 'term', 'exam_type').get(id=course_id)
     student = Profile.objects.select_related('user').get(user_id=user_id)
 
-    result_exists = Result.objects.filter(
+    result_exists = QMODEL.Result.objects.filter(
         student=student,
         exam=course,
         session=course.session,
@@ -4250,11 +4176,25 @@ def get_course_student_questions(course_id, user_id):
         result_class=student.student_class
     ).exists()
 
-    questions = list(
-        Question.objects.filter(course=course).order_by('id')
-    )
+    questions = list(QMODEL.Question.objects.filter(course=course).order_by('id'))
 
     return course, student, result_exists, questions
+
+
+@sync_to_async
+def save_result(course, student, total_marks):
+    with transaction.atomic():
+        QMODEL.Result.objects.create(
+            schools=course.schools,
+            marks=total_marks,
+            exam=course,
+            session=course.session,
+            term=course.term,
+            exam_type=course.exam_type,
+            student=student,
+            result_class=student.student_class
+        )
+
 
 #WORKING FINE
 
