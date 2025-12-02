@@ -2,12 +2,35 @@
 from celery import shared_task, current_task
 from openai import OpenAI
 from django.conf import settings
-from quiz.models import Course, GenerationJob, Question
+from quiz.models import Course, GenerationJob, Question, Result
 from sms.models import Courses
 import re
 import math
 import time
 
+from django.db import transaction, IntegrityError
+
+from users.models import Profile
+
+
+@shared_task(bind=True)
+def save_exam_result_task(self, course_id, student_id, total_marks):
+    course = Course.objects.select_related('schools', 'session', 'term', 'exam_type').get(id=course_id)
+    student = Profile.objects.select_related('user').get(id=student_id)
+
+    with transaction.atomic():
+        Result.objects.create(
+            schools=course.schools,
+            marks=total_marks,
+            exam=course,
+            session=course.session,
+            term=course.term,
+            exam_type=course.exam_type,
+            student=student,
+            result_class=student.student_class
+        )
+
+        
 # client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)

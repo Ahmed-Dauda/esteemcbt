@@ -97,28 +97,6 @@ class CourseGrade(models.Model):
         return self.name if self.name else 'Unnamed Class'
 
 
-# class CourseGrade(models.Model):
-#     schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='coursegrade', blank=True, null=True, db_index=True)  # 🔍 Faster lookup by school
-#     name = models.CharField(max_length=140, blank=True, null=True, db_index=True)  # 🔍 Faster filtering/searching by class name
-#     students = models.ManyToManyField(NewUser, related_name='course_grades', blank=True)
-#     # session = models.ForeignKey(Session, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
-#     subjects = models.ManyToManyField(Course, related_name='course_grade')
-#     is_active = models.BooleanField(default=True, db_index=True)  # 🔍 Fast filtering of active classes
-#     id = models.AutoField(primary_key=True)
-
-#     class Meta:
-#         verbose_name = 'Student class'
-#         verbose_name_plural = 'student classes'
-#         indexes = [
-#             models.Index(fields=['schools']),
-#             models.Index(fields=['name']),
-#             models.Index(fields=['is_active']),
-#         ]
-
-#     def __str__(self):
-#         return self.name if self.name else 'Unnamed Class'
-
-
 
 class School(models.Model):
     name = models.CharField(max_length=255, db_index=True)
@@ -339,14 +317,3 @@ class StudentAnswer(models.Model):
     def __str__(self):
         return f"{self.result.student.user.username} | Q{self.question.id} | {self.selected_answer}"
 
-
-# class ExamsRules(models.Model):
-#     # school_name = models.ForeignKey(
-#     #     School, on_delete=models.SET_NULL,
-#     #     related_name='examrules', blank=True, null=True
-#     # )
-#     rules = models.TextField(blank=True, null=True)
-#     action = models.TextField(blank=True, null=True)
-#     created = models.DateTimeField(auto_now_add=True, null=True)
-#     updated = models.DateTimeField(auto_now=True, null=True)
-#     id = models.AutoField(primary_key=True)
