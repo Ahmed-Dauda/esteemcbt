@@ -9,12 +9,10 @@
 # celery -A school worker --loglevel=info --concurrency=4
 
 # Web dyno: Uvicorn + Gunicorn
-web: gunicorn esteemcbt.wsgi:application --log-file -
-
-
-# Celery worker
-worker: celery -A school worker \
-        --loglevel=info \
-        --concurrency=4 \
-        --prefetch-multiplier=1 \
-        --max-tasks-per-child=50
+# web: gunicorn esteemcbt.wsgi:application --log-file -
+# # Celery worker
+# worker: celery -A school worker \
+#         --loglevel=info \
+#         --concurrency=4 \
+#         --prefetch-multiplier=1 \
+#         --max-tasks-per-child=50

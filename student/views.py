@@ -3769,154 +3769,42 @@ from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from asgiref.sync import async_to_sync, sync_to_async
 
-from django_redis import get_redis_connection
+# from django_redis import get_redis_connection
 
-redis = get_redis_connection("default")
-
-
-# ------------------- START EXAM VIEW -------------------
-@csrf_exempt
-def start_exams_view(request, pk: int):
-    if not request.user.is_authenticated:
-        return redirect('account_login')
-    return async_to_sync(_start_exam_async)(request, pk)
+# redis = get_redis_connection("default")
 
 
-# ---------- ASYNC VERSION ----------
-async def _start_exam_async(request, pk: int):
-    user_profile = await get_user_profile(request.user)
-    course = await get_course(pk)
-    all_questions = await get_course_questions(course)
-    result_exists = await check_result_exists(user_profile, course)
-
-    if result_exists:
-        print(f"DEBUG: Student {user_profile} already submitted {course}, redirecting")
-        return await async_redirect('student:view_result')
-
-    # Redis: get shuffled questions order per student
-    shuffled_questions = await get_or_create_redis_shuffled_questions(user_profile.id, course.id, all_questions, course.duration_minutes)
-
-    # Trim to course.show_questions limit
-    show_count = course.show_questions or len(shuffled_questions)
-    questions_to_show = shuffled_questions[:show_count]
-
-    context = {
-        'course': course,
-        'questions': questions_to_show,
-        'q_count': len(questions_to_show),
-        'page_obj': questions_to_show,
-        'quiz_already_submitted': result_exists,
-        'tab_limit': course.num_attemps,
-    }
-
-    response = await async_render(request, 'student/dashboard/start_exams.html', context)
-    response.set_cookie('course_id', course.id)
-    return response
-
-
-# ------------------- ASYNC HELPERS -------------------
-@sync_to_async
-def get_user_profile(user):
-    return user.profile
-
-
-@sync_to_async
-def get_course(pk):
-    return Course.objects.select_related('course_name').get(id=pk)
-
-
-@sync_to_async
-def get_course_questions(course):
-    key = f"course:{course.id}:questions"
-    cached = redis.get(key)
-
-    if cached:
-        questions_data = json.loads(cached)
-        # Convert dicts to Question objects
-        return [Question(**data) for data in questions_data]
-
-    # Fetch from DB
-    questions = list(
-        Question.objects.filter(course=course).order_by('id')
-        .values('id', 'question', 'option1', 'option2', 'option3', 'option4', 'answer', 'marks')
-    )
-
-    # Cache for 2 hours
-    redis.set(key, json.dumps(questions))
-    redis.expire(key, 7200)
-
-    # Convert dicts to Question objects
-    return [Question(**data) for data in questions]
-
-
-@sync_to_async
-def check_result_exists(profile, course):
-    return Result.objects.filter(
-        student=profile,
-        exam=course,
-        session=course.session,
-        term=course.term,
-        exam_type=course.exam_type,
-        result_class=profile.student_class
-    ).exists()
-
-
-@sync_to_async
-def get_or_create_redis_shuffled_questions(student_id, course_id, all_questions, duration_minutes):
-    """
-    Get shuffled question order from Redis, or create a new one.
-    """
-    key = f"exam:session:{student_id}:{course_id}"
-    if redis.exists(key):
-        order = json.loads(redis.get(key))
-    else:
-        question_ids = [q.id for q in all_questions]
-        order = random.sample(question_ids, len(question_ids))
-        redis.set(key, json.dumps(order))
-        redis.expire(key, duration_minutes * 60)  # expire after exam duration
-
-    # Return ordered Question objects
-    id_map = {q.id: q for q in all_questions}
-    ordered_questions = [id_map[qid] for qid in order]
-    return ordered_questions
-
-
-# Django sync views wrapped in async
-async_render = sync_to_async(render, thread_sensitive=True)
-async_redirect = sync_to_async(redirect, thread_sensitive=True)
-
-
-# #working view
+# # ------------------- START EXAM VIEW -------------------
 # @csrf_exempt
-# def start_exams_view(request: HttpRequest, pk: int) -> HttpResponse:
+# def start_exams_view(request, pk: int):
 #     if not request.user.is_authenticated:
 #         return redirect('account_login')
 #     return async_to_sync(_start_exam_async)(request, pk)
 
+
 # # ---------- ASYNC VERSION ----------
-# async def _start_exam_async(request, pk):
-#     user = request.user
-#     user_profile = await get_user_profile(user)
+# async def _start_exam_async(request, pk: int):
+#     user_profile = await get_user_profile(request.user)
 #     course = await get_course(pk)
 #     all_questions = await get_course_questions(course)
 #     result_exists = await check_result_exists(user_profile, course)
 
 #     if result_exists:
+#         print(f"DEBUG: Student {user_profile} already submitted {course}, redirecting")
 #         return await async_redirect('student:view_result')
 
-#     # Get shuffled questions from saved session or create new
-#     all_shuffled_questions = await get_or_create_shuffled_questions(user_profile, course, all_questions)
+#     # Redis: get shuffled questions order per student
+#     shuffled_questions = await get_or_create_redis_shuffled_questions(user_profile.id, course.id, all_questions, course.duration_minutes)
 
 #     # Trim to course.show_questions limit
-#     show_count = course.show_questions or len(all_shuffled_questions)
-#     questions = all_shuffled_questions[:show_count]
-#     q_count = len(questions)
+#     show_count = course.show_questions or len(shuffled_questions)
+#     questions_to_show = shuffled_questions[:show_count]
 
 #     context = {
 #         'course': course,
-#         'questions': questions,
-#         'q_count': q_count,
-#         'page_obj': questions,
+#         'questions': questions_to_show,
+#         'q_count': len(questions_to_show),
+#         'page_obj': questions_to_show,
 #         'quiz_already_submitted': result_exists,
 #         'tab_limit': course.num_attemps,
 #     }
@@ -3925,17 +3813,130 @@ async_redirect = sync_to_async(redirect, thread_sensitive=True)
 #     response.set_cookie('course_id', course.id)
 #     return response
 
-# # ---------- ASYNC HELPERS ----------
+
+# # ------------------- ASYNC HELPERS -------------------
 # @sync_to_async
 # def get_user_profile(user):
 #     return user.profile
 
+
 # @sync_to_async
 # def get_course(pk):
-#     return Course.objects.select_related('course_name').only(
-#         'id', 'room_name', 'course_name__id', 'exam_type__name',
-#         'course_name__title', 'num_attemps', 'show_questions', 'duration_minutes'
-#     ).get(id=pk)
+#     return Course.objects.select_related('course_name').get(id=pk)
+
+
+# @sync_to_async
+# def get_course_questions(course):
+#     key = f"course:{course.id}:questions"
+#     cached = redis.get(key)
+
+#     if cached:
+#         questions_data = json.loads(cached)
+#         # Convert dicts to Question objects
+#         return [Question(**data) for data in questions_data]
+
+#     # Fetch from DB
+#     questions = list(
+#         Question.objects.filter(course=course).order_by('id')
+#         .values('id', 'question', 'option1', 'option2', 'option3', 'option4', 'answer', 'marks')
+#     )
+
+#     # Cache for 2 hours
+#     redis.set(key, json.dumps(questions))
+#     redis.expire(key, 7200)
+
+#     # Convert dicts to Question objects
+#     return [Question(**data) for data in questions]
+
+
+# @sync_to_async
+# def check_result_exists(profile, course):
+#     return Result.objects.filter(
+#         student=profile,
+#         exam=course,
+#         session=course.session,
+#         term=course.term,
+#         exam_type=course.exam_type,
+#         result_class=profile.student_class
+#     ).exists()
+
+
+# @sync_to_async
+# def get_or_create_redis_shuffled_questions(student_id, course_id, all_questions, duration_minutes):
+#     """
+#     Get shuffled question order from Redis, or create a new one.
+#     """
+#     key = f"exam:session:{student_id}:{course_id}"
+#     if redis.exists(key):
+#         order = json.loads(redis.get(key))
+#     else:
+#         question_ids = [q.id for q in all_questions]
+#         order = random.sample(question_ids, len(question_ids))
+#         redis.set(key, json.dumps(order))
+#         redis.expire(key, duration_minutes * 60)  # expire after exam duration
+
+#     # Return ordered Question objects
+#     id_map = {q.id: q for q in all_questions}
+#     ordered_questions = [id_map[qid] for qid in order]
+#     return ordered_questions
+
+
+# # Django sync views wrapped in async
+# async_render = sync_to_async(render, thread_sensitive=True)
+# async_redirect = sync_to_async(redirect, thread_sensitive=True)
+
+
+# #working view
+
+@csrf_exempt
+def start_exams_view(request: HttpRequest, pk: int) -> HttpResponse:
+    if not request.user.is_authenticated:
+        return redirect('account_login')
+    return async_to_sync(_start_exam_async)(request, pk)
+
+# ---------- ASYNC VERSION ----------
+async def _start_exam_async(request, pk):
+    user = request.user
+    user_profile = await get_user_profile(user)
+    course = await get_course(pk)
+    all_questions = await get_course_questions(course)
+    result_exists = await check_result_exists(user_profile, course)
+
+    if result_exists:
+        return await async_redirect('student:view_result')
+
+    # Get shuffled questions from saved session or create new
+    all_shuffled_questions = await get_or_create_shuffled_questions(user_profile, course, all_questions)
+
+    # Trim to course.show_questions limit
+    show_count = course.show_questions or len(all_shuffled_questions)
+    questions = all_shuffled_questions[:show_count]
+    q_count = len(questions)
+
+    context = {
+        'course': course,
+        'questions': questions,
+        'q_count': q_count,
+        'page_obj': questions,
+        'quiz_already_submitted': result_exists,
+        'tab_limit': course.num_attemps,
+    }
+
+    response = await async_render(request, 'student/dashboard/start_exams.html', context)
+    response.set_cookie('course_id', course.id)
+    return response
+
+# ---------- ASYNC HELPERS ----------
+@sync_to_async
+def get_user_profile(user):
+    return user.profile
+
+@sync_to_async
+def get_course(pk):
+    return Course.objects.select_related('course_name').only(
+        'id', 'room_name', 'course_name__id', 'exam_type__name',
+        'course_name__title', 'num_attemps', 'show_questions', 'duration_minutes'
+    ).get(id=pk)
 
 # @sync_to_async
 # def get_course_questions(course):
@@ -4132,147 +4133,68 @@ from quiz.models import StudentAnswer
 from django.db import transaction
 from django.db import IntegrityError, transaction
 from django.db import transaction
-from quiz.tasks import save_exam_result_task
+# from quiz.tasks import save_exam_result_task
 
 # Redis connection
 # redis_conn = get_redis_connection("default")
 
 
-@csrf_exempt
-def calculate_marks_view(request):
-    """Sync wrapper that allows async view inside."""
-    if not request.user.is_authenticated:
-        return JsonResponse(
-            {'success': False, 'error': 'Authentication required.'},
-            status=401
-        )
-
-    # run async view
-    return async_to_sync(_calculate_marks_async)(request)
-
-
-# -----------------------------
-# ASYNC VIEW (REAL WORK HAPPENS HERE)
-# -----------------------------
-async def _calculate_marks_async(request):
-    if request.method != 'POST':
-        return JsonResponse(
-            {'success': False, 'error': 'Invalid request method.'}
-        )
-
-    # --- GET COURSE ID FROM COOKIE ---
-    course_id = request.COOKIES.get('course_id')
-    if not course_id:
-        return JsonResponse(
-            {'success': False, 'error': 'Course ID not found in cookies.'}
-        )
-
-    # --- GET ANSWERS JSON ---
-    try:
-        answers_dict = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse(
-            {'success': False, 'error': 'Invalid JSON format.'}
-        )
-
-    # --- FETCH COURSE, STUDENT, QUESTIONS ---
-    try:
-        course, student, result_exists, questions = await get_course_student_questions(
-            course_id, request.user.id
-        )
-    except Course.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Course not found.'})
-    except Profile.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Student profile not found.'})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'})
-
-    # --- PREVENT MULTIPLE SUBMISSIONS ---
-    if result_exists:
-        return JsonResponse(
-            {'success': False, 'error': 'Result already exists.'}
-        )
-
-    # --- CALCULATE SCORE ---
-    total_marks = 0
-
-    for question in questions:
-        qid = str(question.id)
-        selected = answers_dict.get(qid)
-
-        if selected and selected == question.answer:
-            total_marks += question.marks or 0
-
-    # --- SAVE USING CELERY (NON-BLOCKING) ---
-    from quiz.tasks import save_exam_result_task
-    save_exam_result_task.delay(course.id, student.id, total_marks)
-
-    return JsonResponse({
-        'success': True,
-        'message': 'Quiz graded ✅. Saving to database in background.'
-    })
-
-
-# -----------------------------
-# ASYNC HELPER FUNCTION
-# -----------------------------
-@sync_to_async
-def get_course_student_questions(course_id, user_id):
-    """Fetch course, student, questions, and check existing result."""
-    course = Course.objects.select_related(
-        'schools', 'session', 'term', 'exam_type'
-    ).get(id=course_id)
-
-    student = Profile.objects.select_related('user').get(user_id=user_id)
-
-    result_exists = Result.objects.filter(
-        student=student,
-        exam=course,
-        session=course.session,
-        term=course.term,
-        exam_type=course.exam_type,
-        result_class=student.student_class
-    ).exists()
-
-    questions = list(
-        Question.objects.filter(course=course).order_by('id')
-    )
-
-    return course, student, result_exists, questions
-
-#WORKING FINE
 # @csrf_exempt
 # def calculate_marks_view(request):
+#     """Sync wrapper that allows async view inside."""
 #     if not request.user.is_authenticated:
-#         return JsonResponse({'success': False, 'error': 'Authentication required.'}, status=401)
+#         return JsonResponse(
+#             {'success': False, 'error': 'Authentication required.'},
+#             status=401
+#         )
+
+#     # run async view
 #     return async_to_sync(_calculate_marks_async)(request)
 
 
+# # -----------------------------
+# # ASYNC VIEW (REAL WORK HAPPENS HERE)
+# # -----------------------------
 # async def _calculate_marks_async(request):
 #     if request.method != 'POST':
-#         return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+#         return JsonResponse(
+#             {'success': False, 'error': 'Invalid request method.'}
+#         )
 
+#     # --- GET COURSE ID FROM COOKIE ---
 #     course_id = request.COOKIES.get('course_id')
 #     if not course_id:
-#         return JsonResponse({'success': False, 'error': 'Course ID not found in cookies.'})
+#         return JsonResponse(
+#             {'success': False, 'error': 'Course ID not found in cookies.'}
+#         )
 
+#     # --- GET ANSWERS JSON ---
 #     try:
 #         answers_dict = json.loads(request.body)
 #     except json.JSONDecodeError:
-#         return JsonResponse({'success': False, 'error': 'Invalid JSON format.'})
+#         return JsonResponse(
+#             {'success': False, 'error': 'Invalid JSON format.'}
+#         )
 
+#     # --- FETCH COURSE, STUDENT, QUESTIONS ---
 #     try:
-#         course, student, result_exists, questions = await get_course_and_student_and_questions(course_id, request.user.id)
-#     except QMODEL.Course.DoesNotExist:
+#         course, student, result_exists, questions = await get_course_student_questions(
+#             course_id, request.user.id
+#         )
+#     except Course.DoesNotExist:
 #         return JsonResponse({'success': False, 'error': 'Course not found.'})
 #     except Profile.DoesNotExist:
 #         return JsonResponse({'success': False, 'error': 'Student profile not found.'})
 #     except Exception as e:
 #         return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'})
 
+#     # --- PREVENT MULTIPLE SUBMISSIONS ---
 #     if result_exists:
-#         return JsonResponse({'success': False, 'error': 'Result already exists.'})
+#         return JsonResponse(
+#             {'success': False, 'error': 'Result already exists.'}
+#         )
 
+#     # --- CALCULATE SCORE ---
 #     total_marks = 0
 
 #     for question in questions:
@@ -4282,21 +4204,29 @@ def get_course_student_questions(course_id, user_id):
 #         if selected and selected == question.answer:
 #             total_marks += question.marks or 0
 
-#     try:
-#         await save_result(course, student, total_marks)
-#         return JsonResponse({'success': True, 'message': 'Quiz graded and saved ✅'})
-#     except IntegrityError:
-#         return JsonResponse({'success': False, 'error': 'Result already exists.'})
-#     except Exception as e:
-#         return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'})
+#     # --- SAVE USING CELERY (NON-BLOCKING) ---
+#     from quiz.tasks import save_exam_result_task
+#     save_exam_result_task.delay(course.id, student.id, total_marks)
+
+#     return JsonResponse({
+#         'success': True,
+#         'message': 'Quiz graded ✅. Saving to database in background.'
+#     })
 
 
+# # -----------------------------
+# # ASYNC HELPER FUNCTION
+# # -----------------------------
 # @sync_to_async
-# def get_course_and_student_and_questions(course_id, user_id):
-#     course = QMODEL.Course.objects.select_related('schools', 'session', 'term', 'exam_type').get(id=course_id)
+# def get_course_student_questions(course_id, user_id):
+#     """Fetch course, student, questions, and check existing result."""
+#     course = Course.objects.select_related(
+#         'schools', 'session', 'term', 'exam_type'
+#     ).get(id=course_id)
+
 #     student = Profile.objects.select_related('user').get(user_id=user_id)
 
-#     result_exists = QMODEL.Result.objects.filter(
+#     result_exists = Result.objects.filter(
 #         student=student,
 #         exam=course,
 #         session=course.session,
@@ -4305,24 +4235,96 @@ def get_course_student_questions(course_id, user_id):
 #         result_class=student.student_class
 #     ).exists()
 
-#     questions = list(QMODEL.Question.objects.filter(course=course).order_by('id'))
+#     questions = list(
+#         Question.objects.filter(course=course).order_by('id')
+#     )
 
 #     return course, student, result_exists, questions
 
+#WORKING FINE
 
-# @sync_to_async
-# def save_result(course, student, total_marks):
-#     with transaction.atomic():
-#         QMODEL.Result.objects.create(
-#             schools=course.schools,
-#             marks=total_marks,
-#             exam=course,
-#             session=course.session,
-#             term=course.term,
-#             exam_type=course.exam_type,
-#             student=student,
-#             result_class=student.student_class
-#         )
+@csrf_exempt
+def calculate_marks_view(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required.'}, status=401)
+    return async_to_sync(_calculate_marks_async)(request)
+
+
+async def _calculate_marks_async(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+    course_id = request.COOKIES.get('course_id')
+    if not course_id:
+        return JsonResponse({'success': False, 'error': 'Course ID not found in cookies.'})
+
+    try:
+        answers_dict = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON format.'})
+
+    try:
+        course, student, result_exists, questions = await get_course_and_student_and_questions(course_id, request.user.id)
+    except QMODEL.Course.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Course not found.'})
+    except Profile.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Student profile not found.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'})
+
+    if result_exists:
+        return JsonResponse({'success': False, 'error': 'Result already exists.'})
+
+    total_marks = 0
+
+    for question in questions:
+        qid = str(question.id)
+        selected = answers_dict.get(qid)
+
+        if selected and selected == question.answer:
+            total_marks += question.marks or 0
+
+    try:
+        await save_result(course, student, total_marks)
+        return JsonResponse({'success': True, 'message': 'Quiz graded and saved ✅'})
+    except IntegrityError:
+        return JsonResponse({'success': False, 'error': 'Result already exists.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'})
+
+
+@sync_to_async
+def get_course_and_student_and_questions(course_id, user_id):
+    course = QMODEL.Course.objects.select_related('schools', 'session', 'term', 'exam_type').get(id=course_id)
+    student = Profile.objects.select_related('user').get(user_id=user_id)
+
+    result_exists = QMODEL.Result.objects.filter(
+        student=student,
+        exam=course,
+        session=course.session,
+        term=course.term,
+        exam_type=course.exam_type,
+        result_class=student.student_class
+    ).exists()
+
+    questions = list(QMODEL.Question.objects.filter(course=course).order_by('id'))
+
+    return course, student, result_exists, questions
+
+
+@sync_to_async
+def save_result(course, student, total_marks):
+    with transaction.atomic():
+        QMODEL.Result.objects.create(
+            schools=course.schools,
+            marks=total_marks,
+            exam=course,
+            session=course.session,
+            term=course.term,
+            exam_type=course.exam_type,
+            student=student,
+            result_class=student.student_class
+        )
 
 
 
