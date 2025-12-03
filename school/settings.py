@@ -240,19 +240,80 @@ MIDDLEWARE = [
 
 import os
 from celery.schedules import crontab
+import os
+from celery.schedules import crontab
+from django.core.cache import cache
 
-# Redis config for Celery
-CELERY_BROKER_URL = os.environ.get('REDISCLOUD_URL', 'redis://localhost:6379')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_BACKEND = CELERY_BROKER_URL  # Optional if you want result backend
+# ---------------- Celery ----------------
+CELERY_BROKER_URL = os.environ.get("REDISCLOUD_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "UTC"
 
+# Optional: periodic tasks
+CELERY_BEAT_SCHEDULE = {
+    # Example: clear old exam sessions every night
+    "clear-old-sessions": {
+        "task": "quiz.tasks.clear_old_exam_sessions",
+        "schedule": crontab(hour=3, minute=0),
+    },
+}
 
+# ---------------- Cache ----------------
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
+
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": os.environ.get("REDISCLOUD_URL", "redis://127.0.0.1:6379/1"),
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#             "IGNORE_EXCEPTIONS": True,  # Redis down? fallback to default cache
+#         },
+#         "TIMEOUT": 60 * 60 * 2,  # default 2 hours
+#     }
+# }
+
+# ---------------- Logging ----------------
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",  # DEBUG can be too verbose in production
+    },
+}
+
+# ---------------- Security / Performance ----------------
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+CSRF_USE_SESSIONS = True
+
+# # Redis config for Celery
+# CELERY_BROKER_URL = os.environ.get('REDISCLOUD_URL', 'redis://localhost:6379')
+# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_RESULT_BACKEND = CELERY_BROKER_URL  # Optional if you want result backend
+
+
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+#     }
+# }
 
 # CACHES = {
 #     "default": {
