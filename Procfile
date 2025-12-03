@@ -9,20 +9,19 @@
 # celery -A school worker --loglevel=info --concurrency=4
 
 # Web dyno: Uvicorn + Gunicorn
+# Web process (ASGI)
 web: bin/start-pgbouncer gunicorn school.asgi:application \
      -k uvicorn.workers.UvicornWorker \
      --workers 2 \
-     --threads 1 \
-     --timeout 60 \
-     --max-requests 500 \
+     --threads 2 \
+     --timeout 90 \
+     --max-requests 1000 \
      --max-requests-jitter 50 \
-     --preload
+     --bind 0.0.0.0:$PORT
 
 # Celery worker
 worker: celery -A school worker \
         --loglevel=info \
-        --concurrency=2 \
+        --concurrency=4 \
         --prefetch-multiplier=1 \
         --max-tasks-per-child=50
-
-
