@@ -245,42 +245,36 @@ from celery.schedules import crontab
 from django.core.cache import cache
 import os
 from celery.schedules import crontab
+import os
+import ssl
+
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 # ---------------- Celery ----------------
-REDIS_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
-
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
-CELERY_ENABLE_UTC = True
 
-# Optional: periodic tasks
-CELERY_BEAT_SCHEDULE = {
-    # Example: clear old exam sessions every night at 3am UTC
-    "clear-old-sessions": {
-        "task": "quiz.tasks.clear_old_exam_sessions",
-        "schedule": crontab(hour=3, minute=0),
-    },
-}
-
-# Use connection pool to reduce memory usage in production
-CELERY_REDIS_MAX_CONNECTIONS = int(os.environ.get("CELERY_REDIS_MAX_CONNECTIONS", 20))
+# Handle TLS/SSL for Heroku Redis
+if REDIS_URL.startswith("rediss://"):
+    CELERY_BROKER_TRANSPORT_OPTIONS = {
+        "ssl": {"cert_reqs": ssl.CERT_NONE}
+    }
+    CELERY_REDIS_BACKEND_USE_SSL = {
+        "ssl_cert_reqs": ssl.CERT_NONE
+    }
 
 # ---------------- Cache ----------------
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": REDIS_URL,  # Uses production Redis URL
+        "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "CONNECTION_POOL_KWARGS": {
-                "max_connections": int(os.environ.get("REDIS_MAX_CONNECTIONS", 50))
-            },
-            "PASSWORD": os.environ.get("REDIS_PASSWORD", None),
-            "SOCKET_TIMEOUT": 5,  # fail faster if Redis is unreachable
+            "SSL_CERT_REQS": None if REDIS_URL.startswith("rediss://") else ssl.CERT_REQUIRED,
         },
     }
 }
