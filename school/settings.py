@@ -241,11 +241,52 @@ MIDDLEWARE = [
 import os
 from celery.schedules import crontab
 
-# Redis config for Celery
-CELERY_BROKER_URL = os.environ.get('REDISCLOUD_URL', 'redis://localhost:6379')
+# -------------------------------
+# Redis / Celery Configuration
+# -------------------------------
+
+# Use REDISCLOUD_URL if set (Heroku production), else fallback to localhost
+REDIS_URL = os.environ.get("REDISCLOUD_URL", "redis://127.0.0.1:6379/0")
+
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_BACKEND = CELERY_BROKER_URL  # Optional if you want result backend
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
+# -------------------------------
+# Django Caching
+# -------------------------------
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL.replace("/0", "/1"),  # separate DB for caching
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+# -------------------------------
+# Logging Configuration
+# -------------------------------
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG' if os.environ.get("DEBUG", "True") == "True" else 'INFO',
+    },
+}
 
 
 CSRF_COOKIE_SECURE=False
@@ -647,35 +688,6 @@ TINYMCE_COMPRESSOR = False
 
 #allauth socialaccount migrations
 #if you have issue allauth socialaccount migrations, apply befor users.NewUser migration, them comment the allauth and apply the migrations before uncommenting again
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-    }
-}
-
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://127.0.0.1:6379/1",
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#         }
-#     }
-# }
-
-# LOGGING = {
-#     'version': 1,
-#     'handlers': {
-#         'console': {
-#             'class': 'logging.StreamHandler',
-#         },
-#     },
-#     'root': {
-#         'handlers': ['console'],
-#         'level': 'DEBUG',
-#     },
-# }
 
 
 INTERNAL_IPS = [
