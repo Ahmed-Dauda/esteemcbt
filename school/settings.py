@@ -239,41 +239,42 @@ MIDDLEWARE = [
 ]
 
 import os
-from celery.schedules import crontab
 
-# -------------------------------
+# -----------------------------
 # Redis / Celery Configuration
-# -------------------------------
+# -----------------------------
+REDIS_URL = os.environ.get("REDISCLOUD_URL")  # Heroku Redis add-on URL
+if not REDIS_URL:
+    # Local development fallback
+    REDIS_URL = "redis://127.0.0.1:6379/0"
 
-# Use REDISCLOUD_URL if set (Heroku production), else fallback to localhost
-REDIS_URL = os.environ.get("REDISCLOUD_URL", "redis://127.0.0.1:6379/0")
-
+# Celery
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
-
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
-# -------------------------------
-# Django Caching
-# -------------------------------
-
+# Django cache
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": REDIS_URL.replace("/0", "/1"),  # separate DB for caching
+        "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "IGNORE_EXCEPTIONS": True,  # Avoid crashing if Redis is temporarily unavailable
         }
     }
 }
 
-# -------------------------------
-# Logging Configuration
-# -------------------------------
+# Optional: session caching via Redis
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
 
+# -----------------------------
+# Logging (for debugging)
+# -----------------------------
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -284,7 +285,7 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'DEBUG' if os.environ.get("DEBUG", "True") == "True" else 'INFO',
+        'level': 'DEBUG',
     },
 }
 
