@@ -247,8 +247,11 @@ import os
 from celery.schedules import crontab
 import os
 import ssl
+import os
+import ssl
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+# ---------------- Redis URL ----------------
+REDIS_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
 
 # ---------------- Celery ----------------
 CELERY_BROKER_URL = REDIS_URL
@@ -258,14 +261,12 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
 
-# Handle TLS/SSL for Heroku Redis
+# TLS/SSL for Heroku Redis
 if REDIS_URL.startswith("rediss://"):
     CELERY_BROKER_TRANSPORT_OPTIONS = {
-        "ssl": {"cert_reqs": ssl.CERT_NONE}
+        "ssl": {"cert_reqs": ssl.CERT_NONE}  # skip certificate verification
     }
-    CELERY_REDIS_BACKEND_USE_SSL = {
-        "ssl_cert_reqs": ssl.CERT_NONE
-    }
+    CELERY_REDIS_BACKEND_USE_SSL = {"ssl_cert_reqs": ssl.CERT_NONE}
 
 # ---------------- Cache ----------------
 CACHES = {
@@ -274,9 +275,20 @@ CACHES = {
         "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            # Skip SSL verification for rediss://, require it otherwise
             "SSL_CERT_REQS": None if REDIS_URL.startswith("rediss://") else ssl.CERT_REQUIRED,
         },
     }
+}
+
+# ---------------- Optional: periodic tasks ----------------
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    "clear-old-sessions": {
+        "task": "quiz.tasks.clear_old_exam_sessions",
+        "schedule": crontab(hour=3, minute=0),
+    },
 }
 
 # ---------------- Logging ----------------

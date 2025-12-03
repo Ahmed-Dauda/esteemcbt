@@ -3763,16 +3763,14 @@ from django_redis import get_redis_connection
 from asgiref.sync import sync_to_async
 # ------------------- REDIS -------------------
 # Use production REDIS URL from env vars, fallback to localhost for dev
-REDIS_URL = os.environ.get(
-    "REDIS_URL",
-    "redis://127.0.0.1:6379/1"
-)
-redis_client = get_redis_connection("default")  # Django-Redis connection
+# ---------------- Redis Setup ----------------
+REDIS_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1")
+redis_client = get_redis_connection("default")  # Uses CACHES["default"] from settings
 
 # ------------------- UTILITY WRAPPERS -------------------
 async_render = sync_to_async(render, thread_sensitive=True)
 async_redirect = sync_to_async(redirect, thread_sensitive=True)
-sync_to_async_wrapper = async_to_sync  # wrapper to use sync view
+sync_to_async_wrapper = async_to_sync  # wrapper to use in sync view
 
 # ------------------- START EXAM VIEW -------------------
 @csrf_exempt
@@ -3780,6 +3778,7 @@ def start_exams_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return redirect('account_login')
     return sync_to_async_wrapper(_start_exam_async)(request, *args, **kwargs)
+
 
 # ---------- ASYNC VERSION ----------
 async def _start_exam_async(request, *args, **kwargs):
@@ -3793,7 +3792,7 @@ async def _start_exam_async(request, *args, **kwargs):
     if result_exists:
         return await async_redirect('student:view_result')
 
-    # Get shuffled questions (from Redis or DB)
+    # Get shuffled questions from Redis or DB
     questions = await get_or_create_shuffled_questions(user_profile, course, all_questions)
 
     # Limit questions to course.show_questions
@@ -3813,6 +3812,7 @@ async def _start_exam_async(request, *args, **kwargs):
     response.set_cookie('course_id', course.id)
     return response
 
+
 # ------------------- ASYNC HELPERS -------------------
 @sync_to_async
 def get_user_profile(user):
@@ -3827,18 +3827,19 @@ def get_course(pk):
 
 @sync_to_async
 def get_course_questions(course):
+    """Fetch course questions, caching in Redis."""
     key = f"course:{course.id}:questions"
     cached = redis_client.get(key)
     if cached:
         return json.loads(cached)
-    
+
     qs = list(
         Question.objects.filter(course=course).values(
             'id', 'question', 'option1', 'option2', 'option3', 'option4',
             'answer', 'marks', 'img_quiz'
         )
     )
-    redis_client.set(key, json.dumps(qs), ex=7200)  # cache 2 hours
+    redis_client.set(key, json.dumps(qs), ex=7200)  # Cache 2 hours
     return qs
 
 @sync_to_async
@@ -3847,18 +3848,17 @@ def check_result_exists(profile, course):
 
 @sync_to_async
 def get_or_create_shuffled_questions(student, course, all_questions):
-    """
-    Stores per-student question order in Redis to avoid hitting DB.
-    """
+    """Per-student question order stored in Redis to minimize DB hits."""
     key = f"exam:session:{student.id}:{course.id}"
-    if redis_client.exists(key):
-        order = json.loads(redis_client.get(key))
+    cached_order = redis_client.get(key)
+    if cached_order:
+        order = json.loads(cached_order)
     else:
         question_ids = [q['id'] for q in all_questions]
         order = random.sample(question_ids, len(question_ids))
         redis_client.set(key, json.dumps(order), ex=course.duration_minutes * 60)
 
-    # Map order to full question data
+    # Map order to full question objects
     id_map = {q['id']: q for q in all_questions}
     ordered_questions = [id_map[qid] for qid in order]
     return ordered_questions
