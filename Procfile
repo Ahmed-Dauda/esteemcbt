@@ -10,14 +10,13 @@
 
 # Web dyno: Uvicorn + Gunicorn
 # Web process (ASGI)
-web: bin/start-pgbouncer gunicorn school.asgi:application \
+web: gunicorn school.asgi:application \
      -k uvicorn.workers.UvicornWorker \
      --workers 2 \
      --threads 2 \
      --timeout 90 \
      --max-requests 1000 \
-     --max-requests-jitter 50 \
-     --bind 0.0.0.0:$PORT
+     --max-requests-jitter 50
 
 # Celery worker
 worker: celery -A school worker \
