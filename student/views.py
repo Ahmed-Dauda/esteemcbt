@@ -3887,7 +3887,6 @@ from asgiref.sync import async_to_sync, sync_to_async
 
 
 # #working view
-
 @csrf_exempt
 def start_exams_view(request: HttpRequest, pk: int) -> HttpResponse:
     if not request.user.is_authenticated:
@@ -3938,58 +3937,58 @@ def get_course(pk):
         'course_name__title', 'num_attemps', 'show_questions', 'duration_minutes'
     ).get(id=pk)
 
-# @sync_to_async
-# def get_course_questions(course):
-#     return list(Question.objects.select_related('course').only(
-#         'id', 'course__id', 'marks', 'question', 'img_quiz',
-#         'option1', 'option2', 'option3', 'option4', 'answer'
-#     ).filter(course=course).order_by('id'))
+@sync_to_async
+def get_course_questions(course):
+    return list(Question.objects.select_related('course').only(
+        'id', 'course__id', 'marks', 'question', 'img_quiz',
+        'option1', 'option2', 'option3', 'option4', 'answer'
+    ).filter(course=course).order_by('id'))
 
-# @sync_to_async
-# def check_result_exists(profile, course):
-#     return Result.objects.select_related('student', 'exam').only(
-#         'student__id', 'student__username', 'exam_type__name',
-#         'exam__id', 'exam__course_name'
-#     ).filter(student=profile, exam=course).exists()
+@sync_to_async
+def check_result_exists(profile, course):
+    return Result.objects.select_related('student', 'exam').only(
+        'student__id', 'student__username', 'exam_type__name',
+        'exam__id', 'exam__course_name'
+    ).filter(student=profile, exam=course).exists()
 
 
-# @sync_to_async
-# def get_or_create_shuffled_questions(student, course, all_questions):
-#     all_question_ids = [q.id for q in all_questions]
+@sync_to_async
+def get_or_create_shuffled_questions(student, course, all_questions):
+    all_question_ids = [q.id for q in all_questions]
 
-#     # Try to get the latest valid session
-#     existing_sessions = StudentExamSession.objects.filter(student=student, course=course)
+    # Try to get the latest valid session
+    existing_sessions = StudentExamSession.objects.filter(student=student, course=course)
 
-#     if existing_sessions.count() > 1:
-#         # Clean up duplicates — keep the latest one
-#         latest = existing_sessions.order_by('-created').first()
-#         existing_sessions.exclude(id=latest.id).delete()
-#         session = latest
-#         created = False
-#     elif existing_sessions.exists():
-#         session = existing_sessions.first()
-#         created = False
-#     else:
-#         session = StudentExamSession.objects.create(
-#             student=student,
-#             course=course,
-#             question_order=random.sample(all_question_ids, len(all_question_ids))
-#         )
-#         created = True
+    if existing_sessions.count() > 1:
+        # Clean up duplicates — keep the latest one
+        latest = existing_sessions.order_by('-created').first()
+        existing_sessions.exclude(id=latest.id).delete()
+        session = latest
+        created = False
+    elif existing_sessions.exists():
+        session = existing_sessions.first()
+        created = False
+    else:
+        session = StudentExamSession.objects.create(
+            student=student,
+            course=course,
+            question_order=random.sample(all_question_ids, len(all_question_ids))
+        )
+        created = True
 
-#     # Ensure the question order matches the current question list
-#     if set(session.question_order) != set(all_question_ids):
-#         session.question_order = random.sample(all_question_ids, len(all_question_ids))
-#         session.save()
+    # Ensure the question order matches the current question list
+    if set(session.question_order) != set(all_question_ids):
+        session.question_order = random.sample(all_question_ids, len(all_question_ids))
+        session.save()
 
-#     # Return ordered question objects
-#     ordered_questions = list(Question.objects.filter(id__in=session.question_order))
-#     ordered_questions.sort(key=lambda q: session.question_order.index(q.id))
-#     return ordered_questions
+    # Return ordered question objects
+    ordered_questions = list(Question.objects.filter(id__in=session.question_order))
+    ordered_questions.sort(key=lambda q: session.question_order.index(q.id))
+    return ordered_questions
 
-# # Django sync views wrapped in async
-# async_render = sync_to_async(render, thread_sensitive=True)
-# async_redirect = sync_to_async(redirect, thread_sensitive=True)
+# Django sync views wrapped in async
+async_render = sync_to_async(render, thread_sensitive=True)
+async_redirect = sync_to_async(redirect, thread_sensitive=True)
 
 
 
