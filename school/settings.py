@@ -243,46 +243,47 @@ from celery.schedules import crontab
 import os
 from celery.schedules import crontab
 from django.core.cache import cache
+import os
+from celery.schedules import crontab
 
 # ---------------- Celery ----------------
-CELERY_BROKER_URL = os.environ.get("REDISCLOUD_URL", "redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+REDIS_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
+
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
+CELERY_ENABLE_UTC = True
 
 # Optional: periodic tasks
 CELERY_BEAT_SCHEDULE = {
-    # Example: clear old exam sessions every night
+    # Example: clear old exam sessions every night at 3am UTC
     "clear-old-sessions": {
         "task": "quiz.tasks.clear_old_exam_sessions",
         "schedule": crontab(hour=3, minute=0),
     },
 }
 
+# Use connection pool to reduce memory usage in production
+CELERY_REDIS_MAX_CONNECTIONS = int(os.environ.get("CELERY_REDIS_MAX_CONNECTIONS", 20))
+
 # ---------------- Cache ----------------
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1"),
+        "LOCATION": REDIS_URL,  # Uses production Redis URL
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
+            "CONNECTION_POOL_KWARGS": {
+                "max_connections": int(os.environ.get("REDIS_MAX_CONNECTIONS", 50))
+            },
+            "PASSWORD": os.environ.get("REDIS_PASSWORD", None),
+            "SOCKET_TIMEOUT": 5,  # fail faster if Redis is unreachable
+        },
     }
 }
-
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": os.environ.get("REDISCLOUD_URL", "redis://127.0.0.1:6379/1"),
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#             "IGNORE_EXCEPTIONS": True,  # Redis down? fallback to default cache
-#         },
-#         "TIMEOUT": 60 * 60 * 2,  # default 2 hours
-#     }
-# }
 
 # ---------------- Logging ----------------
 LOGGING = {
@@ -293,7 +294,7 @@ LOGGING = {
     },
     "root": {
         "handlers": ["console"],
-        "level": "INFO",  # DEBUG can be too verbose in production
+        "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),  # INFO in prod, DEBUG in dev
     },
 }
 
