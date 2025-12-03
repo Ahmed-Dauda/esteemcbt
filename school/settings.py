@@ -238,56 +238,44 @@ MIDDLEWARE = [
 
 ]
 
-# import os
-# from celery.schedules import crontab
-
-# # Redis config for Celery
-# CELERY_BROKER_URL = os.environ.get('REDISCLOUD_URL', 'redis://localhost:6379')
-# CELERY_ACCEPT_CONTENT = ['json']
-# CELERY_TASK_SERIALIZER = 'json'
-# CELERY_RESULT_BACKEND = CELERY_BROKER_URL  # Optional if you want result backend
-
-
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-#     }
-# }
-
 import os
 from celery.schedules import crontab
 
-# Redis config for Celery (broker and cache)
-REDIS_URL = os.environ.get('REDISCLOUD_URL', 'redis://localhost:6379/0')
-
-# Celery broker & result backend
-CELERY_BROKER_URL = REDIS_URL
-CELERY_RESULT_BACKEND = REDIS_URL
+# Redis config for Celery
+CELERY_BROKER_URL = os.environ.get('REDISCLOUD_URL', 'redis://localhost:6379')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Africa/Lagos'
-CELERY_ENABLE_UTC = True
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL  # Optional if you want result backend
 
-# Optional: periodic tasks
-CELERY_BEAT_SCHEDULE = {
-    # Example: clear old sessions every day at midnight
-    'clear_old_exam_sessions': {
-        'task': 'student.tasks.clear_old_exam_sessions',
-        'schedule': crontab(hour=0, minute=0),
-    },
-}
 
-# Redis-backed cache (shared across workers)
 CACHES = {
     'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': f'{REDIS_URL}/1',  # separate DB for caching
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
+
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://127.0.0.1:6379/1",
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         }
+#     }
+# }
+
+# LOGGING = {
+#     'version': 1,
+#     'handlers': {
+#         'console': {
+#             'class': 'logging.StreamHandler',
+#         },
+#     },
+#     'root': {
+#         'handlers': ['console'],
+#         'level': 'DEBUG',
+#     },
+# }
 
 
 CSRF_COOKIE_SECURE=False

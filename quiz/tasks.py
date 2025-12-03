@@ -7,28 +7,42 @@ from sms.models import Courses
 import re
 import math
 import time
-
+from django.core.cache import cache
 from django.db import transaction, IntegrityError
-
+import random
 from users.models import Profile
 
 
-# @shared_task(bind=True)
-# def save_exam_result_task(self, course_id, student_id, total_marks):
-#     course = Course.objects.select_related('schools', 'session', 'term', 'exam_type').get(id=course_id)
-#     student = Profile.objects.select_related('user').get(id=student_id)
+@shared_task
+def prepare_exam_session(student_id, course_id, question_ids):
+    """
+    Create or retrieve a shuffled exam session for a student.
+    Store in Redis cache to reduce DB load.
+    """
+    User = get_user_model()
+    student = User.objects.get(id=student_id)  # sync ORM
+    course = Course.objects.get(id=course_id)
 
-#     with transaction.atomic():
-#         Result.objects.create(
-#             schools=course.schools,
-#             marks=total_marks,
-#             exam=course,
-#             session=course.session,
-#             term=course.term,
-#             exam_type=course.exam_type,
-#             student=student,
-#             result_class=student.student_class
-#         )
+    cache_key = f'exam_session_{student_id}_{course_id}'
+    cached_session = cache.get(cache_key)
+    if cached_session:
+        return cached_session
+
+    # Check or create session
+    session, created = StudentExamSession.objects.get_or_create(
+        student=student,
+        course=course,
+        defaults={'question_order': random.sample(question_ids, len(question_ids))}
+    )
+
+    # Ensure question order matches current course questions
+    if set(session.question_order) != set(question_ids):
+        session.question_order = random.sample(question_ids, len(question_ids))
+        session.save()
+
+    # Cache ordered question IDs
+    cache.set(cache_key, session.question_order, timeout=3600)
+    return session.question_order
 
         
 # client = OpenAI(api_key=settings.OPENAI_API_KEY)
