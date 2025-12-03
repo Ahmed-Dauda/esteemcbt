@@ -9,14 +9,8 @@
 # celery -A school worker --loglevel=info --concurrency=4
 
 # Web dyno: Uvicorn + Gunicorn
-# Web process (ASGI)
-web: gunicorn school.asgi:application \
-     -k uvicorn.workers.UvicornWorker \
-     --workers 2 \
-     --threads 2 \
-     --timeout 90 \
-     --max-requests 1000 \
-     --max-requests-jitter 50
+web: gunicorn esteemcbt.wsgi:application --log-file -
+
 
 # Celery worker
 worker: celery -A school worker \
