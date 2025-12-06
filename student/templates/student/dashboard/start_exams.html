@@ -385,12 +385,15 @@ div.quiz p {
     
 </form> 
 
+<!-- full screen mode settings -->
+ 
 <div style="display: none;" class="exam-container">
   <h1>Exam Mode</h1>
   <p>Click below to enter fullscreen exam mode.</p>
   <button id="startExamBtn" onclick="startExam()">Start Exam</button>
 </div>
 
+<!-- Add this inside your HTML (already have fullscreenPopup div, we’ll update it) -->
 <div id="fullscreenPopup" style="
   display: none;
   justify-content: center;
@@ -398,7 +401,7 @@ div.quiz p {
   flex-direction: column;
   position: fixed;
   inset: 0;
-  background: #000; /* Fully opaque black */
+  background: rgba(0,0,0,0.9);
   color: #fff;
   z-index: 999999;
   font-family: Arial, sans-serif;
@@ -406,8 +409,11 @@ div.quiz p {
   transition: opacity 0.3s ease;
 ">
   <h2 style="font-size: 2rem; margin-bottom: 1rem;">⚠️ Exam Paused</h2>
-  <p style="font-size: 1.2rem; margin-bottom: 2rem;">
+  <p id="fullscreenWarningText" style="font-size: 1.2rem; margin-bottom: 1rem;">
     You exited fullscreen. Please return to continue your exam.
+  </p>
+  <p id="fullscreenCounterText" style="font-size: 1rem; margin-bottom: 2rem; color: yellow;">
+    Fullscreen Strikes: 0
   </p>
   <button onclick="returnToFullscreen()" style="
     background: #fff;
@@ -423,7 +429,7 @@ div.quiz p {
   </button>
 </div>
 
-
+<!-- 
 <script>
   const elem = document.documentElement;
 
@@ -491,7 +497,7 @@ div.quiz p {
       return false;
     }
   });
-</script>
+</script> -->
 
 <!-- Button with inline CSS -->
 
@@ -734,11 +740,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 <script>
-// manual submission
-document.getElementById('submit').addEventListener('click', function () {
-    const confirmed = confirm("Are you sure you want to submit the quiz?");
-    if (!confirmed) return;
-
+// ---------------- Manual submission ----------------
+function manualSubmitQuiz() {
     if (window.timerInterval) {
         clearInterval(window.timerInterval);
     }
@@ -772,7 +775,169 @@ document.getElementById('submit').addEventListener('click', function () {
             console.error("Submission error:", error);
         }
     });
+}
+
+// Manual submit button
+document.getElementById('submit').addEventListener('click', function () {
+    const confirmed = confirm("Are you sure you want to submit the quiz?");
+    if (!confirmed) return;
+
+    manualSubmitQuiz();
 });
+
+// ---------------- Fullscreen logic ----------------
+const elem = document.documentElement;
+let fullscreenExitCount = 0;
+let flashInterval = null;
+let strikeRegistered = false; // prevent multiple increments per event
+
+// Update the popup counter and flash
+function updateFullscreenCounter() {
+    const counterEl = document.getElementById("fullscreenCounterText");
+    if (counterEl) {
+        counterEl.innerText = "Fullscreen Strikes: " + fullscreenExitCount;
+
+        // Flash yellow-red if 1 strike
+        if (fullscreenExitCount === 1) {
+            if (!flashInterval) {
+                flashInterval = setInterval(() => {
+                    counterEl.style.color = counterEl.style.color === "yellow" ? "red" : "yellow";
+                }, 500);
+            }
+        } else {
+            clearInterval(flashInterval);
+            flashInterval = null;
+            counterEl.style.color = fullscreenExitCount >= 2 ? "red" : "yellow";
+        }
+    }
+}
+
+// Open fullscreen
+function openFullscreen() {
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+    }
+
+    localStorage.setItem("examFullscreen", "true");
+}
+
+// Start exam
+function startExam() {
+    openFullscreen();
+    const btn = document.getElementById("startExamBtn");
+    if (btn) btn.style.display = "none";
+}
+
+// Handle a strike (increment counter once)
+function registerFullscreenStrike() {
+    if (fullscreenExitCount >= 2) return; // max 2 strikes
+    if (strikeRegistered) return;
+
+    fullscreenExitCount++;
+    strikeRegistered = true;
+    updateFullscreenCounter();
+
+    if (fullscreenExitCount >= 2) {
+        alert("❌ You exited fullscreen twice. Your exam will be submitted.");
+        manualSubmitQuiz();
+    }
+}
+
+// Return to fullscreen (also counts as a strike)
+function returnToFullscreen() {
+    registerFullscreenStrike();
+    openFullscreen();
+    document.getElementById("fullscreenPopup").style.display = "none";
+    strikeRegistered = false; // reset for next strike
+}
+
+// Detect exiting fullscreen
+document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement) {
+        registerFullscreenStrike();
+        if (fullscreenExitCount < 2) {
+            document.getElementById("fullscreenPopup").style.display = "flex";
+            strikeRegistered = false; // reset for next strike
+        }
+    }
+});
+
+// Restore fullscreen after reload
+window.addEventListener("load", () => {
+    const wasFull = localStorage.getItem("examFullscreen") === "true";
+    if (wasFull) setTimeout(() => openFullscreen(), 500);
+
+    const radios = document.querySelectorAll(".radio-button");
+    radios.forEach(radio => {
+        radio.addEventListener("click", () => startExam());
+    });
+});
+
+// Detect tab switch or blur
+window.addEventListener("blur", () => {
+    registerFullscreenStrike();
+    if (fullscreenExitCount < 2) {
+        document.getElementById("fullscreenPopup").style.display = "flex";
+        strikeRegistered = false;
+    }
+});
+
+// Block F11, Esc, Ctrl+R, F5
+document.addEventListener("keydown", (e) => {
+    if (
+        e.key === "F11" ||
+        e.key === "Escape" ||
+        (e.ctrlKey && e.key === "r") ||
+        e.key === "F5"
+    ) {
+        e.preventDefault();
+        alert("🚫 Fullscreen mode is required during the exam!");
+        return false;
+    }
+});
+
+// document.getElementById('submit').addEventListener('click', function () {
+//     const confirmed = confirm("Are you sure you want to submit the quiz?");
+//     if (!confirmed) return;
+
+//     if (window.timerInterval) {
+//         clearInterval(window.timerInterval);
+//     }
+
+//     const finalTabSwitchCount = parseInt(localStorage.getItem('tabSwitchCount')) || 0;
+//     const courseKey = 'remainingTime_{{ course.id }}';
+
+//     const storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+//     storedAnswers['tabSwitchCount'] = finalTabSwitchCount;
+
+//     const jsonData = JSON.stringify(storedAnswers);
+
+//     $.ajax({
+//         type: "POST",
+//         url: "/student/calculate_marks",
+//         contentType: "application/json",
+//         data: jsonData,
+//         success: function (response) {
+//             alert("Quiz submitted successfully!");
+//             localStorage.removeItem('quizAnswers');
+//             localStorage.removeItem('lastVisitedPage');
+//             localStorage.removeItem('tabSwitchCount');
+//             localStorage.removeItem(courseKey);
+//             localStorage.removeItem('quizStartedForCourse_{{ course.id }}');
+
+//             setTimeout(function () {
+//                 window.location.reload();
+//             }, 1000);
+//         },
+//         error: function (xhr, status, error) {
+//             console.error("Submission error:", error);
+//         }
+//     });
+// });
 
 
 // quiz submit due to time expiration
@@ -1209,6 +1374,8 @@ $(document).on('keydown', function (e) {
 </script>
 <!-- end -->
 <br><br><br><br><br><br>
+
+<!-- blocking screenshot -->
 
 
 {% endblock %} 

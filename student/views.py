@@ -3759,55 +3759,114 @@ import random
 import json
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
-from django_redis import get_redis_connection
 from asgiref.sync import sync_to_async
 
 
 #working version
-from asgiref.sync import sync_to_async
-from django.shortcuts import redirect, render
-from quiz.tasks import prepare_exam_session
-import asyncio
 
-async def start_exams_view(request, pk):
+@csrf_exempt
+def start_exams_view(request: HttpRequest, pk: int) -> HttpResponse:
     if not request.user.is_authenticated:
         return redirect('account_login')
+    return async_to_sync(_start_exam_async)(request, pk)
 
+# ---------- ASYNC VERSION ----------
+async def _start_exam_async(request, pk):
     user = request.user
-    # ORM wrapped in sync_to_async
-    course = await sync_to_async(Course.objects.get)(id=pk)
-    all_questions = await sync_to_async(lambda: list(Question.objects.filter(course=course)))()
-    question_ids = [q.id for q in all_questions]
+    user_profile = await get_user_profile(user)
+    course = await get_course(pk)
+    all_questions = await get_course_questions(course)
+    result_exists = await check_result_exists(user_profile, course)
 
-    cache_key = f'exam_session_{user.id}_{course.id}'
-    question_order = await sync_to_async(cache.get)(cache_key)
+    if result_exists:
+        return await async_redirect('student:view_result')
 
-    if not question_order:
-        # Fire Celery task asynchronously (non-blocking)
-        await sync_to_async(prepare_exam_session.delay)(user.id, course.id, question_ids)
-        return await sync_to_async(render)(
-            request,
-            'student/dashboard/exam_loading.html',
-            {'course': course}
-        )
+    # Get shuffled questions from saved session or create new
+    all_shuffled_questions = await get_or_create_shuffled_questions(user_profile, course, all_questions)
 
-    # Order questions according to cached session
-    id_index = {qid: i for i, qid in enumerate(question_order)}
-    questions = [q for q in all_questions if q.id in id_index]
-    questions.sort(key=lambda q: id_index[q.id])
+    # Trim to course.show_questions limit
+    show_count = course.show_questions or len(all_shuffled_questions)
+    questions = all_shuffled_questions[:show_count]
+    q_count = len(questions)
 
     context = {
         'course': course,
         'questions': questions,
-        'q_count': len(questions),
+        'q_count': q_count,
         'page_obj': questions,
-        'quiz_already_submitted': False,
+        'quiz_already_submitted': result_exists,
         'tab_limit': course.num_attemps,
     }
 
-    response = await sync_to_async(render)(request, 'student/dashboard/start_exams.html', context)
+    response = await async_render(request, 'student/dashboard/start_exams.html', context)
     response.set_cookie('course_id', course.id)
     return response
+
+# ---------- ASYNC HELPERS ----------
+@sync_to_async
+def get_user_profile(user):
+    return user.profile
+
+@sync_to_async
+def get_course(pk):
+    return Course.objects.select_related('course_name').only(
+        'id', 'room_name', 'course_name__id', 'exam_type__name',
+        'course_name__title', 'num_attemps', 'show_questions', 'duration_minutes'
+    ).get(id=pk)
+
+@sync_to_async
+def get_course_questions(course):
+    return list(Question.objects.select_related('course').only(
+        'id', 'course__id', 'marks', 'question', 'img_quiz',
+        'option1', 'option2', 'option3', 'option4', 'answer'
+    ).filter(course=course).order_by('id'))
+
+@sync_to_async
+def check_result_exists(profile, course):
+    return Result.objects.select_related('student', 'exam').only(
+        'student__id', 'student__username', 'exam_type__name',
+        'exam__id', 'exam__course_name'
+    ).filter(student=profile, exam=course).exists()
+
+
+@sync_to_async
+def get_or_create_shuffled_questions(student, course, all_questions):
+    all_question_ids = [q.id for q in all_questions]
+
+    # Try to get the latest valid session
+    existing_sessions = StudentExamSession.objects.filter(student=student, course=course)
+
+    if existing_sessions.count() > 1:
+        # Clean up duplicates — keep the latest one
+        latest = existing_sessions.order_by('-created_at').first()
+        existing_sessions.exclude(id=latest.id).delete()
+        session = latest
+        created = False
+    elif existing_sessions.exists():
+        session = existing_sessions.first()
+        created = False
+    else:
+        session = StudentExamSession.objects.create(
+            student=student,
+            course=course,
+            question_order=random.sample(all_question_ids, len(all_question_ids))
+        )
+        created = True
+
+    # Ensure the question order matches the current question list
+    if set(session.question_order) != set(all_question_ids):
+        session.question_order = random.sample(all_question_ids, len(all_question_ids))
+        session.save()
+
+    # Return ordered question objects
+    ordered_questions = list(Question.objects.filter(id__in=session.question_order))
+    ordered_questions.sort(key=lambda q: session.question_order.index(q.id))
+    return ordered_questions
+
+# Django sync views wrapped in async
+async_render = sync_to_async(render, thread_sensitive=True)
+async_redirect = sync_to_async(redirect, thread_sensitive=True)
+
 
 
 # end of dashboard view
