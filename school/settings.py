@@ -329,6 +329,10 @@ DATABASES = {
     )
 }
 
+DATABASES['default']['OPTIONS'] = {
+    'DISABLE_SERVER_SIDE_CURSORS': True,
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
