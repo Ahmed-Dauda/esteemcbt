@@ -322,17 +322,13 @@ import dj_database_url
 import dj_database_url
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-
 DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=0,
+        conn_max_age=60,   # ✅ IMPORTANT
         ssl_require=False
     )
 }
-
-DATABASES['default']['CONN_MAX_AGE'] = 0  # For PgBouncer if you switch to Postgres later
 
 
 # Password validation
