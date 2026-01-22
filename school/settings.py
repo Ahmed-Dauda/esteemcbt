@@ -324,8 +324,8 @@ from pathlib import Path
 
 DATABASES = {
     'default': dj_database_url.config(
-        conn_max_age=0,   # REQUIRED for PgBouncer
-        ssl_require=True
+        conn_max_age=0,
+        ssl_require=False,   # 🔥 THIS FIXES IT
     )
 }
 
