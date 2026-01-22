@@ -2244,17 +2244,11 @@ from django.contrib import messages  # Import the messages framework
 #     }
 #     return render(request, 'teacher/dashboard/exams_subjects.html', context)
 
-
 @login_required
 def add_course_view(request):
     if request.method == 'POST':
         form = CoursesForm(request.POST, user=request.user)
         if form.is_valid():
-            # Save the Courses form
-            courses_instance = form.save(commit=False)
-            courses_instance.created_by = request.user
-            courses_instance.save()
-            courses_instance.schools.add(request.user.school)
 
             user = request.user
             if not hasattr(user, 'teacher'):
@@ -2263,33 +2257,98 @@ def add_course_view(request):
 
             teacher = user.teacher
 
-            # Check if Course instance already exists
-            course_instance, created = Course.objects.get_or_create(
-                course_name=courses_instance,
-                session=courses_instance.session,
-                term=courses_instance.term,
-                schools=request.user.school,
-                exam_type=courses_instance.exam_type,
-                defaults={
-                    'room_name': 'Some Room',  # You may update dynamically
-                }
-            )
+            with transaction.atomic():
 
-            # Assign course to teacher if not already assigned
-            if course_instance not in teacher.subjects_taught.all():
-                teacher.subjects_taught.add(course_instance)
-                messages.success(request, 'Subject has been successfully added and assigned to you!')
-            else:
-                messages.info(request, 'This course is already assigned to you.')
+                # 1️⃣ Save Courses
+                courses_instance = form.save(commit=False)
+                courses_instance.created_by = user
+                courses_instance.save()
+                courses_instance.schools.add(user.school)
+
+                # 2️⃣ Get or create Course (NO M2M here)
+                course_instance, created = Course.objects.get_or_create(
+                    course_name=courses_instance,
+                    session=courses_instance.session,
+                    term=courses_instance.term,
+                    exam_type=courses_instance.exam_type,
+                    defaults={
+                        'room_name': 'Some Room',
+                    }
+                )
+
+                # 3️⃣ Add M2M relations safely
+                course_instance.schools.add(user.school)
+
+                # 4️⃣ Assign to teacher
+                if not teacher.subjects_taught.filter(id=course_instance.id).exists():
+                    teacher.subjects_taught.add(course_instance)
+                    messages.success(
+                        request,
+                        'Subject has been successfully added and assigned to you!'
+                    )
+                else:
+                    messages.info(
+                        request,
+                        'This course is already assigned to you.'
+                    )
 
             return redirect('teacher:create_course_view')
+
     else:
         form = CoursesForm(user=request.user)
 
-    context = {
-        'form': form,
-    }
-    return render(request, 'teacher/dashboard/exams_subjects.html', context)
+    return render(
+        request,
+        'teacher/dashboard/exams_subjects.html',
+        {'form': form}
+    )
+
+#real
+# @login_required
+# def add_course_view(request):
+#     if request.method == 'POST':
+#         form = CoursesForm(request.POST, user=request.user)
+#         if form.is_valid():
+#             # Save the Courses form
+#             courses_instance = form.save(commit=False)
+#             courses_instance.created_by = request.user
+#             courses_instance.save()
+#             courses_instance.schools.add(request.user.school)
+
+#             user = request.user
+#             if not hasattr(user, 'teacher'):
+#                 messages.error(request, 'You are not assigned as a teacher yet.')
+#                 return redirect('teacher:create_course_view')
+
+#             teacher = user.teacher
+
+#             # Check if Course instance already exists
+#             course_instance, created = Course.objects.get_or_create(
+#                 course_name=courses_instance,
+#                 session=courses_instance.session,
+#                 term=courses_instance.term,
+#                 schools=request.user.school,
+#                 exam_type=courses_instance.exam_type,
+#                 defaults={
+#                     'room_name': 'Some Room',  # You may update dynamically
+#                 }
+#             )
+
+#             # Assign course to teacher if not already assigned
+#             if course_instance not in teacher.subjects_taught.all():
+#                 teacher.subjects_taught.add(course_instance)
+#                 messages.success(request, 'Subject has been successfully added and assigned to you!')
+#             else:
+#                 messages.info(request, 'This course is already assigned to you.')
+
+#             return redirect('teacher:create_course_view')
+#     else:
+#         form = CoursesForm(user=request.user)
+
+#     context = {
+#         'form': form,
+#     }
+#     return render(request, 'teacher/dashboard/exams_subjects.html', context)
 
 
 from django.db.models.signals import post_save
