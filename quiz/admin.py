@@ -54,7 +54,7 @@ def delete_unused_placeholder_courses(modeladmin, request, queryset):
 
 
 class CourseAdmin(admin.ModelAdmin):    
-    list_display = ['get_school_name', 'full_screen','show_questions', 'course_name', 'session','term','exam_type','question_number', 'total_marks', 'num_attemps', 'duration_minutes','learning_objectives', 'ai_question_num','created']
+    list_display = ['get_school_name', 'full_screen','show_questions', 'course_name', 'session','term','exam_type','question_number', 'total_marks', 'num_attemps', 'fullscreencounter','duration_minutes','learning_objectives', 'ai_question_num','created']
     search_fields = ['course_name__title', 'schools__school_name','term__name', 'exam_type__name']  # Add search field for course name and school name
     autocomplete_fields = ['schools']
     actions = [delete_unused_placeholder_courses]

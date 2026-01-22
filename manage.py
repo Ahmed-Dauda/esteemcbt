@@ -3,6 +3,12 @@
 import os
 import sys
 
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv(dotenv_path=".env", override=True)
+
 
 def main():
     """Run administrative tasks."""

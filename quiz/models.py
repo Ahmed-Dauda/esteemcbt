@@ -25,6 +25,7 @@ class Course(models.Model):
     exam_type = models.ForeignKey(ExamType, on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
 
     num_attemps = models.PositiveIntegerField(default=4)
+    fullscreencounter = models.PositiveIntegerField(default=3)
     show_questions = models.PositiveIntegerField(default=10)
     duration_minutes = models.PositiveIntegerField(default=10)
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)

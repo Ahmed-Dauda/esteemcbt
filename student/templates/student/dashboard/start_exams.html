@@ -740,6 +740,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 <script>
+  
 // ---------------- Manual submission ----------------
 function manualSubmitQuiz() {
     if (window.timerInterval) {
@@ -788,27 +789,28 @@ document.getElementById('submit').addEventListener('click', function () {
 // ---------------- Fullscreen logic ----------------
 const elem = document.documentElement;
 let fullscreenExitCount = 0;
+let fullscreencounter = Number({{ course.fullscreencounter|default:"2" }}); // dynamic max strikes
 let flashInterval = null;
 let strikeRegistered = false; // prevent multiple increments per event
 
 // Update the popup counter and flash
 function updateFullscreenCounter() {
     const counterEl = document.getElementById("fullscreenCounterText");
-    if (counterEl) {
-        counterEl.innerText = "Fullscreen Strikes: " + fullscreenExitCount;
+    if (!counterEl) return;
 
-        // Flash yellow-red if 1 strike
-        if (fullscreenExitCount === 1) {
-            if (!flashInterval) {
-                flashInterval = setInterval(() => {
-                    counterEl.style.color = counterEl.style.color === "yellow" ? "red" : "yellow";
-                }, 500);
-            }
-        } else {
-            clearInterval(flashInterval);
-            flashInterval = null;
-            counterEl.style.color = fullscreenExitCount >= 2 ? "red" : "yellow";
+    counterEl.innerText = `Fullscreen Strikes: ${fullscreenExitCount} / ${fullscreencounter}`;
+
+    // Only flash when fullscreenExitCount === fullscreencounter
+    if (fullscreenExitCount === fullscreencounter) {
+        if (!flashInterval) {
+            flashInterval = setInterval(() => {
+                counterEl.style.color = counterEl.style.color === "yellow" ? "red" : "yellow";
+            }, 500);
         }
+    } else {
+        clearInterval(flashInterval);
+        flashInterval = null;
+        counterEl.style.color = "yellow"; // normal strikes color
     }
 }
 
@@ -821,7 +823,6 @@ function openFullscreen() {
     } else if (elem.msRequestFullscreen) {
         elem.msRequestFullscreen();
     }
-
     localStorage.setItem("examFullscreen", "true");
 }
 
@@ -834,15 +835,16 @@ function startExam() {
 
 // Handle a strike (increment counter once)
 function registerFullscreenStrike() {
-    if (fullscreenExitCount >= 2) return; // max 2 strikes
+    if (fullscreenExitCount >= fullscreencounter) return;
     if (strikeRegistered) return;
 
     fullscreenExitCount++;
     strikeRegistered = true;
     updateFullscreenCounter();
 
-    if (fullscreenExitCount >= 2) {
-        alert("❌ You exited fullscreen twice. Your exam will be submitted.");
+    // Trigger submission only when fullscreenExitCount reaches fullscreencounter
+    if (fullscreenExitCount === fullscreencounter) {
+        alert(`❌ You exited fullscreen ${fullscreenExitCount} times. Your exam will be submitted.`);
         manualSubmitQuiz();
     }
 }
@@ -852,16 +854,16 @@ function returnToFullscreen() {
     registerFullscreenStrike();
     openFullscreen();
     document.getElementById("fullscreenPopup").style.display = "none";
-    strikeRegistered = false; // reset for next strike
+    strikeRegistered = false;
 }
 
 // Detect exiting fullscreen
 document.addEventListener("fullscreenchange", () => {
     if (!document.fullscreenElement) {
         registerFullscreenStrike();
-        if (fullscreenExitCount < 2) {
+        if (fullscreenExitCount < fullscreencounter) {
             document.getElementById("fullscreenPopup").style.display = "flex";
-            strikeRegistered = false; // reset for next strike
+            strikeRegistered = false;
         }
     }
 });
@@ -872,15 +874,15 @@ window.addEventListener("load", () => {
     if (wasFull) setTimeout(() => openFullscreen(), 500);
 
     const radios = document.querySelectorAll(".radio-button");
-    radios.forEach(radio => {
-        radio.addEventListener("click", () => startExam());
-    });
+    radios.forEach(radio => radio.addEventListener("click", () => startExam()));
+
+    updateFullscreenCounter(); // show counter immediately on load
 });
 
 // Detect tab switch or blur
 window.addEventListener("blur", () => {
     registerFullscreenStrike();
-    if (fullscreenExitCount < 2) {
+    if (fullscreenExitCount < fullscreencounter) {
         document.getElementById("fullscreenPopup").style.display = "flex";
         strikeRegistered = false;
     }
@@ -899,6 +901,7 @@ document.addEventListener("keydown", (e) => {
         return false;
     }
 });
+
 
 // document.getElementById('submit').addEventListener('click', function () {
 //     const confirmed = confirm("Are you sure you want to submit the quiz?");

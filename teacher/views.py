@@ -191,7 +191,7 @@ def delete_school_view(request, pk):
     name = school.school_name
     school.delete()
     messages.warning(request, f"🗑️ {name} has been deleted successfully.")
-    return redirect('teacher:onboarding')
+    return redirect('teacher:onboarding_dashboard')
 
 
 @login_required(login_url='teacher:teacher_login')
