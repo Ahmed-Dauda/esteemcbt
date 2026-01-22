@@ -2259,13 +2259,13 @@ def add_course_view(request):
 
             with transaction.atomic():
 
-                # 1️⃣ Save Courses
+                # 1️⃣ Save Courses (M2M schools → use add)
                 courses_instance = form.save(commit=False)
                 courses_instance.created_by = user
                 courses_instance.save()
                 courses_instance.schools.add(user.school)
 
-                # 2️⃣ Get or create Course (NO M2M here)
+                # 2️⃣ Get or create Course (FK schools → assign)
                 course_instance, created = Course.objects.get_or_create(
                     course_name=courses_instance,
                     session=courses_instance.session,
@@ -2273,14 +2273,17 @@ def add_course_view(request):
                     exam_type=courses_instance.exam_type,
                     defaults={
                         'room_name': 'Some Room',
+                        'schools': user.school,
                     }
                 )
 
-                # 3️⃣ Add M2M relations safely
-                course_instance.schools.add(user.school)
+                # 3️⃣ If it already existed but school was empty
+                if not created and course_instance.schools is None:
+                    course_instance.schools = user.school
+                    course_instance.save(update_fields=['schools'])
 
-                # 4️⃣ Assign to teacher
-                if not teacher.subjects_taught.filter(id=course_instance.id).exists():
+                # 4️⃣ Assign to teacher safely
+                if not teacher.subjects_taught.filter(pk=course_instance.pk).exists():
                     teacher.subjects_taught.add(course_instance)
                     messages.success(
                         request,
@@ -2302,6 +2305,7 @@ def add_course_view(request):
         'teacher/dashboard/exams_subjects.html',
         {'form': form}
     )
+
 
 #real
 # @login_required
