@@ -324,14 +324,13 @@ from pathlib import Path
 
 DATABASES = {
     'default': dj_database_url.config(
-        conn_max_age=0,
-        ssl_require=False,   # 🔥 THIS FIXES IT
+        conn_max_age=0,      # PgBouncer-safe
+        ssl_require=False,   # PgBouncer does not support SSL
     )
 }
 
-DATABASES['default']['OPTIONS'] = {
-    'DISABLE_SERVER_SIDE_CURSORS': True,
-}
+# ✅ Django-level setting (NOT sent to Postgres)
+DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
 
 # Password validation
