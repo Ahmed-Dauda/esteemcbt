@@ -196,8 +196,6 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from openai import OpenAI
 # --- TEMPORARY: Use API key directly for testing ---
-#client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-client = OpenAI(api_key="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")
 
 # quiz/views.py
 import uuid
@@ -290,6 +288,43 @@ def ai_summative_assessment(request):
     return render(request, "quiz/dashboard/ai_summative_assessment.html", {
         "courses": courses,
     })
+
+
+@login_required
+def start_generation(request):
+    if request.method != "POST":
+        return HttpResponseBadRequest("Invalid method")
+
+    # Parse POST data (supporting both form-data and JSON)
+    try:
+        body_data = json.loads(request.body) if request.body else {}
+    except json.JSONDecodeError:
+        body_data = {}
+
+    course_id = request.POST.get("course") or body_data.get("course")
+    num_questions = request.POST.get("num_questions") or body_data.get("num_questions")
+    difficulty = request.POST.get("difficulty") or body_data.get("difficulty", "medium")
+    marks = request.POST.get("marks") or body_data.get("marks", 1)
+    learning_objectives = request.POST.get("learning_objectives") or body_data.get("learning_objectives", "")
+
+    if not course_id or not num_questions or not learning_objectives:
+        return JsonResponse({"error": "Missing course, num_questions, or learning objectives"}, status=400)
+
+    # Create a new generation job
+    job_id = str(uuid.uuid4())
+    GenerationJob.objects.create(job_id=job_id, status="pending")
+
+    # Launch Celery task with learning objectives
+    generate_ai_questions_task.delay(
+        job_id, 
+        int(course_id), 
+        int(num_questions), 
+        difficulty, 
+        int(marks),
+        learning_objectives
+    )
+
+    return JsonResponse({"job_id": job_id, "message": "Generation started"})
 
 
 # @login_required
@@ -404,42 +439,6 @@ def ai_summative_assessment(request):
 #     return render(request, "quiz/dashboard/ai_summative_assessment.html", {
 #         "courses": courses
 #     })
-
-@login_required
-def start_generation(request):
-    if request.method != "POST":
-        return HttpResponseBadRequest("Invalid method")
-
-    # Parse POST data (supporting both form-data and JSON)
-    try:
-        body_data = json.loads(request.body) if request.body else {}
-    except json.JSONDecodeError:
-        body_data = {}
-
-    course_id = request.POST.get("course") or body_data.get("course")
-    num_questions = request.POST.get("num_questions") or body_data.get("num_questions")
-    difficulty = request.POST.get("difficulty") or body_data.get("difficulty", "medium")
-    marks = request.POST.get("marks") or body_data.get("marks", 1)
-    learning_objectives = request.POST.get("learning_objectives") or body_data.get("learning_objectives", "")
-
-    if not course_id or not num_questions or not learning_objectives:
-        return JsonResponse({"error": "Missing course, num_questions, or learning objectives"}, status=400)
-
-    # Create a new generation job
-    job_id = str(uuid.uuid4())
-    GenerationJob.objects.create(job_id=job_id, status="pending")
-
-    # Launch Celery task with learning objectives
-    generate_ai_questions_task.delay(
-        job_id, 
-        int(course_id), 
-        int(num_questions), 
-        difficulty, 
-        int(marks),
-        learning_objectives
-    )
-
-    return JsonResponse({"job_id": job_id, "message": "Generation started"})
 
 # @login_required
 # def start_generation(request):

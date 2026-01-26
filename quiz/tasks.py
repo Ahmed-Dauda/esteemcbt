@@ -9,32 +9,12 @@ import math
 import time
 
 from django.db import transaction, IntegrityError
-
 from users.models import Profile
 
 
-# @shared_task(bind=True)
-# def save_exam_result_task(self, course_id, student_id, total_marks):
-#     course = Course.objects.select_related('schools', 'session', 'term', 'exam_type').get(id=course_id)
-#     student = Profile.objects.select_related('user').get(id=student_id)
-
-#     with transaction.atomic():
-#         Result.objects.create(
-#             schools=course.schools,
-#             marks=total_marks,
-#             exam=course,
-#             session=course.session,
-#             term=course.term,
-#             exam_type=course.exam_type,
-#             student=student,
-#             result_class=student.student_class
-#         )
-
-        
-# client = OpenAI(api_key=settings.OPENAI_API_KEY)
-
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
-
+print("OPENAI KEY STARTS WITH:", settings.OPENAI_API_KEY[:20])
+        
 def parse_ai_output(output):
     """Parse AI text into list of question dicts (question, option1..4, answer)"""
     blocks = re.split(r'\n\s*\n', output.strip())
@@ -68,28 +48,66 @@ def parse_ai_output(output):
 
 
 # @shared_task(bind=True)
-# def generate_ai_questions_task(self, job_id, course_id, num_questions, difficulty, marks):
+# def generate_ai_questions_task(
+#     self, job_id, course_id, num_questions, difficulty, marks, learning_objectives
+# ):
+#     print("\n🔥🔥🔥 CELERY TASK STARTED 🔥🔥🔥")
+#     print("Job ID:", job_id)
+#     print("Course ID:", course_id)
+#     print("Num Questions:", num_questions)
+#     print("Difficulty:", difficulty)
+#     print("Learning Objectives:", learning_objectives)
+
+#     # Debug OpenAI key
+#     import os
+#     openai_key = os.getenv("OPENAI_API_KEY")
+#     print("OPENAI KEY PRESENT:", bool(openai_key))
+#     if openai_key:
+#         print("OPENAI KEY STARTS WITH:", openai_key[:10])  # just first 10 chars, don't print full key
+
 #     job = GenerationJob.objects.get(job_id=job_id)
 #     job.status = "processing"
 #     job.save()
 
 #     try:
+#         # Fetch course object
 #         course_obj = Courses.objects.get(id=course_id)
-#         course_title = course_obj.title or ""
-#         course_detail = Course.objects.filter(course_name=course_obj).first()
+#         course_title = (course_obj.title or "").strip()
 
-#         # Batch to keep token usage and runtime reasonable
+#         # Map to Course model and save learning objectives
+#         course_detail = Course.objects.filter(course_name=course_obj).first()
+#         if course_detail:
+#             course_detail.learning_objectives = learning_objectives
+#             course_detail.save()
+
+#         # Batch settings
 #         BATCH_SIZE = 10
-#         batches = math.ceil(int(num_questions) / BATCH_SIZE)
+#         total_questions = int(num_questions)
+#         batches = math.ceil(total_questions / BATCH_SIZE)
 #         all_questions = []
 
 #         for b in range(batches):
-#             batch_count = min(BATCH_SIZE, int(num_questions) - b * BATCH_SIZE)
-#             # build prompt; keep it concise
+#             batch_count = min(BATCH_SIZE, total_questions - (b * BATCH_SIZE))
+
 #             prompt = f"""
-# You are an expert in learning assessment.
-# Generate {batch_count} {difficulty}-level multiple-choice questions strictly about '{course_title}'.
-# Format (no extra text):
+# You are a professional assessment specialist.
+
+# Generate {batch_count} multiple-choice questions strictly based on the learning objectives below:
+
+# Course: {course_title}
+
+# Learning Objectives:
+# {learning_objectives}
+
+# Difficulty Level: {difficulty}
+
+# Each question MUST:
+# - Match the learning objectives
+# - Be clear and unambiguous
+# - Have 4 options (A–D)
+# - Include one correct answer only
+
+# Return ONLY text in this strict format:
 
 # Question: <question text>
 # A. <option>
@@ -98,44 +116,47 @@ def parse_ai_output(output):
 # D. <option>
 # Answer: <A|B|C|D>
 # """
+#             print("Calling OpenAI API…")  # <-- log before call
 #             resp = client.chat.completions.create(
 #                 model="gpt-4o-mini",
 #                 messages=[
-#                     {"role":"system","content":"You are a helpful assistant that generates professional learning quiz questions."},
-#                     {"role":"user","content":prompt},
+#                     {
+#                         "role": "system",
+#                         "content": "You generate curriculum-aligned exam questions with high precision."
+#                     },
+#                     {"role": "user", "content": prompt},
 #                 ],
-#                 max_tokens=1200,
+#                 max_tokens=1800,
 #                 temperature=0,
 #             )
 
 #             output = resp.choices[0].message.content
+#             print("RAW AI OUTPUT:\n", output)
+
 #             parsed = parse_ai_output(output)
 #             all_questions.extend(parsed)
+#             print("Parsed questions batch:", parsed)
 
-#             # update job progress (approx)
+#             # Update job progress
 #             job.result = {"partial_count": len(all_questions)}
 #             job.save()
-
-#             # optional small sleep to avoid burst rate issues
 #             time.sleep(0.5)
 
-#         # Save resulting questions JSON into job.result
+#         # Final job update
 #         job.result = {"questions": all_questions}
 #         job.status = "completed"
 #         job.save()
 
-#         # Optionally return created count
 #         return {"created": len(all_questions)}
 
 #     except Exception as exc:
+#         print("🔥🔥🔥 TASK ERROR 🔥🔥🔥")
+#         print(exc)
 #         job.status = "failed"
 #         job.error = str(exc)
 #         job.save()
 #         raise
 
-from celery import shared_task
-import math
-import time
 
 @shared_task(bind=True)
 def generate_ai_questions_task(
@@ -208,6 +229,7 @@ Answer: <A|B|C|D>
             output = resp.choices[0].message.content
             parsed = parse_ai_output(output)
             all_questions.extend(parsed)
+            
 
             # Update job progress
             job.result = {"partial_count": len(all_questions)}
