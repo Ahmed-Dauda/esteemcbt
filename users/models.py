@@ -66,28 +66,34 @@ gender_choice = [
 class NewUser(AbstractBaseUser, PermissionsMixin):
     email           = models.EmailField(max_length=254, unique=True, db_index=True)
     username        = models.CharField(max_length=35, blank=True, db_index=True)
-    school          = models.ForeignKey('quiz.School', on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
+    school          = models.ForeignKey(
+                        'quiz.School', 
+                        on_delete=models.SET_NULL, 
+                        blank=True, 
+                        null=True, 
+                        db_index=True
+                     )
     student_class   = models.CharField(max_length=254, null=True, blank=True, db_index=True)
     phone_number    = models.CharField(max_length=254, blank=True)
     first_name      = models.CharField(max_length=254, null=True, blank=True, db_index=True)
     last_name       = models.CharField(max_length=254, null=True, blank=True, db_index=True)
     admission_no    = models.CharField(max_length=254, null=True, blank=True, db_index=True)
     countries       = models.CharField(max_length=254, blank=True, null=True)
-    pro_img         = CloudinaryField('profile_photos', blank=True, null=True, default='https://i.ibb.co/cx34WCc/logo.png')
+    pro_img         = CloudinaryField(
+                        'profile_photos', 
+                        blank=True, 
+                        null=True, 
+                        default='https://i.ibb.co/cx34WCc/logo.png'
+                     )
     gender          = models.CharField(choices=gender_choice, max_length=225, blank=True, null=True)
     is_staff        = models.BooleanField(default=False)
     is_superuser    = models.BooleanField(default=False)
     is_active       = models.BooleanField(default=True)
-    is_principal = models.BooleanField(default=False)
+    is_principal    = models.BooleanField(default=False)
     last_login      = models.DateTimeField(null=True, blank=True)
     date_joined     = models.DateTimeField(auto_now_add=True, db_index=True)
 
-    # USERNAME_FIELD  = 'email'
-    # EMAIL_FIELD     = 'username'
-
     USERNAME_FIELD  = 'username'
-    # EMAIL_FIELD     = 'email'
-
     REQUIRED_FIELDS = []
 
     objects         = CustomUserManager()
@@ -97,6 +103,47 @@ class NewUser(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         db_table = 'auth_user'
+        indexes = [
+            models.Index(fields=['school', 'student_class']),          # fast filtering by school + class
+            models.Index(fields=['school', 'student_class', 'username']),  # for unique lookups per class
+            models.Index(fields=['email', 'username']),               # login lookups
+            models.Index(fields=['first_name', 'last_name']),         # search by name
+        ]
+
+# class NewUser(AbstractBaseUser, PermissionsMixin):
+#     email           = models.EmailField(max_length=254, unique=True, db_index=True)
+#     username        = models.CharField(max_length=35, blank=True, db_index=True)
+#     school          = models.ForeignKey('quiz.School', on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
+#     student_class   = models.CharField(max_length=254, null=True, blank=True, db_index=True)
+#     phone_number    = models.CharField(max_length=254, blank=True)
+#     first_name      = models.CharField(max_length=254, null=True, blank=True, db_index=True)
+#     last_name       = models.CharField(max_length=254, null=True, blank=True, db_index=True)
+#     admission_no    = models.CharField(max_length=254, null=True, blank=True, db_index=True)
+#     countries       = models.CharField(max_length=254, blank=True, null=True)
+#     pro_img         = CloudinaryField('profile_photos', blank=True, null=True, default='https://i.ibb.co/cx34WCc/logo.png')
+#     gender          = models.CharField(choices=gender_choice, max_length=225, blank=True, null=True)
+#     is_staff        = models.BooleanField(default=False)
+#     is_superuser    = models.BooleanField(default=False)
+#     is_active       = models.BooleanField(default=True)
+#     is_principal = models.BooleanField(default=False)
+#     last_login      = models.DateTimeField(null=True, blank=True)
+#     date_joined     = models.DateTimeField(auto_now_add=True, db_index=True)
+
+#     # USERNAME_FIELD  = 'email'
+#     # EMAIL_FIELD     = 'username'
+
+#     USERNAME_FIELD  = 'username'
+#     # EMAIL_FIELD     = 'email'
+
+#     REQUIRED_FIELDS = []
+
+#     objects         = CustomUserManager()
+
+#     def __str__(self):
+#         return f'({self.school}) - ({self.first_name}, {self.last_name}, {self.student_class})'
+
+#     class Meta:
+#         db_table = 'auth_user'
 
 
 

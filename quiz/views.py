@@ -196,6 +196,10 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from openai import OpenAI
 # --- TEMPORARY: Use API key directly for testing ---
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
+# print("OPENAI KEY PRESENT:", bool(settings.OPENAI_API_KEY))
+# print("OPENAI KEY STARTS WITH:", settings.OPENAI_API_KEY[:10])
 
 # quiz/views.py
 import uuid

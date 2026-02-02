@@ -49,30 +49,77 @@
 <div id="toast-container"></div>
 
 <div class="form-section">
-  <h3>
-    Only Mathematics, Chemistry, and Physics Teachers should use this link: 
-    <a class="btn btn-info btn-lg d-flex align-items-center gap-2" href="{% url 'teacher:generate_csv' %}">
-      <i class="fas fa-robot"></i> Generate with AI
-    </a>
-  </h3>
 
-  <h2>🤖 AI Summative Assessment</h2>
+
+  <h2>🤖 Generate Questions with AI</h2>
 
   <form id="generate-form" method="POST">
     {% csrf_token %}
     <div class="form-group">
-      <label>Select Course:</label>
+      <h3>Instructions</h3>
+      <p>Select the subject and enter learning objectives, assign the number of questions and difficulty level and click generate.</p>
+      <label>Select Subject:</label>
       <select id="course" name="course" required>
         {% for c in courses %}
           <option value="{{ c.id }}">{{ c.course_name }}</option>
         {% endfor %}
       </select>
     </div>
-
+  
+  
+  
     <div class="form-group">
+  <label>Learning Objectives:</label>
+  <textarea id="learning_objectives"
+            name="learning_objectives"
+            rows="6"
+            placeholder="Enter learning objectives..."
+            required></textarea>
+
+  <!-- <h4>Activate Mathematics, Chemistry, or Physics Question Format.Only for secondary and tertiary levels.</h4>
+<button type="button"
+        class="btn btn-primary mt-2"
+        onclick="activation(); addMathMLQuestion();">
+  Active mode
+</button>
+<style>
+math {
+  display: inline-block;
+  font-size: 1.2em;
+  vertical-align: middle;
+}
+</style>
+
+</div>
+
+<script>
+function   activation(){
+  alert("Mathematics, Chemistry, or Physics Question Format Activated. Please enter your learning objectives below separated by commas.");
+}
+
+function addMathMLQuestion() {
+  const questionBlock = `
+Make sure Both questions and options should be formatted as valid mathml url format strictly. 
+Example: 
+    "question":"<math xmlns='http://www.w3.org/1998/Math/MathML'><msup><mi>v</mi><mn>2</mn></msup><mo>=</mo><msup><mi>u</mi><mn>2</mn></msup><mo>+</mo><mn>2</mn><mi>a</mi><mi>s</mi></math>",    
+    "option1": "<math xmlns='http://www.w3.org/1998/Math/MathML'><mfrac><mn>3</mn><mn>5</mn></mfrac></math>",
+    "option2": "<math xmlns='http://www.w3.org/1998/Math/MathML'><mfrac><mn>5</mn><mn>6</mn></mfrac></math>",
+    "option3": "<math xmlns='http://www.w3.org/1998/Math/MathML'><mfrac><mn>7</mn><mn>6</mn></mfrac></math>",
+    "option4": "<math xmlns='http://www.w3.org/1998/Math/MathML'><mfrac><mn>8</mn><mn>9</mn></mfrac></math>",
+`;
+
+
+  const textarea = document.getElementById("learning_objectives");
+textarea.value += '\n\n\n\n\n\n\n\n' + questionBlock; // adds top padding visually
+
+}
+</script> -->
+
+
+    <!-- <div class="form-group">
       <label>Learning Objectives:</label>
       <textarea id="learning_objectives" name="learning_objectives" rows="4" placeholder="Enter learning objectives..." required></textarea>
-    </div>
+    </div> -->
 
     <div class="form-group">
       <label>Number of Questions:</label>
@@ -91,7 +138,7 @@
     </div>
 
     <div style="text-align:center;">
-      <button type="submit" id="generate-btn">⚙️ Generate AI Questions</button>
+      <button type="submit" id="generate-btn">⚙️ Generate Questions</button>
     </div>
   </form>
 
@@ -205,6 +252,7 @@ $(document).ready(function() {
           </select>
         </div></div>`;
     });
+
 
     html+=`<div style="text-align:center;"><button type="submit">✅ Save All Questions</button></div></form></div>`;
     $('#preview-save-container').html(html);

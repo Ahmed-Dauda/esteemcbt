@@ -214,23 +214,18 @@ class StudentExamSession(models.Model):
         return f"{self.course}"
     
 
-
 class Question(models.Model):
-    course = models.ForeignKey(
-        'Course', on_delete=models.CASCADE, blank=True, null=True, db_index=True
-    )  # ✅ index added
+    course = models.ForeignKey('Course', on_delete=models.CASCADE, blank=True, null=True)
 
-    marks = models.PositiveIntegerField(null=True,default=1,validators=[MinValueValidator(1), MaxValueValidator(1)],
-        help_text="This field is locked to 1 mark."
-    )
+    marks = models.PositiveIntegerField(default=1)
 
     question = HTMLField(blank=True, null=True)
     img_quiz = CloudinaryField('image', blank=True, null=True)
 
-    option1 = HTMLField(max_length=500, blank=True, null=True)
-    option2 = HTMLField(max_length=500, blank=True, null=True)
-    option3 = HTMLField(max_length=500, blank=True, null=True)
-    option4 = HTMLField(max_length=500, blank=True, null=True)
+    option1 = HTMLField(blank=True, null=True)
+    option2 = HTMLField(blank=True, null=True)
+    option3 = HTMLField(blank=True, null=True)
+    option4 = HTMLField(blank=True, null=True)
 
     OPTION_CHOICES = [
         ('Option1', 'Option1'),
@@ -238,26 +233,21 @@ class Question(models.Model):
         ('Option3', 'Option3'),
         ('Option4', 'Option4'),
     ]
-    answer = models.CharField(
-        max_length=200, choices=OPTION_CHOICES, blank=True, null=True
-    )
+    answer = models.CharField(max_length=20, choices=OPTION_CHOICES, blank=True, null=True)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-    id = models.AutoField(primary_key=True)
 
     def __str__(self):
-        return f"{self.course} | {self.question[:30]}"
+        return f"{self.course} | {(self.question or '')[:30]}"
 
     def save(self, *args, **kwargs):
-        self.marks = 1  # Ensure marks is always set to 1
+        self.marks = 1
         super().save(*args, **kwargs)
+
         if self.course:
-            total_marks = Question.objects.filter(course=self.course).aggregate(Sum('marks'))['marks__sum'] or 0
-           
             self.course.question_number = Question.objects.filter(course=self.course).count()
-            # self.course.total_marks = Question.objects.filter(course = self.course).count()
-            self.course.save()
+            self.course.save(update_fields=["question_number"])
 
     def delete(self, *args, **kwargs):
         course = self.course

@@ -238,6 +238,7 @@ div.quiz p {
       background: #0b5ed7;
     }
   </style>
+
 <!-- MathJax for math rendering -->
 
 <form novalidate autocomplete="off" class="no-copy" id="quizf" action="/student/calculate_marks" onsubmit="return saveAns()" enctype="multipart/form-data"  method="POST">
@@ -306,6 +307,7 @@ div.quiz p {
             
               {% else %}
               <label style="font-size: 18px;">
+                
                 {{ q.question|safe }}
               </label>
     
@@ -315,6 +317,7 @@ div.quiz p {
 
               
               {% if q.option1 %}
+              
                 <div class="quiz">
                     <div  class="radio-container">
                         <input  class="radio-button" 

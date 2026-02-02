@@ -1,0 +1,95 @@
+<script>
+function   activation(){
+  alert("Mathematics, Chemistry, or Physics Question Format Activated. Please enter your learning objectives below separated by commas.");
+}
+
+function addMathMLQuestion() {
+  const questionBlock = `
+Both questions and options MUST be written strictly in MathML format.
+Use <msup> for powers. The ^ symbol is NOT allowed.
+
+Question:
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mrow>
+      <mfrac>
+        <mn>3</mn>
+        <mn>5</mn>
+      </mfrac>
+      <mo>+</mo>
+      <mfrac>
+        <mn>2</mn>
+        <mn>5</mn>
+      </mfrac>
+    </mrow>
+    <mn>2</mn>
+  </msup>
+</math>
+
+option1:
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+</math>
+
+option2:
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mfrac>
+    <mn>1</mn>
+    <mn>5</mn>
+  </mfrac>
+</math>
+
+option3:
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mfrac>
+    <mn>25</mn>
+    <mn>25</mn>
+  </mfrac>
+</math>
+
+option4:
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+</math>
+
+Answer: D
+------------------------------------
+`;
+
+  const questionBlockChemistry = `
+TEXT / CHEMISTRY MODE:
+• Use normal HTML
+• Use <sub> for subscripts
+• MathML is NOT required
+
+Question:
+Which of the following is an inorganic compound?
+
+option1:
+NaCl
+
+option2:
+H<sub>2</sub>O
+
+option3:
+C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>
+
+option4:
+CO<sub>2</sub>
+
+Answer: A
+`;
+
+ {% for c in courses %}
+          <p>{{ c.course_name }}</p>
+          if (" "Math" in "{{ c.course_name }}"  || "Phy" in "{{ c.course_name }}") {
+
+            document.getElementById('learning_objectives').value = questionBlock;
+          } else if ("{{ c.course_name }}" === "Chemistry") {
+            document.getElementById('learning_objectives').value = questionBlockChemistry;
+          }
+
+{% endfor %}
+
+}
+</script>

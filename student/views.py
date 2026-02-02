@@ -3597,6 +3597,170 @@ def pdf_document_list(request):
     return render(request, 'student/dashboard/pdf_document_list.html', {'documents': documents})
 
 
+from django.core.cache import cache
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404
+
+# @login_required
+# def take_exams_view(request):
+#     user = request.user
+
+#     # -------------------------------
+#     # 1. Get student profile & school
+#     # -------------------------------
+#     student = get_object_or_404(
+#         NewUser.objects.select_related('school').only(
+#             'id', 'email', 'school__id', 'school__school_name', 'student_class'
+#         ),
+#         email=user.email
+#     )
+
+#     school = student.school
+#     student_class = student.student_class
+#     school_name = school.school_name if school else "Default School"
+
+#     # -------------------------------
+#     # 2. Cache subjects per class
+#     # -------------------------------
+#     cache_key = f"class_subjects_{user.id}"
+#     cached_data = cache.get(cache_key)
+
+#     if cached_data:
+#         sub_grade, class_subj = cached_data
+#     else:
+#         course_grade = (
+#             QMODEL.CourseGrade.objects
+#             .prefetch_related('subjects')
+#             .filter(students=user)
+#             .only('id', 'name')
+#             .first()
+#         )
+
+#         if course_grade:
+#             sub_grade = course_grade.name
+#             class_subj = list(course_grade.subjects.only('id', 'name'))
+#         else:
+#             sub_grade = None
+#             class_subj = []
+
+#         cache.set(cache_key, (sub_grade, class_subj), 300)  # 5 mins cache
+
+#     # -------------------------------
+#     # 3. Load ONLY relevant courses
+#     # -------------------------------
+#     courses = (
+#         Course.objects
+#         .filter(schools=school)
+#         .select_related('course_name', 'exam_type')
+#         .only(
+#             'id',
+#             'course_name__title',
+#             'exam_type__name',
+#             'session',
+#             'term'
+#         )
+#     )
+
+#     # -------------------------------
+#     # 4. Load results efficiently
+#     # -------------------------------
+#     user_results = (
+#         Result.objects
+#         .filter(student__user=user)
+#         .select_related('exam')
+#         .only('exam__id', 'exam__course_name', 'marks')
+#     )
+
+#     context = {
+#         'courses': courses,
+#         'class_subj': class_subj,
+#         'student_class': student_class,
+#         'school_name': school_name,
+#         'sub_grade': sub_grade,
+#         'user_results': user_results,
+#     }
+
+#     return render(request, 'student/dashboard/take_exams.html', context)
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Prefetch
+from django.core.cache import cache
+import logging
+
+logger = logging.getLogger(__name__)
+
+# @login_required
+# def take_exams_view(request):
+ 
+#     course = Course.objects.select_related('schools', 'course_name').only(
+#         'id', 'schools__name', 'course_name__title','session','term', 'exam_type__name'
+#     )
+
+#     current_user = request.user
+#     user_profile = get_object_or_404(
+#             Profile.objects.select_related('user').only(
+#                 'user__id', 'user__username', 'username', 'first_name', 'last_name'), user=request.user
+#         )
+#     # Get the results related to this user
+#     user_results =Result.objects.filter(student = user_profile).select_related('exam').only(
+#         'exam__id', 'exam__course_name', 'marks')
+
+#     # user_newuser = get_object_or_404(NewUser, email=request.user)
+#     user_newuser = get_object_or_404(
+#             NewUser.objects.select_related('school').only(
+#                 'id', 'email', 'school__id', 'school__name', 'student_class'
+#             ), 
+#             email=request.user.email)
+    
+#     if user_newuser is not None:
+#         school = user_newuser.school
+#         if school is not None:
+#             school_name = school.school_name
+#             # course_pay = school.course_pay
+#             # course_names = Course.objects.filter(course_pay=course_pay)
+#         else:
+#             school_name = "Default School Name"
+#             # course_names = []
+#             # course_pay = None
+#         student_class = user_newuser.student_class
+#     else:
+#         school_name = "Default School Name"
+#         student_class = "Default Class"
+#         # course_names = []
+#         # course_pay = None
+
+#     sub_grade = None  # Initialize sub_grade with a default value
+#     subjects = None  # Initialize subjects with a default value
+#     class_subj = []  # Initialize class_subj with a default value
+
+#     course_grade = QMODEL.CourseGrade.objects.prefetch_related('subjects').filter(students__in=[current_user]).first()
+
+#     if course_grade:
+#         # If the CourseGrade instance exists, you can access its name and subjects
+#         sub_grade = course_grade.name
+#         subjects = course_grade.subjects.all()
+#         for subject in subjects:
+#             class_subj.append(subject)
+#     else:
+#         print("No CourseGrade instance found for the current user.")
+
+#     context = {
+#         'courses': course,
+#         'class_subj': class_subj,
+#         'student_class': student_class,
+#         'school_name': school_name,
+#         "sub_grade": sub_grade,
+#         "subjects": subjects,
+#         # "course_names": course_names,
+#         # 'course_pay': course_pay,
+#         # "grades": QMODEL.CourseGrade.objects.all(),
+#         'user_results':user_results,
+#     }
+#     return render(request, 'student/dashboard/take_exams.html', context=context)
+
+
+#working fine
 @login_required
 def take_exams_view(request):
  
@@ -3641,9 +3805,6 @@ def take_exams_view(request):
     subjects = None  # Initialize subjects with a default value
     class_subj = []  # Initialize class_subj with a default value
 
-    # Query the CourseGrade instance associated with the current user
-    # course_grade = QMODEL.CourseGrade.objects.filter(students__in=[current_user]).first()
-    # course_grade = QMODEL.CourseGrade.objects.filter(students__in=[current_user]).first()
     course_grade = QMODEL.CourseGrade.objects.prefetch_related('subjects').filter(students__in=[current_user]).first()
 
     if course_grade:
