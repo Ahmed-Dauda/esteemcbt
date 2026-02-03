@@ -334,12 +334,11 @@ from pathlib import Path
 
 DATABASES = {
     'default': dj_database_url.config(
-        conn_max_age=0,      # PgBouncer-safe
-        ssl_require=True,   # PgBouncer does not support SSL
+        conn_max_age=0,
+        ssl_require=True,
     )
 }
 
-# ✅ Django-level setting (NOT sent to Postgres)
 DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
 
@@ -379,25 +378,25 @@ USE_TZ = True
 # ADDITIONAL SITEs SECURITY
 # HTTPS and secure headers
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_SSL_REDIRECT = True
+# SECURE_BROWSER_XSS_FILTER = True
+# SECURE_CONTENT_TYPE_NOSNIFF = True
+# X_FRAME_OPTIONS = 'DENY'
 
-# HSTS (HTTP Strict Transport Security)
-SECURE_HSTS_SECONDS = 3600  # You can increase to 31536000 (1 year) in production
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+# # HSTS (HTTP Strict Transport Security)
+# SECURE_HSTS_SECONDS = 3600  # You can increase to 31536000 (1 year) in production
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
 
-# Cookies and sessions
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-SESSION_COOKIE_HTTPONLY = True
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# # Cookies and sessions
+# CSRF_COOKIE_SECURE = True
+# SESSION_COOKIE_SECURE = True
+# SESSION_COOKIE_HTTPONLY = True
+# SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-# Optional - block embedding your site in iframe entirely
-SECURE_FRAME_DENY = True  # Already handled by X_FRAME_OPTIONS = 'DENY'
+# # Optional - block embedding your site in iframe entirely
+# SECURE_FRAME_DENY = True  # Already handled by X_FRAME_OPTIONS = 'DENY'
 
 # end of new security
 
