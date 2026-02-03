@@ -259,15 +259,11 @@ import os
 import os
 
 # Use environment variable if set (Heroku)
-REDIS_URL = os.environ.get("REDIS", os.environ.get("REDISCLOUD", "redis://127.0.0.1:6379/0"))
+REDIS_URL = os.environ.get("REDIS")  # or REDISCLOUD
 
-# Celery
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
 
-# Django cache
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
