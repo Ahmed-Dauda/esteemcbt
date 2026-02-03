@@ -255,6 +255,8 @@ from celery.schedules import crontab
 #         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
 #     }
 # }
+import os
+
 REDIS_URL = os.environ.get("REDIS_URL")
 
 # Celery
