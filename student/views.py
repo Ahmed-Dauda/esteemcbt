@@ -3760,75 +3760,118 @@ logger = logging.getLogger(__name__)
 #     return render(request, 'student/dashboard/take_exams.html', context=context)
 
 
-#working fine
 @login_required
 def take_exams_view(request):
- 
-    course = Course.objects.select_related('schools', 'course_name').only(
-        'id', 'schools__name', 'course_name__title','session','term', 'exam_type__name'
+    current_user = request.user
+
+    # Fetch user profile
+    user_profile = Profile.objects.select_related('user').only(
+        'user__id', 'user__username', 'username', 'first_name', 'last_name'
+    ).filter(user=current_user).first()
+
+    # Fetch user results
+    user_results = Result.objects.filter(student=user_profile).select_related('exam').only(
+        'exam__id', 'exam__course_name', 'marks'
     )
 
-    current_user = request.user
-    user_profile = get_object_or_404(
-            Profile.objects.select_related('user').only(
-                'user__id', 'user__username', 'username', 'first_name', 'last_name'), user=request.user
-        )
-    # Get the results related to this user
-    user_results =Result.objects.filter(student = user_profile).select_related('exam').only(
-        'exam__id', 'exam__course_name', 'marks')
+    # Fetch NewUser & school info
+    user_newuser = NewUser.objects.select_related('school').only(
+        'id', 'email', 'school__id', 'school__name', 'student_class'
+    ).filter(email=current_user.email).first()
 
-    # user_newuser = get_object_or_404(NewUser, email=request.user)
-    user_newuser = get_object_or_404(
-            NewUser.objects.select_related('school').only(
-                'id', 'email', 'school__id', 'school__name', 'student_class'
-            ), 
-            email=request.user.email)
-    
-    if user_newuser is not None:
-        school = user_newuser.school
-        if school is not None:
-            school_name = school.school_name
-            # course_pay = school.course_pay
-            # course_names = Course.objects.filter(course_pay=course_pay)
-        else:
-            school_name = "Default School Name"
-            # course_names = []
-            # course_pay = None
-        student_class = user_newuser.student_class
-    else:
-        school_name = "Default School Name"
-        student_class = "Default Class"
-        # course_names = []
-        # course_pay = None
+    school_name = user_newuser.school.school_name if user_newuser and user_newuser.school else "Default School Name"
+    student_class = user_newuser.student_class if user_newuser else "Default Class"
 
-    sub_grade = None  # Initialize sub_grade with a default value
-    subjects = None  # Initialize subjects with a default value
-    class_subj = []  # Initialize class_subj with a default value
+    # Fetch courses the student can take
+    course = Course.objects.select_related('schools', 'course_name').only(
+        'id', 'schools__name', 'course_name__title','session','term', 'exam_type__name'
+    )[:50]  # LIMIT to first 50 courses for speed
 
-    course_grade = QMODEL.CourseGrade.objects.prefetch_related('subjects').filter(students__in=[current_user]).first()
-
-    if course_grade:
-        # If the CourseGrade instance exists, you can access its name and subjects
-        sub_grade = course_grade.name
-        subjects = course_grade.subjects.all()
-        for subject in subjects:
-            class_subj.append(subject)
-    else:
-        print("No CourseGrade instance found for the current user.")
+    # Fetch CourseGrade and subjects
+    course_grade = QMODEL.CourseGrade.objects.prefetch_related('subjects').filter(students=current_user).first()
+    subjects = course_grade.subjects.all() if course_grade else []
+    sub_grade = course_grade.name if course_grade else None
 
     context = {
         'courses': course,
-        'class_subj': class_subj,
+        'class_subj': subjects,
         'student_class': student_class,
         'school_name': school_name,
         "sub_grade": sub_grade,
         "subjects": subjects,
-        # "course_names": course_names,
-        # 'course_pay': course_pay,
-        # "grades": QMODEL.CourseGrade.objects.all(),
-        'user_results':user_results,
+        'user_results': user_results,
     }
     return render(request, 'student/dashboard/take_exams.html', context=context)
+
+
+#working fine
+# @login_required
+# def take_exams_view(request):
+ 
+#     course = Course.objects.select_related('schools', 'course_name').only(
+#         'id', 'schools__name', 'course_name__title','session','term', 'exam_type__name'
+#     )
+#     current_user = request.user
+#     user_profile = get_object_or_404(
+#             Profile.objects.select_related('user').only(
+#                 'user__id', 'user__username', 'username', 'first_name', 'last_name'), user=request.user
+#         )
+#     # Get the results related to this user
+#     user_results =Result.objects.filter(student = user_profile).select_related('exam').only(
+#         'exam__id', 'exam__course_name', 'marks')
+
+#     # user_newuser = get_object_or_404(NewUser, email=request.user)
+#     user_newuser = get_object_or_404(
+#             NewUser.objects.select_related('school').only(
+#                 'id', 'email', 'school__id', 'school__name', 'student_class'
+#             ), 
+#             email=request.user.email)
+    
+#     if user_newuser is not None:
+#         school = user_newuser.school
+#         if school is not None:
+#             school_name = school.school_name
+#             # course_pay = school.course_pay
+#             # course_names = Course.objects.filter(course_pay=course_pay)
+#         else:
+#             school_name = "Default School Name"
+#             # course_names = []
+#             # course_pay = None
+#         student_class = user_newuser.student_class
+#     else:
+#         school_name = "Default School Name"
+#         student_class = "Default Class"
+#         # course_names = []
+#         # course_pay = None
+
+#     sub_grade = None  # Initialize sub_grade with a default value
+#     subjects = None  # Initialize subjects with a default value
+#     class_subj = []  # Initialize class_subj with a default value
+
+#     course_grade = QMODEL.CourseGrade.objects.prefetch_related('subjects').filter(students__in=[current_user]).first()
+
+#     if course_grade:
+#         # If the CourseGrade instance exists, you can access its name and subjects
+#         sub_grade = course_grade.name
+#         subjects = course_grade.subjects.all()
+#         for subject in subjects:
+#             class_subj.append(subject)
+#     else:
+#         print("No CourseGrade instance found for the current user.")
+
+#     context = {
+#         'courses': course,
+#         'class_subj': class_subj,
+#         'student_class': student_class,
+#         'school_name': school_name,
+#         "sub_grade": sub_grade,
+#         "subjects": subjects,
+#         # "course_names": course_names,
+#         # 'course_pay': course_pay,
+#         # "grades": QMODEL.CourseGrade.objects.all(),
+#         'user_results':user_results,
+#     }
+#     return render(request, 'student/dashboard/take_exams.html', context=context)
 
 
 # @login_required
@@ -4042,6 +4085,7 @@ from quiz.models import StudentAnswer
 from django.db import transaction
 from django.db import IntegrityError, transaction
 from django.db import transaction
+
 
 @csrf_exempt
 def calculate_marks_view(request):
