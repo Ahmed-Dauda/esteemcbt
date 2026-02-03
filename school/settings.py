@@ -258,7 +258,9 @@ from celery.schedules import crontab
 import os
 import os
 
-REDIS_URL = os.environ.get("REDIS")  # Heroku Mini Redis
+# Use the free Heroku Redis Mini or Redis Cloud
+REDIS_URL = os.environ.get("REDIS")  # For Mini plan
+# REDIS_URL = os.environ.get("REDISCLOUD")  # Or use the 30MB free one
 
 # Celery
 CELERY_BROKER_URL = REDIS_URL
