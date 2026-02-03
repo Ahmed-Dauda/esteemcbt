@@ -257,22 +257,34 @@ from celery.schedules import crontab
 # }
 import os
 import os
+from django.core.exceptions import ImproperlyConfigured
 
-# Use environment variable if set (Heroku)
-REDIS_URL = os.environ.get("REDIS")  # or REDISCLOUD
+# Make sure REDIS_URL is set
+REDIS_URL = os.environ.get("REDIS")
+if not REDIS_URL:
+    raise ImproperlyConfigured(
+        "REDIS environment variable is missing! "
+        "Check that your Heroku Redis add-on is attached."
+    )
 
+# Celery
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
 
+# Django cache
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": REDIS_URL,
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
     }
 }
+
+# Sessions
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
 
 
 # CACHES = {
