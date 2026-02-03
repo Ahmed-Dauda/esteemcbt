@@ -259,26 +259,45 @@ import os
 import os
 from django.core.exceptions import ImproperlyConfigured
 
-# Make sure REDIS_URL is set
-REDIS_URL = os.environ.get("REDIS")
+import os
+from django.core.exceptions import ImproperlyConfigured
+
+# ===============================
+# REDIS CONFIG
+# ===============================
+
+# Try to get the REDIS URL from env vars
+REDIS_URL = os.environ.get("REDIS")  # Heroku expects this
+LOCAL_REDIS_URL = "redis://127.0.0.1:6379/0"  # Local default
+
 if not REDIS_URL:
+    # If running locally, fall back to local Redis
+    REDIS_URL = LOCAL_REDIS_URL
+
+# Optionally, raise error if you really want Heroku to fail when missing
+# Comment out the next lines for local development
+if os.environ.get("DYNO") and not REDIS_URL:
     raise ImproperlyConfigured(
         "REDIS environment variable is missing! "
         "Check that your Heroku Redis add-on is attached."
     )
 
-# Celery
+# Celery configuration
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
 
-# Django cache
+# Django Caching
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": REDIS_URL,
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            # Avoid SSL verification errors locally
+            "SSL_CERT_REQS": None if "127.0.0.1" in REDIS_URL else None,
+        },
     }
 }
 
