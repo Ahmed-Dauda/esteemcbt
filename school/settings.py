@@ -260,31 +260,43 @@ import os
 from django.core.exceptions import ImproperlyConfigured
 
 import os
+import ssl
 
 REDIS_URL = os.environ.get("REDIS", "redis://127.0.0.1:6379/0")
 
-# If the URL starts with rediss:// (SSL), allow self-signed certs
+# Detect SSL Redis
 if REDIS_URL.startswith("rediss://"):
-    # Add ?ssl_cert_reqs=None if not already present
-    if "?" not in REDIS_URL:
-        REDIS_URL += "?ssl_cert_reqs=None"
-    elif "ssl_cert_reqs" not in REDIS_URL:
-        REDIS_URL += "&ssl_cert_reqs=None"
-
-# Celery config
-CELERY_BROKER_URL = REDIS_URL
-CELERY_RESULT_BACKEND = REDIS_URL
-
-# Django cache config
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": REDIS_URL,
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+    # Configure Django-Redis SSL options
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "CONNECTION_POOL_KWARGS": {
+                    "ssl_cert_reqs": ssl.CERT_NONE,  # Ignore self-signed cert
+                },
+            },
+        }
     }
-}
+
+    CELERY_BROKER_URL = REDIS_URL
+    CELERY_RESULT_BACKEND = REDIS_URL
+
+else:
+    # Local non-SSL Redis
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        }
+    }
+
+    CELERY_BROKER_URL = REDIS_URL
+    CELERY_RESULT_BACKEND = REDIS_URL
 
 
 # CACHES = {
