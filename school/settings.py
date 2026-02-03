@@ -242,17 +242,35 @@ MIDDLEWARE = [
 import os
 from celery.schedules import crontab
 
-# Redis config for Celery
-CELERY_BROKER_URL = os.environ.get('REDISCLOUD_URL', 'redis://localhost:6379')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_BACKEND = CELERY_BROKER_URL  # Optional if you want result backend
+# # Redis config for Celery
+# CELERY_BROKER_URL = os.environ.get('REDISCLOUD_URL', 'redis://localhost:6379')
+# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_RESULT_BACKEND = CELERY_BROKER_URL  # Optional if you want result backend
 
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": os.environ.get("REDIS_URL"),
+#         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+#     }
+# }
+REDIS_URL = os.environ.get("REDIS_URL")
+
+# Celery
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+
+# Django cache
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.environ.get("REDIS_URL"),
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
     }
 }
 
