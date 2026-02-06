@@ -14,3 +14,4 @@
 web: gunicorn school.asgi:application -k uvicorn.workers.UvicornWorker --workers 2 --threads 2 --timeout 60
 worker: celery -A school worker --loglevel=info --concurrency=1 --pool=solo
 
+clock: python clock.py
