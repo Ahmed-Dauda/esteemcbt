@@ -2,7 +2,7 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
-from myapp.models import StudentExamSession
+from quiz.models import StudentExamSession
 
 class Command(BaseCommand):
     help = 'Delete StudentExamSession records older than 1 minute'
