@@ -4,13 +4,25 @@ from django.core.management import call_command
 import django
 import os
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'school.settings')
-django.setup()
+# myapp/management/commands/cleanup_old_sessions.py
+from django.core.management.base import BaseCommand
+from django.utils import timezone
+from datetime import timedelta
+from quiz.models import StudentExamSession
+import logging
 
-scheduler = BlockingScheduler()
+logger = logging.getLogger(__name__)
 
-@scheduler.scheduled_job('interval', minutes=1)
-def cleanup_sessions():
-    call_command('cleanup_old_sessions')
+class Command(BaseCommand):
+    help = 'Delete StudentExamSession records older than 1 minute'
 
-scheduler.start()
+    def handle(self, *args, **kwargs):
+        one_minute_ago = timezone.now() - timedelta(minutes=1)
+        deleted_count, _ = StudentExamSession.objects.filter(
+            created__lt=one_minute_ago
+        ).delete()
+        
+        logger.info(f'Cleanup ran at {timezone.now()}: Deleted {deleted_count} sessions')
+        self.stdout.write(
+            self.style.SUCCESS(f'Deleted {deleted_count} old sessions')
+        )
