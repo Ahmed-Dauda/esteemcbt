@@ -1,288 +1,66 @@
 {% extends 'sms/dashboard/studentbase.html' %}
+{% load static %}
 
-{% block title %} Start the Quiz {% endblock %}
+{% block title %}Start the Quiz{% endblock %}
 
-    {% load static %}
+{% block content %}
 
-  {% block content %} 
+<!-- Logout -->
+<div class="d-flex mb-3 container">
+    <a class="btn btn-primary" href="{% url 'teacher:student-logout' %}">
+        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+    </a>
+</div>
 
-  <style>
-    /* Animation for the Start text */
-    .animated-start {
-        animation: pulse 2s infinite; /* Animation name, duration, and infinite looping */
-        border-radius: 10px; /* Optional: make the edges round */
-        transition: transform 0.3s ease-in-out;
-    }
-    
-    /* Keyframes for pulse effect */
-    @keyframes pulse {
-        0% {
-            transform: scale(1);
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-        }
-        50% {
-            transform: scale(1.1);
-            box-shadow: 0 0 20px rgba(0, 123, 255, 0.8);
-        }
-        100% {
-            transform: scale(1);
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-        }
-    }
-    
-    /* Optional hover effect */
-    .animated-start:hover {
-        transform: scale(1.2);
-        box-shadow: 0 0 30px rgba(0, 123, 255, 1);
-    }
-
-    /* Note area css */
-    .alert-slide {
-        position: relative;
-        animation: slide-in 1s ease-out forwards, pulse-effect 2s infinite, fade-in 1s ease-in forwards;
-        opacity: 0;
-        border-left: 5px solid #007bff; /* Add a blue border to make it stand out */
-        background-color: #e9f7fe; /* Softer background color */
-    }
-
-    /* Slide in from the top */
-    @keyframes slide-in {
-        from {
-            transform: translateY(-100%);
-        }
-        to {
-            transform: translateY(0);
-        }
-    }
-
-    /* Fading in animation */
-    @keyframes fade-in {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
-    }
-
-    /* Pulse effect to draw attention */
-    /* @keyframes pulse-effect {
-        0% {
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.6);
-        }
-        50% {
-            box-shadow: 0 0 20px rgba(0, 123, 255, 0.9);
-        }
-        100% {
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.6);
-        }
-    } */
-
-    /* Text emphasis styles */
-    .alert-slide strong {
-        font-size: 1.2rem;
-        color: #007bff;
-    }
-    </style>
-<style>
-
-/* Reusable roller for links and buttons */
-
-.btn-roller, .link-roller {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.loading {
-  pointer-events: none;
-  opacity: 0.8;
-}
-.loading::after {
-  content: "";
-  position: absolute;
-  right: 12px;
-  width: 32px;       /* bigger spinner */
-  height: 32px;      /* bigger spinner */
-  border: 4px solid currentColor; /* thicker line */
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: roller-spin 0.7s linear infinite;
-}
-
-@keyframes roller-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-</style>    
-    <!--Products-->
-    <div class="d-flex mb-3 container">
-        <a class="btn btn-primary d-flex align-items-center" href="{% url 'teacher:student-logout' %}">
-            <i class="fas fa-sign-out-alt fa-lg text-light mr-2"></i>
-            <span class="text-light">Logout</span>
-        </a>
+<!-- Welcome -->
+<div class="text-center mt-4 mb-4">
+    <div class="alert alert-info mx-auto" style="max-width: 600px;">
+        <strong>Welcome, {{ request.user.profile.first_name|title }}!</strong>
+        <p class="mb-1">You can begin with any exam.</p>
+        <p class="mb-0 text-muted">Ensure you answer all questions before submitting.</p>
     </div>
-    
-    <div class="text-center mt-5 mb-4">
-        <div style="width: 50%; text-align: center;margin: 0 auto;" class=" alert-info alert-slide" role="alert">
-            <span class="ml-2">Welcome, {{ request.user.profile.first_name|title }}!</span> <br>
-            <strong>Note:</strong>
-            <p>You can begin with any exam.</p>  
-            <p>Ensure you answer all questions before submitting.</p>
-            <p class="mt-2 text-muted">Good luck!</p>
-        </div>
+</div>
 
-    </div>
-    
+<!-- ================= EXAMS ================= -->
+<div class="container">
+    <div class="row justify-content-center">
 
-<script>
-// Reusable Roller for both buttons and links
-function startRoller(el) {
-  if (!el.classList.contains('btn-roller') && !el.classList.contains('link-roller')) return;
-  el.classList.add('loading');
-  el.style.pointerEvents = 'none';
-}
-
-function stopRoller(el) {
-  el.classList.remove('loading');
-  el.style.pointerEvents = 'auto';
-}
-
-// Simulate or delay navigation (for links)
-function simulateRoller(el, delay = 400) {
-  startRoller(el);
-
-  // For <a> tags with href, delay navigation slightly
-  if (el.tagName === 'A' && el.href) {
-    const url = el.href;
-    setTimeout(() => {
-      window.location.href = url;
-    }, delay);
-  }
-}
-
-// Remove all loading rollers when user returns via back/forward navigation
-window.addEventListener('pageshow', function () {
-  setTimeout(() => {
-    document.querySelectorAll('.loading').forEach(el => {
-      el.classList.remove('loading');
-      el.style.pointerEvents = 'auto';
-    });
-  }, 100);
-});
-
-</script>
-
-<!-- <button class="btn btn-primary btn-roller" onclick="simulateRoller(this)">
-  Submit
-</button>
-
-<button class="btn btn-success btn-roller" onclick="startRoller(this)">
-  Save
-</button> -->
-
-
-{% if course_pay %}
-
-{% else %}
-
-<!-- schools exams sections  -->
-<div style="display: flex; flex-wrap: wrap; justify-content: center; padding: 0 10px 0px 10px;">
-    {% for item in courses %}
-
-
-   
-        {% for subj in subjects %}
-        
-            <!-- Check if the item (course) is associated with the subject -->
-            {% if item|lower == subj|lower %}
-                {% if sub_grade|lower == student_class|lower and item.schools.school_name|lower == school_name|lower %}
-                
-                <a onclick="simulateRoller(this)" 
-                    href="{% url 'student:start-exam' item.id %}" 
-                    class="link-roller text-decoration-none text-dark d-block mb-4">
-                    <div class="d-flex border border-light rounded shadow-sm overflow-hidden">
-                        <div class="bg-primary text-white d-flex align-items-center justify-content-center font-weight-bold" style="width: 100px; font-size: 24px;">
-                        Start
-                        </div>
-                        <div class="flex-grow-1 p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="text-primary font-weight-bold">
-                            {{ item.course_name }} {{ item.session }} {{ item.term }} {{ item.exam_type }}
+        {% if courses %}
+            {% for course in courses %}
+            <div class="col-md-6 col-lg-5 mb-3">
+                <a href="{% url 'student:start-exam' course.id %}" class="text-decoration-none text-dark">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-primary font-weight-bold mb-1">
+                                    {{ course.course_name.title }}
+                                </h6>
+                                <small class="text-muted">
+                                    {{ course.session }} – {{ course.term }} – {{ course.exam_type }}
+                                </small>
                             </div>
-                            {% for result in user_results %}
-                            {% if result.exam|lower == item|lower %}
-                                <span class="badge badge-danger">Exam Taken</span>
-                            {% endif %}
-                            {% endfor %}
-                        </div>
-                        </div>
-                    </div>
-                </a>                
 
-                {% else %}
-                
-                <div class="card shadow-sm border-light rounded mb-4 text-center">
-                    <div class="card-body">
-                        <h5 class="card-title text-primary font-weight-bold mb-2">
-                            {{ item }}
-                        </h5>
-                        <p class="card-text text-muted mb-0">
-                            <span class="badge badge-warning">Exam not started</span>
-                        </p>
+                            <div>
+                                {% if course.id in taken_exam_ids %}
+                                    <span class="badge badge-danger">Exam Taken</span>
+                                {% else %}
+                                    <span class="badge badge-success">Start</span>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
-                </div>
-                
-               
-                {% endif %}
-              
-            
-            {% else %}
-         
-    
-            {% endif %}
-           
-            {% empty %}
-            {% if forloop.first %}
-            <div style="width: 100%; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden;">
-                <div style="padding: 20px; text-align: center;">
-                    <small>No exam assign to you. Ask the instructor for assistance</small>
+                </a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center mt-4">
+                <div class="alert alert-warning">
+                    No exams assigned to you yet. Please contact your instructor.
                 </div>
             </div>
-            {% endif  %}
-        {% endfor %}
-        
-       
-    {% endfor %}
+        {% endif %}
+
+    </div>
 </div>
 
-
-<div class="container mt-4">
-    <h5 class="text-primary mb-3">Enrolled Subjects</h5>
-    <ul class="list-group">
-        {% for subject in subjects %}
-            {% if subject|lower %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ subject }} 
-                    <span class="badge badge-primary badge-pill">Enrolled</span>
-                </li>
-            {% else %}
-                <li class="list-group-item">No subjects enrolled.</li>
-            {% endif %}
-        {% endfor %}
-    </ul>
-</div>
-
-<!-- end schools exams sections  -->
-
-{% endif %}
-
-   
-{% endblock %} 
- 
-
-
+{% endblock %}

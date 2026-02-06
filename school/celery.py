@@ -3,6 +3,16 @@ from __future__ import absolute_import, unicode_literals
 import os
 from celery import Celery
 
+# from celery.schedules import crontab
+
+# CELERY_BEAT_SCHEDULE = {
+#     'cleanup_old_exam_sessions': {
+#         'task': 'quiz.tasks.cleanup_old_exam_sessions',  # adjust path
+#         'schedule': crontab(minute='*/1'),  # every 30 minutes
+#     },
+# }
+
+
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=".env", override=True)
 

@@ -262,13 +262,7 @@ div.quiz p {
                     <div class="col-12 col-md-4" style="padding: 10px;">
                 <p style="color: red;text-align: center;"><span id="tabCount">0</span> / {{ course.num_attemps }} attempts to leave the exam page detected.</p>
 
-                        <!-- <h6 style="color: #dc3545; font-weight: bold; font-size: 16px;" id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</h6>
-                        <h5 id="attempts" style="color:red; font-size:24px;">Allow attempts: 0</h5> -->
-
-                        <div id="timer" style="font-size: 24px; font-weight: bold; color: #333; text-align: center; margin: 10px 0;">00:00</div>
-                        <!-- <div class="progress mt-3" style="height: 20px; border-radius: 10px;">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: 0%; border-radius: 10px;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0% Complete</div>
-                        </div> -->
+                  <div id="timer" style="font-size: 24px; font-weight: bold; color: #333; text-align: center; margin: 10px 0;">00:00</div> 
                     </div>
                     <!-- Exam Information -->
                     <div class="examinfo col-12 col-md-4" style="padding: 10px;">
@@ -289,7 +283,7 @@ div.quiz p {
           </tr>
       </thead>
      
-      <tbody >
+      <tbody onclick="openFullscreen()">
     
         {% for q in  page_obj %}
         <tr>
@@ -389,12 +383,6 @@ div.quiz p {
 </form> 
 
 <!-- full screen mode settings -->
- 
-<div style="display: none;" class="exam-container">
-  <h1>Exam Mode</h1>
-  <p>Click below to enter fullscreen exam mode.</p>
-  <button id="startExamBtn" onclick="startExam()">Start Exam</button>
-</div>
 
 <!-- Add this inside your HTML (already have fullscreenPopup div, we’ll update it) -->
 <div id="fullscreenPopup" style="
@@ -432,75 +420,6 @@ div.quiz p {
   </button>
 </div>
 
-<!-- 
-<script>
-  const elem = document.documentElement;
-
-  function openFullscreen() {
-    if (elem.requestFullscreen) {
-      elem.requestFullscreen();
-    } else if (elem.webkitRequestFullscreen) { // Safari
-      elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) { // IE11
-      elem.msRequestFullscreen();
-    }
-    localStorage.setItem("examFullscreen", "true");
-  }
-
-  function startExam() {
-    openFullscreen();
-    const btn = document.getElementById("startExamBtn");
-    if (btn) btn.style.display = "none";
-  }
-
-  function returnToFullscreen() {
-    openFullscreen();
-    document.getElementById("fullscreenPopup").style.display = "none";
-  }
-
-  // Detect exiting fullscreen
-  document.addEventListener("fullscreenchange", () => {
-    if (!document.fullscreenElement) {
-      localStorage.setItem("examFullscreen", "false");
-      document.getElementById("fullscreenPopup").style.display = "flex";
-    }
-  });
-
-  // Auto re-enter on reload if last session was fullscreen
-  window.addEventListener("load", () => {
-    const wasFull = localStorage.getItem("examFullscreen") === "true";
-    if (wasFull) {
-      setTimeout(() => openFullscreen(), 500);
-    }
-
-    // Attach listener to radio buttons
-    const radios = document.querySelectorAll(".radio-button");
-    radios.forEach(radio => {
-      radio.addEventListener("click", () => {
-        startExam(); // Trigger fullscreen + hide button
-      });
-    });
-  });
-
-  // Optional: detect tab switch or window blur
-  window.addEventListener("blur", () => {
-    document.getElementById("fullscreenPopup").style.display = "flex";
-  });
-
-  // Block F11, Esc, Ctrl+R, F5
-  document.addEventListener("keydown", (e) => {
-    if (
-      e.key === "F11" ||
-      e.key === "Escape" ||
-      (e.ctrlKey && e.key === "r") ||
-      e.key === "F5"
-    ) {
-      e.preventDefault();
-      alert("🚫 Fullscreen mode is required during the exam!");
-      return false;
-    }
-  });
-</script> -->
 
 <!-- Button with inline CSS -->
 
@@ -514,7 +433,7 @@ div.quiz p {
         Submit
     </button>
  <div id="paginationWrapper" style="text-align: center; margin-top: 20px;">
-    <div id="paginationBoxes"></div>
+    <div id="paginationBoxes" onclick="openFullscreen()"></div>fff
 </div>
 
     </div>
@@ -536,7 +455,7 @@ var table = $('#example').DataTable({
     ordering: false,
     dom: 'rtp',
     pagingType: "simple", 
-    // pagingType: isMobileView() ? "simple" : "full_numbers",
+    
     columnDefs: [
         { orderable: false, targets: [1, 2, 3] }
     ]
@@ -679,8 +598,6 @@ table.on('draw', function () {
 
 
 <!-- working codes on timer-->
-
-
 <script>
 $(document).ready(function() {
     var timerElement = document.getElementById('timer');
@@ -789,36 +706,46 @@ document.getElementById('submit').addEventListener('click', function () {
     manualSubmitQuiz();
 });
 
-// ---------------- Fullscreen logic ----------------
-const elem = document.documentElement;
-let fullscreenExitCount = 0;
-let fullscreencounter = Number({{ course.fullscreencounter|default:"2" }}); // dynamic max strikes
-let flashInterval = null;
-let strikeRegistered = false; // prevent multiple increments per event
 
-// Update the popup counter and flash
+
+// ---------------- Fullscreen logic ----------------
+
+const elem = document.documentElement;
+
+let fullscreenExitCount = 0;
+let fullscreencounter = Number({{ course.fullscreencounter|default:"3" }});
+let flashInterval = null;
+
+// NEW guards
+let skipFirstFullscreenExit = true;
+let isReturningToFullscreen = false;
+
+// ---------------- Counter UI ----------------
 function updateFullscreenCounter() {
     const counterEl = document.getElementById("fullscreenCounterText");
     if (!counterEl) return;
 
     counterEl.innerText = `Fullscreen Strikes: ${fullscreenExitCount} / ${fullscreencounter}`;
 
-    // Only flash when fullscreenExitCount === fullscreencounter
     if (fullscreenExitCount === fullscreencounter) {
         if (!flashInterval) {
             flashInterval = setInterval(() => {
-                counterEl.style.color = counterEl.style.color === "yellow" ? "red" : "yellow";
+                counterEl.style.color =
+                    counterEl.style.color === "yellow" ? "red" : "yellow";
             }, 500);
         }
     } else {
         clearInterval(flashInterval);
         flashInterval = null;
-        counterEl.style.color = "yellow"; // normal strikes color
+        counterEl.style.color = "yellow";
     }
 }
 
-// Open fullscreen
+
+// ---------------- Fullscreen control ----------------
 function openFullscreen() {
+    isReturningToFullscreen = true;
+
     if (elem.requestFullscreen) {
         elem.requestFullscreen();
     } else if (elem.webkitRequestFullscreen) {
@@ -826,124 +753,108 @@ function openFullscreen() {
     } else if (elem.msRequestFullscreen) {
         elem.msRequestFullscreen();
     }
+
     localStorage.setItem("examFullscreen", "true");
+
+    // Ignore fullscreen re-entry event
+    setTimeout(() => {
+        isReturningToFullscreen = false;
+    }, 500);
 }
 
-// Start exam
+// ---------------- Exam start ----------------
 function startExam() {
     openFullscreen();
     const btn = document.getElementById("startExamBtn");
     if (btn) btn.style.display = "none";
 }
+// ================= SUBMIT =================
+function submitExam(reason = "manual") {
+    if (examSubmitted) return;
+    examSubmitted = true;
 
-// Handle a strike (increment counter once)
+    // send real values
+    storedAnswers['fullscreenExitCount'] = fullscreenExitCount;
+    storedAnswers['tabSwitchCount'] = tabSwitchCount;
+    storedAnswers['submissionReason'] = reason;
+
+    document.getElementById("quizForm").submit();
+
+    // reset AFTER submit
+    setTimeout(resetExamCounters, 500);
+}
+
+// ---------------- Strike logic ----------------
+let examSubmittedDueToFullscreen = false;
+
 function registerFullscreenStrike() {
     if (fullscreenExitCount >= fullscreencounter) return;
-    if (strikeRegistered) return;
 
     fullscreenExitCount++;
-    strikeRegistered = true;
     updateFullscreenCounter();
 
-    // Trigger submission only when fullscreenExitCount reaches fullscreencounter
     if (fullscreenExitCount === fullscreencounter) {
-        alert(`❌ You exited fullscreen ${fullscreenExitCount} times. Your exam will be submitted.`);
-        manualSubmitQuiz();
-    }
+    // Prevent further tab switch counting
+    examSubmittedDueToFullscreen = true;
+
+    // Reset tabswitch count
+    tabSwitchCount = 0;
+    localStorage.setItem('tabSwitchCount', '0');
+
+    alert(`❌ You exited fullscreen ${fullscreenExitCount} times. Your exam will be submitted.`);
+    manualSubmitQuiz();
 }
 
-// Return to fullscreen (also counts as a strike)
+}
+
+// ---------------- Return button ----------------
 function returnToFullscreen() {
-    registerFullscreenStrike();
-    openFullscreen();
+    openFullscreen(); // ❌ no strike here
     document.getElementById("fullscreenPopup").style.display = "none";
-    strikeRegistered = false;
 }
 
-// Detect exiting fullscreen
+// ---------------- Detect fullscreen exit ONLY ----------------
 document.addEventListener("fullscreenchange", () => {
+    // Ignore re-enter fullscreen
+    if (isReturningToFullscreen) return;
+
+    // Act only on EXIT
     if (!document.fullscreenElement) {
+
+        // Ignore the first exit completely
+        if (skipFirstFullscreenExit) {
+            skipFirstFullscreenExit = false;
+            document.getElementById("fullscreenPopup").style.display = "flex";
+            return;
+        }
+
         registerFullscreenStrike();
+
         if (fullscreenExitCount < fullscreencounter) {
             document.getElementById("fullscreenPopup").style.display = "flex";
-            strikeRegistered = false;
         }
     }
 });
 
-// Restore fullscreen after reload
+// ---------------- Restore fullscreen ----------------
 window.addEventListener("load", () => {
     const wasFull = localStorage.getItem("examFullscreen") === "true";
-    if (wasFull) setTimeout(() => openFullscreen(), 500);
+    if (wasFull) setTimeout(openFullscreen, 500);
 
-    const radios = document.querySelectorAll(".radio-button");
-    radios.forEach(radio => radio.addEventListener("click", () => startExam()));
+    document.querySelectorAll(".radio-button")
+        .forEach(r => r.addEventListener("click", startExam));
 
-    updateFullscreenCounter(); // show counter immediately on load
+    updateFullscreenCounter();
 });
 
-// Detect tab switch or blur
-window.addEventListener("blur", () => {
-    registerFullscreenStrike();
-    if (fullscreenExitCount < fullscreencounter) {
-        document.getElementById("fullscreenPopup").style.display = "flex";
-        strikeRegistered = false;
-    }
-});
-
-// Block F11, Esc, Ctrl+R, F5
-document.addEventListener("keydown", (e) => {
-    if (
-        e.key === "F11" ||
-        e.key === "Escape" ||
-        (e.ctrlKey && e.key === "r") ||
-        e.key === "F5"
-    ) {
-        e.preventDefault();
-        alert("🚫 Fullscreen mode is required during the exam!");
-        return false;
-    }
-});
-
-
-// document.getElementById('submit').addEventListener('click', function () {
-//     const confirmed = confirm("Are you sure you want to submit the quiz?");
-//     if (!confirmed) return;
-
-//     if (window.timerInterval) {
-//         clearInterval(window.timerInterval);
+// ---------------- Blur (NO strike) ----------------
+// window.addEventListener("blur", () => {
+//     if (document.fullscreenElement && fullscreenExitCount < fullscreencounter) {
+//         document.getElementById("fullscreenPopup").style.display = "flex";
 //     }
-
-//     const finalTabSwitchCount = parseInt(localStorage.getItem('tabSwitchCount')) || 0;
-//     const courseKey = 'remainingTime_{{ course.id }}';
-
-//     const storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
-//     storedAnswers['tabSwitchCount'] = finalTabSwitchCount;
-
-//     const jsonData = JSON.stringify(storedAnswers);
-
-//     $.ajax({
-//         type: "POST",
-//         url: "/student/calculate_marks",
-//         contentType: "application/json",
-//         data: jsonData,
-//         success: function (response) {
-//             alert("Quiz submitted successfully!");
-//             localStorage.removeItem('quizAnswers');
-//             localStorage.removeItem('lastVisitedPage');
-//             localStorage.removeItem('tabSwitchCount');
-//             localStorage.removeItem(courseKey);
-//             localStorage.removeItem('quizStartedForCourse_{{ course.id }}');
-
-//             setTimeout(function () {
-//                 window.location.reload();
-//             }, 1000);
-//         },
-//         error: function (xhr, status, error) {
-//             console.error("Submission error:", error);
-//         }
-//     });
 // });
+
+// ---------------- Block keys ----------------
 
 
 // quiz submit due to time expiration
@@ -1068,7 +979,7 @@ function inactivesubmitQuiz() {
 </script>
 
 
-<script>
+<!-- <script>
 document.addEventListener('DOMContentLoaded', function () {
     const shouldFullscreen = {{ course.full_screen|yesno:"true,false" }};
 
@@ -1085,11 +996,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 });
-</script>
+</script> -->
 
 
 <!-- codes to stop copy and paste on the platform -->
-<script type="text/javascript">
+<!-- <script type="text/javascript">
 
 document.addEventListener('DOMContentLoaded', (event) => {
     // Disable text selection
@@ -1112,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
 });
   
-</script>
+</script> -->
 
 
 <!-- network detector -->

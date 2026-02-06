@@ -1,0 +1,90 @@
+{% extends 'sms/dashboard/studentbase.html' %}
+{% load static %}
+
+{% block title %}Start the Quiz{% endblock %}
+
+{% block content %}
+
+<!-- Logout -->
+<div class="d-flex mb-3 container">
+    <a class="btn btn-primary" href="{% url 'teacher:student-logout' %}">
+        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+    </a>
+</div>
+
+<!-- Welcome -->
+<div class="text-center mt-4 mb-4">
+    <div class="alert alert-info mx-auto" style="max-width: 600px;">
+        <strong>Welcome, {{ request.user.profile.first_name|title }}!</strong>
+        <p class="mb-1">You can begin with any exam.</p>
+        <p class="mb-0 text-muted">Ensure you answer all questions before submitting.</p>
+    </div>
+</div>
+
+<!-- ================= EXAMS ================= -->
+<div class="container">
+    <div class="row justify-content-center">
+
+        {% for course in courses %}
+        <div class="col-md-6 col-lg-5 mb-3">
+
+            <a href="{% url 'student:start-exam' course.id %}"
+               class="text-decoration-none text-dark">
+
+                <div class="card shadow-sm h-100">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <h6 class="text-primary font-weight-bold mb-1">
+                                {{ course.course_name.title }}
+                            </h6>
+                            <small class="text-muted">
+                                {{ course.session }} – {{ course.term }} – {{ course.exam_type }}
+                            </small>
+                        </div>
+
+                        <div>
+                            {% if course.id in taken_exam_ids %}
+                                <span class="badge badge-danger">Exam Taken</span>
+                            {% else %}
+                                <span class="badge badge-success">Start</span>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+            </a>
+
+        </div>
+        {% empty %}
+        <div class="col-12 text-center mt-4">
+            <div class="alert alert-warning">
+                No exams assigned to you yet. Please contact your instructor.
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+
+<!-- ================= SUBJECTS ================= -->
+<div class="container mt-5">
+    <h5 class="text-primary mb-3">Enrolled Subjects</h5>
+
+    {% if subjects %}
+        <ul class="list-group">
+            {% for subject in subjects %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ subject }}
+                <span class="badge badge-primary">Enrolled</span>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="alert alert-secondary">
+            No subjects enrolled.
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

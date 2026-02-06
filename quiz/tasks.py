@@ -2,17 +2,36 @@
 from celery import shared_task, current_task
 from openai import OpenAI
 from django.conf import settings
-from quiz.models import Course, GenerationJob, Question, Result
+from quiz.models import Course, GenerationJob, Question, Result, StudentExamSession
 from sms.models import Courses
 import re
 import math
 import time
-
+from django.core.cache import cache
 from django.db import transaction, IntegrityError
 from users.models import Profile
-
+from datetime import timedelta, timezone
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
+import django.utils.timezone as dj_timezone  # ✅ Use fully qualified name
+
+from celery import shared_task
+from datetime import datetime, timedelta
+from django.utils.timezone import make_aware
+from quiz.models import StudentExamSession
+
+# @shared_task
+# def cleanup_old_exam_sessions():
+#     cutoff = make_aware(datetime.utcnow() - timedelta(minutes=1))
+
+#     deleted_count, _ = StudentExamSession.objects.filter(
+#         created_at__lt=cutoff
+#     ).delete()
+
+#     return f"Deleted {deleted_count} old exam sessions"
+
+
   
 def parse_ai_output(output):
     """Parse AI text into list of question dicts (question, option1..4, answer)"""
@@ -343,3 +362,75 @@ Answer: <A|B|C|D>
         job.error = str(exc)
         job.save()
         raise
+
+
+#calculate marks celery task
+
+import json
+
+
+@shared_task(bind=True)
+def grade_exam_task(self, course_id, user_id, answers_dict):
+    """
+    Async grading task for a student's exam.
+    Caches results in Redis to prevent duplicate grading.
+    """
+    cache_key = f"graded:{course_id}:{user_id}"
+    
+    # 1️⃣ Check Redis if already graded
+    if cache.get(cache_key):
+        return f"Exam for user {user_id} already graded."
+
+    try:
+        course = Course.objects.select_related('schools', 'session', 'term', 'exam_type').get(id=course_id)
+        student = Profile.objects.select_related('user').get(user_id=user_id)
+    except Course.DoesNotExist:
+        return f"Course {course_id} not found."
+    except Profile.DoesNotExist:
+        return f"Student {user_id} profile not found."
+
+    # 2️⃣ Prevent duplicate results in DB
+    if Result.objects.filter(
+        student=student,
+        exam=course,
+        session=course.session,
+        term=course.term,
+        exam_type=course.exam_type,
+        result_class=student.student_class
+    ).exists():
+        cache.set(cache_key, True, timeout=0)  # mark as graded for 1 hour
+        return f"Result for student {user_id} already exists."
+
+    # 3️⃣ Calculate total marks
+    total_marks = 0
+    questions = course.question_set.all()  # assumes related_name='question_set'
+
+    for question in questions:
+        qid = str(question.id)
+        selected = answers_dict.get(qid)
+        if selected and selected == question.answer:
+            total_marks += question.marks or 0
+
+    # 4️⃣ Save result in a transaction
+    try:
+        with transaction.atomic():
+            Result.objects.create(
+                schools=course.schools,
+                marks=total_marks,
+                exam=course,
+                session=course.session,
+                term=course.term,
+                exam_type=course.exam_type,
+                student=student,
+                result_class=student.student_class
+            )
+        # 5️⃣ Cache that this student is graded
+        cache.set(cache_key, True, timeout=0)  # 1 hour
+        return f"Graded exam for student {user_id}, total marks: {total_marks}"
+
+    except IntegrityError:
+        cache.set(cache_key, True, timeout=0)
+        return f"Duplicate result detected for student {user_id}."
+    except Exception as e:
+        # Retry if something unexpected happens
+        raise self.retry(exc=e, countdown=5, max_retries=3)    
