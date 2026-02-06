@@ -5,14 +5,27 @@ from datetime import timedelta
 from quiz.models import StudentExamSession
 
 class Command(BaseCommand):
-    help = 'Delete StudentExamSession records older than 1 minute'
+    help = 'Delete StudentExamSession records older than 2 hours'
 
     def handle(self, *args, **kwargs):
-        one_minute_ago = timezone.now() - timedelta(minutes=1)
+        two_hours_ago = timezone.now() - timedelta(hours=2)
         deleted_count, _ = StudentExamSession.objects.filter(
-            created__lt=one_minute_ago
+            created__lt=two_hours_ago
         ).delete()
         
         self.stdout.write(
             self.style.SUCCESS(f'Deleted {deleted_count} old sessions')
         )
+        
+# class Command(BaseCommand):
+#     help = 'Delete StudentExamSession records older than 1 minute'
+
+#     def handle(self, *args, **kwargs):
+#         one_minute_ago = timezone.now() - timedelta(minutes=1)
+#         deleted_count, _ = StudentExamSession.objects.filter(
+#             created__lt=one_minute_ago
+#         ).delete()
+        
+#         self.stdout.write(
+#             self.style.SUCCESS(f'Deleted {deleted_count} old sessions')
+#         )
