@@ -1,458 +1,795 @@
 <!DOCTYPE html>
-
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <meta name="description" content="{% block description %} Esteem Learning Centre School provides high-quality education integrated with Islamic perspectives. Esteem Q offers a unique program where students memorize the Holy Qur'an within a year. Our dedicated instructors and specialized curriculum ensure that students achieve this remarkable feat while fostering spiritual growth and a deep connection to the Holy Scriptures. Our research-based curriculum fosters capable students who can excel globally in any academic environment. We cultivate a positive learning atmosphere, ensuring happiness, stability, safety, and security, while nurturing students' social and emotional well-being. Our approach promotes the development of self-discipline, responsibility, and respect for diverse cultural values. We offer students opportunities for holistic growth, encompassing intellectual, cultural, physical, social, and creative dimensions. {% endblock %}">
-        <meta name="author" content="Esteem Learning Centre, Abuja">
-        <link rel="icon" type="image/x-icon" href="/static/sms/images/esteemlogo.jpg">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="{% block description %} Esteem Learning Centre School provides high-quality education integrated with Islamic perspectives. Esteem Q offers a unique program where students memorize the Holy Qur'an within a year. Our dedicated instructors and specialized curriculum ensure that students achieve this remarkable feat while fostering spiritual growth and a deep connection to the Holy Scriptures. Our research-based curriculum fosters capable students who can excel globally in any academic environment. We cultivate a positive learning atmosphere, ensuring happiness, stability, safety, and security, while nurturing students' social and emotional well-being. Our approach promotes the development of self-discipline, responsibility, and respect for diverse cultural values. We offer students opportunities for holistic growth, encompassing intellectual, cultural, physical, social, and creative dimensions. {% endblock %}">
+    <meta name="author" content="Esteem Learning Centre, Abuja">
+    <link rel="icon" type="image/x-icon" href="/static/sms/images/esteemlogo.jpg">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
     
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-        <!-- Font Awesome -->
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Prism CSS -->
+    <link rel="stylesheet" type="text/css" href="/static/sms/prism.css">
     
-        <!-- Google Fonts -->
-        <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet">
+    <!-- Prism JS -->
+    <script src="/static/sms/prism.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tinydrive/mathjax@5/index.min.js"></script>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     
-        <!-- Prism CSS -->
-        <link rel="stylesheet" type="text/css" href="/static/sms/prism.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     
-        <!-- Prism JS -->
-        <script src="/static/sms/prism.js"></script>
-
-        <script src="https://cdn.jsdelivr.net/npm/@tinydrive/mathjax@5/index.min.js"></script>
-
+    <title>{% block title %} dashboard {% endblock %}</title>
     
-        <!-- MDB -->
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.2.0/mdb.min.css" rel="stylesheet"/>
-    
-        <!-- Bootstrap CSS -->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    
-        <!-- Custom fonts for this template-->
-        <link href="/static/sms/dashboard/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    
-        <!-- Custom styles for this template-->
-        <link href="/static/sms/dashboard/css/sb-admin-2.min.css" rel="stylesheet">
-    
-        <!-- DataTables CSS -->
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
-    
-        <title>{% block title %} dashboard {% endblock %}</title>
-    
-        <!-- jQuery -->
-        <script src="https://code.jquery.com/jquery-3.6.4.js" integrity="sha256-a9jBBRygX1Bh5lt8GZjXDzyOB+bWve9EiO7tROUtj/E=" crossorigin="anonymous"></script>
-    </head>
-    
-<style>
-     .navbar{
-    min-height: 50px;
-    margin-bottom: 20px;
-  }
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.4.js" integrity="sha256-a9jBBRygX1Bh5lt8GZjXDzyOB+bWve9EiO7tROUtj/E=" crossorigin="anonymous"></script>
 
- .navbar-fixed-top {
-    position: fixed;
-    top:0;
-    right: 0;
-    left: 0;
-    z-index: 1030;
- }
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1e40af;
+            --primary-light: #3b82f6;
+            --secondary-color: #0f172a;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --sidebar-width: 280px;
+            --topbar-height: 70px;
+            --transition-speed: 0.3s;
+        }
 
- body {
-   padding-top: 70px;
-   color: black;
-  
-   
- }
- .nav-item{
-    font-size: 30px;
- }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
- /* flip cards  */
- 
-/* our partners  */
-.flip-card {
-  perspective: 1000px;
-  width: 200px; /* Adjust the width as needed */
-  height: 200px; /* Adjust the height as needed */
-}
+        body {
+            font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 15px;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
 
-.flip-card-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  text-align: center;
-  transition: transform 0.6s;
-  transform-style: preserve-3d;
-}
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+            box-shadow: var(--shadow-xl);
+            z-index: 1000;
+            transition: transform var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
 
-.flip-card:hover .flip-card-inner {
-  transform: rotateY(180deg);
-}
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
 
-.flip-card-front, .flip-card-back {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-}
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
 
-.flip-card-back {
-  transform: rotateY(180deg);
-}
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
 
-</style>
-<body id="page-top" class="sidebar-toggled ">
-    
-    <!-- Page Wrapper -->
-    <div id="wrapper" class="bg-white">
-        <!-- Sidebar -->
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
 
-       
-        <ul style="background-color: rgb(37, 101, 229); margin-bottom: 0;" class="navbar-nav sidebar sidebar-dark accordion toggled" id="accordionSidebar">
-            <!-- Nav Item - Pages Collapse Menu -->
-<br>
-         
-             <!-- Sidebar Toggler (Sidebar) -->
-             <div class="text-center d-none d-md-inline">
-                <button class="rounded-circle border-0" id="sidebarToggle"></button>
-            </div>
+        .sidebar.toggled {
+            transform: translateX(-100%);
+        }
 
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.1);
+        }
 
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: white;
+            text-decoration: none;
+            transition: transform var(--transition-speed);
+        }
 
-            <!-- Divider -->
-            <hr class="sidebar-divider">
+        .sidebar-brand:hover {
+            transform: translateX(5px);
+        }
 
-            {% if request.user.is_authenticated and request.user.is_teacher %}
-            {% if teacher_school|lower == user_school|lower %}
- 
-            <a href="{% url 'teacher:manage_exam' %}">Manage Exams</a>
-            <a href="{% url 'teacher:create_exam' %}">Create New Exam</a>
-    <!-- Add other teacher-specific links here -->
-            {% endif %}
-            {% endif %}
+        .brand-icon {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
 
+        .brand-text {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-toggle-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+        }
+
+        .nav-section {
+            padding: 1.5rem 0;
+        }
+
+        .nav-section-title {
+            padding: 0 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-item {
+            margin: 0.25rem 0.75rem;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all var(--transition-speed);
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.875rem 1rem;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.925rem;
+            transition: all var(--transition-speed);
+            position: relative;
+            border-radius: 12px;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 0;
+            background: white;
+            border-radius: 0 4px 4px 0;
+            transition: height var(--transition-speed);
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .nav-link:hover::before {
+            height: 60%;
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-link.active::before {
+            height: 70%;
+        }
+
+        .nav-link i {
+            width: 24px;
+            font-size: 1.1rem;
+            margin-right: 0.875rem;
+            transition: transform var(--transition-speed);
+        }
+
+        .nav-link:hover i {
+            transform: scale(1.15);
+        }
+
+        .sidebar-divider {
+            margin: 1.5rem 1.5rem;
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Topbar Styles */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            right: 0;
+            height: var(--topbar-height);
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            z-index: 999;
+            transition: left var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+        }
+
+        .sidebar.toggled ~ .main-wrapper .topbar {
+            left: 0;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .mobile-toggle {
+            display: none;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-tertiary);
+            border: none;
+            border-radius: 10px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+
+        .mobile-toggle:hover {
+            background: var(--border-color);
+            transform: scale(1.05);
+        }
+
+        .search-bar {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all var(--transition-speed);
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            background: white;
+        }
+
+        .search-bar i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-dropdown {
+            position: relative;
+        }
+
+        .user-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+
+        .user-toggle:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--primary-color);
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            right: 0;
+            min-width: 220px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border-color);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all var(--transition-speed);
+        }
+
+        .user-dropdown.active .user-dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1.25rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all var(--transition-speed);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .dropdown-item:first-child {
+            border-radius: 12px 12px 0 0;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-secondary);
+            color: var(--primary-color);
+        }
+
+        .dropdown-item i {
+            width: 20px;
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        /* Main Content */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            transition: margin-left var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar.toggled ~ .main-wrapper {
+            margin-left: 0;
+        }
+
+        .content {
+            padding: calc(var(--topbar-height) + 2rem) 2rem 2rem;
+            min-height: 100vh;
+        }
+
+        .content-header {
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .page-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 2rem;
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-speed);
+            animation: fadeInUp 0.6s ease-out backwards;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            :root {
+                --sidebar-width: 0px;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-wrapper {
+                margin-left: 0;
+            }
+
+            .topbar {
+                left: 0;
+            }
+
+            .mobile-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .search-bar {
+                max-width: 200px;
+            }
+
+            .content {
+                padding: calc(var(--topbar-height) + 1rem) 1rem 1rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Stagger animations for nav items */
+        .nav-item {
+            animation: slideInRight 0.4s ease-out backwards;
+        }
+
+        .nav-item:nth-child(1) { animation-delay: 0.05s; }
+        .nav-item:nth-child(2) { animation-delay: 0.1s; }
+        .nav-item:nth-child(3) { animation-delay: 0.15s; }
+        .nav-item:nth-child(4) { animation-delay: 0.2s; }
+        .nav-item:nth-child(5) { animation-delay: 0.25s; }
+        .nav-item:nth-child(6) { animation-delay: 0.3s; }
+        .nav-item:nth-child(7) { animation-delay: 0.35s; }
+        .nav-item:nth-child(8) { animation-delay: 0.4s; }
+        .nav-item:nth-child(9) { animation-delay: 0.45s; }
+        .nav-item:nth-child(10) { animation-delay: 0.5s; }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="accordionSidebar">
+        <div class="sidebar-header">
+            <button class="sidebar-toggle-btn" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a href="#" class="sidebar-brand">
+                <div class="brand-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <span class="brand-text">Esteem</span>
+            </a>
+        </div>
+
+        <div class="nav-section">
             {% if request.user.is_authenticated and request.user.is_superuser and request.user.is_staff %}
-
-            <li class="nav-item" style="margin-bottom: -10px;">
+            <div class="nav-section-title">Administration</div>
+            
+            <div class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:onboarding_dashboard' %}">
-                    <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
+                    <i class="fas fa-chalkboard-teacher"></i>
                     <span>Onboarding</span>
                 </a>
-            </li>
+            </div>
 
-            <li class="nav-item" style="margin-bottom: -10px;">
+            <div class="nav-item">
                 <a class="nav-link" href="{% url 'portal:subscription_list' %}">
-                    <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
-                    <span>subscription</span>
+                    <i class="fas fa-credit-card"></i>
+                    <span>Subscription</span>
                 </a>
-            </li>
-
-
-            {% endif %} 
-
+            </div>
+            {% endif %}
 
             {% if request.user.is_authenticated and request.user.is_superuser %}
             {% if teacher_school|lower == user_school|lower %}
-            <li class="nav-item" style="margin-bottom: -10px;">
+            <div class="nav-section-title">Management</div>
+            
+            <div class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
-                    <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
+                    <i class="fas fa-home"></i>
                     <span>Home</span>
                 </a>
-            </li>
-            {% endif %}
-            {% endif %} 
-           
-            {% if request.user.is_authenticated and request.user.is_superuser %}
-            {% if teacher_school|lower == user_school|lower %}
-       
-             {% endif %}
-             {% endif %} 
+            </div>
 
-            {% if request.user.is_authenticated and request.user.is_superuser %}
-            {% if teacher_school|lower == user_school|lower %}
-            <li class="nav-item">
+            <div class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:create_course_view' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Add subject</span>
+                    <i class="fas fa-book"></i>
+                    <span>Add Subject</span>
                 </a>
-             </li>
-             <li class="nav-item">
+            </div>
+
+            <div class="nav-item">
                 <a class="nav-link" href="{% url 'portal:class_report_list' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>All report cards</span>
+                    <i class="fas fa-file-alt"></i>
+                    <span>All Report Cards</span>
                 </a>
-             </li>
-             <li class="nav-item">
+            </div>
+
+            <div class="nav-item">
                 <a class="nav-link" href="{% url 'portal:report_card_list' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Student report cards</span>
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Student Report Cards</span>
                 </a>
-             </li>
-            
-             {% endif %}
-             {% endif %} 
+            </div>
 
-             {% if request.user.is_authenticated and request.user.is_superuser %}
-             {% if teacher_school|lower == user_school|lower %}
-            <li class="nav-item">
+            <div class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:student_lists' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>manage students</span>
+                    <i class="fas fa-user-graduate"></i>
+                    <span>Manage Students</span>
                 </a>
-             </li>
-             {% endif %}
-             {% endif %} 
+            </div>
 
-             {% if request.user.is_authenticated and request.user.is_superuser %}
-             {% if teacher_school|lower == user_school|lower %}
-             <li class="nav-item">
+            <div class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:manage_exam' %}">
-                    <i class="fas fa-fw fa-book"></i>
+                    <i class="fas fa-tasks"></i>
                     <span>Manage Exams</span>
                 </a>
-             </li>
-            {% endif %}
-            {% endif %} 
+            </div>
 
-            {% if request.user.is_authenticated and request.user.is_superuser %}
-            {% if teacher_school|lower == user_school|lower %}
-             <li class="nav-item">
+            <div class="nav-item">
                 <a class="nav-link" href="{% url 'teacher:teacher_list' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Manage Teacher </span>
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <span>Manage Teachers</span>
                 </a>
-             </li>
-              <li class="nav-item">
+            </div>
+
+            <div class="nav-item">
                 <a class="nav-link" href="{% url 'quiz:edit_school' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Edit Profile </span>
+                    <i class="fas fa-cog"></i>
+                    <span>Edit Profile</span>
                 </a>
-             </li>
-             
-             <li class="nav-item">
-                <!-- <a class="nav-link" href="{% url 'teacher:teacher_results' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Manage Results </span>
-                </a> -->
-                 <a class="nav-link" href="{% url 'teacher:examiner_results_list' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Manage Results </span>
-                </a>
-                
-             </li>
+            </div>
 
-             {% endif %}
-             {% endif %}   
-             
-        {% if request.user.is_authenticated and request.user.is_superuser %}
-        {% if teacher_school|lower == user_school|lower %}
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:exam_list' %}">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Result statistics</span>
-                </a>
-            </li>
-            {% endif %} 
-
-            {% else %}
-
-            <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
-                    <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
-                    <span>HOME</span>
-                </a>
-            </li>
-            <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'portal:principal_dashboard' %}">
-                    <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
-                    <span>principal comments</span>
-                </a>
-            </li>
-          
-            <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'portal:enter_select' %}">
-                    <i class="fas fa-fw fa-eye"></i> <!-- Icon for view questions -->
-                    <span>Input scores</span>
-                </a>
-            </li> 
-           <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'portal:form_teacher_dashboard' %}">
-                    <i class="fas fa-fw fa-eye"></i> <!-- Icon for view questions -->
-                    <span>Class Teacher</span>
-                </a>
-            </li> 
-            
-            <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'teacher:teacher_subjects' %}">
-                    <i class="fas fa-fw fa-eye"></i> <!-- Icon for view questions -->
-                    <span>Manage Questions</span>
-                </a>
-            </li>
-
-            <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'teacher:teacher_results' %}">
-                    <i class="fas fa-fw fa-poll"></i> <!-- Icon for teacher results -->
+            <div class="nav-item">
+                <a class="nav-link" href="{% url 'teacher:examiner_results_list' %}">
+                    <i class="fas fa-chart-line"></i>
                     <span>Manage Results</span>
                 </a>
-            </li>
+            </div>
 
+            <div class="nav-item">
+                <a class="nav-link" href="{% url 'teacher:exam_list' %}">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Result Statistics</span>
+                </a>
+            </div>
+            {% endif %}
+            {% else %}
+            
+            <div class="nav-section-title">Teacher Portal</div>
+            
+            <div class="nav-item">
+                <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a class="nav-link" href="{% url 'portal:principal_dashboard' %}">
+                    <i class="fas fa-user-tie"></i>
+                    <span>Principal Comments</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a class="nav-link" href="{% url 'portal:enter_select' %}">
+                    <i class="fas fa-keyboard"></i>
+                    <span>Input Scores</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a class="nav-link" href="{% url 'portal:form_teacher_dashboard' %}">
+                    <i class="fas fa-chalkboard"></i>
+                    <span>Class Teacher</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a class="nav-link" href="{% url 'teacher:teacher_subjects' %}">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Manage Questions</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a class="nav-link" href="{% url 'teacher:teacher_results' %}">
+                    <i class="fas fa-poll"></i>
+                    <span>Manage Results</span>
+                </a>
+            </div>
 
             {% if request.user.is_authenticated %}
             {% if teacher_school|lower == user_school|lower %}
-            <li class="nav-item" style="margin-bottom: -10px;">
+            <div class="nav-item">
                 <a class="nav-link" href="{% url 'finance:finance_record_view' %}">
-                    <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
+                    <i class="fas fa-dollar-sign"></i>
                     <span>Finance</span>
                 </a>
-            </li>
-            {% endif %}
-            {% endif %}
-                   
+            </div>
 
-            {% if request.user.is_authenticated  %}
-            {% if teacher_school|lower == user_school|lower %}
-            <li class="nav-item" style="margin-bottom: -10px;">
+            <div class="nav-item">
                 <a class="nav-link" href="{% url 'academics:list_conducts' %}">
-                    <i class="fas fa-fw fa-chalkboard-teacher"></i> <!-- Icon for teacher dashboard -->
+                    <i class="fas fa-clipboard-check"></i>
                     <span>Manage Conduct</span>
                 </a>
-            </li>
-            {% endif %}
-            {% endif %}
-         
-           <!-- <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'academics:add_conduct' %}">
-                    <i class="fas fa-fw fa-eye"></i> 
-                    <span>Add Conduct</span>
-                </a>
-            </li> -->
-            <!-- <li class="nav-item" style="margin-bottom: -10px;">
-                <a class="nav-link" href="{% url 'academics:list_conducts' %}">
-                    <i class="fas fa-fw fa-eye"></i> 
-                    <span>Conduct List</span>
-                </a>
-            </li> -->
-
-        
-            {% endif %}
-        
-           
-        <br> <br> <br> <br> <br>
-            <!-- Sidebar Message -->
-
-        </ul>
-        
-       
-        
-
-        <!-- End of Sidebar -->
-
-        <!-- Content Wrapper -->
-        <div id="content-wrapper" class="d-flex flex-column">
-
-            <!-- Main Content -->
-            <div id="content">
-
-                <!-- Topbar -->
-                <nav style="position: fixed; width: 100%;"  class="navbar navbar-expand navbar-light bg-white topbar navbar-fixed-top mb-4 static-fixed shadow">
-
-                    <!-- Sidebar Toggle (Topbar) -->
-                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-                        <i class="fa fa-bars"></i>
-                    </button>
-
-                    <!-- Topbar Search -->
-                    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
-                        <div class="input-group">
-                            
-                            <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Search" aria-describedby="basic-addon2">
-                            <div class="input-group-append">
-                                <button class="btn btn-primary" type="button">
-                                    <i class="fas fa-search fa-sm"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                    
-
-                    <!-- Topbar Navbar -->
-                    <ul class="navbar-nav ml-auto" >
-
-                        <!-- Nav Item - Search Dropdown (Visible Only XS) -->
-                        <li class="nav-item dropdown no-arrow d-sm-none" >
-                            <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-search fa-fw"></i>
-                            </a>
-                            <!-- Dropdown - Messages -->
-                            <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in" aria-labelledby="searchDropdown">
-                                <form class="form-inline mr-auto w-100 navbar-search">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Search" aria-describedby="basic-addon2">
-                                        <div class="input-group-append">
-                                            <button class="btn btn-primary" type="button">
-                                                <i class="fas fa-search fa-sm"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </li>
-
-                        <!-- Nav Item - User Information -->
-                        <li class="nav-item dropdown no-arrow" >
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                
-                                <img class="img-profile rounded-circle" src="/static/sms/dashboard/img/undraw_profile.svg">
-                            </a>
-                            <!-- Dropdown - User Information -->
-                            <div  class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
-                               <a class="dropdown-item" href="">
-                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Profile
-                                </a> 
-                                <hr>
-                                <a class="dropdown-item" href="{% url 'account_change_password' %}">
-                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Change Password
-                                </a><hr>
-                                <a class="dropdown-item" href="{% url 'account_reset_password' %}">
-                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Password Reset
-                                </a>
-                                <hr>
-
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{% url 'teacher:teacher_logout' %}" >
-                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Logout 
-                                </a>
-                            </div>
-                        </li>
-
-                    </ul>
-
-                </nav>
-                <!-- End of Topbar -->
-
-                <!-- Begin Page Content -->
-              <div class="bg-body">
-                <br>
-                <h3 class="text-center">Teacher view</h3>
-                
-                {% block content %} 
-                
-
-
-                {% endblock %} 
             </div>
-                    
+            {% endif %}
+            {% endif %}
+            {% endif %}
+        </div>
+    </nav>
 
-           <br><br><br><br>
-        
-           
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="mobile-toggle" id="sidebarToggleTop">
+                    <i class="fa fa-bars"></i>
+                </button>
+
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search for anything...">
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="user-toggle">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <i class="fas fa-chevron-down" style="font-size: 0.8rem; color: var(--text-secondary);"></i>
+                    </div>
+                    
+                    <div class="user-dropdown-menu">
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-user"></i>
+                            <span>Profile</span>
+                        </a>
+                        <a class="dropdown-item" href="{% url 'account_change_password' %}">
+                            <i class="fas fa-key"></i>
+                            <span>Change Password</span>
+                        </a>
+                        <a class="dropdown-item" href="{% url 'account_reset_password' %}">
+                            <i class="fas fa-unlock-alt"></i>
+                            <span>Password Reset</span>
+                        </a>
+                        <a class="dropdown-item" href="{% url 'teacher:teacher_logout' %}">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="content">
+            <div class="content-header">
+                <h1 class="page-title">Teacher Dashboard</h1>
+                <p class="page-subtitle">Welcome back! Manage your classes and students</p>
+            </div>
+
+            {% block content %}
+            <!-- Content goes here -->
+            {% endblock %}
+        </main>
+    </div>
 
     <!-- Bootstrap core JavaScript-->
     <script src="/static/sms/dashboard/vendor/jquery/jquery.min.js"></script>
@@ -466,21 +803,63 @@
 
     <!-- Page level plugins -->
     <script src="/static/sms/dashboard/vendor/chart.js/Chart.min.js"></script>
-
-    <!-- Page level custom scripts -->
     <script src="/static/sms/dashboard/js/demo/chart-area-demo.js"></script>
     <script src="/static/sms/dashboard/js/demo/chart-pie-demo.js"></script>
 
- 
-    <!-- Page level plugins -->
+    <!-- DataTables -->
     <script src="/static/sms/dashboard/vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="/static/sms/dashboard/vendor/datatables/dataTables.bootstrap4.min.js"></script>
-
-    <!-- Page level custom scripts -->
     <script src="/static/sms/dashboard/js/demo/datatables-demo.js"></script>
 
-    
-      <script src="/static/sms/prism.js"></script>
-            
+    <script src="/static/sms/prism.js"></script>
+
+    <script>
+        // Sidebar toggle functionality
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.getElementById('accordionSidebar').classList.toggle('toggled');
+        });
+
+        document.getElementById('sidebarToggleTop').addEventListener('click', function() {
+            const sidebar = document.getElementById('accordionSidebar');
+            sidebar.classList.toggle('toggled');
+            sidebar.classList.toggle('active');
+        });
+
+        // User dropdown toggle
+        document.getElementById('userDropdown').addEventListener('click', function(e) {
+            e.stopPropagation();
+            this.classList.toggle('active');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('userDropdown');
+            if (!dropdown.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+
+        // Active nav link highlighting
+        const currentPath = window.location.pathname;
+        document.querySelectorAll('.nav-link').forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+            }
+        });
+
+        // Smooth scroll behavior
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
