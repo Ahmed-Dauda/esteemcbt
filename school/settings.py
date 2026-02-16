@@ -3,6 +3,8 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY
 
+from school import celery
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -608,6 +610,7 @@ if REDIS_URL.startswith("rediss://"):  # Heroku production
         "ssl_cert_reqs": ssl.CERT_NONE
     }
 
+# celery -A school worker --pool=solo -l info
 
 # TINYMCE_DEFAULT_CONFIG = {
 #     'height': 360,
