@@ -968,7 +968,164 @@ p {
 
 <br>
 
-<div id="frontPageVideoCarousel"  class="carousel slide" data-bs-ride="carousel" data-bs-interval="false">
+<ul>
+<!-- Carousel Shell -->
+<div style="position: relative; max-width: 900px; margin: auto;">
+
+  <!-- Slides -->
+  {% for video in front_page_videos %}
+  <div class="carousel-slide" {% if not forloop.first %}style="display:none;"{% endif %}>
+
+    <div class="video-container app-container">
+      <div class="video-wrapper app-container" style="background: #000000; position: relative; max-width: 900px; margin:auto;">
+
+        <iframe
+            id="player-{{ video.id }}"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            allowfullscreen
+            referrerpolicy="strict-origin-when-cross-origin"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
+            style="width:100%; height:450px;"
+        ></iframe>
+
+        <div class="banner-overlay"></div>
+        <div class="watch-overlay"></div>
+
+      </div>
+    </div>
+
+    <script>
+    (function() {
+      const iframeId = "player-{{ video.id }}";
+      const iframe = document.getElementById(iframeId);
+      const shortUrl = "{{ video.get_youtube_short_url }}";
+
+      if (!shortUrl) return;
+      const videoId = shortUrl.split("/").pop().split("?")[0];
+
+      const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&rel=0&modestbranding=1&playsinline=1&autoplay=0&controls=1&loop=1&playlist=${videoId}&mute=0`;
+      iframe.src = embedUrl;
+
+      const overlay = iframe.parentElement.querySelector(".watch-overlay");
+      overlay.style.cssText = `
+        position: absolute; top: 0; left: 0;
+        width: 100%; height: 100%;
+        z-index: 10; cursor: pointer;
+      `;
+
+      let playing = false;
+      overlay.addEventListener("click", () => {
+        const func = playing ? "pauseVideo" : "playVideo";
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ event: "command", func, args: "" }), "*"
+        );
+        playing = !playing;
+      });
+    })();
+    </script>
+
+  </div>
+  {% endfor %}
+
+  <!-- Prev / Next Buttons -->
+  <button onclick="carouselMove(-1)" style="position:absolute; top:45%; left:10px; transform:translateY(-50%); z-index:30; background:rgba(0,0,0,0.6); color:#fff; border:none; padding:12px 16px; font-size:1.3rem; border-radius:4px; cursor:pointer;">&#8592;</button>
+  <button onclick="carouselMove(1)"  style="position:absolute; top:45%; right:10px; transform:translateY(-50%); z-index:30; background:rgba(0,0,0,0.6); color:#fff; border:none; padding:12px 16px; font-size:1.3rem; border-radius:4px; cursor:pointer;">&#8594;</button>
+
+  <!-- Dots -->
+  <div id="carousel-dots" style="display:flex; justify-content:center; gap:8px; padding:10px 0;"></div>
+
+</div>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll(".carousel-slide");
+  const dotsWrap = document.getElementById("carousel-dots");
+  let current = 0;
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement("div");
+    d.style.cssText = `width:10px; height:10px; border-radius:50%; background:${i===0?'#333':'#ccc'}; cursor:pointer;`;
+    d.addEventListener("click", () => goTo(i));
+    dotsWrap.appendChild(d);
+  });
+
+  function pauseCurrent() {
+    const iframe = slides[current].querySelector("iframe");
+    if (iframe) iframe.contentWindow.postMessage(
+      JSON.stringify({ event:"command", func:"pauseVideo", args:"" }), "*"
+    );
+  }
+
+  function goTo(n) {
+    pauseCurrent();
+    slides[current].style.display = "none";
+    dotsWrap.children[current].style.background = "#ccc";
+    current = (n + slides.length) % slides.length;
+    slides[current].style.display = "block";
+    dotsWrap.children[current].style.background = "#333";
+  }
+
+  window.carouselMove = (dir) => goTo(current + dir);
+})();
+</script>
+
+<!-- working -->
+<!-- {% for video in front_page_videos %}
+<div class="video-container app-container">
+  <div class="video-wrapper app-container" style="background: #000000; position: relative; max-width: 900px; margin:auto;">
+
+   
+    <iframe
+        id="player-{{ video.id }}"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+        allowfullscreen
+        referrerpolicy="strict-origin-when-cross-origin"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
+        style="width:100%; height:450px;"
+    ></iframe>
+
+    
+    <div class="banner-overlay"></div>
+    <div class="watch-overlay"></div>
+
+  </div>
+</div>
+<script>
+(function() {
+  const iframeId = "player-{{ video.id }}";
+  const iframe = document.getElementById(iframeId);
+  const shortUrl = "{{ video.get_youtube_short_url }}";
+
+  if (!shortUrl) return;
+  const videoId = shortUrl.split("/").pop().split("?")[0];
+
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&rel=0&modestbranding=1&playsinline=1&autoplay=0&controls=1&loop=1&playlist=${videoId}&mute=0`;
+  iframe.src = embedUrl;
+
+  const overlay = iframe.parentElement.querySelector(".watch-overlay");
+  overlay.style.cssText = `
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 10; cursor: pointer;
+  `;
+
+  let playing = false;
+  overlay.addEventListener("click", () => {
+    const func = playing ? "pauseVideo" : "playVideo";
+    iframe.contentWindow.postMessage(
+      JSON.stringify({ event: "command", func, args: "" }), "*"
+    );
+    playing = !playing;
+  });
+})();
+</script>
+{% endfor %} -->
+
+
+<!-- <div id="frontPageVideoCarousel"  class="carousel slide" data-bs-ride="carousel" data-bs-interval="false">
   <div class="carousel-inner">
     {% for video in front_page_videos %}
         {% if forloop.first %}
@@ -1008,7 +1165,7 @@ p {
   <span class="sr-only">Next</span>
 </a>
 
-</div>
+</div> -->
 
 
 
@@ -1224,65 +1381,6 @@ error image loading -->
   }
   </script>
   
-
-<!-- Refresh page once -->
-<!-- <script>
-   document.addEventListener('DOMContentLoaded', function() {
-        let reloadCount = localStorage.getItem('reloadCount') ? parseInt(localStorage.getItem('reloadCount')) : 0;
-
-        if (reloadCount < 1) {
-            setTimeout(function() {
-                reloadCount++;
-                localStorage.setItem('reloadCount', reloadCount);
-                location.reload();
-            }, 3000); 
-        } else {
-            localStorage.removeItem('reloadCount'); 
-        }
-    });
-</script> -->
-
-<!-- js for loading animation -->
-
-<!-- <script>
-  function hideLoadingScreen() {
-      document.getElementById('rolling-text-container').classList.add('hidden');
-      document.getElementById('main-content').classList.remove('hidden');
-  }
-
-  if (document.readyState === 'complete') {
-      // Document is already fully loaded
-      hideLoadingScreen();
-  } else {
-      // Document is not fully loaded yet
-      window.onload = function() {
-          hideLoadingScreen();
-      };
-  }
-</script> -->
-
-<!-- setting for vidos url direct parse -->
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-      const videos = [
-          {% for video in front_page_videos %}
-              "{{ video.video|escapejs }}"{% if not forloop.last %},{% endif %}
-          {% endfor %}
-      ];
-  
-      videos.forEach((videoUrl, index) => {
-          const videoId = extractYouTubeId(videoUrl);
-          const iframe = document.getElementById(`video-${index + 1}`);
-          iframe.src = `https://www.youtube.com/embed/${videoId}?theme=dark&autoplay=1&keyboard=1&autohide=2&cc_load_policy=1&modestbranding=1&fs=0&showinfo=0&rel=0&iv_load_policy=3&mute=0&loop=0&controls=0`;
-      });
-  
-      function extractYouTubeId(url) {
-          const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-          const match = url.match(regex);
-          return match ? match[1] : null;
-      }
-  });
-  </script>
   
 
 {% endblock %} 

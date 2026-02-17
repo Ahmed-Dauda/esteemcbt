@@ -1,4 +1,6 @@
+import re
 from typing import cast
+from urllib.parse import parse_qs, urlparse
 from django.contrib.contenttypes.fields import GenericRelation
 from django.forms import Widget
 from users.models import Profile  # Update this import
@@ -39,18 +41,65 @@ class AboutUs(models.Model):
         return self.title
 
 
-class FrontPageVideo(models.Model):
+import re
+from urllib.parse import urlparse, parse_qs
+from django.db import models
 
+class FrontPageVideo(models.Model):
     title = models.CharField(max_length=500, blank=True, null=True)
-    video = EmbedVideoField(blank=True, null=True)
+    video = models.CharField(max_length=1000, blank=True, null=True)  # or EmbedVideoField
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     updated = models.DateTimeField(auto_now=True, blank=True, null=True) 
     id = models.BigAutoField(primary_key=True)
-    hit_count_generic = GenericRelation(HitCount, object_id_field='object_pk', related_query_name='hit_count_generic_relation')
+
+    def get_youtube_id(self):
+        """Extract YouTube video ID from any URL format, including /embed/ links"""
+        if not self.video:
+            return None
+
+        url = self.video.strip()
+
+        # 1. youtu.be short links
+        match = re.search(r'youtu\.be/([^\?&/]+)', url)
+        if match:
+            return match.group(1)
+
+        # 2. embed links
+        match = re.search(r'/embed/([^\?&/]+)', url)
+        if match:
+            return match.group(1)
+
+        # 3. shorts links
+        match = re.search(r'/shorts/([^\?&/]+)', url)
+        if match:
+            return match.group(1)
+
+        # 4. standard watch?v= links
+        try:
+            parsed = urlparse(url)
+            q = parse_qs(parsed.query)
+            if 'v' in q:
+                return q['v'][0]
+        except Exception:
+            pass
+
+        return None
+
+    def get_youtube_short_url(self):
+        """Return clean youtu.be URL"""
+        video_id = self.get_youtube_id()
+        if video_id:
+            return f"https://youtu.be/{video_id}"
+        return None
+
+    def print_debug(self):
+        print("Original URL:", self.video)
+        print("Extracted ID:", self.get_youtube_id())
+        print("Short URL:", self.get_youtube_short_url())
 
     def __str__(self):
-        return f'{self.title}'
-
+        return self.title or f"Video {self.id}"
+    
 
 class CarouselImage(models.Model):
     image_carousel = CloudinaryField('carousel_images/', blank=True, null= True)
