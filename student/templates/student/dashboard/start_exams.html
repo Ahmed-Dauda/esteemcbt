@@ -283,7 +283,7 @@ div.quiz p {
           </tr>
       </thead>
      
-      <tbody onclick="openFullscreen()">
+      <tbody onclick="openFullscreen()" style="user-select: none;">
     
         {% for q in  page_obj %}
         <tr>
@@ -999,7 +999,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </script> -->
 
 
-<!-- codes to stop copy and paste on the platform -->
+
 <!-- <script type="text/javascript">
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -1011,13 +1011,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
         e.preventDefault();
     });
 
-    // Disable copy event
-    document.addEventListener('copy', (e) => {
-        e.preventDefault();
-    });
 
     // Disable text selection for specific elements
-    let elements = document.querySelectorAll('.no-copy');
+   
     elements.forEach((element) => {
         element.style.userSelect = 'none';
     });

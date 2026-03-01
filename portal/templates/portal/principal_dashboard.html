@@ -15,7 +15,24 @@
 
 <div class="container my-5">
     <h2 class="mb-4">Assign Comments to Students</h2>
-
+<!-- Progress Bar -->
+<div id="progress-wrapper" style="display:none;" class="mb-4">
+    <div class="d-flex justify-content-between mb-1">
+        <span class="fw-bold text-primary">Generating AI Comments</span>
+        <span id="progress-label" class="text-muted small">Starting...</span>
+    </div>
+    <div class="progress" style="height: 28px;">
+        <div id="progress-bar"
+             class="progress-bar progress-bar-striped progress-bar-animated bg-warning text-dark fw-bold"
+             role="progressbar"
+             style="width: 0%;"
+             aria-valuenow="0"
+             aria-valuemin="0"
+             aria-valuemax="100">
+            0%
+        </div>
+    </div>
+</div>
     <!-- FILTER FORM -->
     <form method="get" class="row g-3 mb-4">
         <div class="col-md-3">
@@ -99,13 +116,18 @@
                         </td>
 
                         <!-- AI Generate Button -->
-                        <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-outline-info mb-1"
-                                    onclick="generateComment('{{ record.student.id }}')">
-                                🤖 Generate
-                            </button>
-                            <p class="mb-0"><small>Total: {{ record.total_score }} | Avg: {{ record.average_score }} | Grade: {{ record.final_grade }}</small></p>
-                        </td>
+                        <!-- AI Generate Button -->
+<td class="text-center">
+    <button type="button"
+            id="btn-{{ record.student.id }}"
+            class="btn btn-sm btn-outline-info mb-1"
+            onclick="generateComment('{{ record.student.id }}')">
+        🤖 Generate
+    </button>
+    <p class="mb-0">
+        <small>Total: {{ record.total_score }} | Avg: {{ record.average_score }} | Grade: {{ record.final_grade }}</small>
+    </p>
+</td>
 
                         <!-- Principal Comment Textarea -->
                         <td>
@@ -143,30 +165,107 @@
 <script>
 function generateComment(studentId) {
     const target = document.getElementById("comment-" + studentId);
-    target.value = "Generating...";
+    const btn = document.getElementById("btn-" + studentId);
+
+    // Show spinner on button
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status"></span> Generating...`;
+    target.value = "";
 
     fetch(`/portal/generate-principal-comment/${studentId}/?session={{ selected_session.id }}&term={{ selected_term.id }}&class={{ selected_class.id }}`)
         .then(res => res.json())
         .then(data => {
             target.value = data.comment;
+            btn.disabled = false;
+            btn.innerHTML = "🤖 Generate";
         })
-        .catch(() => target.value = "Error generating comment.");
+        .catch(() => {
+            target.value = "Error generating comment.";
+            btn.disabled = false;
+            btn.innerHTML = "🤖 Generate";
+        });
 }
 
 function generateAllComments() {
     if (!confirm("Generate AI comments for ALL students?")) return;
+
     document.querySelectorAll("textarea[id^='comment-']").forEach(t => t.value = "Generating...");
+    showProgressBar(0, "Starting...");
 
     fetch(`/portal/generate-all-principal-comments/?session={{ selected_session.id }}&term={{ selected_term.id }}&class={{ selected_class.id }}`)
         .then(res => res.json())
         .then(data => {
-            for (const id in data.comments) {
-                const target = document.getElementById("comment-" + id);
-                if (target) target.value = data.comments[id];
-            }
-            alert("AI comments generated successfully!");
+            if (!data.task_id) { alert("Failed to start task."); return; }
+            pollCommentStatus(data.task_id);
         })
-        .catch(() => alert("Error generating comments."));
+        .catch(() => alert("Error starting comment generation."));
+}
+
+function pollCommentStatus(taskId) {
+    const interval = setInterval(() => {
+        fetch(`/portal/generate-all-principal-comments/status/${taskId}/`)
+            .then(res => res.json())
+            .then(data => {
+
+                if (data.state === 'PENDING') {
+                    showProgressBar(0, "Waiting in queue...");
+                }
+
+                else if (data.state === 'PROGRESS') {
+                    const current = data.current || 0;
+                    const total = data.total || 1;
+                    const pct = Math.round((current / total) * 100);
+                    showProgressBar(pct, `Processing ${current} of ${total} students...`);
+
+                    // Fill comments as they come in progressively
+                    Object.entries(data.comments || {}).forEach(([studentId, comment]) => {
+                        const target = document.getElementById("comment-" + studentId);
+                        if (target && target.value === "Generating...") {
+                            target.value = comment;
+                        }
+                    });
+                }
+
+                else if (data.state === 'SUCCESS') {
+                    clearInterval(interval);
+                    showProgressBar(100, "Done!");
+
+                    Object.entries(data.comments).forEach(([studentId, comment]) => {
+                        const target = document.getElementById("comment-" + studentId);
+                        if (target) target.value = comment;
+                    });
+
+                    setTimeout(() => hideProgressBar(), 2000);
+                }
+
+                else if (data.state === 'FAILURE') {
+                    clearInterval(interval);
+                    hideProgressBar();
+                    alert("Failed to generate comments.");
+                }
+            })
+            .catch(() => {
+                clearInterval(interval);
+                hideProgressBar();
+                alert("Error checking task status.");
+            });
+    }, 2000);
+}
+
+function showProgressBar(percent, label) {
+    const wrapper = document.getElementById("progress-wrapper");
+    const bar = document.getElementById("progress-bar");
+    const text = document.getElementById("progress-label");
+
+    wrapper.style.display = "block";
+    bar.style.width = percent + "%";
+    bar.setAttribute("aria-valuenow", percent);
+    bar.textContent = percent + "%";
+    text.textContent = label;
+}
+
+function hideProgressBar() {
+    document.getElementById("progress-wrapper").style.display = "none";
 }
 </script>
 

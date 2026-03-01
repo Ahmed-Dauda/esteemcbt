@@ -1644,90 +1644,181 @@ def generate_principal_comment(request, student_id):
     
 
 
+from celery.result import AsyncResult
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .tasks import generate_comments_task
+
 @csrf_exempt
 def generate_all_principal_comments(request):
-    """
-    Generate AI principal comments using OpenAI GPT for all students
-    in a given session, term, and class.
-    """
-
     session_id = request.GET.get("session")
     term_id = request.GET.get("term")
     class_id = request.GET.get("class")
 
     if not (session_id and term_id and class_id):
-        return JsonResponse({"error": "Missing parameters: session, term, or class"}, status=400)
+        return JsonResponse({"error": "Missing parameters"}, status=400)
 
-    # Fetch students in the class
-    students = NewUser.objects.filter(course_grades__id=class_id).distinct()
+    # Fire task in background
+    task = generate_comments_task.delay(session_id, term_id, class_id)
+    return JsonResponse({"task_id": task.id}, status=202)
 
-    # Fetch all results for the students in this session and term
-    results = Result_Portal.objects.filter(
-        session_id=session_id,
-        term_id=term_id,
-        student__in=students
-    ).select_related("subject", "student", "schools")
 
-    output_comments = {}
+def get_comment_task_status(request, task_id):
+    """Poll this endpoint to check progress and retrieve comments."""
+    result = AsyncResult(task_id)
 
-    for student in students:
-        student_results = results.filter(student=student)
+    if result.state == "PENDING":
+        return JsonResponse({"state": "PENDING", "progress": 0})
 
-        strong_subjects = []
-        weak_subjects = []
-        result_lines = []
+    elif result.state == "PROGRESS":
+        meta = result.info
+        return JsonResponse({
+            "state": "PROGRESS",
+            "current": meta.get("current", 0),
+            "total": meta.get("total", 1),
+            "comments": meta.get("comments", {}),
+        })
 
-        for r in student_results:
-            # Determine strong/weak subjects
-            if r.total_score >= 70:
-                strong_subjects.append(r.subject.title)
-            elif r.total_score < 45:
-                weak_subjects.append(r.subject.title)
+    elif result.state == "SUCCESS":
+        return JsonResponse({
+            "state": "SUCCESS",
+            "comments": result.result.get("comments", {}),
+        })
 
-            result_lines.append(
-                f"{r.subject.title}: Total={r.total_score}, Grade={r.grade_letter or '-'}, Remark={r.remark or '-'}"
-            )
+    else:  # FAILURE
+        return JsonResponse({"state": "FAILURE", "error": str(result.info)}, status=500)
 
-        result_text = "\n".join(result_lines) if result_lines else "No results yet."
 
-        prompt = f"""
-You are an expert school principal. Based on the following student's performance, write a professional principal comment.
+from celery.result import AsyncResult
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .tasks import generate_comments_task
 
-Student: {student.first_name} {student.last_name}
-Results:
-{result_text}
+@csrf_exempt
+def generate_all_principal_comments(request):
+    session_id = request.GET.get("session")
+    term_id = request.GET.get("term")
+    class_id = request.GET.get("class")
 
-Strong subjects: {', '.join(strong_subjects) if strong_subjects else 'None'}
-Weak subjects: {', '.join(weak_subjects) if weak_subjects else 'None'}
+    if not (session_id and term_id and class_id):
+        return JsonResponse({"error": "Missing parameters"}, status=400)
 
-The comment must:
-- Highlight strong subjects
-- Highlight weak subjects
-- Mention overall performance
-- Be encouraging and actionable
-- Be 2–3 sentences long
-"""
+    # Fire task in background
+    task = generate_comments_task.delay(session_id, term_id, class_id)
+    return JsonResponse({"task_id": task.id}, status=202)
 
-        try:
-            resp = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "You generate curriculum-aligned principal comments with high precision."},
-                    {"role": "user", "content": prompt},
-                ],
-                max_tokens=1800,
-                temperature=0.4,
-            )
 
-            # Correct access to the message content
-            ai_comment = resp.choices[0].message.content.strip()
+def get_comment_task_status(request, task_id):
+    """Poll this endpoint to check progress and retrieve comments."""
+    result = AsyncResult(task_id)
 
-        except Exception as e:
-            ai_comment = f"Error generating comment: {str(e)}"
+    if result.state == "PENDING":
+        return JsonResponse({"state": "PENDING", "progress": 0})
 
-        output_comments[student.id] = ai_comment
+    elif result.state == "PROGRESS":
+        meta = result.info
+        return JsonResponse({
+            "state": "PROGRESS",
+            "current": meta.get("current", 0),
+            "total": meta.get("total", 1),
+            "comments": meta.get("comments", {}),
+        })
 
-    return JsonResponse({"comments": output_comments}, status=200)
+    elif result.state == "SUCCESS":
+        return JsonResponse({
+            "state": "SUCCESS",
+            "comments": result.result.get("comments", {}),
+        })
+
+    else:  # FAILURE
+        return JsonResponse({"state": "FAILURE", "error": str(result.info)}, status=500)
+    
+
+#real view
+# @csrf_exempt
+# def generate_all_principal_comments(request):
+#     """
+#     Generate AI principal comments using OpenAI GPT for all students
+#     in a given session, term, and class.
+#     """
+
+#     session_id = request.GET.get("session")
+#     term_id = request.GET.get("term")
+#     class_id = request.GET.get("class")
+
+#     if not (session_id and term_id and class_id):
+#         return JsonResponse({"error": "Missing parameters: session, term, or class"}, status=400)
+
+#     # Fetch students in the class
+#     students = NewUser.objects.filter(course_grades__id=class_id).distinct()
+
+#     # Fetch all results for the students in this session and term
+#     results = Result_Portal.objects.filter(
+#         session_id=session_id,
+#         term_id=term_id,
+#         student__in=students
+#     ).select_related("subject", "student", "schools")
+
+#     output_comments = {}
+
+#     for student in students:
+#         student_results = results.filter(student=student)
+
+#         strong_subjects = []
+#         weak_subjects = []
+#         result_lines = []
+
+#         for r in student_results:
+#             # Determine strong/weak subjects
+#             if r.total_score >= 70:
+#                 strong_subjects.append(r.subject.title)
+#             elif r.total_score < 45:
+#                 weak_subjects.append(r.subject.title)
+
+#             result_lines.append(
+#                 f"{r.subject.title}: Total={r.total_score}, Grade={r.grade_letter or '-'}, Remark={r.remark or '-'}"
+#             )
+
+#         result_text = "\n".join(result_lines) if result_lines else "No results yet."
+
+#         prompt = f"""
+# You are a school principal. Write a brief, professional report card comment for this student.
+
+# Student: {student.first_name} {student.last_name}
+# Results:
+# {result_text}
+
+# Strong subjects: {', '.join(strong_subjects) if strong_subjects else 'None'}
+# Weak subjects: {', '.join(weak_subjects) if weak_subjects else 'None'}
+
+# Rules:
+# - 1–2 sentences only
+# - No salutations, sign-offs, or names
+# - Mention strengths, weaknesses, and encouragement
+# - Formal and concise tone
+# """
+
+#         try:
+#             resp = client.chat.completions.create(
+#                 model="gpt-4o-mini",
+#                 messages=[
+#                     {"role": "system", "content": "You generate curriculum-aligned principal comments with high precision."},
+#                     {"role": "user", "content": prompt},
+#                 ],
+#                 max_tokens=1800,
+#                 temperature=0.4,
+#             )
+
+#             # Correct access to the message content
+#             ai_comment = resp.choices[0].message.content.strip()
+
+#         except Exception as e:
+#             ai_comment = f"Error generating comment: {str(e)}"
+
+#         output_comments[student.id] = ai_comment
+
+#     return JsonResponse({"comments": output_comments}, status=200)
+
 
 
 @login_required
@@ -1756,112 +1847,3 @@ def principal_edit_behavior(request, record_id):
     }
     return render(request, "portal/principal_edit_behavior.html", context)
 
-
-# @login_required
-# def enter_results_for_class_subject(request, class_id, subject_id, session_id, term_id):
-#     """
-#     Render table of students for a class/subject and handle POST to save all results.
-#     Safely creates or updates Result_Portal entries using update_or_create.
-#     """
-#     teacher = _get_teacher_for_request(request.user)
-
-#     # Fetch class, course, session, term
-#     class_obj = get_object_or_404(CourseGrade, id=class_id)
-#     course_obj = get_object_or_404(Courses, id=subject_id)
-#     session = get_object_or_404(Session, id=session_id)
-#     term = get_object_or_404(Term, id=term_id)
-
-#     # --- Robust permission checks ---
-#     teacher_classes = teacher.classes_taught.all()
-#     teacher_subjects = teacher.subjects_taught.all()
-
-#     if not any(c.id == class_obj.id for c in teacher_classes):
-#         return HttpResponseForbidden("You are not assigned to this class.")
-
-#     if not any(s.id == course_obj.id for s in teacher_subjects):
-#         return HttpResponseForbidden("You are not assigned to this subject.")
-
-#     # Fetch students in the class
-#     students = class_obj.students.all().order_by('id')
-
-#     # Formset for bulk entry
-#     ResultFormset = formset_factory(ResultRowForm, extra=0)
-
-#     if request.method == "POST":
-#         formset = ResultFormset(request.POST)
-#         if formset.is_valid():
-#             with transaction.atomic():
-#                 for form in formset:
-#                     student_id = int(form.cleaned_data["student_id"])
-#                     ca = Decimal(form.cleaned_data.get("ca_score") or 0)
-#                     mid = Decimal(form.cleaned_data.get("midterm_score") or 0)
-#                     exam = Decimal(form.cleaned_data.get("exam_score") or 0)
-#                     total = ca + mid + exam
-
-#                     # Safely create or update result
-#                     Result_Portal.objects.update_or_create(
-#                         student_id=student_id,
-#                         subject=course_obj,
-#                         term=term,
-#                         session=session,
-#                         result_class=class_obj.name,  # VERY IMPORTANT
-#                         defaults={
-#                             'schools': getattr(class_obj, 'schools', None),
-#                             'ca_score': ca,
-#                             'midterm_score': mid,
-#                             'exam_score': exam,
-#                             'total_score': total
-#                         }
-#                     )
-
-
-#             # Redirect to same page
-#             return redirect(reverse('portal:enter_results', kwargs={
-#                 'class_id': class_id,
-#                 'subject_id': subject_id,
-#                 'session_id': session_id,
-#                 'term_id': term_id
-#             }))
-#         else:
-#             forms_with_students = zip(formset.forms, students)
-#             return render(request, "portal/enter_results.html", {
-#                 "formset": formset,
-#                 "forms_with_students": forms_with_students,
-#                 "class_obj": class_obj,
-#                 "subject_obj": course_obj,
-#                 "session": session,
-#                 "term": term,
-#             })
-
-#     # GET: prepare initial data for formset
-#     existing_results = Result_Portal.objects.filter(
-#         student_id__in=[s.id for s in students],
-#         subject=course_obj,
-#         session=session,
-#         term=term,
-#         result_class=class_obj.name
-#     )
-#     existing_by_student = {r.student_id: r for r in existing_results}
-
-#     initial_data = []
-#     for s in students:
-#         existing = existing_by_student.get(s.id)
-#         initial_data.append({
-#             'student_id': s.id,
-#             'existing_result_id': existing.id if existing else '',
-#             'ca_score': existing.ca_score if existing else Decimal('0.00'),
-#             'midterm_score': existing.midterm_score if existing else Decimal('0.00'),
-#             'exam_score': existing.exam_score if existing else Decimal('0.00'),
-#         })
-
-#     formset = ResultFormset(initial=initial_data)
-#     forms_with_students = zip(formset.forms, students)
-
-#     return render(request, "portal/enter_results.html", {
-#         "formset": formset,
-#         "forms_with_students": forms_with_students,
-#         "class_obj": class_obj,
-#         "subject_obj": course_obj,
-#         "session": session,
-#         "term": term,
-#     })

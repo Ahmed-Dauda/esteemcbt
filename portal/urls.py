@@ -10,20 +10,26 @@ urlpatterns = [
         name="generate_principal_comment"
     ),
     path(
-    "generate-all-principal-comments/",
-    views.generate_all_principal_comments,
-    name="generate_all_principal_comments",
-),
+        "generate-all-principal-comments/",
+        views.generate_all_principal_comments,
+        name="generate_all_principal_comments",
+    ),
+    # ── Celery task status polling ──────────────────────────────
+    path(
+        "generate-all-principal-comments/status/<str:task_id>/",
+        views.get_comment_task_status,
+        name="get_comment_task_status",
+    ),
 
     path("principal-dashboard/", views.principal_dashboard, name="principal_dashboard"),
     path("principal-edit-behavior/<int:record_id>/", views.principal_edit_behavior, name="principal_edit_behavior"),
 
     path('form-teacher-dashboard/', views.form_teacher_dashboard, name='form_teacher_dashboard'),
     path("generate-form-teacher-comment/<int:student_id>/", views.generate_form_teacher_comment, name="generate_form_teacher_comment"),
-    # path("generate-all-form-teacher-comments/", views.generate_all_form_teacher_comments, name="generate_all_form_teacher_comments"),
     path('student/<int:student_id>/term/<int:term_id>/session/<int:session_id>/edit/', 
          views.edit_student_behavior, name='edit_student_behavior'),
-     # superadmin
+
+    # superadmin
     path("subscriptions/", views.subscription_list, name="subscription_list"),
     path("subscriptions/<int:school_id>/", views.subscription_edit, name="subscription_edit"),
 
@@ -38,14 +44,11 @@ urlpatterns = [
     path('report-cards/', views.report_card_list, name='report_card_list'),
     path('my-report-cards/', views.my_report_cards, name='my_report_cards'),
 
-    # Report card detail for a student in a session and term
     path(
         'report-card/<int:student_id>/<int:session_id>/<int:term_id>/',
         views.report_card_detail,
         name='report_card_detail'
     ),
-
-    # PDF download for full term report
     path(
         'report-card/term/pdf/<int:student_id>/<int:session_id>/<int:term_id>/',
         views.download_term_report_pdf,
@@ -58,5 +61,4 @@ urlpatterns = [
         views.enter_results_for_class_subject,
         name="enter_results",
     ),
-
 ]
