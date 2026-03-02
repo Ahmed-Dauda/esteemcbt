@@ -1671,25 +1671,18 @@ def principal_dashboard(request):
         return HttpResponseForbidden("Access denied")
 
     school = request.user.school
-    classes = CourseGrade.objects.filter(schools=school)
-
-    # ── Filter sessions and terms to only those that have results for this school
-    portal_qs = Result_Portal.objects.filter(schools=school)
-
-    session_ids = portal_qs.values_list('session_id', flat=True).distinct()
-    term_ids    = portal_qs.values_list('term_id', flat=True).distinct()
 
     sessions = Session.objects.filter(school=school).order_by('name')
     terms    = Term.objects.filter(school=school).order_by('name')
     classes  = CourseGrade.objects.filter(schools=school).distinct()
 
     selected_session_id = request.GET.get("session")
-    selected_term_id = request.GET.get("term")
-    selected_class_id = request.GET.get("class")
+    selected_term_id    = request.GET.get("term")
+    selected_class_id   = request.GET.get("class")
 
-    selected_session = Session.objects.filter(id=selected_session_id, schools=school).first() if selected_session_id else None
-    selected_term = Term.objects.filter(id=selected_term_id, schools=school).first() if selected_term_id else None
-    selected_class = CourseGrade.objects.filter(id=selected_class_id, schools=school).first() if selected_class_id else None
+    selected_session = Session.objects.filter(id=selected_session_id, school=school).first() if selected_session_id else None
+    selected_term    = Term.objects.filter(id=selected_term_id, school=school).first() if selected_term_id else None
+    selected_class   = CourseGrade.objects.filter(id=selected_class_id, schools=school).first() if selected_class_id else None
 
     records = []
 
@@ -1721,35 +1714,38 @@ def principal_dashboard(request):
                 float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
                 for r in results
             )
-            num_subjects = results.count()
-            average_score = round(total_score / num_subjects, 2) if num_subjects else 0
-            final_grade = results[0].grade_letter if results else ''
-            remarks = {r.subject.title: r.remark for r in results}
+            num_subjects   = results.count()
+            average_score  = round(total_score / num_subjects, 2) if num_subjects else 0
+            final_grade    = results[0].grade_letter if results else ''
+            remarks        = {r.subject.title: r.remark for r in results}
 
-            record.results = results
-            record.total_score = total_score
-            record.average_score = average_score
-            record.final_grade = final_grade
+            record.results        = results
+            record.total_score    = total_score
+            record.average_score  = average_score
+            record.final_grade    = final_grade
             record.subject_remarks = remarks
 
         if request.method == "POST":
             for record in records:
                 comment_field = f"comment_{record.student.id}"
-                new_comment = request.POST.get(comment_field)
+                new_comment   = request.POST.get(comment_field)
                 if new_comment is not None:
                     record.principal_comment = new_comment
                     record.save()
             messages.success(request, "Principal comments saved successfully.")
-            return redirect(request.path + f"?session={selected_session.id}&term={selected_term.id}&class={selected_class.id}")
+            return redirect(
+                request.path +
+                f"?session={selected_session.id}&term={selected_term.id}&class={selected_class.id}"
+            )
 
     context = {
-        "classes": classes,
-        "sessions": sessions,   # ← now school-scoped, no duplicates
-        "terms": terms,         # ← now school-scoped, no duplicates
+        "classes":          classes,
+        "sessions":         sessions,
+        "terms":            terms,
         "selected_session": selected_session,
-        "selected_term": selected_term,
-        "selected_class": selected_class,
-        "records": records,
+        "selected_term":    selected_term,
+        "selected_class":   selected_class,
+        "records":          records,
     }
 
     return render(request, "portal/principal_dashboard.html", context)
