@@ -1674,16 +1674,14 @@ def principal_dashboard(request):
     classes = CourseGrade.objects.filter(schools=school)
 
     # ── Filter sessions and terms to only those that have results for this school
-    session_ids = Result_Portal.objects.filter(
-        schools=school
-    ).values_list('session__id', flat=True).distinct()
+    portal_qs = Result_Portal.objects.filter(schools=school)
 
-    term_ids = Result_Portal.objects.filter(
-        schools=school
-    ).values_list('term__id', flat=True).distinct()
+    session_ids = portal_qs.values_list('session_id', flat=True).distinct()
+    term_ids    = portal_qs.values_list('term_id', flat=True).distinct()
 
     sessions = Session.objects.filter(id__in=session_ids).order_by('name')
-    terms = Term.objects.filter(id__in=term_ids).order_by('name')
+    terms    = Term.objects.filter(id__in=term_ids).order_by('name')
+    classes  = CourseGrade.objects.filter(schools=school).distinct()
 
     selected_session_id = request.GET.get("session")
     selected_term_id = request.GET.get("term")
