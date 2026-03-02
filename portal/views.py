@@ -974,6 +974,7 @@ def load_bulk_entry_page(request):
 
 from django.contrib import messages
 
+
 @require_reportcard_subscription
 @login_required
 def enter_results_for_class_subject(request, class_id, subject_id, session_id, term_id):
@@ -999,13 +1000,23 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
     max_exam = Decimal(str(getattr(school, 'max_exam_score', '60.0') or '60.0'))
 
     # ── Existing results (used in both GET and POST) ───────────────────────
-    existing_results = Result_Portal.objects.filter(
-        student_id__in=[s.id for s in students],
-        subject=course_obj,
-        session=session,
-        term=term,
-        result_class=class_obj.name
-    ).select_for_update()  # lock rows to prevent race conditions
+   
+    if request.method == "POST":
+        existing_results = Result_Portal.objects.filter(
+            student_id__in=[s.id for s in students],
+            subject=course_obj,
+            session=session,
+            term=term,
+            result_class=class_obj.name
+        ).select_for_update()  # ✅ only lock rows during POST/write
+    else:
+        existing_results = Result_Portal.objects.filter(
+            student_id__in=[s.id for s in students],
+            subject=course_obj,
+            session=session,
+            term=term,
+            result_class=class_obj.name
+        )  # ✅ no lock needed on GET/read
 
     existing_by_student = {r.student_id: r for r in existing_results}
 
