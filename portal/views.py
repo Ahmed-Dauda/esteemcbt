@@ -974,7 +974,6 @@ def load_bulk_entry_page(request):
 
 from django.contrib import messages
 
-
 @require_reportcard_subscription
 @login_required
 def enter_results_for_class_subject(request, class_id, subject_id, session_id, term_id):
@@ -985,53 +984,32 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
     teacher = _get_teacher_for_request(request.user)
 
     # ── Fetch objects ──────────────────────────────────────────────────────
-    class_obj = get_object_or_404(CourseGrade, id=class_id)
+    class_obj  = get_object_or_404(CourseGrade, id=class_id)
     course_obj = get_object_or_404(Courses, id=subject_id)
-    session = get_object_or_404(Session, id=session_id)
-    term = get_object_or_404(Term, id=term_id)
+    session    = get_object_or_404(Session, id=session_id)
+    term       = get_object_or_404(Term, id=term_id)
 
     # ── Students ───────────────────────────────────────────────────────────
     students = list(class_obj.students.all().order_by('id'))
 
     # ── School max scores ──────────────────────────────────────────────────
-    school = getattr(class_obj, 'schools', None)
-    max_ca = Decimal(str(getattr(school, 'max_ca_score', '10.0') or '10.0'))
+    school      = getattr(class_obj, 'schools', None)
+    max_ca      = Decimal(str(getattr(school, 'max_ca_score',      '10.0') or '10.0'))
     max_midterm = Decimal(str(getattr(school, 'max_midterm_score', '30.0') or '30.0'))
-    max_exam = Decimal(str(getattr(school, 'max_exam_score', '60.0') or '60.0'))
-
-    # ── Existing results (used in both GET and POST) ───────────────────────
-   
-    if request.method == "POST":
-        existing_results = Result_Portal.objects.filter(
-            student_id__in=[s.id for s in students],
-            subject=course_obj,
-            session=session,
-            term=term,
-            result_class=class_obj.name
-        ).select_for_update()  # ✅ only lock rows during POST/write
-    else:
-        existing_results = Result_Portal.objects.filter(
-            student_id__in=[s.id for s in students],
-            subject=course_obj,
-            session=session,
-            term=term,
-            result_class=class_obj.name
-        )  # ✅ no lock needed on GET/read
-
-    existing_by_student = {r.student_id: r for r in existing_results}
+    max_exam    = Decimal(str(getattr(school, 'max_exam_score',    '60.0') or '60.0'))
 
     # ── Formset ────────────────────────────────────────────────────────────
     ResultFormset = formset_factory(ResultRowForm, extra=0)
 
     # ── Context shared across GET and POST ─────────────────────────────────
     base_context = {
-        "class_obj": class_obj,
+        "class_obj":   class_obj,
         "subject_obj": course_obj,
-        "session": session,
-        "term": term,
-        "max_ca": max_ca,
+        "session":     session,
+        "term":        term,
+        "max_ca":      max_ca,
         "max_midterm": max_midterm,
-        "max_exam": max_exam,
+        "max_exam":    max_exam,
     }
 
     # ── POST: Save results ─────────────────────────────────────────────────
@@ -1043,6 +1021,17 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
             to_create = []
 
             with transaction.atomic():
+                # ✅ select_for_update INSIDE atomic block
+                existing_results = Result_Portal.objects.filter(
+                    student_id__in=[s.id for s in students],
+                    subject=course_obj,
+                    session=session,
+                    term=term,
+                    result_class=class_obj.name
+                ).select_for_update()
+
+                existing_by_student = {r.student_id: r for r in existing_results}
+
                 for form in formset:
                     cd = form.cleaned_data
                     student_id = cd.get('student_id')
@@ -1050,22 +1039,20 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
                         continue
 
                     # Cap scores at school maximums
-                    ca   = min(Decimal(str(cd.get('ca_score') or 0)), max_ca)
-                    mid  = min(Decimal(str(cd.get('midterm_score') or 0)), max_midterm)
-                    exam = min(Decimal(str(cd.get('exam_score') or 0)), max_exam)
+                    ca    = min(Decimal(str(cd.get('ca_score')      or 0)), max_ca)
+                    mid   = min(Decimal(str(cd.get('midterm_score') or 0)), max_midterm)
+                    exam  = min(Decimal(str(cd.get('exam_score')    or 0)), max_exam)
                     total = ca + mid + exam
 
                     existing = existing_by_student.get(int(student_id))
 
                     if existing:
-                        # Update in memory, bulk save later
-                        existing.ca_score = ca
+                        existing.ca_score      = ca
                         existing.midterm_score = mid
-                        existing.exam_score = exam
-                        existing.total_score = total
+                        existing.exam_score    = exam
+                        existing.total_score   = total
                         to_update.append(existing)
                     else:
-                        # Queue for bulk create
                         to_create.append(Result_Portal(
                             student_id=student_id,
                             subject=course_obj,
@@ -1088,17 +1075,17 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
                 if to_create:
                     Result_Portal.objects.bulk_create(
                         to_create,
-                        update_conflicts=True,  # safe if unique_together is set
+                        update_conflicts=True,
                         update_fields=['ca_score', 'midterm_score', 'exam_score', 'total_score'],
-                        unique_fields=['student_id', 'subject_id', 'term_id', 'session_id'],  # ← matches your unique_together exactly
+                        unique_fields=['student_id', 'subject_id', 'term_id', 'session_id'],
                     )
 
             messages.success(request, "All results have been saved successfully!")
             return redirect(reverse('portal:enter_results', kwargs={
-                'class_id': class_id,
-                'subject_id': subject_id,
-                'session_id': session_id,
-                'term_id': term_id,
+                'class_id':    class_id,
+                'subject_id':  subject_id,
+                'session_id':  session_id,
+                'term_id':     term_id,
             }))
 
         else:
@@ -1106,18 +1093,29 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
             forms_with_students = list(zip(formset.forms, students))
             return render(request, "portal/enter_results.html", {
                 **base_context,
-                "formset": formset,
+                "formset":             formset,
                 "forms_with_students": forms_with_students,
             })
 
     # ── GET: Display formset ───────────────────────────────────────────────
+    # ✅ No select_for_update on GET — just a plain read
+    existing_results = Result_Portal.objects.filter(
+        student_id__in=[s.id for s in students],
+        subject=course_obj,
+        session=session,
+        term=term,
+        result_class=class_obj.name
+    )
+
+    existing_by_student = {r.student_id: r for r in existing_results}
+
     initial_data = [
         {
-            'student_id': s.id,
+            'student_id':         s.id,
             'existing_result_id': existing_by_student[s.id].id if s.id in existing_by_student else '',
-            'ca_score': existing_by_student[s.id].ca_score if s.id in existing_by_student else Decimal('0.00'),
-            'midterm_score': existing_by_student[s.id].midterm_score if s.id in existing_by_student else Decimal('0.00'),
-            'exam_score': existing_by_student[s.id].exam_score if s.id in existing_by_student else Decimal('0.00'),
+            'ca_score':           existing_by_student[s.id].ca_score      if s.id in existing_by_student else Decimal('0.00'),
+            'midterm_score':      existing_by_student[s.id].midterm_score if s.id in existing_by_student else Decimal('0.00'),
+            'exam_score':         existing_by_student[s.id].exam_score    if s.id in existing_by_student else Decimal('0.00'),
         }
         for s in students
     ]
@@ -1127,10 +1125,9 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
 
     return render(request, "portal/enter_results.html", {
         **base_context,
-        "formset": formset,
+        "formset":             formset,
         "forms_with_students": forms_with_students,
     })
-
 
 #working codes
 # @require_reportcard_subscription
