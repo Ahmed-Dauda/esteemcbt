@@ -1687,51 +1687,85 @@ def principal_dashboard(request):
     records = []
 
     if selected_session and selected_term and selected_class:
-        for student in selected_class.students.all():
-            StudentBehaviorRecord.objects.get_or_create(
+        # ── 1. Bulk create missing behavior records in one query ──
+        students = list(selected_class.students.all())
+        existing = set(
+            StudentBehaviorRecord.objects.filter(
+                student__in=students,
+                school=school,
+                session=selected_session,
+                term=selected_term,
+            ).values_list('student_id', flat=True)
+        )
+
+        StudentBehaviorRecord.objects.bulk_create([
+            StudentBehaviorRecord(
                 student=student,
                 school=school,
                 session=selected_session,
                 term=selected_term,
-                defaults={'form_teacher': selected_class.form_teacher}
+                form_teacher=selected_class.form_teacher,
             )
+            for student in students
+            if student.id not in existing
+        ], ignore_conflicts=True)
 
-        records = StudentBehaviorRecord.objects.filter(
-            student__course_grades=selected_class,
-            session=selected_session,
-            term=selected_term
-        ).select_related('student')
-
-        for record in records:
-            results = Result_Portal.objects.filter(
-                student=record.student,
+        # ── 2. Fetch all records in one query ─────────────────────
+        records = list(
+            StudentBehaviorRecord.objects.filter(
+                student__course_grades=selected_class,
                 session=selected_session,
                 term=selected_term,
-                result_class=selected_class.name
-            ).select_related('subject')
+            ).select_related('student')
+        )
 
-            total_score = sum(
+        # ── 3. Fetch ALL results for all students in ONE query ────
+        student_ids = [r.student_id for r in records]
+
+        all_results = Result_Portal.objects.filter(
+            student_id__in=student_ids,
+            session=selected_session,
+            term=selected_term,
+            result_class=selected_class.name,
+        ).select_related('subject').order_by('subject__title')
+
+        # ── 4. Group results by student_id in Python ──────────────
+        from collections import defaultdict
+        results_by_student = defaultdict(list)
+        for result in all_results:
+            results_by_student[result.student_id].append(result)
+
+        # ── 5. Attach computed data to each record ────────────────
+        for record in records:
+            student_results = results_by_student[record.student_id]
+
+            total_score   = sum(
                 float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
-                for r in results
+                for r in student_results
             )
-            num_subjects   = results.count()
-            average_score  = round(total_score / num_subjects, 2) if num_subjects else 0
-            final_grade    = results[0].grade_letter if results else ''
-            remarks        = {r.subject.title: r.remark for r in results}
+            num_subjects  = len(student_results)
+            average_score = round(total_score / num_subjects, 2) if num_subjects else 0
+            final_grade   = student_results[0].grade_letter if student_results else ''
+            remarks       = {r.subject.title: r.remark for r in student_results}
 
-            record.results        = results
-            record.total_score    = total_score
-            record.average_score  = average_score
-            record.final_grade    = final_grade
+            record.results         = student_results
+            record.total_score     = total_score
+            record.average_score   = average_score
+            record.final_grade     = final_grade
             record.subject_remarks = remarks
 
+        # ── 6. Handle POST ────────────────────────────────────────
         if request.method == "POST":
+            to_update = []
             for record in records:
-                comment_field = f"comment_{record.student.id}"
-                new_comment   = request.POST.get(comment_field)
+                new_comment = request.POST.get(f"comment_{record.student_id}")
                 if new_comment is not None:
                     record.principal_comment = new_comment
-                    record.save()
+                    to_update.append(record)
+
+            if to_update:
+                StudentBehaviorRecord.objects.bulk_update(to_update, ['principal_comment'])
+
             messages.success(request, "Principal comments saved successfully.")
             return redirect(
                 request.path +
@@ -1749,6 +1783,7 @@ def principal_dashboard(request):
     }
 
     return render(request, "portal/principal_dashboard.html", context)
+
 
 
 from django.http import JsonResponse

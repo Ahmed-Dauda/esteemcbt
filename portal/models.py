@@ -163,6 +163,7 @@ class Result_Portal(models.Model):
         }.get(letter, 'N/A')
 
 
+
 class StudentBehaviorRecord(models.Model):
     student = models.ForeignKey(NewUser, on_delete=models.CASCADE, db_index=True)
     school = models.ForeignKey(School, on_delete=models.CASCADE, null=True, blank=True)
