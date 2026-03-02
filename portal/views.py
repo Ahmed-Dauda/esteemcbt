@@ -1663,8 +1663,8 @@ def edit_student_behavior(request, student_id, term_id, session_id):
 
 from django.http import HttpResponseForbidden
 from django.db.models import Prefetch
-
 from django.http import JsonResponse
+
 @login_required
 def principal_dashboard(request):
     if not getattr(request.user, "is_principal", False):
@@ -1674,12 +1674,15 @@ def principal_dashboard(request):
     classes = CourseGrade.objects.filter(schools=school)
 
     # ── Filter sessions and terms to only those that have results for this school
+    # Get result portal IDs for this school first, then filter sessions/terms
+    portal_ids = Result_Portal.objects.filter(schools=school).values_list('id', flat=True)
+
     sessions = Session.objects.filter(
-        result_portal__schools=school
+        result_portal__in=portal_ids
     ).distinct().order_by('name')
 
     terms = Term.objects.filter(
-        result_portal__schools=school
+        result_portal__in=portal_ids
     ).distinct().order_by('name')
 
     selected_session_id = request.GET.get("session")
