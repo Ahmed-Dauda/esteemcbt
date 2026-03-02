@@ -1679,8 +1679,8 @@ def principal_dashboard(request):
     session_ids = portal_qs.values_list('session_id', flat=True).distinct()
     term_ids    = portal_qs.values_list('term_id', flat=True).distinct()
 
-    sessions = Session.objects.filter(id__in=session_ids).order_by('name')
-    terms    = Term.objects.filter(id__in=term_ids).order_by('name')
+    sessions = Session.objects.filter(school=school).order_by('name')
+    terms    = Term.objects.filter(school=school).order_by('name')
     classes  = CourseGrade.objects.filter(schools=school).distinct()
 
     selected_session_id = request.GET.get("session")
