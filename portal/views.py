@@ -1686,8 +1686,8 @@ def principal_dashboard(request):
     selected_term_id = request.GET.get("term")
     selected_class_id = request.GET.get("class")
 
-    selected_session = Session.objects.filter(id=selected_session_id).first() if selected_session_id else None
-    selected_term = Term.objects.filter(id=selected_term_id).first() if selected_term_id else None
+    selected_session = Session.objects.filter(id=selected_session_id, schools=school).first() if selected_session_id else None
+    selected_term = Term.objects.filter(id=selected_term_id, schools=school).first() if selected_term_id else None
     selected_class = CourseGrade.objects.filter(id=selected_class_id, schools=school).first() if selected_class_id else None
 
     records = []
