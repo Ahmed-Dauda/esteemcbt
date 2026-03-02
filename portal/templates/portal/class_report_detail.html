@@ -1,6 +1,24 @@
 {% extends 'sms/dashboard/teacherbase.html' %}
 
 {% block content %}
+<!-- PDF Progress Bar -->
+<div id="pdf-progress-wrapper" style="display:none;" class="mt-3">
+    <div class="d-flex justify-content-between mb-1">
+        <span class="fw-bold text-success">Generating PDF</span>
+        <span id="pdf-progress-label" class="text-muted small">Starting...</span>
+    </div>
+    <div class="progress" style="height: 24px;">
+        <div id="pdf-progress-bar"
+             class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+             role="progressbar"
+             style="width: 0%;"
+             aria-valuenow="0"
+             aria-valuemin="0"
+             aria-valuemax="100">0%
+        </div>
+    </div>
+</div>
+
 <div class="container py-4">
 
     <!-- Header -->
@@ -9,12 +27,13 @@
             {{ result_class }} – Report for {{ session.name }} ({{ term.name }})
         </h3>
 
-        {% if students %}
-            <a href="{% url 'portal:download_class_reports_pdf' result_class session.id term.id %}" 
-               class="btn btn-success btn-sm">
-                <i class="bi bi-download me-1"></i> Download All Reports (PDF)
-            </a>
-        {% endif %}
+       {% if students %}
+    <button 
+        class="btn btn-success btn-sm"
+        onclick="generatePDF('{{ result_class }}', {{ session.id }}, {{ term.id }})">
+        <i class="bi bi-download me-1"></i> Download All Reports (PDF)
+    </button>
+{% endif %}
     </div>
 
     <!-- Message / Alert -->
@@ -74,4 +93,66 @@
     {% endif %}
 
 </div>
+
+
+<script>
+function generatePDF(resultClass, sessionId, termId) {
+    document.getElementById("pdf-progress-wrapper").style.display = "block";
+    updatePDFBar(0, "Starting...");
+
+    fetch(`/portal/reports/pdf/generate/${resultClass}/${sessionId}/${termId}/`)
+        .then(res => res.json())
+        .then(data => {
+            if (!data.task_id) { alert("Failed to start PDF generation."); return; }
+            pollPDFStatus(data.task_id);
+        })
+        .catch(() => alert("Error starting PDF generation."));
+}
+
+function pollPDFStatus(taskId) {
+    const interval = setInterval(() => {
+        fetch(`/portal/reports/pdf/status/${taskId}/`)
+            .then(res => res.json())
+            .then(data => {
+                updatePDFBar(data.percent || 0, data.step || "Processing...");
+
+                if (data.state === 'SUCCESS') {
+                    clearInterval(interval);
+                    updatePDFBar(100, "PDF Ready! Downloading...");
+
+                    // Auto trigger download
+                    const a = document.createElement('a');
+                    a.href = data.download_url;
+                    a.download = data.filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                    setTimeout(() => {
+                        document.getElementById("pdf-progress-wrapper").style.display = "none";
+                    }, 3000);
+
+                } else if (data.state === 'FAILURE') {
+                    clearInterval(interval);
+                    document.getElementById("pdf-progress-wrapper").style.display = "none";
+                    alert("PDF generation failed. Please try again.");
+                }
+            })
+            .catch(() => {
+                clearInterval(interval);
+                document.getElementById("pdf-progress-wrapper").style.display = "none";
+                alert("Error checking PDF status.");
+            });
+    }, 2000);
+}
+
+function updatePDFBar(percent, label) {
+    const bar = document.getElementById("pdf-progress-bar");
+    const lbl = document.getElementById("pdf-progress-label");
+    bar.style.width = percent + "%";
+    bar.setAttribute("aria-valuenow", percent);
+    bar.textContent = percent + "%";
+    lbl.textContent = label;
+}
+</script>
 {% endblock %}

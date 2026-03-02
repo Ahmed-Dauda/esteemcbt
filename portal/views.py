@@ -627,260 +627,296 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 
-def download_class_reports_pdf(request, result_class, session_id, term_id):
 
-    # --- Fetch all results ---
-    all_results = Result_Portal.objects.filter(
-        result_class=result_class,
-        session_id=session_id,
-        term_id=term_id
-    ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('student__username', 'subject__title')
+# def download_class_reports_pdf(request, result_class, session_id, term_id):
 
-    if not all_results.exists():
-        return HttpResponse("No results found for this class.", status=404)
+#     # --- Fetch all results ---
+#     all_results = Result_Portal.objects.filter(
+#         result_class=result_class,
+#         session_id=session_id,
+#         term_id=term_id
+#     ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('student__username', 'subject__title')
 
-    # --- Group by student ---
-    students = {}
-    for res in all_results:
-        sid = res.student_id
-        if sid not in students:
-            students[sid] = {
-                'student': res.student,
-                'records': [],
-                'school': res.schools,
-                'session': res.session,
-                'term': res.term
-            }
-        students[sid]['records'].append(res)
+#     if not all_results.exists():
+#         return HttpResponse("No results found for this class.", status=404)
 
-    # --- Compute totals for ranking ---
-    class_totals = {}
-    for res in all_results:
-        sid = res.student_id
-        total = float(res.ca_score or 0) + float(res.midterm_score or 0) + float(res.exam_score or 0)
-        class_totals[sid] = class_totals.get(sid, 0) + total
-    sorted_totals = sorted(class_totals.items(), key=lambda x: x[1], reverse=True)
+#     # --- Group by student ---
+#     students = {}
+#     for res in all_results:
+#         sid = res.student_id
+#         if sid not in students:
+#             students[sid] = {
+#                 'student': res.student,
+#                 'records': [],
+#                 'school': res.schools,
+#                 'session': res.session,
+#                 'term': res.term
+#             }
+#         students[sid]['records'].append(res)
 
-    # --- PDF Setup ---
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="class_{result_class}_term_reports.pdf"'
-    doc = SimpleDocTemplate(response, pagesize=A4, topMargin=25, leftMargin=25, rightMargin=25, bottomMargin=30)
+#     # --- Compute totals for ranking ---
+#     class_totals = {}
+#     for res in all_results:
+#         sid = res.student_id
+#         total = float(res.ca_score or 0) + float(res.midterm_score or 0) + float(res.exam_score or 0)
+#         class_totals[sid] = class_totals.get(sid, 0) + total
+#     sorted_totals = sorted(class_totals.items(), key=lambda x: x[1], reverse=True)
 
-    styles = getSampleStyleSheet()
-    style_left = styles["Normal"]
-    style_left.alignment = TA_LEFT
-    style_center = ParagraphStyle(name="Center", parent=styles["Normal"], alignment=TA_CENTER)
+#     # --- PDF Setup ---
+#     response = HttpResponse(content_type='application/pdf')
+#     response['Content-Disposition'] = f'attachment; filename="class_{result_class}_term_reports.pdf"'
+#     doc = SimpleDocTemplate(response, pagesize=A4, topMargin=25, leftMargin=25, rightMargin=25, bottomMargin=30)
 
-    elements = []
+#     styles = getSampleStyleSheet()
+#     style_left = styles["Normal"]
+#     style_left.alignment = TA_LEFT
+#     style_center = ParagraphStyle(name="Center", parent=styles["Normal"], alignment=TA_CENTER)
 
-    # --- Generate report for each student ---
-    for sid, data in students.items():
-        student = data['student']
-        records = data['records']
-        school = data['school']
-        session = data['session']
-        term = data['term']
+#     elements = []
 
-        # --- Student stats ---
-        num_subjects = len(records)
-        student_total = sum(
-            float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
-            for r in records
-        )
-        student_average = round(student_total / num_subjects, 2) if num_subjects else 0
-        total_students = len(class_totals)
-        class_average = round(sum(class_totals.values()) / len(class_totals), 2)
-        position = next((i + 1 for i, (stud_id, _) in enumerate(sorted_totals) if stud_id == sid), None)
-        highest_in_class = max(class_totals.values(), default=0)
-        lowest_in_class = min(class_totals.values(), default=0)
-        final_grade = records[0].grade_letter if records else ""
+#     # --- Generate report for each student ---
+#     for sid, data in students.items():
+#         student = data['student']
+#         records = data['records']
+#         school = data['school']
+#         session = data['session']
+#         term = data['term']
 
-        # --- Header Section (Logo + School Info in Flex Layout) ---
-        logo_img = None
-        if school and getattr(school, 'logo', None):
-            try:
-                logo_data = io.BytesIO(requests.get(school.logo.url).content)
-                logo_img = RLImage(logo_data, width=80, height=80)
-            except Exception:
-                pass
+#         # --- Student stats ---
+#         num_subjects = len(records)
+#         student_total = sum(
+#             float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
+#             for r in records
+#         )
+#         student_average = round(student_total / num_subjects, 2) if num_subjects else 0
+#         total_students = len(class_totals)
+#         class_average = round(sum(class_totals.values()) / len(class_totals), 2)
+#         position = next((i + 1 for i, (stud_id, _) in enumerate(sorted_totals) if stud_id == sid), None)
+#         highest_in_class = max(class_totals.values(), default=0)
+#         lowest_in_class = min(class_totals.values(), default=0)
+#         final_grade = records[0].grade_letter if records else ""
 
-        # School details
-        school_name = f"<b>{school.school_name or 'Best Academy, Abuja'}</b>"
-        school_motto = f"<i>{school.school_motto or 'Motto: Knowledge for Excellence'}</i>"
-        school_address = f"{school.school_address or 'Tunga'}"
+#         # --- Header Section (Logo + School Info in Flex Layout) ---
+#         logo_img = None
+#         if school and getattr(school, 'logo', None):
+#             try:
+#                 logo_data = io.BytesIO(requests.get(school.logo.url).content)
+#                 logo_img = RLImage(logo_data, width=80, height=80)
+#             except Exception:
+#                 pass
 
-        school_details = [
-            Paragraph(school_name, ParagraphStyle(name='SchoolName', fontSize=14, alignment=TA_LEFT)),
-            Spacer(1, 8),  # 4 points of vertical space
-            Paragraph(school_motto, ParagraphStyle(name='SchoolMotto', fontSize=10, alignment=TA_LEFT)),
-            Spacer(1, 8),  # 2 points of vertical space
-            Paragraph(school_address, ParagraphStyle(name='SchoolAddress', fontSize=9, alignment=TA_LEFT))
-        ]
+#         # School details
+#         school_name = f"<b>{school.school_name or 'Best Academy, Abuja'}</b>"
+#         school_motto = f"<i>{school.school_motto or 'Motto: Knowledge for Excellence'}</i>"
+#         school_address = f"{school.school_address or 'Tunga'}"
 
-
-        # Simulate flexbox with table (Logo | School Info)
-        header_table = Table(
-            [[logo_img if logo_img else "", school_details]],
-            colWidths=[90, 400]
-        )
-        header_table.setStyle(TableStyle([
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEFTPADDING', (0, 0), (-1, -1), 5),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-            ('TOPPADDING', (0, 0), (-1, -1), 0),
-        ]))
-        elements.append(header_table)
-        elements.append(Spacer(1, 10))
-
-        hr = HRFlowable(width="100%", thickness=0.5, color=colors.blue)
-        elements.append(hr)
+#         school_details = [
+#             Paragraph(school_name, ParagraphStyle(name='SchoolName', fontSize=14, alignment=TA_LEFT)),
+#             Spacer(1, 8),  # 4 points of vertical space
+#             Paragraph(school_motto, ParagraphStyle(name='SchoolMotto', fontSize=10, alignment=TA_LEFT)),
+#             Spacer(1, 8),  # 2 points of vertical space
+#             Paragraph(school_address, ParagraphStyle(name='SchoolAddress', fontSize=9, alignment=TA_LEFT))
+#         ]
 
 
-        # --- Title ---
-        elements.append(Paragraph("<b><u>TERM REPORT CARD</u></b>", style_center))
-        elements.append(Spacer(1, 10))
+#         # Simulate flexbox with table (Logo | School Info)
+#         header_table = Table(
+#             [[logo_img if logo_img else "", school_details]],
+#             colWidths=[90, 400]
+#         )
+#         header_table.setStyle(TableStyle([
+#             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+#             ('LEFTPADDING', (0, 0), (-1, -1), 5),
+#             ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+#             ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+#             ('TOPPADDING', (0, 0), (-1, -1), 0),
+#         ]))
+#         elements.append(header_table)
+#         elements.append(Spacer(1, 10))
 
-        # --- Student Info (with Grid Borders) ---
-        full_name = f"{student.first_name or ''} {student.last_name or ''}".strip()
+#         hr = HRFlowable(width="100%", thickness=0.5, color=colors.blue)
+#         elements.append(hr)
 
-        student_info_data = [
-            [f"Name: {student.first_name} {student.last_name}", f"Class: {result_class}", f"Term: {term.name}"],
-            [f"Session: {session.name}", f"No. in Class: {total_students}", f"Position: {position} of {total_students}"],
-            [f"Total Score: {student_total}", f"Average Score: {student_average}", f"Class Average: {class_average}"],
-            [f"Highest in Class: {highest_in_class}", f"Lowest in Class: {lowest_in_class}", f"Final Grade: {final_grade}"],
-        ]
 
-        student_table = Table(student_info_data, colWidths=[180, 180, 180])
-        student_table.setStyle(TableStyle([
-            ('GRID', (0, 0), (-1, -1), 0.6, colors.grey),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]))
-        elements += [student_table, Spacer(1, 15)]
+#         # --- Title ---
+#         elements.append(Paragraph("<b><u>TERM REPORT CARD</u></b>", style_center))
+#         elements.append(Spacer(1, 10))
 
-        max_ca = school.max_ca_score if school else 10
-        max_mid = school.max_midterm_score if school else 30
-        max_exam = school.max_exam_score if school else 60
+#         # --- Student Info (with Grid Borders) ---
+#         full_name = f"{student.first_name or ''} {student.last_name or ''}".strip()
 
-        # --- Subject Table (with Grid) ---
-        header_style = ParagraphStyle(name='HeaderStyle', fontName='Helvetica-Bold', fontSize=7, alignment=1)
-        # Use f-strings to insert actual max values
-        headers = [
-            "Subject",
-            f"CA<br/>({max_ca})",
-            f"Midterm<br/>({max_mid})",
-            f"Exam<br/>({max_exam})",
-            "Total",
-            "Per (%)",
-            "Grade",
-            "Class<br/>Ave",
-            "POS",
-            "Out<br/>Of",
-            "High<br/>In<br/>Class",
-            "Low<br/>In<br/>Class",
-            "Remark"
-        ]
+#         student_info_data = [
+#             [f"Name: {student.first_name} {student.last_name}", f"Class: {result_class}", f"Term: {term.name}"],
+#             [f"Session: {session.name}", f"No. in Class: {total_students}", f"Position: {position} of {total_students}"],
+#             [f"Total Score: {student_total}", f"Average Score: {student_average}", f"Class Average: {class_average}"],
+#             [f"Highest in Class: {highest_in_class}", f"Lowest in Class: {lowest_in_class}", f"Final Grade: {final_grade}"],
+#         ]
 
-        table_data = [[Paragraph(h, header_style) for h in headers]]
+#         student_table = Table(student_info_data, colWidths=[180, 180, 180])
+#         student_table.setStyle(TableStyle([
+#             ('GRID', (0, 0), (-1, -1), 0.6, colors.grey),
+#             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+#             ('FONTSIZE', (0, 0), (-1, -1), 10),
+#             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+#         ]))
+#         elements += [student_table, Spacer(1, 15)]
 
-        for r in records:
-            ca = float(r.ca_score or 0)
-            mid = float(r.midterm_score or 0)
-            exam = float(r.exam_score or 0)
-            total = ca + mid + exam
-            max_total = sum([10 if ca > 0 else 0, 30 if mid > 0 else 0, 60 if exam > 0 else 0])
-            percentage = round((total / max_total) * 100) if max_total else 0
+#         max_ca = school.max_ca_score if school else 10
+#         max_mid = school.max_midterm_score if school else 30
+#         max_exam = school.max_exam_score if school else 60
 
-            subject_results = all_results.filter(subject=r.subject)
-            class_avg = round(sum(
-                float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
-                for s in subject_results
-            ) / len(subject_results), 2) if subject_results else 0
-            high_in_class = max([
-                float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
-                for s in subject_results
-            ], default=0)
-            low_in_class = min([
-                float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
-                for s in subject_results
-            ], default=0)
-            pos_sorted = sorted([
-                (s.student_id, float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0))
-                for s in subject_results
-            ], key=lambda x: x[1], reverse=True)
-            pos = next((i + 1 for i, (sid_, _) in enumerate(pos_sorted) if sid_ == sid), None)
+#         # --- Subject Table (with Grid) ---
+#         header_style = ParagraphStyle(name='HeaderStyle', fontName='Helvetica-Bold', fontSize=7, alignment=1)
+#         # Use f-strings to insert actual max values
+#         headers = [
+#             "Subject",
+#             f"CA<br/>({max_ca})",
+#             f"Midterm<br/>({max_mid})",
+#             f"Exam<br/>({max_exam})",
+#             "Total",
+#             "Per (%)",
+#             "Grade",
+#             "Class<br/>Ave",
+#             "POS",
+#             "Out<br/>Of",
+#             "High<br/>In<br/>Class",
+#             "Low<br/>In<br/>Class",
+#             "Remark"
+#         ]
 
-            row = [
-                r.subject.title, str(ca), str(mid), str(exam), str(total),
-                f"{percentage}", r.grade_letter, str(class_avg), str(pos),
-                str(len(subject_results)), str(high_in_class), str(low_in_class), r.remark
-            ]
-            table_data.append([Paragraph(str(x), style_center) for x in row])
+#         table_data = [[Paragraph(h, header_style) for h in headers]]
 
-        page_width = A4[0] - doc.leftMargin - doc.rightMargin
-        col_fractions = [0.10, 0.05, 0.08, 0.06, 0.07, 0.05, 0.07, 0.05, 0.05, 0.06, 0.06, 0.10, 0.20]
-        col_widths = [page_width * frac for frac in col_fractions]
+#         for r in records:
+#             ca = float(r.ca_score or 0)
+#             mid = float(r.midterm_score or 0)
+#             exam = float(r.exam_score or 0)
+#             total = ca + mid + exam
+#             max_total = sum([10 if ca > 0 else 0, 30 if mid > 0 else 0, 60 if exam > 0 else 0])
+#             percentage = round((total / max_total) * 100) if max_total else 0
 
-        result_table = Table(table_data, colWidths=col_widths)
-        result_table.setStyle(TableStyle([
-            ('GRID', (0, 0), (-1, -1), 0.4, colors.lightgrey),
-            ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 6),
-            ('FONTSIZE', (0, 1), (-1, -1), 6),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]))
-        elements += [result_table, Spacer(1, 15)]
+#             subject_results = all_results.filter(subject=r.subject)
+#             class_avg = round(sum(
+#                 float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
+#                 for s in subject_results
+#             ) / len(subject_results), 2) if subject_results else 0
+#             high_in_class = max([
+#                 float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
+#                 for s in subject_results
+#             ], default=0)
+#             low_in_class = min([
+#                 float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
+#                 for s in subject_results
+#             ], default=0)
+#             pos_sorted = sorted([
+#                 (s.student_id, float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0))
+#                 for s in subject_results
+#             ], key=lambda x: x[1], reverse=True)
+#             pos = next((i + 1 for i, (sid_, _) in enumerate(pos_sorted) if sid_ == sid), None)
 
-        # --- Grading Scale ---
-        elements.append(Paragraph("<b>GRADING SCALE</b>", style_left))
-        elements.append(Spacer(1, 4))
-        elements.append(Paragraph("A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39", style_left))
-        elements.append(Spacer(1, 15))
+#             row = [
+#                 r.subject.title, str(ca), str(mid), str(exam), str(total),
+#                 f"{percentage}", r.grade_letter, str(class_avg), str(pos),
+#                 str(len(subject_results)), str(high_in_class), str(low_in_class), r.remark
+#             ]
+#             table_data.append([Paragraph(str(x), style_center) for x in row])
 
-        behavior = StudentBehaviorRecord.objects.filter(
+#         page_width = A4[0] - doc.leftMargin - doc.rightMargin
+#         col_fractions = [0.10, 0.05, 0.08, 0.06, 0.07, 0.05, 0.07, 0.05, 0.05, 0.06, 0.06, 0.10, 0.20]
+#         col_widths = [page_width * frac for frac in col_fractions]
+
+#         result_table = Table(table_data, colWidths=col_widths)
+#         result_table.setStyle(TableStyle([
+#             ('GRID', (0, 0), (-1, -1), 0.4, colors.lightgrey),
+#             ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
+#             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+#             ('FONTSIZE', (0, 0), (-1, 0), 6),
+#             ('FONTSIZE', (0, 1), (-1, -1), 6),
+#             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+#             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+#         ]))
+#         elements += [result_table, Spacer(1, 15)]
+
+#         # --- Grading Scale ---
+#         elements.append(Paragraph("<b>GRADING SCALE</b>", style_left))
+#         elements.append(Spacer(1, 4))
+#         elements.append(Paragraph("A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39", style_left))
+#         elements.append(Spacer(1, 15))
+
+#         behavior = StudentBehaviorRecord.objects.filter(
            
-            session_id=session_id,
-            term_id=term_id
-        ).first()
+#             session_id=session_id,
+#             term_id=term_id
+#         ).first()
 
-        elements.append(hr)
+#         elements.append(hr)
 
-        if behavior:
-            # append form teacher and principal comments
-            elements.append(Spacer(1, 10))
-            elements.append(Paragraph(f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}", style_left))
+#         if behavior:
+#             # append form teacher and principal comments
+#             elements.append(Spacer(1, 10))
+#             elements.append(Paragraph(f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}", style_left))
 
         
-        elements.append(hr)
+#         elements.append(hr)
 
-        # --- Comments & Signatures ---
-        if school and getattr(school, 'teacher_signature', None):
-            try:
-                sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
-                sig_img = RLImage(sig_data, width=100, height=40)
-                elements.append(sig_img)
-            except Exception:
-                pass
+#         # --- Comments & Signatures ---
+#         if school and getattr(school, 'teacher_signature', None):
+#             try:
+#                 sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
+#                 sig_img = RLImage(sig_data, width=100, height=40)
+#                 elements.append(sig_img)
+#             except Exception:
+#                 pass
 
-        elements.append(Spacer(1, 10))
+#         elements.append(Spacer(1, 10))
 
-        if school and getattr(school, 'principal_signature', None):
-            try:
-                sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
-                sig_img = RLImage(sig_data, width=100, height=40)
-                elements.append(sig_img)
-            except Exception:
-                pass
+#         if school and getattr(school, 'principal_signature', None):
+#             try:
+#                 sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
+#                 sig_img = RLImage(sig_data, width=100, height=40)
+#                 elements.append(sig_img)
+#             except Exception:
+#                 pass
 
-        elements.append(PageBreak())
+#         elements.append(PageBreak())
 
-    doc.build(elements)
-    return response
+#     doc.build(elements)
+#     return response
 
+from celery.result import AsyncResult
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .tasks import generate_class_pdf_task
+
+@csrf_exempt
+def trigger_class_pdf(request, result_class, session_id, term_id):
+    task = generate_class_pdf_task.delay(result_class, session_id, term_id)
+    return JsonResponse({"task_id": task.id}, status=202)
+
+
+def class_pdf_status(request, task_id):
+    result = AsyncResult(task_id)
+
+    if result.state == "PENDING":
+        return JsonResponse({"state": "PENDING", "percent": 0, "step": "Waiting in queue..."})
+
+    elif result.state == "PROGRESS":
+        meta = result.info or {}
+        return JsonResponse({
+            "state": "PROGRESS",
+            "percent": meta.get("percent", 0),
+            "step": meta.get("step", "Processing..."),
+        })
+
+    elif result.state == "SUCCESS":
+        return JsonResponse({
+            "state": "SUCCESS",
+            "download_url": result.result.get("download_url"),
+            "filename": result.result.get("filename"),
+        })
+
+    else:
+        return JsonResponse({"state": "FAILURE", "error": str(result.info)}, status=500)
+    
 
 
 # bulk upload
@@ -943,113 +979,261 @@ from django.contrib import messages
 def enter_results_for_class_subject(request, class_id, subject_id, session_id, term_id):
     """
     Render table of students for a class/subject and handle POST to save all results.
-    Uses update_or_create to save results safely.
+    Uses bulk_update/bulk_create for maximum performance across multiple schools/teachers.
     """
     teacher = _get_teacher_for_request(request.user)
-    # Fetch class, course, session, term
+
+    # ── Fetch objects ──────────────────────────────────────────────────────
     class_obj = get_object_or_404(CourseGrade, id=class_id)
     course_obj = get_object_or_404(Courses, id=subject_id)
     session = get_object_or_404(Session, id=session_id)
     term = get_object_or_404(Term, id=term_id)
 
-    # Fetch all students for this class
-    students = class_obj.students.all().order_by('id')
+    # ── Students ───────────────────────────────────────────────────────────
+    students = list(class_obj.students.all().order_by('id'))
 
-    # School max scores
+    # ── School max scores ──────────────────────────────────────────────────
     school = getattr(class_obj, 'schools', None)
-    max_ca = getattr(school, 'max_ca_score', Decimal('10.0')) if school else Decimal('10.0')
-    max_midterm = getattr(school, 'max_midterm_score', Decimal('30.0')) if school else Decimal('30.0')
-    max_exam = getattr(school, 'max_exam_score', Decimal('60.0')) if school else Decimal('60.0')
+    max_ca = Decimal(str(getattr(school, 'max_ca_score', '10.0') or '10.0'))
+    max_midterm = Decimal(str(getattr(school, 'max_midterm_score', '30.0') or '30.0'))
+    max_exam = Decimal(str(getattr(school, 'max_exam_score', '60.0') or '60.0'))
 
-    # Formset
-    ResultFormset = formset_factory(ResultRowForm, extra=0)
-
-    # GET: prepare initial data
+    # ── Existing results (used in both GET and POST) ───────────────────────
     existing_results = Result_Portal.objects.filter(
-        student_id__in=students.values_list('id', flat=True),
+        student_id__in=[s.id for s in students],
         subject=course_obj,
         session=session,
         term=term,
         result_class=class_obj.name
-    )
+    ).select_for_update()  # lock rows to prevent race conditions
+
     existing_by_student = {r.student_id: r for r in existing_results}
 
-    initial_data = []
-    for s in students:
-        existing = existing_by_student.get(s.id)
-        initial_data.append({
-            'student_id': s.id,
-            'existing_result_id': existing.id if existing else '',
-            'ca_score': existing.ca_score if existing else Decimal('0.00'),
-            'midterm_score': existing.midterm_score if existing else Decimal('0.00'),
-            'exam_score': existing.exam_score if existing else Decimal('0.00'),
-        })
+    # ── Formset ────────────────────────────────────────────────────────────
+    ResultFormset = formset_factory(ResultRowForm, extra=0)
 
+    # ── Context shared across GET and POST ─────────────────────────────────
+    base_context = {
+        "class_obj": class_obj,
+        "subject_obj": course_obj,
+        "session": session,
+        "term": term,
+        "max_ca": max_ca,
+        "max_midterm": max_midterm,
+        "max_exam": max_exam,
+    }
+
+    # ── POST: Save results ─────────────────────────────────────────────────
     if request.method == "POST":
         formset = ResultFormset(request.POST)
+
         if formset.is_valid():
+            to_update = []
+            to_create = []
+
             with transaction.atomic():
                 for form in formset:
-                    student_id = form.cleaned_data.get('student_id')
-                    ca = min(Decimal(form.cleaned_data.get('ca_score') or 0), max_ca)
-                    mid = min(Decimal(form.cleaned_data.get('midterm_score') or 0), max_midterm)
-                    exam = min(Decimal(form.cleaned_data.get('exam_score') or 0), max_exam)
+                    cd = form.cleaned_data
+                    student_id = cd.get('student_id')
+                    if not student_id:
+                        continue
+
+                    # Cap scores at school maximums
+                    ca   = min(Decimal(str(cd.get('ca_score') or 0)), max_ca)
+                    mid  = min(Decimal(str(cd.get('midterm_score') or 0)), max_midterm)
+                    exam = min(Decimal(str(cd.get('exam_score') or 0)), max_exam)
                     total = ca + mid + exam
 
-                    Result_Portal.objects.update_or_create(
-                        student_id=student_id,
-                        subject=course_obj,
-                        term=term,
-                        session=session,
-                        result_class=class_obj.name,
-                        defaults={
-                            'schools': school,
-                            'ca_score': ca,
-                            'midterm_score': mid,
-                            'exam_score': exam,
-                            'total_score': total
-                        }
+                    existing = existing_by_student.get(int(student_id))
+
+                    if existing:
+                        # Update in memory, bulk save later
+                        existing.ca_score = ca
+                        existing.midterm_score = mid
+                        existing.exam_score = exam
+                        existing.total_score = total
+                        to_update.append(existing)
+                    else:
+                        # Queue for bulk create
+                        to_create.append(Result_Portal(
+                            student_id=student_id,
+                            subject=course_obj,
+                            term=term,
+                            session=session,
+                            result_class=class_obj.name,
+                            schools=school,
+                            ca_score=ca,
+                            midterm_score=mid,
+                            exam_score=exam,
+                            total_score=total,
+                        ))
+
+                # ── 2 queries total regardless of class size ───────────────
+                if to_update:
+                    Result_Portal.objects.bulk_update(
+                        to_update,
+                        ['ca_score', 'midterm_score', 'exam_score', 'total_score']
+                    )
+                if to_create:
+                    Result_Portal.objects.bulk_create(
+                        to_create,
+                        update_conflicts=True,  # safe if unique_together is set
+                        update_fields=['ca_score', 'midterm_score', 'exam_score', 'total_score'],
+                        unique_fields=['student_id', 'subject_id', 'term_id', 'session_id'],  # ← matches your unique_together exactly
                     )
 
-            # Add success message
             messages.success(request, "All results have been saved successfully!")
-
-            # Redirect to same page to show message
             return redirect(reverse('portal:enter_results', kwargs={
                 'class_id': class_id,
                 'subject_id': subject_id,
                 'session_id': session_id,
-                'term_id': term_id
+                'term_id': term_id,
             }))
+
         else:
-            # Formset invalid: show errors
-            forms_with_students = zip(formset.forms, students)
+            # Invalid formset — return with errors
+            forms_with_students = list(zip(formset.forms, students))
             return render(request, "portal/enter_results.html", {
+                **base_context,
                 "formset": formset,
                 "forms_with_students": forms_with_students,
-                "class_obj": class_obj,
-                "subject_obj": course_obj,
-                "session": session,
-                "term": term,
-                "max_ca": max_ca,
-                "max_midterm": max_midterm,
-                "max_exam": max_exam,
             })
-    else:
-        # GET: display formset
-        formset = ResultFormset(initial=initial_data)
-        forms_with_students = zip(formset.forms, students)
-        return render(request, "portal/enter_results.html", {
-            "formset": formset,
-            "forms_with_students": forms_with_students,
-            "class_obj": class_obj,
-            "subject_obj": course_obj,
-            "session": session,
-            "term": term,
-            "max_ca": max_ca,
-            "max_midterm": max_midterm,
-            "max_exam": max_exam,
-        })
+
+    # ── GET: Display formset ───────────────────────────────────────────────
+    initial_data = [
+        {
+            'student_id': s.id,
+            'existing_result_id': existing_by_student[s.id].id if s.id in existing_by_student else '',
+            'ca_score': existing_by_student[s.id].ca_score if s.id in existing_by_student else Decimal('0.00'),
+            'midterm_score': existing_by_student[s.id].midterm_score if s.id in existing_by_student else Decimal('0.00'),
+            'exam_score': existing_by_student[s.id].exam_score if s.id in existing_by_student else Decimal('0.00'),
+        }
+        for s in students
+    ]
+
+    formset = ResultFormset(initial=initial_data)
+    forms_with_students = list(zip(formset.forms, students))
+
+    return render(request, "portal/enter_results.html", {
+        **base_context,
+        "formset": formset,
+        "forms_with_students": forms_with_students,
+    })
+
+
+#working codes
+# @require_reportcard_subscription
+# @login_required
+# def enter_results_for_class_subject(request, class_id, subject_id, session_id, term_id):
+#     """
+#     Render table of students for a class/subject and handle POST to save all results.
+#     Uses update_or_create to save results safely.
+#     """
+#     teacher = _get_teacher_for_request(request.user)
+#     # Fetch class, course, session, term
+#     class_obj = get_object_or_404(CourseGrade, id=class_id)
+#     course_obj = get_object_or_404(Courses, id=subject_id)
+#     session = get_object_or_404(Session, id=session_id)
+#     term = get_object_or_404(Term, id=term_id)
+
+#     # Fetch all students for this class
+#     students = class_obj.students.all().order_by('id')
+
+#     # School max scores
+#     school = getattr(class_obj, 'schools', None)
+#     max_ca = getattr(school, 'max_ca_score', Decimal('10.0')) if school else Decimal('10.0')
+#     max_midterm = getattr(school, 'max_midterm_score', Decimal('30.0')) if school else Decimal('30.0')
+#     max_exam = getattr(school, 'max_exam_score', Decimal('60.0')) if school else Decimal('60.0')
+
+#     # Formset
+#     ResultFormset = formset_factory(ResultRowForm, extra=0)
+
+#     # GET: prepare initial data
+#     existing_results = Result_Portal.objects.filter(
+#         student_id__in=students.values_list('id', flat=True),
+#         subject=course_obj,
+#         session=session,
+#         term=term,
+#         result_class=class_obj.name
+#     )
+#     existing_by_student = {r.student_id: r for r in existing_results}
+
+#     initial_data = []
+#     for s in students:
+#         existing = existing_by_student.get(s.id)
+#         initial_data.append({
+#             'student_id': s.id,
+#             'existing_result_id': existing.id if existing else '',
+#             'ca_score': existing.ca_score if existing else Decimal('0.00'),
+#             'midterm_score': existing.midterm_score if existing else Decimal('0.00'),
+#             'exam_score': existing.exam_score if existing else Decimal('0.00'),
+#         })
+
+#     if request.method == "POST":
+#         formset = ResultFormset(request.POST)
+#         if formset.is_valid():
+#             with transaction.atomic():
+#                 for form in formset:
+#                     student_id = form.cleaned_data.get('student_id')
+#                     ca = min(Decimal(form.cleaned_data.get('ca_score') or 0), max_ca)
+#                     mid = min(Decimal(form.cleaned_data.get('midterm_score') or 0), max_midterm)
+#                     exam = min(Decimal(form.cleaned_data.get('exam_score') or 0), max_exam)
+#                     total = ca + mid + exam
+
+#                     Result_Portal.objects.update_or_create(
+#                         student_id=student_id,
+#                         subject=course_obj,
+#                         term=term,
+#                         session=session,
+#                         result_class=class_obj.name,
+#                         defaults={
+#                             'schools': school,
+#                             'ca_score': ca,
+#                             'midterm_score': mid,
+#                             'exam_score': exam,
+#                             'total_score': total
+#                         }
+#                     )
+
+#             # Add success message
+#             messages.success(request, "All results have been saved successfully!")
+
+#             # Redirect to same page to show message
+#             return redirect(reverse('portal:enter_results', kwargs={
+#                 'class_id': class_id,
+#                 'subject_id': subject_id,
+#                 'session_id': session_id,
+#                 'term_id': term_id
+#             }))
+#         else:
+#             # Formset invalid: show errors
+#             forms_with_students = zip(formset.forms, students)
+#             return render(request, "portal/enter_results.html", {
+#                 "formset": formset,
+#                 "forms_with_students": forms_with_students,
+#                 "class_obj": class_obj,
+#                 "subject_obj": course_obj,
+#                 "session": session,
+#                 "term": term,
+#                 "max_ca": max_ca,
+#                 "max_midterm": max_midterm,
+#                 "max_exam": max_exam,
+#             })
+#     else:
+#         # GET: display formset
+#         formset = ResultFormset(initial=initial_data)
+#         forms_with_students = zip(formset.forms, students)
+#         return render(request, "portal/enter_results.html", {
+#             "formset": formset,
+#             "forms_with_students": forms_with_students,
+#             "class_obj": class_obj,
+#             "subject_obj": course_obj,
+#             "session": session,
+#             "term": term,
+#             "max_ca": max_ca,
+#             "max_midterm": max_midterm,
+#             "max_exam": max_exam,
+#         })
 
 
 # @require_reportcard_subscription
@@ -1481,19 +1665,22 @@ from django.http import HttpResponseForbidden
 from django.db.models import Prefetch
 
 from django.http import JsonResponse
-
-from django.http import JsonResponse
-
 @login_required
 def principal_dashboard(request):
-    # Only principals allowed
     if not getattr(request.user, "is_principal", False):
         return HttpResponseForbidden("Access denied")
 
     school = request.user.school
     classes = CourseGrade.objects.filter(schools=school)
-    sessions = Session.objects.all()
-    terms = Term.objects.all()
+
+    # ── Filter sessions and terms to only those that have results for this school
+    sessions = Session.objects.filter(
+        result_portal__schools=school
+    ).distinct().order_by('name')
+
+    terms = Term.objects.filter(
+        result_portal__schools=school
+    ).distinct().order_by('name')
 
     selected_session_id = request.GET.get("session")
     selected_term_id = request.GET.get("term")
@@ -1501,12 +1688,11 @@ def principal_dashboard(request):
 
     selected_session = Session.objects.filter(id=selected_session_id).first() if selected_session_id else None
     selected_term = Term.objects.filter(id=selected_term_id).first() if selected_term_id else None
-    selected_class = CourseGrade.objects.filter(id=selected_class_id).first() if selected_class_id else None
+    selected_class = CourseGrade.objects.filter(id=selected_class_id, schools=school).first() if selected_class_id else None
 
     records = []
 
     if selected_session and selected_term and selected_class:
-        # Ensure all StudentBehaviorRecords exist
         for student in selected_class.students.all():
             StudentBehaviorRecord.objects.get_or_create(
                 student=student,
@@ -1516,38 +1702,35 @@ def principal_dashboard(request):
                 defaults={'form_teacher': selected_class.form_teacher}
             )
 
-        # Fetch behavior records
         records = StudentBehaviorRecord.objects.filter(
             student__course_grades=selected_class,
             session=selected_session,
             term=selected_term
         ).select_related('student')
 
-        # Attach results and calculate totals, grades, and remarks
         for record in records:
             results = Result_Portal.objects.filter(
                 student=record.student,
                 session=selected_session,
                 term=selected_term,
-                schools=school
+                result_class=selected_class.name
             ).select_related('subject')
 
-            # Compute total, average, grade per student
-            total_score = sum(float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
-                              for r in results)
-            num_subjects = len(results)
+            total_score = sum(
+                float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
+                for r in results
+            )
+            num_subjects = results.count()
             average_score = round(total_score / num_subjects, 2) if num_subjects else 0
             final_grade = results[0].grade_letter if results else ''
             remarks = {r.subject.title: r.remark for r in results}
 
-            # Attach to record for template
             record.results = results
             record.total_score = total_score
             record.average_score = average_score
             record.final_grade = final_grade
             record.subject_remarks = remarks
 
-        # Handle POST to save principal comments
         if request.method == "POST":
             for record in records:
                 comment_field = f"comment_{record.student.id}"
@@ -1556,13 +1739,12 @@ def principal_dashboard(request):
                     record.principal_comment = new_comment
                     record.save()
             messages.success(request, "Principal comments saved successfully.")
-            # Redirect to refresh GET params
             return redirect(request.path + f"?session={selected_session.id}&term={selected_term.id}&class={selected_class.id}")
 
     context = {
         "classes": classes,
-        "sessions": sessions,
-        "terms": terms,
+        "sessions": sessions,   # ← now school-scoped, no duplicates
+        "terms": terms,         # ← now school-scoped, no duplicates
         "selected_session": selected_session,
         "selected_term": selected_term,
         "selected_class": selected_class,
@@ -1649,6 +1831,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .tasks import generate_comments_task
 
+
 @csrf_exempt
 def generate_all_principal_comments(request):
     session_id = request.GET.get("session")
@@ -1694,44 +1877,44 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .tasks import generate_comments_task
 
-@csrf_exempt
-def generate_all_principal_comments(request):
-    session_id = request.GET.get("session")
-    term_id = request.GET.get("term")
-    class_id = request.GET.get("class")
+# @csrf_exempt
+# def generate_all_principal_comments(request):
+#     session_id = request.GET.get("session")
+#     term_id = request.GET.get("term")
+#     class_id = request.GET.get("class")
 
-    if not (session_id and term_id and class_id):
-        return JsonResponse({"error": "Missing parameters"}, status=400)
+#     if not (session_id and term_id and class_id):
+#         return JsonResponse({"error": "Missing parameters"}, status=400)
 
-    # Fire task in background
-    task = generate_comments_task.delay(session_id, term_id, class_id)
-    return JsonResponse({"task_id": task.id}, status=202)
+#     # Fire task in background
+#     task = generate_comments_task.delay(session_id, term_id, class_id)
+#     return JsonResponse({"task_id": task.id}, status=202)
 
 
-def get_comment_task_status(request, task_id):
-    """Poll this endpoint to check progress and retrieve comments."""
-    result = AsyncResult(task_id)
+# def get_comment_task_status(request, task_id):
+#     """Poll this endpoint to check progress and retrieve comments."""
+#     result = AsyncResult(task_id)
 
-    if result.state == "PENDING":
-        return JsonResponse({"state": "PENDING", "progress": 0})
+#     if result.state == "PENDING":
+#         return JsonResponse({"state": "PENDING", "progress": 0})
 
-    elif result.state == "PROGRESS":
-        meta = result.info
-        return JsonResponse({
-            "state": "PROGRESS",
-            "current": meta.get("current", 0),
-            "total": meta.get("total", 1),
-            "comments": meta.get("comments", {}),
-        })
+#     elif result.state == "PROGRESS":
+#         meta = result.info
+#         return JsonResponse({
+#             "state": "PROGRESS",
+#             "current": meta.get("current", 0),
+#             "total": meta.get("total", 1),
+#             "comments": meta.get("comments", {}),
+#         })
 
-    elif result.state == "SUCCESS":
-        return JsonResponse({
-            "state": "SUCCESS",
-            "comments": result.result.get("comments", {}),
-        })
+#     elif result.state == "SUCCESS":
+#         return JsonResponse({
+#             "state": "SUCCESS",
+#             "comments": result.result.get("comments", {}),
+#         })
 
-    else:  # FAILURE
-        return JsonResponse({"state": "FAILURE", "error": str(result.info)}, status=500)
+#     else:  # FAILURE
+#         return JsonResponse({"state": "FAILURE", "error": str(result.info)}, status=500)
     
 
 #real view

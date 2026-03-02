@@ -38,7 +38,17 @@ urlpatterns = [
 
     path('reports/', views.class_report_list, name='class_report_list'),
     path('reports/<str:result_class>/<int:session_id>/<int:term_id>/', views.class_report_detail, name='class_report_detail'),
-    path('reports/pdf/<str:result_class>/<int:session_id>/<int:term_id>/', views.download_class_reports_pdf, name='download_class_reports_pdf'),
+    path(
+    'reports/pdf/generate/<str:result_class>/<int:session_id>/<int:term_id>/',
+    views.trigger_class_pdf,
+    name='trigger_class_pdf'
+),
+path(
+    'reports/pdf/status/<str:task_id>/',
+    views.class_pdf_status,
+    name='class_pdf_status'
+),
+    # path('reports/pdf/<str:result_class>/<int:session_id>/<int:term_id>/', views.download_class_reports_pdf, name='download_class_reports_pdf'),
     
     # class report card
     path('report-cards/', views.report_card_list, name='report_card_list'),
