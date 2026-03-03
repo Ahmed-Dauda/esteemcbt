@@ -27,13 +27,14 @@
             {{ result_class }} – Report for {{ session.name }} ({{ term.name }})
         </h3>
 
-       {% if students %}
-    <button 
-        class="btn btn-success btn-sm"
-        onclick="generatePDF('{{ result_class }}', {{ session.id }}, {{ term.id }})">
-        <i class="bi bi-download me-1"></i> Download All Reports (PDF)
-    </button>
-{% endif %}
+        {% if students %}
+        <button
+            class="btn btn-success btn-sm"
+            id="download-btn"
+            onclick="generatePDF('{{ result_class }}', {{ session.id }}, {{ term.id }})">
+            <i class="bi bi-download me-1"></i> Download All Reports (PDF)
+        </button>
+        {% endif %}
     </div>
 
     <!-- Message / Alert -->
@@ -47,7 +48,7 @@
             <!-- Card Header -->
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">{{ student_data.student.first_name }} {{ student_data.student.last_name }}</h5>
-                <a href="{% url 'portal:report_card_detail' student_data.student.id session.id term.id %}" 
+                <a href="{% url 'portal:report_card_detail' student_data.student.id session.id term.id %}"
                    class="btn btn-light btn-sm">
                     <i class="bi bi-eye me-1"></i> View Full Report
                 </a>
@@ -94,19 +95,29 @@
 
 </div>
 
-
 <script>
 function generatePDF(resultClass, sessionId, termId) {
+    const btn = document.getElementById('download-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Generating...';
+
     document.getElementById("pdf-progress-wrapper").style.display = "block";
     updatePDFBar(0, "Starting...");
 
     fetch(`/portal/reports/pdf/generate/${resultClass}/${sessionId}/${termId}/`)
         .then(res => res.json())
         .then(data => {
-            if (!data.task_id) { alert("Failed to start PDF generation."); return; }
+            if (!data.task_id) {
+                alert("Failed to start PDF generation.");
+                resetBtn();
+                return;
+            }
             pollPDFStatus(data.task_id);
         })
-        .catch(() => alert("Error starting PDF generation."));
+        .catch(() => {
+            alert("Error starting PDF generation.");
+            resetBtn();
+        });
 }
 
 function pollPDFStatus(taskId) {
@@ -120,28 +131,41 @@ function pollPDFStatus(taskId) {
                     clearInterval(interval);
                     updatePDFBar(100, "PDF Ready! Downloading...");
 
-                    // Auto trigger download
-                    const a = document.createElement('a');
-                    a.href = data.download_url;
-                    a.download = data.filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+                    // ── Force download as blob (prevents redirect to Cloudinary) ──
+                    fetch(data.download_url)
+                        .then(res => res.blob())
+                        .then(blob => {
+                            const blobUrl = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = blobUrl;
+                            a.download = data.filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(blobUrl);
+                            document.body.removeChild(a);
+                        })
+                        .catch(() => {
+                            // Fallback: open in new tab
+                            window.open(data.download_url, '_blank');
+                        });
 
                     setTimeout(() => {
                         document.getElementById("pdf-progress-wrapper").style.display = "none";
+                        resetBtn();
                     }, 3000);
 
                 } else if (data.state === 'FAILURE') {
                     clearInterval(interval);
                     document.getElementById("pdf-progress-wrapper").style.display = "none";
                     alert("PDF generation failed. Please try again.");
+                    resetBtn();
                 }
             })
             .catch(() => {
                 clearInterval(interval);
                 document.getElementById("pdf-progress-wrapper").style.display = "none";
                 alert("Error checking PDF status.");
+                resetBtn();
             });
     }, 2000);
 }
@@ -153,6 +177,12 @@ function updatePDFBar(percent, label) {
     bar.setAttribute("aria-valuenow", percent);
     bar.textContent = percent + "%";
     lbl.textContent = label;
+}
+
+function resetBtn() {
+    const btn = document.getElementById('download-btn');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-download me-1"></i> Download All Reports (PDF)';
 }
 </script>
 {% endblock %}
