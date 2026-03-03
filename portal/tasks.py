@@ -296,6 +296,19 @@ def generate_class_pdf_task(self, result_class, session_id, term_id):
     doc.build(final_elements)
 
     # ── Upload to Cloudinary ───────────────────────────────────────────────
+    # ── Upload to Cloudinary ───────────────────────────────────────────────
+    import cloudinary
+    import cloudinary.uploader
+    from django.conf import settings
+
+    # Explicitly configure inside task to ensure worker has correct credentials
+    cloudinary.config(
+        cloud_name=settings.CLOUDINARY_CLOUD_NAME if hasattr(settings, 'CLOUDINARY_CLOUD_NAME') else os.environ.get('CLOUDINARY_CLOUD_NAME'),
+        api_key=settings.CLOUDINARY_API_KEY if hasattr(settings, 'CLOUDINARY_API_KEY') else os.environ.get('CLOUDINARY_API_KEY'),
+        api_secret=settings.CLOUDINARY_API_SECRET if hasattr(settings, 'CLOUDINARY_API_SECRET') else os.environ.get('CLOUDINARY_API_SECRET'),
+        secure=True
+    )
+
     filename = f"class_{result_class}_session{session_id}_term{term_id}.pdf"
 
     self.update_state(state="PROGRESS", meta={"step": "Uploading PDF...", "percent": 92})
@@ -306,14 +319,12 @@ def generate_class_pdf_task(self, result_class, session_id, term_id):
         resource_type="raw",
         public_id=f"pdfs/{filename}",
         overwrite=True,
-        format="pdf"
     )
     download_url = result["secure_url"]
 
     self.update_state(state="PROGRESS", meta={"step": "Done!", "percent": 100})
 
     return {"download_url": download_url, "filename": filename}
-
 
 
 async def fetch_comment(student_name, result_text, strong, weak, student_id, semaphore):
