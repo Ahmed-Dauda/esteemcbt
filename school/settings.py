@@ -157,34 +157,16 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-# cloudinary settings
-# cloud_name = 'ds5l3gqr6'
-# api_key = '671667183251344'
-# api_secret = 'P5WKA1qweMmd1i4TkU2W_ZY9ZuA'
-# secure = True
 
 # Configure Cloudinary
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
-# Configure Cloudinary
-# cloudinary.config(
-#     cloud_name='dcomiviua',
-#     api_key='365524854341134',
-#     api_secret='_a3awGtK3hznGaSpvLff2RFTt_I',
-#     secure = True
-# )
-
 
 # import cloudinary
 
-# cloudinary.config( 
-#   cloud_name = "ds5l3gqr6", 
-#   api_key ="671667183251344", 
-#   api_secret = "P5WKA1qweMmd1i4TkU2W_ZY9ZuA",
-#   secure = True
-# )
+
 # email settings
 
 # EMAIL_BACKED = 'django.core.mail.backends.smtp.EmailBackend'

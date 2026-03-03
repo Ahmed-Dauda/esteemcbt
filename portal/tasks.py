@@ -3,10 +3,6 @@ from celery import shared_task
 from openai import AsyncOpenAI
 from django.conf import settings
 from .models import NewUser, Result_Portal
-
-client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-
-
 import asyncio
 import io
 import os
@@ -23,6 +19,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT, TA_CENTER
 from .models import Result_Portal, StudentBehaviorRecord
+client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+
 
 
 def build_student_pdf_data(sid, data, all_results_dict, class_totals, sorted_totals):
@@ -107,9 +105,7 @@ def build_student_pdf_data(sid, data, all_results_dict, class_totals, sorted_tot
     elements += [student_table, Spacer(1, 15)]
 
     # ── Subject Table ──────────────────────────────────────────────────────
-    # max_ca = getattr(school, 'max_ca_score', 10)
-    # max_mid = getattr(school, 'max_midterm_score', 30)
-    # max_exam = getattr(school, 'max_exam_score', 60)
+
     max_ca = float(getattr(school, 'max_ca_score', 10) or 10)
     max_mid = float(getattr(school, 'max_midterm_score', 30) or 30)
     max_exam = float(getattr(school, 'max_exam_score', 60) or 60)
@@ -197,13 +193,13 @@ def build_student_pdf_data(sid, data, all_results_dict, class_totals, sorted_tot
 
     return sid, elements
 
-
 @shared_task(bind=True)
 def generate_class_pdf_task(self, result_class, session_id, term_id):
     """
     Celery task: builds each student's PDF section in parallel threads,
-    assembles into one PDF, saves to media, returns download path.
+    assembles into one PDF, uploads to Cloudinary, returns download URL.
     """
+    import cloudinary.uploader
     from .models import Result_Portal, StudentBehaviorRecord
 
     self.update_state(state="PROGRESS", meta={"step": "Fetching data...", "percent": 5})
@@ -285,27 +281,34 @@ def generate_class_pdf_task(self, result_class, session_id, term_id):
 
     self.update_state(state="PROGRESS", meta={"step": "Assembling final PDF...", "percent": 85})
 
-    # ── Assemble PDF in original student order ─────────────────────────────
+    # ── Assemble PDF in ranked order ───────────────────────────────────────
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=25, leftMargin=25, rightMargin=25, bottomMargin=30)
+    doc = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        topMargin=25, leftMargin=25, rightMargin=25, bottomMargin=30
+    )
 
     final_elements = []
-    for sid, _ in sorted_totals:  # maintain ranked order
+    for sid, _ in sorted_totals:
         if sid in student_elements:
             final_elements.extend(student_elements[sid])
 
     doc.build(final_elements)
 
-    # ── Save PDF to media/pdfs/ ────────────────────────────────────────────
-    pdf_dir = os.path.join(settings.MEDIA_ROOT, "pdfs")
-    os.makedirs(pdf_dir, exist_ok=True)
+    # ── Upload to Cloudinary ───────────────────────────────────────────────
     filename = f"class_{result_class}_session{session_id}_term{term_id}.pdf"
-    filepath = os.path.join(pdf_dir, filename)
 
-    with open(filepath, "wb") as f:
-        f.write(buffer.getvalue())
+    self.update_state(state="PROGRESS", meta={"step": "Uploading PDF...", "percent": 92})
 
-    download_url = f"{settings.MEDIA_URL}pdfs/{filename}"
+    buffer.seek(0)
+    result = cloudinary.uploader.upload(
+        buffer,
+        resource_type="raw",
+        public_id=f"pdfs/{filename}",
+        overwrite=True,
+        format="pdf"
+    )
+    download_url = result["secure_url"]
 
     self.update_state(state="PROGRESS", meta={"step": "Done!", "percent": 100})
 
