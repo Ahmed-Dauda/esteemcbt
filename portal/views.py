@@ -552,16 +552,15 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     doc.build(elements)
     return response
 
-
 def class_report_list(request):
-    # Fetch distinct combinations
     reports = Result_Portal.objects.values(
         'result_class',
         'session_id',
         'session__name',
         'term_id',
-        'term__name'
-    ).distinct()
+        'term__name',
+        'schools__school_name',
+    ).distinct().order_by('result_class', 'session__name', 'term__name')
 
     return render(request, 'portal/class_report_list.html', {
         'reports': reports
@@ -886,6 +885,7 @@ from celery.result import AsyncResult
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .tasks import generate_class_pdf_task
+
 
 @csrf_exempt
 def trigger_class_pdf(request, result_class, session_id, term_id):
