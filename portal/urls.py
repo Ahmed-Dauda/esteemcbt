@@ -4,6 +4,7 @@ from . import views
 app_name = 'portal'
 
 urlpatterns = [
+    path('reports/pdf/download/', views.proxy_download_pdf, name='proxy_download_pdf'),
      path(
         "generate-principal-comment/<int:student_id>/",
         views.generate_principal_comment,
@@ -48,7 +49,7 @@ path(
     views.class_pdf_status,
     name='class_pdf_status'
 ),
-    # path('reports/pdf/<str:result_class>/<int:session_id>/<int:term_id>/', views.download_class_reports_pdf, name='download_class_reports_pdf'),
+    path('reports/pdf/<str:result_class>/<int:session_id>/<int:term_id>/', views.download_class_reports_pdf, name='download_class_reports_pdf'),
     
     # class report card
     path('report-cards/', views.report_card_list, name='report_card_list'),

@@ -567,6 +567,52 @@ def class_report_list(request):
     })
 
 
+import requests
+from django.http import HttpResponse
+
+import requests
+from urllib.parse import unquote
+from django.http import HttpResponse, HttpResponseRedirect
+
+def proxy_download_pdf(request):
+    url = request.GET.get('url')
+    filename = request.GET.get('filename', 'report.pdf')
+
+    if not url:
+        return HttpResponse("Invalid URL", status=400)
+
+    # ── Decode double-encoded URL ──────────────────────────────
+    url = unquote(url)
+
+    # ── Handle local media files ───────────────────────────────
+    if url.startswith('/media/'):
+        import os
+        from django.conf import settings
+        filepath = os.path.join(settings.MEDIA_ROOT, url.replace('/media/', ''))
+        if os.path.exists(filepath):
+            with open(filepath, 'rb') as f:
+                response = HttpResponse(f.read(), content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                return response
+        return HttpResponse("File not found", status=404)
+
+    # ── Handle Cloudinary URLs ─────────────────────────────────
+    if 'cloudinary.com' not in url:
+        return HttpResponse("Invalid URL", status=400)
+
+    try:
+        response = requests.get(url, stream=True, timeout=30)
+        response.raise_for_status()
+        django_response = HttpResponse(
+            response.content,
+            content_type='application/pdf'
+        )
+        django_response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return django_response
+    except Exception:
+        return HttpResponseRedirect(url)
+
+
 def class_report_detail(request, result_class, session_id, term_id):
     # Fetch session and term objects
     session = get_object_or_404(Session, id=session_id)
@@ -627,259 +673,260 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 
 
-# def download_class_reports_pdf(request, result_class, session_id, term_id):
+def download_class_reports_pdf(request, result_class, session_id, term_id):
 
-#     # --- Fetch all results ---
-#     all_results = Result_Portal.objects.filter(
-#         result_class=result_class,
-#         session_id=session_id,
-#         term_id=term_id
-#     ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('student__username', 'subject__title')
+    # --- Fetch all results ---
+    all_results = Result_Portal.objects.filter(
+        result_class=result_class,
+        session_id=session_id,
+        term_id=term_id
+    ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('student__username', 'subject__title')
 
-#     if not all_results.exists():
-#         return HttpResponse("No results found for this class.", status=404)
+    if not all_results.exists():
+        return HttpResponse("No results found for this class.", status=404)
 
-#     # --- Group by student ---
-#     students = {}
-#     for res in all_results:
-#         sid = res.student_id
-#         if sid not in students:
-#             students[sid] = {
-#                 'student': res.student,
-#                 'records': [],
-#                 'school': res.schools,
-#                 'session': res.session,
-#                 'term': res.term
-#             }
-#         students[sid]['records'].append(res)
+    # --- Group by student ---
+    students = {}
+    for res in all_results:
+        sid = res.student_id
+        if sid not in students:
+            students[sid] = {
+                'student': res.student,
+                'records': [],
+                'school': res.schools,
+                'session': res.session,
+                'term': res.term
+            }
+        students[sid]['records'].append(res)
 
-#     # --- Compute totals for ranking ---
-#     class_totals = {}
-#     for res in all_results:
-#         sid = res.student_id
-#         total = float(res.ca_score or 0) + float(res.midterm_score or 0) + float(res.exam_score or 0)
-#         class_totals[sid] = class_totals.get(sid, 0) + total
-#     sorted_totals = sorted(class_totals.items(), key=lambda x: x[1], reverse=True)
+    # --- Compute totals for ranking ---
+    class_totals = {}
+    for res in all_results:
+        sid = res.student_id
+        total = float(res.ca_score or 0) + float(res.midterm_score or 0) + float(res.exam_score or 0)
+        class_totals[sid] = class_totals.get(sid, 0) + total
+    sorted_totals = sorted(class_totals.items(), key=lambda x: x[1], reverse=True)
 
-#     # --- PDF Setup ---
-#     response = HttpResponse(content_type='application/pdf')
-#     response['Content-Disposition'] = f'attachment; filename="class_{result_class}_term_reports.pdf"'
-#     doc = SimpleDocTemplate(response, pagesize=A4, topMargin=25, leftMargin=25, rightMargin=25, bottomMargin=30)
+    # --- PDF Setup ---
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="class_{result_class}_term_reports.pdf"'
+    doc = SimpleDocTemplate(response, pagesize=A4, topMargin=25, leftMargin=25, rightMargin=25, bottomMargin=30)
 
-#     styles = getSampleStyleSheet()
-#     style_left = styles["Normal"]
-#     style_left.alignment = TA_LEFT
-#     style_center = ParagraphStyle(name="Center", parent=styles["Normal"], alignment=TA_CENTER)
+    styles = getSampleStyleSheet()
+    style_left = styles["Normal"]
+    style_left.alignment = TA_LEFT
+    style_center = ParagraphStyle(name="Center", parent=styles["Normal"], alignment=TA_CENTER)
 
-#     elements = []
+    elements = []
 
-#     # --- Generate report for each student ---
-#     for sid, data in students.items():
-#         student = data['student']
-#         records = data['records']
-#         school = data['school']
-#         session = data['session']
-#         term = data['term']
+    # --- Generate report for each student ---
+    for sid, data in students.items():
+        student = data['student']
+        records = data['records']
+        school = data['school']
+        session = data['session']
+        term = data['term']
 
-#         # --- Student stats ---
-#         num_subjects = len(records)
-#         student_total = sum(
-#             float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
-#             for r in records
-#         )
-#         student_average = round(student_total / num_subjects, 2) if num_subjects else 0
-#         total_students = len(class_totals)
-#         class_average = round(sum(class_totals.values()) / len(class_totals), 2)
-#         position = next((i + 1 for i, (stud_id, _) in enumerate(sorted_totals) if stud_id == sid), None)
-#         highest_in_class = max(class_totals.values(), default=0)
-#         lowest_in_class = min(class_totals.values(), default=0)
-#         final_grade = records[0].grade_letter if records else ""
+        # --- Student stats ---
+        num_subjects = len(records)
+        student_total = sum(
+            float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
+            for r in records
+        )
+        student_average = round(student_total / num_subjects, 2) if num_subjects else 0
+        total_students = len(class_totals)
+        class_average = round(sum(class_totals.values()) / len(class_totals), 2)
+        position = next((i + 1 for i, (stud_id, _) in enumerate(sorted_totals) if stud_id == sid), None)
+        highest_in_class = max(class_totals.values(), default=0)
+        lowest_in_class = min(class_totals.values(), default=0)
+        final_grade = records[0].grade_letter if records else ""
 
-#         # --- Header Section (Logo + School Info in Flex Layout) ---
-#         logo_img = None
-#         if school and getattr(school, 'logo', None):
-#             try:
-#                 logo_data = io.BytesIO(requests.get(school.logo.url).content)
-#                 logo_img = RLImage(logo_data, width=80, height=80)
-#             except Exception:
-#                 pass
+        # --- Header Section (Logo + School Info in Flex Layout) ---
+        logo_img = None
+        if school and getattr(school, 'logo', None):
+            try:
+                logo_data = io.BytesIO(requests.get(school.logo.url).content)
+                logo_img = RLImage(logo_data, width=80, height=80)
+            except Exception:
+                pass
 
-#         # School details
-#         school_name = f"<b>{school.school_name or 'Best Academy, Abuja'}</b>"
-#         school_motto = f"<i>{school.school_motto or 'Motto: Knowledge for Excellence'}</i>"
-#         school_address = f"{school.school_address or 'Tunga'}"
+        # School details
+        school_name = f"<b>{school.school_name or 'Best Academy, Abuja'}</b>"
+        school_motto = f"<i>{school.school_motto or 'Motto: Knowledge for Excellence'}</i>"
+        school_address = f"{school.school_address or 'Tunga'}"
 
-#         school_details = [
-#             Paragraph(school_name, ParagraphStyle(name='SchoolName', fontSize=14, alignment=TA_LEFT)),
-#             Spacer(1, 8),  # 4 points of vertical space
-#             Paragraph(school_motto, ParagraphStyle(name='SchoolMotto', fontSize=10, alignment=TA_LEFT)),
-#             Spacer(1, 8),  # 2 points of vertical space
-#             Paragraph(school_address, ParagraphStyle(name='SchoolAddress', fontSize=9, alignment=TA_LEFT))
-#         ]
-
-
-#         # Simulate flexbox with table (Logo | School Info)
-#         header_table = Table(
-#             [[logo_img if logo_img else "", school_details]],
-#             colWidths=[90, 400]
-#         )
-#         header_table.setStyle(TableStyle([
-#             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-#             ('LEFTPADDING', (0, 0), (-1, -1), 5),
-#             ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-#             ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-#             ('TOPPADDING', (0, 0), (-1, -1), 0),
-#         ]))
-#         elements.append(header_table)
-#         elements.append(Spacer(1, 10))
-
-#         hr = HRFlowable(width="100%", thickness=0.5, color=colors.blue)
-#         elements.append(hr)
+        school_details = [
+            Paragraph(school_name, ParagraphStyle(name='SchoolName', fontSize=14, alignment=TA_LEFT)),
+            Spacer(1, 8),  # 4 points of vertical space
+            Paragraph(school_motto, ParagraphStyle(name='SchoolMotto', fontSize=10, alignment=TA_LEFT)),
+            Spacer(1, 8),  # 2 points of vertical space
+            Paragraph(school_address, ParagraphStyle(name='SchoolAddress', fontSize=9, alignment=TA_LEFT))
+        ]
 
 
-#         # --- Title ---
-#         elements.append(Paragraph("<b><u>TERM REPORT CARD</u></b>", style_center))
-#         elements.append(Spacer(1, 10))
+        # Simulate flexbox with table (Logo | School Info)
+        header_table = Table(
+            [[logo_img if logo_img else "", school_details]],
+            colWidths=[90, 400]
+        )
+        header_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 5),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+            ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ]))
+        elements.append(header_table)
+        elements.append(Spacer(1, 10))
 
-#         # --- Student Info (with Grid Borders) ---
-#         full_name = f"{student.first_name or ''} {student.last_name or ''}".strip()
+        hr = HRFlowable(width="100%", thickness=0.5, color=colors.blue)
+        elements.append(hr)
 
-#         student_info_data = [
-#             [f"Name: {student.first_name} {student.last_name}", f"Class: {result_class}", f"Term: {term.name}"],
-#             [f"Session: {session.name}", f"No. in Class: {total_students}", f"Position: {position} of {total_students}"],
-#             [f"Total Score: {student_total}", f"Average Score: {student_average}", f"Class Average: {class_average}"],
-#             [f"Highest in Class: {highest_in_class}", f"Lowest in Class: {lowest_in_class}", f"Final Grade: {final_grade}"],
-#         ]
 
-#         student_table = Table(student_info_data, colWidths=[180, 180, 180])
-#         student_table.setStyle(TableStyle([
-#             ('GRID', (0, 0), (-1, -1), 0.6, colors.grey),
-#             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-#             ('FONTSIZE', (0, 0), (-1, -1), 10),
-#             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-#         ]))
-#         elements += [student_table, Spacer(1, 15)]
+        # --- Title ---
+        elements.append(Paragraph("<b><u>TERM REPORT CARD</u></b>", style_center))
+        elements.append(Spacer(1, 10))
 
-#         max_ca = school.max_ca_score if school else 10
-#         max_mid = school.max_midterm_score if school else 30
-#         max_exam = school.max_exam_score if school else 60
+        # --- Student Info (with Grid Borders) ---
+        full_name = f"{student.first_name or ''} {student.last_name or ''}".strip()
 
-#         # --- Subject Table (with Grid) ---
-#         header_style = ParagraphStyle(name='HeaderStyle', fontName='Helvetica-Bold', fontSize=7, alignment=1)
-#         # Use f-strings to insert actual max values
-#         headers = [
-#             "Subject",
-#             f"CA<br/>({max_ca})",
-#             f"Midterm<br/>({max_mid})",
-#             f"Exam<br/>({max_exam})",
-#             "Total",
-#             "Per (%)",
-#             "Grade",
-#             "Class<br/>Ave",
-#             "POS",
-#             "Out<br/>Of",
-#             "High<br/>In<br/>Class",
-#             "Low<br/>In<br/>Class",
-#             "Remark"
-#         ]
+        student_info_data = [
+            [f"Name: {student.first_name} {student.last_name}", f"Class: {result_class}", f"Term: {term.name}"],
+            [f"Session: {session.name}", f"No. in Class: {total_students}", f"Position: {position} of {total_students}"],
+            [f"Total Score: {student_total}", f"Average Score: {student_average}", f"Class Average: {class_average}"],
+            [f"Highest in Class: {highest_in_class}", f"Lowest in Class: {lowest_in_class}", f"Final Grade: {final_grade}"],
+        ]
 
-#         table_data = [[Paragraph(h, header_style) for h in headers]]
+        student_table = Table(student_info_data, colWidths=[180, 180, 180])
+        student_table.setStyle(TableStyle([
+            ('GRID', (0, 0), (-1, -1), 0.6, colors.grey),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        elements += [student_table, Spacer(1, 15)]
 
-#         for r in records:
-#             ca = float(r.ca_score or 0)
-#             mid = float(r.midterm_score or 0)
-#             exam = float(r.exam_score or 0)
-#             total = ca + mid + exam
-#             max_total = sum([10 if ca > 0 else 0, 30 if mid > 0 else 0, 60 if exam > 0 else 0])
-#             percentage = round((total / max_total) * 100) if max_total else 0
+        max_ca = school.max_ca_score if school else 10
+        max_mid = school.max_midterm_score if school else 30
+        max_exam = school.max_exam_score if school else 60
 
-#             subject_results = all_results.filter(subject=r.subject)
-#             class_avg = round(sum(
-#                 float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
-#                 for s in subject_results
-#             ) / len(subject_results), 2) if subject_results else 0
-#             high_in_class = max([
-#                 float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
-#                 for s in subject_results
-#             ], default=0)
-#             low_in_class = min([
-#                 float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
-#                 for s in subject_results
-#             ], default=0)
-#             pos_sorted = sorted([
-#                 (s.student_id, float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0))
-#                 for s in subject_results
-#             ], key=lambda x: x[1], reverse=True)
-#             pos = next((i + 1 for i, (sid_, _) in enumerate(pos_sorted) if sid_ == sid), None)
+        # --- Subject Table (with Grid) ---
+        header_style = ParagraphStyle(name='HeaderStyle', fontName='Helvetica-Bold', fontSize=7, alignment=1)
+        # Use f-strings to insert actual max values
+        headers = [
+            "Subject",
+            f"CA<br/>({max_ca})",
+            f"Midterm<br/>({max_mid})",
+            f"Exam<br/>({max_exam})",
+            "Total",
+            "Per (%)",
+            "Grade",
+            "Class<br/>Ave",
+            "POS",
+            "Out<br/>Of",
+            "High<br/>In<br/>Class",
+            "Low<br/>In<br/>Class",
+            "Remark"
+        ]
 
-#             row = [
-#                 r.subject.title, str(ca), str(mid), str(exam), str(total),
-#                 f"{percentage}", r.grade_letter, str(class_avg), str(pos),
-#                 str(len(subject_results)), str(high_in_class), str(low_in_class), r.remark
-#             ]
-#             table_data.append([Paragraph(str(x), style_center) for x in row])
+        table_data = [[Paragraph(h, header_style) for h in headers]]
 
-#         page_width = A4[0] - doc.leftMargin - doc.rightMargin
-#         col_fractions = [0.10, 0.05, 0.08, 0.06, 0.07, 0.05, 0.07, 0.05, 0.05, 0.06, 0.06, 0.10, 0.20]
-#         col_widths = [page_width * frac for frac in col_fractions]
+        for r in records:
+            ca = float(r.ca_score or 0)
+            mid = float(r.midterm_score or 0)
+            exam = float(r.exam_score or 0)
+            total = ca + mid + exam
+            max_total = sum([10 if ca > 0 else 0, 30 if mid > 0 else 0, 60 if exam > 0 else 0])
+            percentage = round((total / max_total) * 100) if max_total else 0
 
-#         result_table = Table(table_data, colWidths=col_widths)
-#         result_table.setStyle(TableStyle([
-#             ('GRID', (0, 0), (-1, -1), 0.4, colors.lightgrey),
-#             ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
-#             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-#             ('FONTSIZE', (0, 0), (-1, 0), 6),
-#             ('FONTSIZE', (0, 1), (-1, -1), 6),
-#             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-#             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-#         ]))
-#         elements += [result_table, Spacer(1, 15)]
+            subject_results = all_results.filter(subject=r.subject)
+            class_avg = round(sum(
+                float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
+                for s in subject_results
+            ) / len(subject_results), 2) if subject_results else 0
+            high_in_class = max([
+                float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
+                for s in subject_results
+            ], default=0)
+            low_in_class = min([
+                float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
+                for s in subject_results
+            ], default=0)
+            pos_sorted = sorted([
+                (s.student_id, float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0))
+                for s in subject_results
+            ], key=lambda x: x[1], reverse=True)
+            pos = next((i + 1 for i, (sid_, _) in enumerate(pos_sorted) if sid_ == sid), None)
 
-#         # --- Grading Scale ---
-#         elements.append(Paragraph("<b>GRADING SCALE</b>", style_left))
-#         elements.append(Spacer(1, 4))
-#         elements.append(Paragraph("A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39", style_left))
-#         elements.append(Spacer(1, 15))
+            row = [
+                r.subject.title, str(ca), str(mid), str(exam), str(total),
+                f"{percentage}", r.grade_letter, str(class_avg), str(pos),
+                str(len(subject_results)), str(high_in_class), str(low_in_class), r.remark
+            ]
+            table_data.append([Paragraph(str(x), style_center) for x in row])
 
-#         behavior = StudentBehaviorRecord.objects.filter(
+        page_width = A4[0] - doc.leftMargin - doc.rightMargin
+        col_fractions = [0.10, 0.05, 0.08, 0.06, 0.07, 0.05, 0.07, 0.05, 0.05, 0.06, 0.06, 0.10, 0.20]
+        col_widths = [page_width * frac for frac in col_fractions]
+
+        result_table = Table(table_data, colWidths=col_widths)
+        result_table.setStyle(TableStyle([
+            ('GRID', (0, 0), (-1, -1), 0.4, colors.lightgrey),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 6),
+            ('FONTSIZE', (0, 1), (-1, -1), 6),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        elements += [result_table, Spacer(1, 15)]
+
+        # --- Grading Scale ---
+        elements.append(Paragraph("<b>GRADING SCALE</b>", style_left))
+        elements.append(Spacer(1, 4))
+        elements.append(Paragraph("A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39", style_left))
+        elements.append(Spacer(1, 15))
+
+        behavior = StudentBehaviorRecord.objects.filter(
            
-#             session_id=session_id,
-#             term_id=term_id
-#         ).first()
+            session_id=session_id,
+            term_id=term_id
+        ).first()
 
-#         elements.append(hr)
+        elements.append(hr)
 
-#         if behavior:
-#             # append form teacher and principal comments
-#             elements.append(Spacer(1, 10))
-#             elements.append(Paragraph(f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}", style_left))
+        if behavior:
+            # append form teacher and principal comments
+            elements.append(Spacer(1, 10))
+            elements.append(Paragraph(f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}", style_left))
 
         
-#         elements.append(hr)
+        elements.append(hr)
 
-#         # --- Comments & Signatures ---
-#         if school and getattr(school, 'teacher_signature', None):
-#             try:
-#                 sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
-#                 sig_img = RLImage(sig_data, width=100, height=40)
-#                 elements.append(sig_img)
-#             except Exception:
-#                 pass
+        # --- Comments & Signatures ---
+        if school and getattr(school, 'teacher_signature', None):
+            try:
+                sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
+                sig_img = RLImage(sig_data, width=100, height=40)
+                elements.append(sig_img)
+            except Exception:
+                pass
 
-#         elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 10))
 
-#         if school and getattr(school, 'principal_signature', None):
-#             try:
-#                 sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
-#                 sig_img = RLImage(sig_data, width=100, height=40)
-#                 elements.append(sig_img)
-#             except Exception:
-#                 pass
+        if school and getattr(school, 'principal_signature', None):
+            try:
+                sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
+                sig_img = RLImage(sig_data, width=100, height=40)
+                elements.append(sig_img)
+            except Exception:
+                pass
 
-#         elements.append(PageBreak())
+        elements.append(PageBreak())
 
-#     doc.build(elements)
-#     return response
+    doc.build(elements)
+    return response
+
 
 from celery.result import AsyncResult
 from django.http import JsonResponse
