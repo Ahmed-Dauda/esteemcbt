@@ -895,11 +895,17 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
 
         elements.append(hr)
 
+        # ── Behavior / Form Teacher ────────────────────────────────────────
         if behavior:
-            # append form teacher and principal comments
             elements.append(Spacer(1, 10))
-            elements.append(Paragraph(f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}", style_left))
-
+            if behavior.form_teacher and behavior.form_teacher.user:
+                elements.append(Paragraph(
+                    f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}",
+                    style_left
+                ))
+            else:
+                elements.append(Paragraph("<b>Form Teacher:</b> N/A", style_left))
+        elements.append(hr)
         
         elements.append(hr)
 
