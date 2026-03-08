@@ -180,23 +180,23 @@ class StudentBehaviorRecord(models.Model):
     principal_comment = models.TextField(blank=True, null=True)
 
     # Psychomotor
-    handwriting = models.IntegerField(default=0)
-    games = models.IntegerField(default=0)
-    sports = models.IntegerField(default=0)
-    drawing_painting = models.IntegerField(default=0)
-    crafts = models.IntegerField(default=0)
+    handwriting      = models.IntegerField(default=0, null=True, blank=True)
+    games            = models.IntegerField(default=0, null=True, blank=True)
+    sports           = models.IntegerField(default=0, null=True, blank=True)
+    drawing_painting = models.IntegerField(default=0, null=True, blank=True)
+    crafts           = models.IntegerField(default=0, null=True, blank=True)
 
     # Affective
-    punctuality = models.IntegerField(default=0)
-    attendance = models.IntegerField(default=0)
-    reliability = models.IntegerField(default=0)
-    neatness = models.IntegerField(default=0)
-    politeness = models.IntegerField(default=0)
-    honesty = models.IntegerField(default=0)
-    relationship_with_students = models.IntegerField(default=0)
-    self_control = models.IntegerField(default=0)
-    attentiveness = models.IntegerField(default=0)
-    perseverance = models.IntegerField(default=0)
+    punctuality              = models.IntegerField(default=0, null=True, blank=True)
+    attendance               = models.IntegerField(default=0, null=True, blank=True)
+    reliability              = models.IntegerField(default=0, null=True, blank=True)
+    neatness                 = models.IntegerField(default=0, null=True, blank=True)
+    politeness               = models.IntegerField(default=0, null=True, blank=True)
+    honesty                  = models.IntegerField(default=0, null=True, blank=True)
+    relationship_with_students = models.IntegerField(default=0, null=True, blank=True)
+    self_control             = models.IntegerField(default=0, null=True, blank=True)
+    attentiveness            = models.IntegerField(default=0, null=True, blank=True)
+    perseverance             = models.IntegerField(default=0, null=True, blank=True)
 
     class Meta:
         unique_together = ('student', 'term', 'session')
