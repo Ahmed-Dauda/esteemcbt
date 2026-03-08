@@ -142,7 +142,7 @@ class Session(models.Model):
 
 class Term(models.Model):
     school = models.ForeignKey("quiz.School", on_delete=models.CASCADE, null=True, blank=True, related_name='terms')
-    name = models.CharField(max_length=20, blank=True, null=True)
+    name = models.CharField(max_length=400, blank=True, null=True)
     order = models.PositiveIntegerField(default=1)
     is_midterm = models.BooleanField(default=False)
 
