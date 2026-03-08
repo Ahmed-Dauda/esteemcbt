@@ -757,7 +757,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     doc.build(elements)
     return response
 
-    
+
 
 #per student
 # def download_term_report_pdf(request, student_id, session_id, term_id):
@@ -2741,31 +2741,38 @@ from django.conf import settings
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
+def safe_int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
 
 @login_required(login_url='teacher:teacher_login')
 def form_teacher_dashboard(request):
     teacher = get_object_or_404(Teacher, user=request.user)
-    school = teacher.school
+    school  = teacher.school
 
     # ---- FILTER OPTIONS ----
     sessions = Session.objects.filter(school=school)
-    terms = Term.objects.filter(school=school)
+    terms    = Term.objects.filter(school=school)
 
     # ✅ Only classes associated with this teacher
     classes = teacher.classes_taught.all()
 
     # ---- SELECTED FILTERS ----
     selected_session_id = request.GET.get("session")
-    selected_term_id = request.GET.get("term")
-    selected_class_id = request.GET.get("class")
+    selected_term_id    = request.GET.get("term")
+    selected_class_id   = request.GET.get("class")
 
     selected_session = sessions.filter(id=selected_session_id).first() if selected_session_id else None
-    selected_term = terms.filter(id=selected_term_id).first() if selected_term_id else None
-    selected_class = classes.filter(id=selected_class_id).first() if selected_class_id else None
+    selected_term    = terms.filter(id=selected_term_id).first()        if selected_term_id    else None
+    selected_class   = classes.filter(id=selected_class_id).first()     if selected_class_id   else None
 
     records = []
 
     if selected_session and selected_term and selected_class:
+
         # ---- LOAD RECORDS ----
         records = StudentBehaviorRecord.objects.filter(
             session=selected_session,
@@ -2776,30 +2783,31 @@ def form_teacher_dashboard(request):
         # ---- HANDLE SAVE (POST) ----
         if request.method == "POST":
             for r in records:
+                sid = r.student.id
+
                 # Comment
-                comment_field = f"comment_{r.student.id}"
-                new_comment = request.POST.get(comment_field)
+                new_comment = request.POST.get(f"comment_{sid}")
                 if new_comment is not None:
                     r.form_teacher_comment = new_comment
 
-                # Psychomotor
-                r.handwriting = request.POST.get(f"handwriting_{r.student.id}", 0)
-                r.games = request.POST.get(f"games_{r.student.id}", 0)
-                r.sports = request.POST.get(f"sports_{r.student.id}", 0)
-                r.drawing_painting = request.POST.get(f"drawing_{r.student.id}", 0)
-                r.crafts = request.POST.get(f"crafts_{r.student.id}", 0)
+                # Psychomotor — safe_int ensures 0 saves as 0, not ""
+                r.handwriting        = safe_int(request.POST.get(f"handwriting_{sid}"))
+                r.games              = safe_int(request.POST.get(f"games_{sid}"))
+                r.sports             = safe_int(request.POST.get(f"sports_{sid}"))
+                r.drawing_painting   = safe_int(request.POST.get(f"drawing_{sid}"))
+                r.crafts             = safe_int(request.POST.get(f"crafts_{sid}"))
 
                 # Affective
-                r.punctuality = request.POST.get(f"punctuality_{r.student.id}", 0)
-                r.attendance = request.POST.get(f"attendance_{r.student.id}", 0)
-                r.reliability = request.POST.get(f"reliability_{r.student.id}", 0)
-                r.neatness = request.POST.get(f"neatness_{r.student.id}", 0)
-                r.politeness = request.POST.get(f"politeness_{r.student.id}", 0)
-                r.honesty = request.POST.get(f"honesty_{r.student.id}", 0)
-                r.relationship_with_students = request.POST.get(f"relationship_{r.student.id}", 0)
-                r.self_control = request.POST.get(f"self_control_{r.student.id}", 0)
-                r.attentiveness = request.POST.get(f"attentive_{r.student.id}", 0)
-                r.perseverance = request.POST.get(f"perseverance_{r.student.id}", 0)
+                r.punctuality               = safe_int(request.POST.get(f"punctuality_{sid}"))
+                r.attendance                = safe_int(request.POST.get(f"attendance_{sid}"))
+                r.reliability               = safe_int(request.POST.get(f"reliability_{sid}"))
+                r.neatness                  = safe_int(request.POST.get(f"neatness_{sid}"))
+                r.politeness                = safe_int(request.POST.get(f"politeness_{sid}"))
+                r.honesty                   = safe_int(request.POST.get(f"honesty_{sid}"))
+                r.relationship_with_students = safe_int(request.POST.get(f"relationship_{sid}"))
+                r.self_control              = safe_int(request.POST.get(f"self_control_{sid}"))
+                r.attentiveness             = safe_int(request.POST.get(f"attentive_{sid}"))
+                r.perseverance              = safe_int(request.POST.get(f"perseverance_{sid}"))
 
                 r.save()
 
@@ -2818,24 +2826,24 @@ def form_teacher_dashboard(request):
 
             r.results = student_results
             if student_results.exists():
-                total = sum(float(x.total_score or 0) for x in student_results)
-                avg = total / student_results.count()
-                r.total_score = total
+                total           = sum(float(x.total_score or 0) for x in student_results)
+                avg             = total / student_results.count()
+                r.total_score   = total
                 r.average_score = round(avg, 2)
-                r.final_grade = student_results.first().grade_letter
+                r.final_grade   = student_results.first().grade_letter
             else:
-                r.total_score = None
+                r.total_score   = None
                 r.average_score = None
-                r.final_grade = None
+                r.final_grade   = None
 
     context = {
-        "sessions": sessions,
-        "terms": terms,
-        "classes": classes,   # only teacher classes
-        "records": records,
+        "sessions":         sessions,
+        "terms":            terms,
+        "classes":          classes,
+        "records":          records,
         "selected_session": selected_session.id if selected_session else "",
-        "selected_term": selected_term.id if selected_term else "",
-        "selected_class": selected_class.id if selected_class else "",
+        "selected_term":    selected_term.id    if selected_term    else "",
+        "selected_class":   selected_class.id   if selected_class   else "",
     }
 
     return render(request, "portal/form_teacher_dashboard.html", context)
