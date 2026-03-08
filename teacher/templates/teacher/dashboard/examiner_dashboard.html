@@ -101,8 +101,8 @@
                 <thead class="thead-blue">
                     <tr>
                         <th class="text-center">Class Name</th>
-                        <!-- <th class="text-center">Students</th> -->
                         <th class="text-center">Subjects</th>
+                        <th class="text-center">Form Teachers</th>
                         <th class="text-center" style="padding: 10px;">Actions</th>
                     </tr>
                 </thead>
@@ -111,18 +111,6 @@
                         <tr>
                             <!-- Class Name -->
                             <td class="align-middle text-center">{{ course_grade.name }}</td>
-
-                            <!-- Students -->
-                            <!-- <td class="align-middle">
-                                {% if course_grade.students.all.count > 0 %}
-                                    {% for student in course_grade.students.all %}
-                                        {{ student.first_name }} {{ student.last_name }} -
-                                        <b style="color: rgb(34, 34, 187);">{{ student.username }}</b><br>
-                                    {% endfor %}
-                                {% else %}
-                                    <span class="empty-state">No students yet</span>
-                                {% endif %}
-                            </td> -->
 
                             <!-- Subjects -->
                             <td class="align-middle">
@@ -135,10 +123,24 @@
                                 {% endif %}
                             </td>
 
+                            <!-- Form Teachers -->
+                            <td class="align-middle text-center">
+                                {% if course_grade.form_teacher.all %}
+                                    {% for ft in course_grade.form_teacher.all %}
+                                        <span class="badge bg-success">{{ ft.first_name }} {{ ft.last_name }}</span><br>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="empty-state">Not assigned</span>
+                                {% endif %}
+                            </td>
+
                             <!-- Actions -->
                             <td class="align-middle text-center">
                                 <a href="{% url 'teacher:edit_coursegrade' course_grade.id %}" class="btn btn-sm btn-info mr-2">Edit</a>
                                 <a href="{% url 'teacher:delete_coursegrade' course_grade.id %}" class="btn btn-sm btn-danger">Delete</a>
+                                <a href="{% url 'teacher:assign_form_teachers' course_grade.id %}" class="btn btn-sm btn-outline-primary mt-1">
+                                    👨‍🏫 Form Teachers
+                                </a>
                             </td>
                         </tr>
                     {% empty %}
@@ -153,5 +155,5 @@
         </div>
     </div>
 </div>
-<!-- ok -->
+
 {% endblock %}

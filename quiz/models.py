@@ -79,13 +79,10 @@ class CourseGrade(models.Model):
 
     students = models.ManyToManyField(NewUser, related_name='course_grades', blank=True)
     subjects = models.ManyToManyField(Course, related_name='course_grade')
-    form_teacher = models.ForeignKey(
-       'teacher.Teacher',  # <-- Teacher model
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='form_teacher_classes',
-        
+    form_teacher = models.ManyToManyField(
+    'teacher.Teacher',
+    blank=True,
+    related_name='form_teacher_classes',
     )
     is_active = models.BooleanField(default=True, db_index=True)
     id = models.AutoField(primary_key=True)

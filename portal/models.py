@@ -60,7 +60,7 @@ class Result_Portal(models.Model):
     # --- Score Fields ---
     ca_score = models.DecimalField(max_digits=5, decimal_places=0, default=0)
     midterm_score = models.DecimalField(max_digits=5, decimal_places=0, default=0)
-    exam_score = models.DecimalField(max_digits=5, decimal_places=0, default=0)
+    exam_score = models.DecimalField(max_digits=5, decimal_places=0, default=0, null=True, blank=True)
     total_score = models.DecimalField(max_digits=5, decimal_places=0, default=0, editable=False)
     created_at = models.DateTimeField(default=timezone.now)
 
@@ -171,14 +171,11 @@ class StudentBehaviorRecord(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE, db_index=True)
 
     # Use string reference to Teacher to avoid load order issues
-    form_teacher = models.ForeignKey(
-        'teacher.Teacher',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        limit_choices_to={'form_teacher_role': 'form_teacher'},
-        related_name='behavior_records'
-    )
+    form_teacher = models.ManyToManyField(
+    'teacher.Teacher',
+    blank=True,
+    related_name='behavior_records',
+)
     form_teacher_comment = models.TextField(blank=True, null=True)
     principal_comment = models.TextField(blank=True, null=True)
 

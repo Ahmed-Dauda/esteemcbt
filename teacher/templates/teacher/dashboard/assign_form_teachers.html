@@ -1,0 +1,139 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% block content %}
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-0">Assign Form Teachers</h4>
+            <small class="text-muted">Class: <strong>{{ class_obj.name }}</strong></small>
+        </div>
+        <a href="{% url 'teacher:examiner_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Current Form Teachers -->
+    <div class="card mb-4 border-success">
+        <div class="card-header bg-success text-white fw-bold">
+            ✅ Current Form Teachers for {{ class_obj.name }}
+        </div>
+        <div class="card-body">
+            {% if current_form_teachers %}
+                <div class="d-flex gap-3 flex-wrap">
+                    {% for t in current_form_teachers %}
+                        <span class="badge bg-success fs-6 px-3 py-2">
+                            {{ t.first_name }} {{ t.last_name }}
+                        </span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">No form teachers assigned yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Assign Form -->
+    <div class="card">
+        <div class="card-header bg-primary text-white fw-bold">
+            👨‍🏫 Select Form Teachers (Max 2)
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <p class="text-muted small mb-3">
+                    Hold <kbd>Ctrl</kbd> (Windows) or <kbd>Cmd</kbd> (Mac) to select multiple teachers.
+                    Maximum 2 form teachers allowed per class.
+                </p>
+
+                <!-- Search box -->
+                <input type="text" id="teacher-search" class="form-control mb-3"
+                       placeholder="🔍 Search teacher by name...">
+
+                <div class="row" id="teacher-list">
+                    {% for teacher in all_teachers %}
+                    <div class="col-md-4 col-sm-6 mb-2 teacher-item"
+                         data-name="{{ teacher.first_name|lower }} {{ teacher.last_name|lower }}">
+                        <div class="form-check border rounded p-2
+                            {% if teacher in current_form_teachers %}border-success bg-light{% endif %}">
+                            <input class="form-check-input teacher-checkbox"
+                                   type="checkbox"
+                                   name="form_teachers"
+                                   value="{{ teacher.id }}"
+                                   id="teacher-{{ teacher.id }}"
+                                   {% if teacher in current_form_teachers %}checked{% endif %}>
+                            <label class="form-check-label w-100" for="teacher-{{ teacher.id }}">
+                                <strong>{{ teacher.first_name }} {{ teacher.last_name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ teacher.email }}</small>
+                                {% if teacher.form_teacher_role == 'form_teacher' %}
+                                    <span class="badge bg-success ms-1">Form Teacher</span>
+                                {% endif %}
+                            </label>
+                        </div>
+                    </div>
+                    {% empty %}
+                        <p class="text-muted">No teachers found in your school.</p>
+                    {% endfor %}
+                </div>
+
+                <!-- Selection counter -->
+                <div class="mt-3">
+                    <span id="selection-count" class="badge bg-secondary">0 selected</span>
+                    <span id="selection-warning" class="text-danger ms-2" style="display:none;">
+                        ⚠️ Maximum 2 teachers allowed
+                    </span>
+                </div>
+
+                <button type="submit" class="btn btn-primary mt-3" id="save-btn">
+                    💾 Save Form Teachers
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Search filter ─────────────────────────────────────────────────────────
+document.getElementById('teacher-search').addEventListener('input', function () {
+    const query = this.value.toLowerCase();
+    document.querySelectorAll('.teacher-item').forEach(item => {
+        item.style.display = item.dataset.name.includes(query) ? '' : 'none';
+    });
+});
+
+// ── Max 2 selection enforcement ───────────────────────────────────────────
+const checkboxes  = document.querySelectorAll('.teacher-checkbox');
+const countBadge  = document.getElementById('selection-count');
+const warning     = document.getElementById('selection-warning');
+const saveBtn     = document.getElementById('save-btn');
+
+function updateCount() {
+    const checked = document.querySelectorAll('.teacher-checkbox:checked').length;
+    countBadge.textContent = `${checked} selected`;
+    countBadge.className   = checked > 0 ? 'badge bg-primary' : 'badge bg-secondary';
+
+    if (checked > 2) {
+        warning.style.display = 'inline';
+        saveBtn.disabled      = true;
+        countBadge.className  = 'badge bg-danger';
+    } else {
+        warning.style.display = 'none';
+        saveBtn.disabled      = false;
+    }
+}
+
+checkboxes.forEach(cb => cb.addEventListener('change', updateCount));
+updateCount(); // run on load
+</script>
+
+{% endblock %}

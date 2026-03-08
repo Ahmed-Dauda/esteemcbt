@@ -41,6 +41,35 @@
 
   @keyframes fadein { from {opacity: 0; transform: translateY(-20px);} to {opacity: 0.95; transform: translateY(0);} }
   @keyframes fadeout { from {opacity: 0.95;} to {opacity: 0; transform: translateY(-20px);} }
+
+  /* ── Button Spinner ── */
+  .btn-with-spinner {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-width: 200px;
+  }
+  .btn-spinner-ring {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top: 3px solid #ffffff;
+    border-radius: 50%;
+    flex-shrink: 0;
+    /* animation applied via JS to guarantee it starts */
+  }
+  @keyframes btn-spin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .btn-with-spinner.loading {
+    opacity: 0.85;
+    pointer-events: none;
+    cursor: not-allowed;
+  }
 </style>
 
 <!-- Toast container -->
@@ -85,7 +114,11 @@
     </div>
 
     <div style="text-align:center;">
-      <button type="submit" id="generate-btn">⚙️ Generate AI Questions</button>
+      <!-- ✅ Generate button with spinner -->
+      <button type="submit" id="generate-btn" class="btn-with-spinner">
+        <span class="btn-label">⚙️ Generate AI Questions</span>
+        <span class="btn-spinner-ring"></span>
+      </button>
     </div>
   </form>
 
@@ -108,7 +141,6 @@ if (typeof jQuery == 'undefined') {
 </script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-// Wait for jQuery to be fully loaded
 (function() {
   function initializeForm() {
     if (typeof jQuery === 'undefined') {
@@ -130,16 +162,25 @@ if (typeof jQuery == 'undefined') {
         setTimeout(() => toast.fadeOut(600, () => toast.remove()), 4000);
       }
 
-      // Remove any existing handlers first
+      function setLoading($btn, isLoading, labelText) {
+        if (isLoading) {
+          $btn.addClass('loading');
+          $btn.prop('disabled', true);
+        } else {
+          $btn.removeClass('loading');
+          $btn.prop('disabled', false);
+          if (labelText) $btn.find('.btn-label').text(labelText);
+        }
+      }
+
       $('#generate-form').off('submit');
       
       $('#generate-form').on('submit', function(e){
         e.preventDefault();
         e.stopPropagation();
-        
-        console.log('Form submitted'); // Debug log
-        
-        $('#generate-btn').prop('disabled', true);
+
+        const $btn = $('#generate-btn');
+        setLoading($btn, true);
         $('#loader-container').show();
         $('#preview-area, #preview-save-container').empty();
 
@@ -158,10 +199,19 @@ if (typeof jQuery == 'undefined') {
         .then(r => r.json())
         .then(resp => {
           if(resp.job_id) pollStatus(resp.job_id, parseInt(data.num_questions));
-          else { showMessage('Failed to start generation', 'error'); $('#loader-container').hide(); $('#generate-btn').prop('disabled',false); }
+          else {
+            showMessage('Failed to start generation', 'error');
+            $('#loader-container').hide();
+            setLoading($btn, false, '⚙️ Generate AI Questions');
+          }
         })
-        .catch(err => { console.error(err); showMessage('Error generating questions', 'error'); $('#loader-container').hide(); $('#generate-btn').prop('disabled',false); });
-        
+        .catch(err => {
+          console.error(err);
+          showMessage('Error generating questions', 'error');
+          $('#loader-container').hide();
+          setLoading($btn, false, '⚙️ Generate AI Questions');
+        });
+
         return false;
       });
 
@@ -178,13 +228,13 @@ if (typeof jQuery == 'undefined') {
             } 
             else if(data.status==='completed'){
               $('#loader-container').hide();
-              $('#generate-btn').prop('disabled',false);
+              setLoading($('#generate-btn'), false, '⚙️ Generate AI Questions');
               renderPreview(data.result.questions || []);
             } 
             else if(data.status==='failed'){
               showMessage('Generation failed: ' + (data.error||'unknown'), 'error');
               $('#loader-container').hide();
-              $('#generate-btn').prop('disabled',false);
+              setLoading($('#generate-btn'), false, '⚙️ Generate AI Questions');
             } 
             else setTimeout(()=>pollStatus(jobId,totalQuestions),1500);
           })
@@ -224,13 +274,53 @@ if (typeof jQuery == 'undefined') {
             </div></div>`;
         });
 
-        html+=`<div style="text-align:center;"><button type="submit">✅ Save All Questions</button></div></form></div>`;
+        /* ✅ Save button with visible spinner below it */
+        html+=`<div style="text-align:center; margin-top:16px;">
+          <button type="submit" id="save-btn" style="
+            padding: 12px 28px;
+            background: #28a745;
+            color: #fff;
+            font-size: 15px;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            min-width: 220px;
+          ">✅ Save All Questions</button>
+          <div id="save-spinner" style="
+            display: none;
+            margin: 14px auto 0;
+            width: 36px;
+            height: 36px;
+            border: 4px solid #e0e0e0;
+            border-top: 4px solid #28a745;
+            border-radius: 50%;
+          "></div>
+          <p id="save-spinner-text" style="display:none; margin-top:8px; color:#555; font-size:13px;">Saving questions…</p>
+        </div></form></div>`;
+
         $('#preview-save-container').html(html);
 
         $('#preview-save-form').off('submit').on('submit', function(e){
           e.preventDefault();
           e.stopPropagation();
-          
+
+          const saveBtn     = document.getElementById('save-btn');
+          const spinner     = document.getElementById('save-spinner');
+          const spinnerText = document.getElementById('save-spinner-text');
+
+          // Hide button, show spinning circle
+          saveBtn.style.display = 'none';
+          spinner.style.display = 'block';
+          spinnerText.style.display = 'block';
+
+          // Start the spin animation via JS keyframes
+          let deg = 0;
+          const spinInterval = setInterval(function() {
+            deg += 10;
+            spinner.style.transform = 'rotate(' + deg + 'deg)';
+          }, 30);
+
           const formData = new FormData(this);
           formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
@@ -242,9 +332,26 @@ if (typeof jQuery == 'undefined') {
           .then(r => r.json())
           .then(resp => {
             showMessage(resp.message, resp.status || 'success');
+            // Stop spinner and show saved confirmation
+            clearInterval(spinInterval);
+            spinner.style.display     = 'none';
+            spinnerText.style.display = 'none';
+            // Show a green saved badge instead
+            const savedBadge = document.createElement('div');
+            savedBadge.innerHTML = '✅ Questions Saved!';
+            savedBadge.style.cssText = 'margin-top:12px; color:#28a745; font-weight:bold; font-size:15px;';
+            spinner.parentNode.appendChild(savedBadge);
           })
-          .catch(err => { console.error(err); showMessage('Error saving questions', 'error'); });
-          
+          .catch(err => {
+            console.error(err);
+            showMessage('Error saving questions', 'error');
+            // On error: stop spinner and show button again so user can retry
+            clearInterval(spinInterval);
+            spinner.style.display     = 'none';
+            spinnerText.style.display = 'none';
+            saveBtn.style.display     = 'inline-block';
+          });
+
           return false;
         });
       }

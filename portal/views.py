@@ -1,10 +1,12 @@
 import io
+import re
 # from tkinter import Image
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.db.models import Avg, Sum
 import requests
 from portal.models import Result_Portal
+import school
 from sms.models import Term, Session, ExamType
 from users.models import NewUser
 from .utils import render_to_pdf
@@ -139,7 +141,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from .models import Result_Portal,StudentBehaviorRecord
-
+from reportlab.lib.units import inch, mm
 
 EXAM_TYPES = ['CA', 'Mid-Term', 'Exam']
 
@@ -225,9 +227,33 @@ import requests
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus.flowables import HRFlowable
 
+from django.http import JsonResponse
 
+def download_class_report(request):
+    result_class = request.GET.get('result_class')
+    session_id   = request.GET.get('session_id')
+    term_id      = request.GET.get('term_id')
+
+    if not all([result_class, session_id, term_id]):
+        return JsonResponse({'error': 'Missing parameters'}, status=400)
+
+    from .tasks import generate_class_report_pdf_task
+    task = generate_class_report_pdf_task.delay(result_class, int(session_id), int(term_id))
+
+    return JsonResponse({
+        'status': 'processing',
+        'task_id': task.id,
+        'status_url': request.build_absolute_uri(f'/check-pdf-status/{task.id}/'),
+        'download_url': request.build_absolute_uri(f'/download-pdf/{task.id}/'),
+    })
+
+
+#individual report card PDF generation
 def download_term_report_pdf(request, student_id, session_id, term_id):
-    # --- Fetch results ---
+    from collections import defaultdict
+    from reportlab.lib.units import mm
+
+    # ── Fetch results ─────────────────────────────────────────────
     results = Result_Portal.objects.filter(
         student_id=student_id,
         session_id=session_id,
@@ -237,320 +263,833 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     if not results.exists():
         return HttpResponse("No results found.", status=404)
 
-    student = results.first().student
-    school = results.first().schools
-    session = results.first().session
-    term = results.first().term
-    result_class = getattr(results.first(), 'result_class', '')
-    
-     # Get school max scores from the first result
-   
-    # --- Class stats ---
+    student    = results.first().student
+    school     = results.first().schools
+    session    = results.first().session
+    term       = results.first().term
+    is_midterm = getattr(term, 'is_midterm', False)
+
+    # ── Clean result_class ────────────────────────────────────────
+    raw_class     = getattr(results.first(), 'result_class', '')
+    display_class = raw_class.strip().split()[0]
+
+    # ── Class stats ───────────────────────────────────────────────
     all_results = Result_Portal.objects.filter(
-        result_class=result_class,
+        result_class=raw_class,
         session_id=session_id,
         term_id=term_id
-    )
+    ).select_related('subject')
 
-    student_total = sum(
+    student_total   = sum(
         float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
         for r in results
     )
-    num_subjects = len(results)
+    num_subjects    = results.count()
     student_average = round(student_total / num_subjects, 2) if num_subjects else 0
 
     class_totals = {}
     for r in all_results:
-        sid = r.student_id
-        total_score = float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
-        class_totals[sid] = class_totals.get(sid, 0) + total_score
+        sid   = r.student_id
+        score = float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
+        class_totals[sid] = class_totals.get(sid, 0) + score
 
-    sorted_totals = sorted(class_totals.items(), key=lambda x: x[1], reverse=True)
-    position = next((i + 1 for i, (sid, _) in enumerate(sorted_totals) if sid == student_id), None)
-    total_students = len(class_totals)
-    class_average = round(sum(class_totals.values()) / len(class_totals), 2) if class_totals else 0
-    highest_in_class = max(class_totals.values(), default=0)
-    lowest_in_class = min(class_totals.values(), default=0)
-    final_grade = results[0].grade_letter if results else ''
+    sorted_totals    = sorted(class_totals.items(), key=lambda x: x[1], reverse=True)
+    position         = next((i + 1 for i, (sid, _) in enumerate(sorted_totals) if sid == student_id), None)
+    total_students   = len(class_totals)
+    class_average    = round(sum(class_totals.values()) / len(class_totals), 2) if class_totals else 0
+    highest_in_class = round(max(class_totals.values(), default=0), 2)
+    lowest_in_class  = round(min(class_totals.values(), default=0), 2)
+    final_grade      = results[0].grade_letter if results else ''
 
-    # --- PDF Setup ---
+    # ── Subject scores map (avoid N+1) ───────────────────────────
+    subject_scores_map = defaultdict(list)
+    for r in all_results:
+        score = float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
+        subject_scores_map[r.subject_id].append((r.student_id, score))
+
+    # ── PDF Setup ─────────────────────────────────────────────────
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{student.username}_term_report.pdf"'
-    doc = SimpleDocTemplate(response, pagesize=A4, topMargin=25, leftMargin=25, rightMargin=25, bottomMargin=30)
 
-    styles = getSampleStyleSheet()
-    style_left = styles["Normal"]
-    style_left.alignment = TA_LEFT
-    style_center = ParagraphStyle(name="Center", parent=styles["Normal"], alignment=TA_CENTER)
+    W, H   = A4
+    MARGIN = 5 * mm
+    INNER  = W - 2 * MARGIN
+
+    doc = SimpleDocTemplate(
+        response, pagesize=A4,
+        topMargin=8, bottomMargin=8,
+        leftMargin=MARGIN, rightMargin=MARGIN
+    )
+
+    BLUE  = colors.HexColor("#1a4e8c")
+    LBLUE = colors.HexColor("#d0e4f7")
+    LGREY = colors.HexColor("#f2f2f2")
+
+    S = {
+        "report_title": ParagraphStyle("rt", fontSize=9,  fontName="Helvetica-Bold",
+                                       alignment=TA_CENTER, spaceAfter=4),
+        "section_hd":   ParagraphStyle("sh", fontSize=8,  fontName="Helvetica-Bold",
+                                       alignment=TA_CENTER, spaceAfter=0),
+        "cell_normal":  ParagraphStyle("cn", fontSize=7.5, fontName="Helvetica",
+                                       alignment=TA_LEFT,   leading=10),
+        "cell_center":  ParagraphStyle("cc", fontSize=7,   fontName="Helvetica",
+                                       alignment=TA_CENTER, leading=9),
+        "cell_hdr":     ParagraphStyle("ch", fontSize=7,   fontName="Helvetica-Bold",
+                                       alignment=TA_CENTER, leading=9),
+        "small":        ParagraphStyle("sm", fontSize=6.5, fontName="Helvetica",
+                                       alignment=TA_LEFT,   leading=9),
+        "comment":      ParagraphStyle("co", fontSize=8,   fontName="Helvetica",
+                                       alignment=TA_LEFT,   leading=11, spaceAfter=3),
+        "label":        ParagraphStyle("lb", fontSize=8,   fontName="Helvetica-Bold",
+                                       alignment=TA_LEFT,   leading=10),
+    }
+
+    def hr_line(thickness=0.5, color=BLUE):
+        return HRFlowable(width="100%", thickness=thickness, color=color,
+                          spaceAfter=3, spaceBefore=3)
+
+    def section_header(text):
+        tbl = Table([[Paragraph(text, S["section_hd"])]], colWidths=[INNER])
+        tbl.setStyle(TableStyle([
+            ("BACKGROUND",    (0,0), (-1,-1), LBLUE),
+            ("TOPPADDING",    (0,0), (-1,-1), 3),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 3),
+            ("LEFTPADDING",   (0,0), (-1,-1), 4),
+            ("BOX",           (0,0), (-1,-1), 0.5, BLUE),
+        ]))
+        return tbl
+
+    def ordinal(n):
+        if n is None: return "N/A"
+        suffix = {1:"st", 2:"nd", 3:"rd"}.get(n if n < 20 else n % 10, "th")
+        return f"{n}{suffix}"
+
+    def ic(label, value):
+        return Paragraph(f"<b>{label}:</b> {value}", S["cell_normal"])
+
+    def trait_table(title, traits, width):
+        hdr  = [[Paragraph(f"<b>{title}</b>", S["cell_hdr"]),
+                 Paragraph("<b>Rating</b>",    S["cell_hdr"])]]
+        rows = [[Paragraph(t, S["cell_normal"]), Paragraph(str(v), S["cell_center"])]
+                for t, v in traits]
+        tbl  = Table(hdr + rows, colWidths=[width * 0.75, width * 0.25])
+        tbl.setStyle(TableStyle([
+            ("BACKGROUND",    (0,0), (-1,0),  LBLUE),
+            ("GRID",          (0,0), (-1,-1), 0.4, colors.grey),
+            ("TOPPADDING",    (0,0), (-1,-1), 3),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 3),
+            ("LEFTPADDING",   (0,0), (-1,-1), 4),
+            ("ROWBACKGROUNDS",(0,1), (-1,-1), [colors.white, LGREY]),
+        ]))
+        return tbl
+
+    max_ca   = float(school.max_ca_score)      if school and school.max_ca_score      else 10.0
+    max_mid  = float(school.max_midterm_score) if school and school.max_midterm_score  else 20.0
+    max_exam = float(school.max_exam_score)    if school and school.max_exam_score     else 70.0
 
     elements = []
 
-    # --- Header Section (Logo + Flex Layout) ---
+    # ── 1. School Header ──────────────────────────────────────────
     logo_img = None
     if school and getattr(school, 'logo', None):
         try:
             logo_data = io.BytesIO(requests.get(school.logo.url).content)
-            logo_img = RLImage(logo_data, width=80, height=80)
+            logo_img  = RLImage(logo_data, width=70, height=70)
         except Exception:
             pass
 
-    school_name = f"<b>{getattr(school, 'school_name', 'Best Academy, Abuja')}</b>"
-    school_motto = f"<i>{getattr(school, 'school_motto', 'Motto: Knowledge for Excellence')}</i>"
-    school_address = f"{getattr(school, 'school_address', 'Tunga')}"
+    school_name_str    = school.school_name    if school else "School Name"
+    school_motto_str   = school.school_motto   if school else ""
+    school_address_str = school.school_address if school else ""
 
     school_details = [
-            Paragraph(school_name, ParagraphStyle(name='SchoolName', fontSize=14, alignment=TA_LEFT)),
-            Spacer(1, 8),  # 4 points of vertical space
-            Paragraph(school_motto, ParagraphStyle(name='SchoolMotto', fontSize=10, alignment=TA_LEFT)),
-            Spacer(1, 8),  # 2 points of vertical space
-            Paragraph(school_address, ParagraphStyle(name='SchoolAddress', fontSize=9, alignment=TA_LEFT))
-        ]
-
-    header_table = Table([[logo_img if logo_img else "", school_details]], colWidths=[90, 400])
-    header_table.setStyle(TableStyle([
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('LEFTPADDING', (0, 0), (-1, -1), 5),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-        ('TOPPADDING', (0, 0), (-1, -1), 0),
-    ]))
-    elements.append(header_table)
-    elements.append(Spacer(1, 10))
-
-    
-    hr = HRFlowable(width="100%", thickness=0.5, color=colors.blue)
-    elements.append(hr)
-
-    # --- Title ---
-    elements.append(Paragraph("<b><u>TERM REPORT CARD</u></b>", style_center))
-    elements.append(Spacer(1, 10))
-
-    # --- Student Info (Grid Table) ---
-    student_info_data = [
-        [f"Name: {student.first_name} {student.last_name}", f"Class: {result_class}", f"Term: {term.name}"],
-        [f"Session: {session.name}", f"No. in Class: {total_students}", f"Position: {position} of {total_students}"],
-        [f"Total Score: {student_total}", f"Average Score: {student_average}", f"Class Average: {class_average}"],
-        [f"Highest in Class: {highest_in_class}", f"Lowest in Class: {lowest_in_class}", f"Final Grade: {final_grade}"],
-    ]
-    student_table = Table(student_info_data, colWidths=[180, 180, 180])
-    student_table.setStyle(TableStyle([
-        ('GRID', (0, 0), (-1, -1), 0.6, colors.grey),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-    ]))
-    elements += [student_table, Spacer(1, 15)]
-
-    max_ca = school.max_ca_score if school else 10
-    max_mid = school.max_midterm_score if school else 30
-    max_exam = school.max_exam_score if school else 60
-
-    # --- Subject Table (with Grid) ---
-    header_style = ParagraphStyle(name='HeaderStyle', fontName='Helvetica-Bold', fontSize=7, alignment=1)
-
-    # Use f-strings to insert actual max values
-    headers = [
-        "Subject",
-        f"CA<br/>({max_ca})",
-        f"Midterm<br/>({max_mid})",
-        f"Exam<br/>({max_exam})",
-        "Total",
-        "Per (%)",
-        "Grade",
-        "Class<br/>Ave",
-        "POS",
-        "Out<br/>Of",
-        "High<br/>In<br/>Class",
-        "Low<br/>In<br/>Class",
-        "Remark"
+        Paragraph(f"<b>{school_name_str}</b>",
+                  ParagraphStyle("SN2", fontSize=13, fontName="Helvetica-Bold", alignment=TA_CENTER)),
+        Spacer(1, 4),
+        Paragraph(f"<i>{school_motto_str}</i>",
+                  ParagraphStyle("SM2", fontSize=9, fontName="Helvetica-Oblique", alignment=TA_CENTER)),
+        Spacer(1, 4),
+        Paragraph(school_address_str,
+                  ParagraphStyle("SA2", fontSize=7.5, fontName="Helvetica", alignment=TA_CENTER)),
     ]
 
-    table_data = [[Paragraph(h, header_style) for h in headers]]
+    if logo_img:
+        header_tbl = Table(
+            [[logo_img, school_details, logo_img]],
+            colWidths=[70, INNER - 140, 70]
+        )
+    else:
+        header_tbl = Table([[school_details]], colWidths=[INNER])
 
+    header_tbl.setStyle(TableStyle([
+        ("VALIGN",        (0,0), (-1,-1), "MIDDLE"),
+        ("LEFTPADDING",   (0,0), (-1,-1), 4),
+        ("RIGHTPADDING",  (0,0), (-1,-1), 4),
+        ("TOPPADDING",    (0,0), (-1,-1), 0),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 0),
+    ]))
+    elements.append(header_tbl)
+    elements.append(hr_line(thickness=1.5))
 
+    elements.append(Paragraph(
+        f"<b>REPORT SHEET FOR {term.name}, {session.name} ACADEMIC SESSION</b>",
+        S["report_title"]
+    ))
+    elements.append(hr_line(thickness=0.5))
+    elements.append(Spacer(1, 4))
+
+    # ── 2. Student Info Grid ──────────────────────────────────────
+    col3      = INNER / 3
+    info_data = [
+        [ic("Name",             f"{student.first_name} {student.last_name}"),
+         ic("Gender",           getattr(student, 'gender', 'N/A') or 'N/A'),
+         ic("Class",            display_class)],
+        [ic("No. in Class",     total_students),
+         ic("Total Score",      student_total),
+         ic("Class Average",    class_average)],
+        [ic("Highest In Class", highest_in_class),
+         ic("Lowest In Class",  lowest_in_class),
+         ic("Final Grade",      final_grade)],
+        [ic("Final Average",    student_average),
+         ic("POSITION",         ordinal(position)),
+         ic("Next Term Begins", getattr(school, 'next_term_date', 'N/A') if school else 'N/A')],
+    ]
+    info_tbl = Table(info_data, colWidths=[col3, col3, col3])
+    info_tbl.setStyle(TableStyle([
+        ("GRID",          (0,0), (-1,-1), 0.4, colors.grey),
+        ("TOPPADDING",    (0,0), (-1,-1), 4),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 4),
+        ("LEFTPADDING",   (0,0), (-1,-1), 5),
+        ("RIGHTPADDING",  (0,0), (-1,-1), 5),
+        ("ROWBACKGROUNDS",(0,0), (-1,-1), [colors.white, LGREY]),
+    ]))
+    elements += [info_tbl, Spacer(1, 6)]
+
+    # ── 3. Subject Table ──────────────────────────────────────────
+    elements.append(section_header("Subjects"))
+    elements.append(Spacer(1, 2))
+
+    if is_midterm:
+        hdr_row = [Paragraph(h, S["cell_hdr"]) for h in [
+            "Subjects",
+            f"CA<br/>({int(max_ca)})",
+            f"Midterm<br/>Exams<br/>({int(max_mid)})",
+            "Total",
+            "Per<br/>(%)",
+            "Low.<br/>In<br/>Class",
+            "High.<br/>In<br/>Class",
+            "Class<br/>Average",
+            "POS",
+            "Out<br/>Of",
+            "Grade",
+            "Remark",
+        ]]
+    else:
+        hdr_row = [Paragraph(h, S["cell_hdr"]) for h in [
+            "Subjects",
+            f"CA<br/>({int(max_ca)})",
+            f"Midterm<br/>Exams<br/>({int(max_mid)})",
+            f"Exams<br/>({int(max_exam)})",
+            "Total",
+            "Low.<br/>In<br/>Class",
+            "High.<br/>In<br/>Class",
+            "Class<br/>Average",
+            "POS",
+            "Out<br/>Of",
+            "Grade",
+            "Remark",
+        ]]
+
+    subj_data = [hdr_row]
 
     for r in results:
-        ca = float(r.ca_score or 0)
-        mid = float(r.midterm_score or 0)
-        exam = float(r.exam_score or 0)
+        ca    = float(r.ca_score      or 0)
+        mid   = float(r.midterm_score or 0)
+        exam  = float(r.exam_score    or 0)
         total = ca + mid + exam
-        max_total = sum([10 if ca > 0 else 0, 30 if mid > 0 else 0, 60 if exam > 0 else 0])
-        percentage = round((total / max_total) * 100) if max_total else 0
 
-        subject_results = all_results.filter(subject=r.subject)
-        class_avg = round(sum(
-            float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
-            for s in subject_results
-        ) / len(subject_results), 2) if subject_results else 0
-        high_in_class = max([
-            float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
-            for s in subject_results
-        ], default=0)
-        low_in_class = min([
-            float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
-            for s in subject_results
-        ], default=0)
-        pos_sorted = sorted([
-            (s.student_id, float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0))
-            for s in subject_results
-        ], key=lambda x: x[1], reverse=True)
-        pos = next((i + 1 for i, (sid_, _) in enumerate(pos_sorted) if sid_ == student_id), None)
+        max_total  = max_ca + max_mid
+        percentage = round((total / max_total) * 100) if max_total and is_midterm else 0
 
-        row = [
-            r.subject.title, str(ca), str(mid), str(exam), str(total),
-            f"{percentage}", r.grade_letter, str(class_avg), str(pos),
-            str(len(subject_results)), str(high_in_class), str(low_in_class), r.remark
-        ]
-        table_data.append([Paragraph(str(x), style_center) for x in row])
+        words       = r.subject.title.split()
+        clean_title = ' '.join(
+            w for w in words
+            if not any(w.upper().startswith(p) for p in ['JSS', 'SS'])
+        ).strip()
 
-    page_width = A4[0] - doc.leftMargin - doc.rightMargin
-    col_fractions = [0.10, 0.05, 0.08, 0.06, 0.07, 0.05, 0.07, 0.05, 0.05, 0.06, 0.06, 0.10, 0.20]
-    col_widths = [page_width * frac for frac in col_fractions]
+        s_entries = subject_scores_map[r.subject_id]
+        s_scores  = [sc for _, sc in s_entries]
+        s_count   = len(s_scores)
+        s_avg     = round(sum(s_scores) / s_count, 2) if s_count else 0
+        s_high    = max(s_scores, default=0)
+        s_low     = min(s_scores, default=0)
+        s_sorted  = sorted(s_entries, key=lambda x: x[1], reverse=True)
+        s_pos     = next((i + 1 for i, (sid_, _) in enumerate(s_sorted) if sid_ == student_id), None)
 
-    result_table = Table(table_data, colWidths=col_widths)
-    result_table.setStyle(TableStyle([
-        ('GRID', (0, 0), (-1, -1), 0.4, colors.lightgrey),
-        ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 6),
-        ('FONTSIZE', (0, 1), (-1, -1), 6),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        remark_style = ParagraphStyle(
+            "rs", fontSize=7, fontName="Helvetica", alignment=TA_LEFT, leading=9,
+            textColor=colors.HexColor("#c00000")
+            if r.remark and r.remark.lower() == "fail" else colors.black
+        )
+
+        if is_midterm:
+            subj_data.append([
+                Paragraph(clean_title,                S["cell_normal"]),
+                Paragraph(str(ca),                    S["cell_center"]),
+                Paragraph(str(mid),                   S["cell_center"]),
+                Paragraph(str(total),                 S["cell_center"]),
+                Paragraph(f"{percentage}%",           S["cell_center"]),
+                Paragraph(str(s_low),                 S["cell_center"]),
+                Paragraph(str(s_high),                S["cell_center"]),
+                Paragraph(str(s_avg),                 S["cell_center"]),
+                Paragraph(ordinal(s_pos),             S["cell_center"]),
+                Paragraph(str(s_count),               S["cell_center"]),
+                Paragraph(f"<b>{r.grade_letter}</b>", S["cell_center"]),
+                Paragraph(r.remark or "",             remark_style),
+            ])
+        else:
+            subj_data.append([
+                Paragraph(clean_title,                S["cell_normal"]),
+                Paragraph(str(ca),                    S["cell_center"]),
+                Paragraph(str(mid),                   S["cell_center"]),
+                Paragraph(str(exam),                  S["cell_center"]),
+                Paragraph(str(total),                 S["cell_center"]),
+                Paragraph(str(s_low),                 S["cell_center"]),
+                Paragraph(str(s_high),                S["cell_center"]),
+                Paragraph(str(s_avg),                 S["cell_center"]),
+                Paragraph(ordinal(s_pos),             S["cell_center"]),
+                Paragraph(str(s_count),               S["cell_center"]),
+                Paragraph(f"<b>{r.grade_letter}</b>", S["cell_center"]),
+                Paragraph(r.remark or "",             remark_style),
+            ])
+
+    if is_midterm:
+        col_fracs  = [0.18, 0.06, 0.10, 0.07, 0.07, 0.06, 0.06, 0.09, 0.06, 0.05, 0.06, 0.07]
+    else:
+        col_fracs  = [0.18, 0.05, 0.09, 0.07, 0.06, 0.06, 0.06, 0.09, 0.06, 0.05, 0.06, 0.07]
+
+    col_widths = [INNER * f for f in col_fracs]
+    col_widths[-1] = INNER - sum(col_widths[:-1])
+
+    subj_tbl = Table(subj_data, colWidths=col_widths, repeatRows=1)
+    subj_tbl.setStyle(TableStyle([
+        ("BACKGROUND",    (0,0),  (-1,0),  LBLUE),
+        ("GRID",          (0,0),  (-1,-1), 0.4, colors.grey),
+        ("FONTSIZE",      (0,0),  (-1,-1), 7),
+        ("VALIGN",        (0,0),  (-1,-1), "MIDDLE"),
+        ("TOPPADDING",    (0,0),  (-1,-1), 3),
+        ("BOTTOMPADDING", (0,0),  (-1,-1), 3),
+        ("ROWBACKGROUNDS",(0,1),  (-1,-1), [colors.white, LGREY]),
     ]))
-    elements += [result_table, Spacer(1, 15)]
+    elements += [subj_tbl, Spacer(1, 4)]
 
-    elements.append(Paragraph(f"<b>Number of Subjects:</b> {num_subjects}", style_left))
-    elements.append(Spacer(1, 5))  # optional spacing after
+    grade_details = (
+        getattr(school, 'grade_details', None) or
+        "F = 0-45 | E8 = 45-50 | D7 = 50-55 | C6 = 55-60 | C5 = 60-65 | "
+        "C4 = 65-70 | B3 = 70-75 | B2 = 75-91 | A1 = 91-100"
+    )
+    elements.append(Paragraph(
+        f"<b>Grade Details:</b> {grade_details} | No. of Subjects: {num_subjects}",
+        S["small"]
+    ))
+    elements.append(Spacer(1, 6))
 
-
-    # --- Grading Scale ---
-    grading_text = "<b>GRADING SCALE</b>: A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39"
-    elements.append(Paragraph(grading_text, style_left))
-    # elements.append(Paragraph("<b>GRADING SCALE</b>":"A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39", style_left))
-    elements.append(Spacer(1, 15))
-
-    elements.append(hr)
-     
-    # --- Fetch behavior for 3rd term ---
-    if term.name.lower().strip() in ["3rd term","3rd-term","3rd_term","3rd" ,"third term",'third-term','third_term',"third"]:
+    # ── 4 & 5: Only for non-midterm ───────────────────────────────
+    if not is_midterm:
+        # ── 4. Psychomotor & Affective ────────────────────────────
         behavior = StudentBehaviorRecord.objects.filter(
             student_id=student_id,
             session_id=session_id,
             term_id=term_id
         ).first()
 
-        if behavior:
-            # --- Psychomotor Table ---
-            psychomotor_data = [["Default Psychomotor", "Rating"]]
-            psychomotor_data += [
-                ["Handwriting", behavior.handwriting],
-                ["Games", behavior.games],
-                ["Sports", behavior.sports],
-                ["Drawing & Painting", behavior.drawing_painting],
-                ["Crafts", behavior.crafts]
-            ]
-            psychomotor_table = Table(
-                psychomotor_data,
-                colWidths=[120, 40],
-                rowHeights=[15] + [12]*5  # header = 15, body = 12
-            )
-            psychomotor_table.setStyle(TableStyle([
-                ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-                ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
-                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0,0), (-1,0), 8),
-                ('FONTSIZE', (0,1), (-1,-1), 7),
-                ('ALIGN', (1,1), (-1,-1), 'CENTER'),
-                ('VALIGN', (0,0), (-1,-1), 'MIDDLE')
-            ]))
+        elements.append(section_header("Psychomotor & Affective Traits"))
+        elements.append(Spacer(1, 2))
 
-            # --- Affective Table ---
-            affective_data = [["Default Affective Traits", "Rating"]]
-            affective_data += [
-                ["Punctuality", behavior.punctuality],
-                ["Attendance", behavior.attendance],
-                ["Reliability", behavior.reliability],
-                ["Neatness", behavior.neatness],
-                ["Politeness", behavior.politeness],
-                ["Honesty", behavior.honesty],
-                ["Relationship w/ Students", behavior.relationship_with_students],
-                ["Self Control", behavior.self_control],
-                ["Attentiveness", behavior.attentiveness],
-                ["Perseverance", behavior.perseverance]
-            ]
-            affective_table = Table(
-                affective_data,
-                colWidths=[150, 40],
-                rowHeights=[15] + [12]*10  # header = 15, body = 12
-            )
-            affective_table.setStyle(TableStyle([
-                ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-                ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
-                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0,0), (-1,0), 8),
-                ('FONTSIZE', (0,1), (-1,-1), 7),
-                ('ALIGN', (1,1), (-1,-1), 'CENTER'),
-                ('VALIGN', (0,0), (-1,-1), 'MIDDLE')
-            ]))
-
-            # --- Scale Table ---
-            scale_data = [["SCALE"]]
-            scale_data += [["5 - Excellent"], ["4 - Good"], ["3 - Fair"], ["2 - Poor"], ["1 - Very Poor"]]
-            scale_table = Table(
-                scale_data,
-                colWidths=[100],
-                rowHeights=[15] + [12]*5  # header = 15, body = 12
-            )
-            scale_table.setStyle(TableStyle([
-                ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-                ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
-                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0,0), (-1,0), 8),
-                ('FONTSIZE', (0,1), (-1,-1), 7),
-                ('ALIGN', (0,1), (-1,-1), 'CENTER'),
-                ('VALIGN', (0,0), (-1,-1), 'MIDDLE')
-            ]))
-
-            # --- Combine tables horizontally ---
-            combined = Table([[psychomotor_table, affective_table, scale_table]], colWidths=[160, 200, 120])
-            combined.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP')]))
-
-            elements.append(combined)
-            elements.append(Spacer(1, 10))  # tighter spacing
-    
-            elements.append(hr)
-
-    # --- Comments & Signatures ---
-    if school and getattr(school, 'teacher_signature', None):
-        try:
-            sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
-            sig_img = RLImage(sig_data, width=100, height=40)
-            elements.append(sig_img)
-        except Exception:
-            pass
-
-        elements.append(Spacer(1, 10))
+        half = INNER / 2
 
         if behavior:
-            # append form teacher and principal comments
-            elements.append(Spacer(1, 10))
-            elements.append(Paragraph(f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}", style_left))
-            elements.append(Paragraph(f"<b>Form Teacher Comment:</b> {behavior.form_teacher_comment}", style_left))
-            elements.append(Spacer(1, 5))
-            elements.append(Paragraph(f"<b>Principal's Remark:</b> {behavior.principal_comment}", style_left))
+            psycho_traits = [
+                ("HANDWRITING",        behavior.handwriting),
+                ("GAMES",              behavior.games),
+                ("SPORTS",             behavior.sports),
+                ("DRAWING & PAINTING", behavior.drawing_painting),
+                ("CRAFTS",             behavior.crafts),
+            ]
+            affective_traits = [
+                ("PUNCTUALITY",               behavior.punctuality),
+                ("ATTENDANCE",                behavior.attendance),
+                ("RELIABILITY",               behavior.reliability),
+                ("NEATNESS",                  behavior.neatness),
+                ("POLITENESS",                behavior.politeness),
+                ("HONESTY",                   behavior.honesty),
+                ("RELATIONSHIP WITH STUDENTS",behavior.relationship_with_students),
+                ("SELF CONTROL",              behavior.self_control),
+                ("ATTENTIVENESS",             behavior.attentiveness),
+                ("PERSEVERANCE",              behavior.perseverance),
+            ]
+        else:
+            psycho_traits    = [("HANDWRITING",""), ("GAMES",""), ("SPORTS",""),
+                                ("DRAWING & PAINTING",""), ("CRAFTS","")]
+            affective_traits = [("PUNCTUALITY",""), ("ATTENDANCE",""), ("RELIABILITY",""),
+                                ("NEATNESS",""), ("POLITENESS",""), ("HONESTY",""),
+                                ("RELATIONSHIP WITH STUDENTS",""), ("SELF CONTROL",""),
+                                ("ATTENTIVENESS",""), ("PERSEVERANCE","")]
 
-            elements.append(hr)
+        side_tbl = Table(
+            [[trait_table("Default Psychomotor Rating",      psycho_traits,    half),
+              trait_table("Default Affective Traits Rating", affective_traits, half)]],
+            colWidths=[half, half]
+        )
+        side_tbl.setStyle(TableStyle([
+            ("VALIGN",       (0,0), (-1,-1), "TOP"),
+            ("LEFTPADDING",  (0,0), (-1,-1), 0),
+            ("RIGHTPADDING", (0,0), (-1,-1), 0),
+        ]))
+        elements += [side_tbl, Spacer(1, 6)]
 
-    if school and getattr(school, 'principal_signature', None):
+        # ── 5. Comments & Signatures ──────────────────────────────
+        elements.append(section_header("Remarks & Signatures"))
+        elements.append(Spacer(1, 3))
+
+        form_teacher_name = "N/A"
+        if behavior:
+            teachers = behavior.form_teacher.all()
+            if teachers.exists():
+                form_teacher_name = ", ".join(
+                    f"{t.first_name} {t.last_name}".strip() for t in teachers
+                )
+
+        form_comment      = (behavior.form_teacher_comment if behavior else "") or ""
+        principal_comment = (behavior.principal_comment    if behavior else "") or ""
+
+        comments_data = [
+            [Paragraph(f"<b>Form Teacher:</b> {form_teacher_name}", S["label"]), ""],
+            [Paragraph("<b>Form Teacher Comment:</b>", S["label"]), ""],
+            [Paragraph(form_comment      or "No comment.", S["comment"]), ""],
+            [Paragraph("<b>PRINCIPAL'S REMARK:</b>",    S["label"]), ""],
+            [Paragraph(principal_comment or "No remark.", S["comment"]), ""],
+            [
+                Paragraph("<b>Form Teacher SIGNATURE:</b> _______________________", S["label"]),
+                Paragraph("<b>PRINCIPAL'S SIGNATURE:</b> _______________________",  S["label"]),
+            ],
+        ]
+
+        if school and getattr(school, 'teacher_signature', None):
             try:
-                sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
-                sig_img = RLImage(sig_data, width=100, height=40)
-                elements.append(sig_img)
+                sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
+                sig_img  = RLImage(sig_data, width=100, height=40)
+                comments_data[5][0] = sig_img
             except Exception:
                 pass
-    
+
+        if school and getattr(school, 'principal_signature', None):
+            try:
+                sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
+                sig_img  = RLImage(sig_data, width=100, height=40)
+                comments_data[5][1] = sig_img
+            except Exception:
+                pass
+
+        comment_tbl = Table(comments_data, colWidths=[INNER * 0.6, INNER * 0.4])
+        comment_tbl.setStyle(TableStyle([
+            ("GRID",          (0,0), (-1,-1), 0.3, colors.lightgrey),
+            ("TOPPADDING",    (0,0), (-1,-1), 4),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 4),
+            ("LEFTPADDING",   (0,0), (-1,-1), 6),
+            ("SPAN",          (0,0), (1,0)),
+            ("SPAN",          (0,1), (1,1)),
+            ("SPAN",          (0,2), (1,2)),
+            ("SPAN",          (0,3), (1,3)),
+            ("SPAN",          (0,4), (1,4)),
+            ("BACKGROUND",    (0,0), (-1,0),  LGREY),
+            ("BACKGROUND",    (0,3), (-1,3),  LGREY),
+        ]))
+        elements.append(comment_tbl)
+
+    # ── Principal signature + form teacher always shows for midterm
+    if is_midterm:
+        elements.append(Spacer(1, 10))
+        elements.append(section_header("Principal's Signature"))
+        elements.append(Spacer(1, 6))
+
+        # Form teacher name
+        behavior = StudentBehaviorRecord.objects.filter(
+            student_id=student_id,
+            session_id=session_id,
+            term_id=term_id
+        ).first()
+
+        form_teacher_name = "N/A"
+        if behavior:
+            teachers = behavior.form_teacher.all()
+            if teachers.exists():
+                form_teacher_name = ", ".join(
+                    f"{t.first_name} {t.last_name}".strip() for t in teachers
+                )
+        elements.append(Paragraph(
+            f"<b>Form Teacher:</b> {form_teacher_name}",
+            S["label"]
+        ))
+        elements.append(Spacer(1, 6))
+
+        if school and getattr(school, 'principal_signature', None):
+            try:
+                sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
+                sig_img  = RLImage(sig_data, width=100, height=40)
+                elements.append(sig_img)
+            except Exception:
+                elements.append(Paragraph(
+                    "<b>PRINCIPAL'S SIGNATURE:</b> _______________________",
+                    S["label"]
+                ))
+        else:
+            elements.append(Paragraph(
+                "<b>PRINCIPAL'S SIGNATURE:</b> _______________________",
+                S["label"]
+            ))
+
     doc.build(elements)
     return response
+
+
+#per student
+# def download_term_report_pdf(request, student_id, session_id, term_id):
+#     # --- Fetch results ---
+#     results = Result_Portal.objects.filter(
+#         student_id=student_id,
+#         session_id=session_id,
+#         term_id=term_id
+#     ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('subject__title')
+
+#     if not results.exists():
+#         return HttpResponse("No results found.", status=404)
+
+#     student = results.first().student
+#     school = results.first().schools
+#     session = results.first().session
+#     term = results.first().term
+    
+    
+#     raw_class = getattr(results.first(), 'result_class', '')
+#     print(f"RAW CLASS REPR: {repr(raw_class)}")
+
+#     match = re.match(r'^((?:JSS|SS)\\s*\\d+)', raw_class.strip(), re.IGNORECASE)
+#     print(f"MATCH RESULT: {match}")
+
+#     result_class = match.group(1).strip() if match else raw_class.strip()
+#     print(f"FINAL result_class: '{result_class}'")
+
+#      # Get school max scores from the first result
+   
+#     # --- Class stats ---
+#     all_results = Result_Portal.objects.filter(
+#         result_class=result_class,
+#         session_id=session_id,
+#         term_id=term_id
+#     )
+
+#     student_total = sum(
+#         float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
+#         for r in results
+#     )
+#     num_subjects = len(results)
+#     student_average = round(student_total / num_subjects, 2) if num_subjects else 0
+
+#     class_totals = {}
+#     for r in all_results:
+#         sid = r.student_id
+#         total_score = float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
+#         class_totals[sid] = class_totals.get(sid, 0) + total_score
+
+#     sorted_totals = sorted(class_totals.items(), key=lambda x: x[1], reverse=True)
+#     position = next((i + 1 for i, (sid, _) in enumerate(sorted_totals) if sid == student_id), None)
+#     total_students = len(class_totals)
+#     class_average = round(sum(class_totals.values()) / len(class_totals), 2) if class_totals else 0
+#     highest_in_class = max(class_totals.values(), default=0)
+#     lowest_in_class = min(class_totals.values(), default=0)
+#     final_grade = results[0].grade_letter if results else ''
+
+#     # --- PDF Setup ---
+#     response = HttpResponse(content_type='application/pdf')
+#     response['Content-Disposition'] = f'attachment; filename="{student.username}_term_report.pdf"'
+#     doc = SimpleDocTemplate(response, pagesize=A4, topMargin=25, leftMargin=25, rightMargin=25, bottomMargin=30)
+
+#     styles = getSampleStyleSheet()
+#     style_left = styles["Normal"]
+#     style_left.alignment = TA_LEFT
+#     style_center = ParagraphStyle(name="Center", parent=styles["Normal"], alignment=TA_CENTER)
+
+#     elements = []
+
+#     # --- Header Section (Logo + Flex Layout) ---
+#     logo_img = None
+#     if school and getattr(school, 'logo', None):
+#         try:
+#             logo_data = io.BytesIO(requests.get(school.logo.url).content)
+#             logo_img = RLImage(logo_data, width=80, height=80)
+#         except Exception:
+#             pass
+
+#     school_name = f"<b>{getattr(school, 'school_name', 'Best Academy, Abuja')}</b>"
+#     school_motto = f"<i>{getattr(school, 'school_motto', 'Motto: Knowledge for Excellence')}</i>"
+#     school_address = f"{getattr(school, 'school_address', 'Tunga')}"
+
+#     school_details = [
+#             Paragraph(school_name, ParagraphStyle(name='SchoolName', fontSize=14, alignment=TA_LEFT)),
+#             Spacer(1, 8),  # 4 points of vertical space
+#             Paragraph(school_motto, ParagraphStyle(name='SchoolMotto', fontSize=10, alignment=TA_LEFT)),
+#             Spacer(1, 8),  # 2 points of vertical space
+#             Paragraph(school_address, ParagraphStyle(name='SchoolAddress', fontSize=9, alignment=TA_LEFT))
+#         ]
+
+#     header_table = Table([[logo_img if logo_img else "", school_details]], colWidths=[90, 400])
+#     header_table.setStyle(TableStyle([
+#         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+#         ('LEFTPADDING', (0, 0), (-1, -1), 5),
+#         ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+#         ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+#         ('TOPPADDING', (0, 0), (-1, -1), 0),
+#     ]))
+#     elements.append(header_table)
+#     elements.append(Spacer(1, 10))
+
+    
+#     hr = HRFlowable(width="100%", thickness=0.5, color=colors.blue)
+#     elements.append(hr)
+
+#     # --- Title ---
+#     elements.append(Paragraph("<b><u>TERM REPORT CARD</u></b>", style_center))
+#     elements.append(Spacer(1, 10))
+
+#     # --- Student Info (Grid Table) ---
+
+#     student_info_data = [
+#         [f"Name: {student.first_name} {student.last_name}", f"Class: {result_class}", f"Term: {term.name}"],
+#         [f"Session: {session.name}", f"No. in Class: {total_students}", f"Position: {position} of {total_students}"],
+#         [f"Total Score: {student_total}", f"Average Score: {student_average}", f"Class Average: {class_average}"],
+#         [f"Highest in Class: {highest_in_class}", f"Lowest in Class: {lowest_in_class}", f"Final Grade: {final_grade}"],
+#     ]
+#     student_table = Table(student_info_data, colWidths=[180, 180, 180])
+#     student_table.setStyle(TableStyle([
+#         ('GRID', (0, 0), (-1, -1), 0.6, colors.grey),
+#         ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+#         ('FONTSIZE', (0, 0), (-1, -1), 10),
+#         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+#     ]))
+#     elements += [student_table, Spacer(1, 15)]
+
+#     max_ca = school.max_ca_score if school else 10
+#     max_mid = school.max_midterm_score if school else 30
+#     max_exam = school.max_exam_score if school else 60
+
+#     # --- Subject Table (with Grid) ---
+#     header_style = ParagraphStyle(name='HeaderStyle', fontName='Helvetica-Bold', fontSize=7, alignment=1)
+
+#     # Use f-strings to insert actual max values
+#     headers = [
+#         "Subject",
+#         f"CA<br/>({max_ca})",
+#         f"Midterm<br/>({max_mid})",
+#         f"Exam<br/>({max_exam})",
+#         "Total",
+#         "Per (%)",
+#         "Grade",
+#         "Class<br/>Ave",
+#         "POS",
+#         "Out<br/>Of",
+#         "High<br/>In<br/>Class",
+#         "Low<br/>In<br/>Class",
+#         "Remark"
+#     ]
+
+#     table_data = [[Paragraph(h, header_style) for h in headers]]
+
+
+
+#     for r in results:
+#         ca = float(r.ca_score or 0)
+#         mid = float(r.midterm_score or 0)
+#         exam = float(r.exam_score or 0)
+#         total = ca + mid + exam
+#         max_total = sum([10 if ca > 0 else 0, 30 if mid > 0 else 0, 60 if exam > 0 else 0])
+#         percentage = round((total / max_total) * 100) if max_total else 0
+
+#         subject_results = all_results.filter(subject=r.subject)
+#         class_avg = round(sum(
+#             float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
+#             for s in subject_results
+#         ) / len(subject_results), 2) if subject_results else 0
+#         high_in_class = max([
+#             float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
+#             for s in subject_results
+#         ], default=0)
+#         low_in_class = min([
+#             float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
+#             for s in subject_results
+#         ], default=0)
+#         pos_sorted = sorted([
+#             (s.student_id, float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0))
+#             for s in subject_results
+#         ], key=lambda x: x[1], reverse=True)
+#         pos = next((i + 1 for i, (sid_, _) in enumerate(pos_sorted) if sid_ == student_id), None)
+
+#         row = [
+#             r.subject.title, str(ca), str(mid), str(exam), str(total),
+#             f"{percentage}", r.grade_letter, str(class_avg), str(pos),
+#             str(len(subject_results)), str(high_in_class), str(low_in_class), r.remark
+#         ]
+#         table_data.append([Paragraph(str(x), style_center) for x in row])
+
+#     page_width = A4[0] - doc.leftMargin - doc.rightMargin
+#     col_fractions = [0.10, 0.05, 0.08, 0.06, 0.07, 0.05, 0.07, 0.05, 0.05, 0.06, 0.06, 0.10, 0.20]
+#     col_widths = [page_width * frac for frac in col_fractions]
+
+#     result_table = Table(table_data, colWidths=col_widths)
+#     result_table.setStyle(TableStyle([
+#         ('GRID', (0, 0), (-1, -1), 0.4, colors.lightgrey),
+#         ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
+#         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+#         ('FONTSIZE', (0, 0), (-1, 0), 6),
+#         ('FONTSIZE', (0, 1), (-1, -1), 6),
+#         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+#         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+#     ]))
+#     elements += [result_table, Spacer(1, 15)]
+
+#     elements.append(Paragraph(f"<b>Number of Subjects:</b> {num_subjects}", style_left))
+#     elements.append(Spacer(1, 5))  # optional spacing after
+
+
+#     # --- Grading Scale ---
+#     grading_text = "<b>GRADING SCALE</b>: A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39"
+#     elements.append(Paragraph(grading_text, style_left))
+#     # elements.append(Paragraph("<b>GRADING SCALE</b>":"A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39", style_left))
+#     elements.append(Spacer(1, 15))
+
+#     elements.append(hr)
+     
+#     # --- Fetch behavior for 3rd term ---
+#     if term.name.lower().strip() in ["3rd term","3rd-term","3rd_term","3rd" ,"third term",'third-term','third_term',"third"]:
+#         behavior = StudentBehaviorRecord.objects.filter(
+#             student_id=student_id,
+#             session_id=session_id,
+#             term_id=term_id
+#         ).first()
+
+#         if behavior:
+#             # --- Psychomotor Table ---
+#             psychomotor_data = [["Default Psychomotor", "Rating"]]
+#             psychomotor_data += [
+#                 ["Handwriting", behavior.handwriting],
+#                 ["Games", behavior.games],
+#                 ["Sports", behavior.sports],
+#                 ["Drawing & Painting", behavior.drawing_painting],
+#                 ["Crafts", behavior.crafts]
+#             ]
+#             psychomotor_table = Table(
+#                 psychomotor_data,
+#                 colWidths=[120, 40],
+#                 rowHeights=[15] + [12]*5  # header = 15, body = 12
+#             )
+#             psychomotor_table.setStyle(TableStyle([
+#                 ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+#                 ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
+#                 ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+#                 ('FONTSIZE', (0,0), (-1,0), 8),
+#                 ('FONTSIZE', (0,1), (-1,-1), 7),
+#                 ('ALIGN', (1,1), (-1,-1), 'CENTER'),
+#                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE')
+#             ]))
+
+#             # --- Affective Table ---
+#             affective_data = [["Default Affective Traits", "Rating"]]
+#             affective_data += [
+#                 ["Punctuality", behavior.punctuality],
+#                 ["Attendance", behavior.attendance],
+#                 ["Reliability", behavior.reliability],
+#                 ["Neatness", behavior.neatness],
+#                 ["Politeness", behavior.politeness],
+#                 ["Honesty", behavior.honesty],
+#                 ["Relationship w/ Students", behavior.relationship_with_students],
+#                 ["Self Control", behavior.self_control],
+#                 ["Attentiveness", behavior.attentiveness],
+#                 ["Perseverance", behavior.perseverance]
+#             ]
+#             affective_table = Table(
+#                 affective_data,
+#                 colWidths=[150, 40],
+#                 rowHeights=[15] + [12]*10  # header = 15, body = 12
+#             )
+#             affective_table.setStyle(TableStyle([
+#                 ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+#                 ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
+#                 ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+#                 ('FONTSIZE', (0,0), (-1,0), 8),
+#                 ('FONTSIZE', (0,1), (-1,-1), 7),
+#                 ('ALIGN', (1,1), (-1,-1), 'CENTER'),
+#                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE')
+#             ]))
+
+#             # --- Scale Table ---
+#             scale_data = [["SCALE"]]
+#             scale_data += [["5 - Excellent"], ["4 - Good"], ["3 - Fair"], ["2 - Poor"], ["1 - Very Poor"]]
+#             scale_table = Table(
+#                 scale_data,
+#                 colWidths=[100],
+#                 rowHeights=[15] + [12]*5  # header = 15, body = 12
+#             )
+#             scale_table.setStyle(TableStyle([
+#                 ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+#                 ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
+#                 ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+#                 ('FONTSIZE', (0,0), (-1,0), 8),
+#                 ('FONTSIZE', (0,1), (-1,-1), 7),
+#                 ('ALIGN', (0,1), (-1,-1), 'CENTER'),
+#                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE')
+#             ]))
+
+#             # --- Combine tables horizontally ---
+#             combined = Table([[psychomotor_table, affective_table, scale_table]], colWidths=[160, 200, 120])
+#             combined.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP')]))
+
+#             elements.append(combined)
+#             elements.append(Spacer(1, 10))  # tighter spacing
+    
+#             elements.append(hr)
+
+#     # --- Comments & Signatures ---
+#     if school and getattr(school, 'teacher_signature', None):
+#         try:
+#             sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
+#             sig_img = RLImage(sig_data, width=100, height=40)
+#             elements.append(sig_img)
+#         except Exception:
+#             pass
+
+#         elements.append(Spacer(1, 10))
+
+#         if behavior:
+#             # append form teacher and principal comments
+#             elements.append(Spacer(1, 10))
+#             elements.append(Paragraph(f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}", style_left))
+#             elements.append(Paragraph(f"<b>Form Teacher Comment:</b> {behavior.form_teacher_comment}", style_left))
+#             elements.append(Spacer(1, 5))
+#             elements.append(Paragraph(f"<b>Principal's Remark:</b> {behavior.principal_comment}", style_left))
+
+#             elements.append(hr)
+
+#     if school and getattr(school, 'principal_signature', None):
+#             try:
+#                 sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
+#                 sig_img = RLImage(sig_data, width=100, height=40)
+#                 elements.append(sig_img)
+#             except Exception:
+#                 pass
+    
+#     doc.build(elements)
+#     return response
+
 
 def class_report_list(request):
     reports = Result_Portal.objects.values(
@@ -567,51 +1106,7 @@ def class_report_list(request):
     })
 
 
-import requests
-from django.http import HttpResponse
-
-import requests
-from urllib.parse import unquote
-from django.http import HttpResponse, HttpResponseRedirect
-
-def proxy_download_pdf(request):
-    url = request.GET.get('url')
-    filename = request.GET.get('filename', 'report.pdf')
-
-    if not url:
-        return HttpResponse("Invalid URL", status=400)
-
-    # ── Decode double-encoded URL ──────────────────────────────
-    url = unquote(url)
-
-    # ── Handle local media files ───────────────────────────────
-    if url.startswith('/media/'):
-        import os
-        from django.conf import settings
-        filepath = os.path.join(settings.MEDIA_ROOT, url.replace('/media/', ''))
-        if os.path.exists(filepath):
-            with open(filepath, 'rb') as f:
-                response = HttpResponse(f.read(), content_type='application/pdf')
-                response['Content-Disposition'] = f'attachment; filename="{filename}"'
-                return response
-        return HttpResponse("File not found", status=404)
-
-    # ── Handle Cloudinary URLs ─────────────────────────────────
-    if 'cloudinary.com' not in url:
-        return HttpResponse("Invalid URL", status=400)
-
-    try:
-        response = requests.get(url, stream=True, timeout=30)
-        response.raise_for_status()
-        django_response = HttpResponse(
-            response.content,
-            content_type='application/pdf'
-        )
-        django_response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        return django_response
-    except Exception:
-        return HttpResponseRedirect(url)
-
+     
 
 def class_report_detail(request, result_class, session_id, term_id):
     # Fetch session and term objects
@@ -673,9 +1168,579 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 
 
-def download_class_reports_pdf(request, result_class, session_id, term_id):
+# def download_class_reports_pdf(request, result_class, session_id, term_id):
 
-    # --- Fetch all results ---
+#     # --- Fetch all results ---
+#     all_results = Result_Portal.objects.filter(
+#         result_class=result_class,
+#         session_id=session_id,
+#         term_id=term_id
+#     ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('student__username', 'subject__title')
+
+#     if not all_results.exists():
+#         return HttpResponse("No results found for this class.", status=404)
+
+#     # --- Group by student ---
+#     students = {}
+#     for res in all_results:
+#         sid = res.student_id
+#         if sid not in students:
+#             students[sid] = {
+#                 'student': res.student,
+#                 'records': [],
+#                 'school': res.schools,
+#                 'session': res.session,
+#                 'term': res.term
+#             }
+#         students[sid]['records'].append(res)
+
+#     # --- Compute totals for ranking ---
+#     class_totals = {}
+#     for res in all_results:
+#         sid = res.student_id
+#         total = float(res.ca_score or 0) + float(res.midterm_score or 0) + float(res.exam_score or 0)
+#         class_totals[sid] = class_totals.get(sid, 0) + total
+#     sorted_totals = sorted(class_totals.items(), key=lambda x: x[1], reverse=True)
+
+#     # --- PDF Setup ---
+#     response = HttpResponse(content_type='application/pdf')
+#     response['Content-Disposition'] = f'attachment; filename="class_{result_class}_term_reports.pdf"'
+#     doc = SimpleDocTemplate(response, pagesize=A4, topMargin=25, leftMargin=25, rightMargin=25, bottomMargin=30)
+
+#     styles = getSampleStyleSheet()
+#     style_left = styles["Normal"]
+#     style_left.alignment = TA_LEFT
+#     style_center = ParagraphStyle(name="Center", parent=styles["Normal"], alignment=TA_CENTER)
+
+#     elements = []
+
+#     # --- Generate report for each student ---
+#     for sid, data in students.items():
+#         student = data['student']
+#         records = data['records']
+#         school = data['school']
+#         session = data['session']
+#         term = data['term']
+
+#         # --- Student stats ---
+#         num_subjects = len(records)
+#         student_total = sum(
+#             float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
+#             for r in records
+#         )
+#         student_average = round(student_total / num_subjects, 2) if num_subjects else 0
+#         total_students = len(class_totals)
+#         class_average = round(sum(class_totals.values()) / len(class_totals), 2)
+#         position = next((i + 1 for i, (stud_id, _) in enumerate(sorted_totals) if stud_id == sid), None)
+#         highest_in_class = max(class_totals.values(), default=0)
+#         lowest_in_class = min(class_totals.values(), default=0)
+#         final_grade = records[0].grade_letter if records else ""
+
+#         # --- Header Section (Logo + School Info in Flex Layout) ---
+#         logo_img = None
+#         if school and getattr(school, 'logo', None):
+#             try:
+#                 logo_data = io.BytesIO(requests.get(school.logo.url).content)
+#                 logo_img = RLImage(logo_data, width=80, height=80)
+#             except Exception:
+#                 pass
+
+#         # School details
+#         school_name = f"<b>{school.school_name or 'Best Academy, Abuja'}</b>"
+#         school_motto = f"<i>{school.school_motto or 'Motto: Knowledge for Excellence'}</i>"
+#         school_address = f"{school.school_address or 'Tunga'}"
+
+#         school_details = [
+#             Paragraph(school_name, ParagraphStyle(name='SchoolName', fontSize=14, alignment=TA_LEFT)),
+#             Spacer(1, 8),  # 4 points of vertical space
+#             Paragraph(school_motto, ParagraphStyle(name='SchoolMotto', fontSize=10, alignment=TA_LEFT)),
+#             Spacer(1, 8),  # 2 points of vertical space
+#             Paragraph(school_address, ParagraphStyle(name='SchoolAddress', fontSize=9, alignment=TA_LEFT))
+#         ]
+
+
+#         # Simulate flexbox with table (Logo | School Info)
+#         header_table = Table(
+#             [[logo_img if logo_img else "", school_details]],
+#             colWidths=[90, 400]
+#         )
+#         header_table.setStyle(TableStyle([
+#             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+#             ('LEFTPADDING', (0, 0), (-1, -1), 5),
+#             ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+#             ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+#             ('TOPPADDING', (0, 0), (-1, -1), 0),
+#         ]))
+#         elements.append(header_table)
+#         elements.append(Spacer(1, 10))
+
+#         hr = HRFlowable(width="100%", thickness=0.5, color=colors.blue)
+#         elements.append(hr)
+
+
+#         # --- Title ---
+#         elements.append(Paragraph("<b><u>TERM REPORT CARD</u></b>", style_center))
+#         elements.append(Spacer(1, 10))
+
+#         # --- Student Info (with Grid Borders) ---
+#         full_name = f"{student.first_name or ''} {student.last_name or ''}".strip()
+
+#         student_info_data = [
+#             [f"Name: {student.first_name} {student.last_name}", f"Class: {result_class}", f"Term: {term.name}"],
+#             [f"Session: {session.name}", f"No. in Class: {total_students}", f"Position: {position} of {total_students}"],
+#             [f"Total Score: {student_total}", f"Average Score: {student_average}", f"Class Average: {class_average}"],
+#             [f"Highest in Class: {highest_in_class}", f"Lowest in Class: {lowest_in_class}", f"Final Grade: {final_grade}"],
+#         ]
+
+#         student_table = Table(student_info_data, colWidths=[180, 180, 180])
+#         student_table.setStyle(TableStyle([
+#             ('GRID', (0, 0), (-1, -1), 0.6, colors.grey),
+#             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+#             ('FONTSIZE', (0, 0), (-1, -1), 10),
+#             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+#         ]))
+#         elements += [student_table, Spacer(1, 15)]
+
+#         max_ca = school.max_ca_score if school else 10
+#         max_mid = school.max_midterm_score if school else 30
+#         max_exam = school.max_exam_score if school else 60
+
+#         # --- Subject Table (with Grid) ---
+#         header_style = ParagraphStyle(name='HeaderStyle', fontName='Helvetica-Bold', fontSize=7, alignment=1)
+#         # Use f-strings to insert actual max values
+#         headers = [
+#             "Subject",
+#             f"CA<br/>({max_ca})",
+#             f"Midterm<br/>({max_mid})",
+#             f"Exam<br/>({max_exam})",
+#             "Total",
+#             "Per (%)",
+#             "Grade",
+#             "Class<br/>Ave",
+#             "POS",
+#             "Out<br/>Of",
+#             "High<br/>In<br/>Class",
+#             "Low<br/>In<br/>Class",
+#             "Remark"
+#         ]
+
+#         table_data = [[Paragraph(h, header_style) for h in headers]]
+
+#         for r in records:
+#             ca = float(r.ca_score or 0)
+#             mid = float(r.midterm_score or 0)
+#             exam = float(r.exam_score or 0)
+#             total = ca + mid + exam
+#             max_total = sum([10 if ca > 0 else 0, 30 if mid > 0 else 0, 60 if exam > 0 else 0])
+#             percentage = round((total / max_total) * 100) if max_total else 0
+
+#             subject_results = all_results.filter(subject=r.subject)
+#             class_avg = round(sum(
+#                 float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
+#                 for s in subject_results
+#             ) / len(subject_results), 2) if subject_results else 0
+#             high_in_class = max([
+#                 float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
+#                 for s in subject_results
+#             ], default=0)
+#             low_in_class = min([
+#                 float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
+#                 for s in subject_results
+#             ], default=0)
+#             pos_sorted = sorted([
+#                 (s.student_id, float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0))
+#                 for s in subject_results
+#             ], key=lambda x: x[1], reverse=True)
+#             pos = next((i + 1 for i, (sid_, _) in enumerate(pos_sorted) if sid_ == sid), None)
+
+#             row = [
+#                 r.subject.title, str(ca), str(mid), str(exam), str(total),
+#                 f"{percentage}", r.grade_letter, str(class_avg), str(pos),
+#                 str(len(subject_results)), str(high_in_class), str(low_in_class), r.remark
+#             ]
+#             table_data.append([Paragraph(str(x), style_center) for x in row])
+
+#         page_width = A4[0] - doc.leftMargin - doc.rightMargin
+#         col_fractions = [0.10, 0.05, 0.08, 0.06, 0.07, 0.05, 0.07, 0.05, 0.05, 0.06, 0.06, 0.10, 0.20]
+#         col_widths = [page_width * frac for frac in col_fractions]
+
+#         result_table = Table(table_data, colWidths=col_widths)
+#         result_table.setStyle(TableStyle([
+#             ('GRID', (0, 0), (-1, -1), 0.4, colors.lightgrey),
+#             ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
+#             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+#             ('FONTSIZE', (0, 0), (-1, 0), 6),
+#             ('FONTSIZE', (0, 1), (-1, -1), 6),
+#             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+#             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+#         ]))
+#         elements += [result_table, Spacer(1, 15)]
+
+#         # --- Grading Scale ---
+#         elements.append(Paragraph("<b>GRADING SCALE</b>", style_left))
+#         elements.append(Spacer(1, 4))
+#         elements.append(Paragraph("A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39", style_left))
+#         elements.append(Spacer(1, 15))
+
+#         behavior = StudentBehaviorRecord.objects.filter(
+           
+#             session_id=session_id,
+#             term_id=term_id
+#         ).first()
+
+#         elements.append(hr)
+
+#         # ── Behavior / Form Teacher ────────────────────────────────────────
+#         if behavior:
+#             elements.append(Spacer(1, 10))
+#             if behavior.form_teacher and behavior.form_teacher.user:
+#                 elements.append(Paragraph(
+#                     f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}",
+#                     style_left
+#                 ))
+#             else:
+#                 elements.append(Paragraph("<b>Form Teacher:</b> N/A", style_left))
+#         elements.append(hr)
+        
+#         elements.append(hr)
+
+#         # --- Comments & Signatures ---
+#         if school and getattr(school, 'teacher_signature', None):
+#             try:
+#                 sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
+#                 sig_img = RLImage(sig_data, width=100, height=40)
+#                 elements.append(sig_img)
+#             except Exception:
+#                 pass
+
+#         elements.append(Spacer(1, 10))
+
+#         if school and getattr(school, 'principal_signature', None):
+#             try:
+#                 sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
+#                 sig_img = RLImage(sig_data, width=100, height=40)
+#                 elements.append(sig_img)
+#             except Exception:
+#                 pass
+
+#         elements.append(PageBreak())
+
+#     doc.build(elements)
+#     return response
+
+
+# def download_class_reports_pdf(request, result_class, session_id, term_id):
+#     import re
+
+#     # Clean class name from URL e.g. "SS2 Best Academy, Abuja" -> "SS2"
+#     import re
+#     display_class = result_class.strip().split()[0]  # e.g. "SS2"
+#     print(f"DB query class: '{result_class}' | Display class: '{display_class}'")
+
+#     # --- Fetch all results ---
+#     all_results = Result_Portal.objects.filter(
+#         result_class=result_class,
+#         session_id=session_id,
+#         term_id=term_id
+#     ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('student__username', 'subject__title')
+
+#     if not all_results.exists():
+#         return HttpResponse("No results found for this class.", status=404)
+
+#     # --- Group by student ---
+#     students = {}
+#     for res in all_results:
+#         sid = res.student_id
+#         if sid not in students:
+#             students[sid] = {
+#                 'student': res.student,
+#                 'records': [],
+#                 'school': res.schools,
+#                 'session': res.session,
+#                 'term': res.term
+#             }
+#         students[sid]['records'].append(res)
+
+#     # --- Compute totals for ranking ---
+#     class_totals = {}
+#     for res in all_results:
+#         sid = res.student_id
+#         total = float(res.ca_score or 0) + float(res.midterm_score or 0) + float(res.exam_score or 0)
+#         class_totals[sid] = class_totals.get(sid, 0) + total
+#     sorted_totals = sorted(class_totals.items(), key=lambda x: x[1], reverse=True)
+
+#     # --- PDF Setup ---
+#     response = HttpResponse(content_type='application/pdf')
+#     response['Content-Disposition'] = f'attachment; filename="class_{display_class}_term_reports.pdf"'
+#     doc = SimpleDocTemplate(response, pagesize=A4, topMargin=25, leftMargin=25, rightMargin=25, bottomMargin=30)
+
+#     styles = getSampleStyleSheet()
+#     style_left = styles["Normal"]
+#     style_left.alignment = TA_LEFT
+#     style_center = ParagraphStyle(name="Center", parent=styles["Normal"], alignment=TA_CENTER)
+
+#     elements = []
+
+#     # --- Generate report for each student ---
+#     for sid, data in students.items():
+#         student = data['student']
+#         records = data['records']
+#         school  = data['school']
+#         session = data['session']
+#         term    = data['term']
+
+#         # --- Student stats ---
+#         num_subjects   = len(records)
+#         student_total  = sum(
+#             float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
+#             for r in records
+#         )
+#         student_average  = round(student_total / num_subjects, 2) if num_subjects else 0
+#         total_students   = len(class_totals)
+#         class_average    = round(sum(class_totals.values()) / len(class_totals), 2)
+#         position         = next((i + 1 for i, (stud_id, _) in enumerate(sorted_totals) if stud_id == sid), None)
+#         highest_in_class = max(class_totals.values(), default=0)
+#         lowest_in_class  = min(class_totals.values(), default=0)
+#         final_grade      = records[0].grade_letter if records else ""
+
+#         # --- Header Section ---
+#         logo_img = None
+#         if school and getattr(school, 'logo', None):
+#             try:
+#                 logo_data = io.BytesIO(requests.get(school.logo.url).content)
+#                 logo_img  = RLImage(logo_data, width=80, height=80)
+#             except Exception:
+#                 pass
+
+#         school_name    = f"<b>{school.school_name or 'Best Academy, Abuja'}</b>"
+#         school_motto   = f"<i>{school.school_motto or 'Motto: Knowledge for Excellence'}</i>"
+#         school_address = f"{school.school_address or 'Tunga'}"
+
+#         school_details = [
+#             Paragraph(school_name,    ParagraphStyle(name='SchoolName',    fontSize=14, alignment=TA_LEFT)),
+#             Spacer(1, 8),
+#             Paragraph(school_motto,   ParagraphStyle(name='SchoolMotto',   fontSize=10, alignment=TA_LEFT)),
+#             Spacer(1, 8),
+#             Paragraph(school_address, ParagraphStyle(name='SchoolAddress', fontSize=9,  alignment=TA_LEFT)),
+#         ]
+
+#         header_table = Table(
+#             [[logo_img if logo_img else "", school_details]],
+#             colWidths=[90, 400]
+#         )
+#         header_table.setStyle(TableStyle([
+#             ('VALIGN',        (0, 0), (-1, -1), 'MIDDLE'),
+#             ('LEFTPADDING',   (0, 0), (-1, -1), 5),
+#             ('RIGHTPADDING',  (0, 0), (-1, -1), 5),
+#             ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+#             ('TOPPADDING',    (0, 0), (-1, -1), 0),
+#         ]))
+#         elements.append(header_table)
+#         elements.append(Spacer(1, 10))
+
+#         hr = HRFlowable(width="100%", thickness=0.5, color=colors.blue)
+#         elements.append(hr)
+
+#         # --- Title ---
+#         elements.append(Paragraph("<b><u>TERM REPORT CARD</u></b>", style_center))
+#         elements.append(Spacer(1, 10))
+
+#         # --- Student Info Table ---
+#         cell_style = ParagraphStyle(
+#             name='CellStyle',
+#             fontName='Helvetica',
+#             fontSize=9,
+#             leading=14,
+#             spaceAfter=2,
+#             spaceBefore=2,
+#         )
+
+#         student_info_data = [
+#             [
+#                 Paragraph(f"<b>Name:</b> {student.first_name} {student.last_name}", cell_style),
+#                 Paragraph(f"<b>Class:</b> {display_class}", cell_style),
+#                 Paragraph(f"<b>Term:</b> {term.name}", cell_style),
+#             ],
+#             [
+#                 Paragraph(f"<b>Session:</b> {session.name}", cell_style),
+#                 Paragraph(f"<b>No. in Class:</b> {total_students}", cell_style),
+#                 Paragraph(f"<b>Position:</b> {position} of {total_students}", cell_style),
+#             ],
+#             [
+#                 Paragraph(f"<b>Total Score:</b> {student_total}", cell_style),
+#                 Paragraph(f"<b>Average Score:</b> {student_average}", cell_style),
+#                 Paragraph(f"<b>Class Average:</b> {class_average}", cell_style),
+#             ],
+#             [
+#                 Paragraph(f"<b>Highest in Class:</b> {highest_in_class}", cell_style),
+#                 Paragraph(f"<b>Lowest in Class:</b> {lowest_in_class}", cell_style),
+#                 Paragraph(f"<b>Final Grade:</b> {final_grade}", cell_style),
+#             ],
+#         ]
+
+#         student_table = Table(student_info_data, colWidths=[180, 180, 180])
+#         student_table.setStyle(TableStyle([
+#             ('GRID',          (0, 0), (-1, -1), 0.6, colors.grey),
+#             ('FONTNAME',      (0, 0), (-1, -1), 'Helvetica'),
+#             ('FONTSIZE',      (0, 0), (-1, -1), 9),
+#             ('VALIGN',        (0, 0), (-1, -1), 'MIDDLE'),
+#             ('TOPPADDING',    (0, 0), (-1, -1), 6),
+#             ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+#             ('LEFTPADDING',   (0, 0), (-1, -1), 8),
+#             ('RIGHTPADDING',  (0, 0), (-1, -1), 8),
+#         ]))
+#         elements += [student_table, Spacer(1, 15)]
+
+#         max_ca   = float(school.max_ca_score)      if school else 10.0
+#         max_mid  = float(school.max_midterm_score) if school else 30.0
+#         max_exam = float(school.max_exam_score)    if school else 60.0
+
+#         # --- Subject Table ---
+#         header_style = ParagraphStyle(
+#             name='HeaderStyle', fontName='Helvetica-Bold', fontSize=7, alignment=1
+#         )
+#         headers = [
+#             "Subject",
+#             f"CA\\n({max_ca})",
+#             f"Midterm\\n({max_mid})",
+#             f"Exam\\n({max_exam})",
+#             "Total",
+#             "Per (%)",
+#             "Grade",
+#             "Class\\nAve",
+#             "POS",
+#             "Out\\nOf",
+#             "High\\nIn\\nClass",
+#             "Low\\nIn\\nClass",
+#             "Remark",
+#         ]
+
+#         table_data = [[Paragraph(h, header_style) for h in headers]]
+
+#         for r in records:
+#             ca    = float(r.ca_score    or 0)
+#             mid   = float(r.midterm_score or 0)
+#             exam  = float(r.exam_score  or 0)
+#             total = ca + mid + exam
+
+#             max_total  = (max_ca if ca > 0 else 0.0) + (max_mid if mid > 0 else 0.0) + (max_exam if exam > 0 else 0.0)
+#             percentage = round((total / max_total) * 100) if max_total else 0
+
+#             # Strip JSS/SS prefix from subject title
+#             # Remove class suffix like JSS1, SS1, JSS2, SS2 etc.
+#             words = r.subject.title.split()
+#             clean_words = [
+#                 w for w in words
+#                 if not any(w.upper().startswith(prefix) for prefix in ['JSS', 'SS'])
+#             ]
+#             clean_title = ' '.join(clean_words).strip()
+#             # print(f"Original: '{r.subject.title}' -> Cleaned: '{clean_title}'")
+
+#             subject_results = all_results.filter(subject=r.subject)
+#             subject_scores  = [
+#                 float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
+#                 for s in subject_results
+#             ]
+#             class_avg    = round(sum(subject_scores) / len(subject_scores), 2) if subject_scores else 0
+#             high_in_class = max(subject_scores, default=0)
+#             low_in_class  = min(subject_scores, default=0)
+
+#             pos_sorted = sorted(
+#                 [(s.student_id, float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0))
+#                  for s in subject_results],
+#                 key=lambda x: x[1], reverse=True
+#             )
+#             pos = next((i + 1 for i, (sid_, _) in enumerate(pos_sorted) if sid_ == sid), None)
+
+#             row = [
+#                 clean_title, str(ca), str(mid), str(exam), str(total),
+#                 str(percentage), r.grade_letter, str(class_avg), str(pos),
+#                 str(len(subject_results)), str(high_in_class), str(low_in_class), r.remark
+#             ]
+#             table_data.append([Paragraph(str(x), style_center) for x in row])
+
+#         page_width     = A4[0] - doc.leftMargin - doc.rightMargin
+#         col_fractions  = [0.10, 0.05, 0.08, 0.06, 0.07, 0.05, 0.07, 0.05, 0.05, 0.06, 0.06, 0.10, 0.20]
+#         col_widths     = [page_width * frac for frac in col_fractions]
+
+#         result_table = Table(table_data, colWidths=col_widths)
+#         result_table.setStyle(TableStyle([
+#             ('GRID',       (0, 0), (-1, -1), 0.4, colors.lightgrey),
+#             ('BACKGROUND', (0, 0), (-1,  0), colors.whitesmoke),
+#             ('FONTNAME',   (0, 0), (-1,  0), 'Helvetica-Bold'),
+#             ('FONTSIZE',   (0, 0), (-1,  0), 6),
+#             ('FONTSIZE',   (0, 1), (-1, -1), 6),
+#             ('ALIGN',      (0, 0), (-1, -1), 'CENTER'),
+#             ('VALIGN',     (0, 0), (-1, -1), 'MIDDLE'),
+#         ]))
+#         elements += [result_table, Spacer(1, 15)]
+
+#         # --- Grading Scale ---
+#         elements.append(Paragraph("<b>GRADING SCALE</b>", style_left))
+#         elements.append(Spacer(1, 4))
+#         elements.append(Paragraph(
+#             "A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39",
+#             style_left
+#         ))
+#         elements.append(Spacer(1, 15))
+
+#         behavior = StudentBehaviorRecord.objects.filter(
+#             session_id=session_id,
+#             term_id=term_id
+#         ).first()
+
+#         elements.append(hr)
+
+#         # --- Form Teacher ---
+#         if behavior:
+#             elements.append(Spacer(1, 10))
+#             if behavior.form_teacher and behavior.form_teacher.user:
+#                 elements.append(Paragraph(
+#                     f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}",
+#                     style_left
+#                 ))
+#             else:
+#                 elements.append(Paragraph("<b>Form Teacher:</b> N/A", style_left))
+#         elements.append(hr)
+#         elements.append(hr)
+
+#         # --- Signatures ---
+#         if school and getattr(school, 'teacher_signature', None):
+#             try:
+#                 sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
+#                 sig_img  = RLImage(sig_data, width=100, height=40)
+#                 elements.append(sig_img)
+#             except Exception:
+#                 pass
+
+#         elements.append(Spacer(1, 10))
+
+#         if school and getattr(school, 'principal_signature', None):
+#             try:
+#                 sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
+#                 sig_img  = RLImage(sig_data, width=100, height=40)
+#                 elements.append(sig_img)
+#             except Exception:
+#                 pass
+
+#         elements.append(PageBreak())
+
+#     doc.build(elements)
+#     return response
+
+
+import re
+from collections import defaultdict
+from reportlab.lib.units import mm
+
+def download_class_reports_pdf(request, result_class, session_id, term_id):
+    from collections import defaultdict
+    from reportlab.lib.units import mm
+
+    # ── Clean display class ───────────────────────────────────────
+    display_class = result_class.strip().split()[0]
+
+    # ── Fetch all results ─────────────────────────────────────────
     all_results = Result_Portal.objects.filter(
         result_class=result_class,
         session_id=session_id,
@@ -685,7 +1750,7 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
     if not all_results.exists():
         return HttpResponse("No results found for this class.", status=404)
 
-    # --- Group by student ---
+    # ── Group by student ──────────────────────────────────────────
     students = {}
     for res in all_results:
         sid = res.student_id
@@ -693,240 +1758,473 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
             students[sid] = {
                 'student': res.student,
                 'records': [],
-                'school': res.schools,
+                'school':  res.schools,
                 'session': res.session,
-                'term': res.term
+                'term':    res.term,
             }
         students[sid]['records'].append(res)
 
-    # --- Compute totals for ranking ---
+    # ── Class totals for ranking ──────────────────────────────────
     class_totals = {}
     for res in all_results:
-        sid = res.student_id
+        sid   = res.student_id
         total = float(res.ca_score or 0) + float(res.midterm_score or 0) + float(res.exam_score or 0)
         class_totals[sid] = class_totals.get(sid, 0) + total
     sorted_totals = sorted(class_totals.items(), key=lambda x: x[1], reverse=True)
 
-    # --- PDF Setup ---
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="class_{result_class}_term_reports.pdf"'
-    doc = SimpleDocTemplate(response, pagesize=A4, topMargin=25, leftMargin=25, rightMargin=25, bottomMargin=30)
+    # ── Subject scores grouped (avoids N+1) ──────────────────────
+    subject_scores_map = defaultdict(list)
+    for res in all_results:
+        score = float(res.ca_score or 0) + float(res.midterm_score or 0) + float(res.exam_score or 0)
+        subject_scores_map[res.subject_id].append((res.student_id, score))
 
-    styles = getSampleStyleSheet()
-    style_left = styles["Normal"]
-    style_left.alignment = TA_LEFT
-    style_center = ParagraphStyle(name="Center", parent=styles["Normal"], alignment=TA_CENTER)
+    # ── PDF Setup ─────────────────────────────────────────────────
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="class_{display_class}_term_reports.pdf"'
+
+    W, H   = A4
+    MARGIN = 5 * mm
+    INNER  = W - 2 * MARGIN
+
+    doc = SimpleDocTemplate(
+        response, pagesize=A4,
+        topMargin=8, bottomMargin=8,
+        leftMargin=MARGIN, rightMargin=MARGIN
+    )
+
+    BLUE  = colors.HexColor("#1a4e8c")
+    LBLUE = colors.HexColor("#d0e4f7")
+    LGREY = colors.HexColor("#f2f2f2")
+
+    S = {
+        "report_title": ParagraphStyle("rt", fontSize=9,  fontName="Helvetica-Bold",
+                                       alignment=TA_CENTER, spaceAfter=4),
+        "section_hd":   ParagraphStyle("sh", fontSize=8,  fontName="Helvetica-Bold",
+                                       alignment=TA_CENTER, spaceAfter=0),
+        "cell_normal":  ParagraphStyle("cn", fontSize=7.5, fontName="Helvetica",
+                                       alignment=TA_LEFT,   leading=10),
+        "cell_center":  ParagraphStyle("cc", fontSize=7,   fontName="Helvetica",
+                                       alignment=TA_CENTER, leading=9),
+        "cell_hdr":     ParagraphStyle("ch", fontSize=7,   fontName="Helvetica-Bold",
+                                       alignment=TA_CENTER, leading=9),
+        "small":        ParagraphStyle("sm", fontSize=6.5, fontName="Helvetica",
+                                       alignment=TA_LEFT,   leading=9),
+        "comment":      ParagraphStyle("co", fontSize=8,   fontName="Helvetica",
+                                       alignment=TA_LEFT,   leading=11, spaceAfter=3),
+        "label":        ParagraphStyle("lb", fontSize=8,   fontName="Helvetica-Bold",
+                                       alignment=TA_LEFT,   leading=10),
+    }
+
+    def hr_line(thickness=0.5, color=BLUE):
+        return HRFlowable(width="100%", thickness=thickness, color=color,
+                          spaceAfter=3, spaceBefore=3)
+
+    def section_header(text):
+        tbl = Table([[Paragraph(text, S["section_hd"])]], colWidths=[INNER])
+        tbl.setStyle(TableStyle([
+            ("BACKGROUND",    (0,0), (-1,-1), LBLUE),
+            ("TOPPADDING",    (0,0), (-1,-1), 3),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 3),
+            ("LEFTPADDING",   (0,0), (-1,-1), 4),
+            ("BOX",           (0,0), (-1,-1), 0.5, BLUE),
+        ]))
+        return tbl
+
+    def ordinal(n):
+        if n is None: return "N/A"
+        suffix = {1:"st", 2:"nd", 3:"rd"}.get(n if n < 20 else n % 10, "th")
+        return f"{n}{suffix}"
+
+    def trait_table(title, traits, width):
+        hdr  = [[Paragraph(f"<b>{title}</b>", S["cell_hdr"]),
+                 Paragraph("<b>Rating</b>",    S["cell_hdr"])]]
+        rows = [[Paragraph(t, S["cell_normal"]), Paragraph(str(v), S["cell_center"])]
+                for t, v in traits]
+        tbl  = Table(hdr + rows, colWidths=[width * 0.75, width * 0.25])
+        tbl.setStyle(TableStyle([
+            ("BACKGROUND",    (0,0), (-1,0),  LBLUE),
+            ("GRID",          (0,0), (-1,-1), 0.4, colors.grey),
+            ("TOPPADDING",    (0,0), (-1,-1), 3),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 3),
+            ("LEFTPADDING",   (0,0), (-1,-1), 4),
+            ("ROWBACKGROUNDS",(0,1), (-1,-1), [colors.white, LGREY]),
+        ]))
+        return tbl
 
     elements = []
 
-    # --- Generate report for each student ---
+    # ════════════════════════════════════════════════════════════
+    # Per-student loop
+    # ════════════════════════════════════════════════════════════
     for sid, data in students.items():
-        student = data['student']
-        records = data['records']
-        school = data['school']
-        session = data['session']
-        term = data['term']
+        student    = data['student']
+        records    = data['records']
+        school     = data['school']
+        session    = data['session']
+        term       = data['term']
+        is_midterm = getattr(term, 'is_midterm', False)
 
-        # --- Student stats ---
-        num_subjects = len(records)
-        student_total = sum(
+        # ── Stats ─────────────────────────────────────────────
+        num_subjects     = len(records)
+        student_total    = sum(
             float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
             for r in records
         )
-        student_average = round(student_total / num_subjects, 2) if num_subjects else 0
-        total_students = len(class_totals)
-        class_average = round(sum(class_totals.values()) / len(class_totals), 2)
-        position = next((i + 1 for i, (stud_id, _) in enumerate(sorted_totals) if stud_id == sid), None)
-        highest_in_class = max(class_totals.values(), default=0)
-        lowest_in_class = min(class_totals.values(), default=0)
-        final_grade = records[0].grade_letter if records else ""
+        student_average  = round(student_total / num_subjects, 2) if num_subjects else 0
+        total_students   = len(class_totals)
+        class_average    = round(sum(class_totals.values()) / len(class_totals), 2) if class_totals else 0
+        position         = next((i + 1 for i, (stud_id, _) in enumerate(sorted_totals) if stud_id == sid), None)
+        highest_in_class = round(max(class_totals.values(), default=0), 2)
+        lowest_in_class  = round(min(class_totals.values(), default=0), 2)
+        final_grade      = records[0].grade_letter if records else ""
+        final_average    = student_average
 
-        # --- Header Section (Logo + School Info in Flex Layout) ---
+        max_ca   = float(school.max_ca_score)      if school and school.max_ca_score      else 10.0
+        max_mid  = float(school.max_midterm_score) if school and school.max_midterm_score  else 20.0
+        max_exam = float(school.max_exam_score)    if school and school.max_exam_score     else 70.0
+
+        # ── 1. School Header ──────────────────────────────────
         logo_img = None
         if school and getattr(school, 'logo', None):
             try:
                 logo_data = io.BytesIO(requests.get(school.logo.url).content)
-                logo_img = RLImage(logo_data, width=80, height=80)
+                logo_img  = RLImage(logo_data, width=70, height=70)
             except Exception:
                 pass
 
-        # School details
-        school_name = f"<b>{school.school_name or 'Best Academy, Abuja'}</b>"
-        school_motto = f"<i>{school.school_motto or 'Motto: Knowledge for Excellence'}</i>"
-        school_address = f"{school.school_address or 'Tunga'}"
+        school_name_str    = school.school_name    if school else "School Name"
+        school_motto_str   = school.school_motto   if school else ""
+        school_address_str = school.school_address if school else ""
 
         school_details = [
-            Paragraph(school_name, ParagraphStyle(name='SchoolName', fontSize=14, alignment=TA_LEFT)),
-            Spacer(1, 8),  # 4 points of vertical space
-            Paragraph(school_motto, ParagraphStyle(name='SchoolMotto', fontSize=10, alignment=TA_LEFT)),
-            Spacer(1, 8),  # 2 points of vertical space
-            Paragraph(school_address, ParagraphStyle(name='SchoolAddress', fontSize=9, alignment=TA_LEFT))
+            Paragraph(f"<b>{school_name_str}</b>",
+                      ParagraphStyle("SN2", fontSize=13, fontName="Helvetica-Bold", alignment=TA_CENTER)),
+            Spacer(1, 4),
+            Paragraph(f"<i>{school_motto_str}</i>",
+                      ParagraphStyle("SM2", fontSize=9, fontName="Helvetica-Oblique", alignment=TA_CENTER)),
+            Spacer(1, 4),
+            Paragraph(school_address_str,
+                      ParagraphStyle("SA2", fontSize=7.5, fontName="Helvetica", alignment=TA_CENTER)),
         ]
 
+        if logo_img:
+            header_tbl = Table(
+                [[logo_img, school_details, logo_img]],
+                colWidths=[70, INNER - 140, 70]
+            )
+        else:
+            header_tbl = Table([[school_details]], colWidths=[INNER])
 
-        # Simulate flexbox with table (Logo | School Info)
-        header_table = Table(
-            [[logo_img if logo_img else "", school_details]],
-            colWidths=[90, 400]
-        )
-        header_table.setStyle(TableStyle([
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEFTPADDING', (0, 0), (-1, -1), 5),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-            ('TOPPADDING', (0, 0), (-1, -1), 0),
+        header_tbl.setStyle(TableStyle([
+            ("VALIGN",        (0,0), (-1,-1), "MIDDLE"),
+            ("LEFTPADDING",   (0,0), (-1,-1), 4),
+            ("RIGHTPADDING",  (0,0), (-1,-1), 4),
+            ("TOPPADDING",    (0,0), (-1,-1), 0),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 0),
         ]))
-        elements.append(header_table)
-        elements.append(Spacer(1, 10))
+        elements.append(header_tbl)
+        elements.append(hr_line(thickness=1.5, color=BLUE))
 
-        hr = HRFlowable(width="100%", thickness=0.5, color=colors.blue)
-        elements.append(hr)
+        elements.append(Paragraph(
+            f"<b>REPORT SHEET FOR {term.name}, {session.name} ACADEMIC SESSION</b>",
+            S["report_title"]
+        ))
+        elements.append(hr_line(thickness=0.5))
+        elements.append(Spacer(1, 4))
 
+        # ── 2. Student Info Grid ──────────────────────────────
+        def ic(label, value):
+            return Paragraph(f"<b>{label}:</b> {value}", S["cell_normal"])
 
-        # --- Title ---
-        elements.append(Paragraph("<b><u>TERM REPORT CARD</u></b>", style_center))
-        elements.append(Spacer(1, 10))
-
-        # --- Student Info (with Grid Borders) ---
-        full_name = f"{student.first_name or ''} {student.last_name or ''}".strip()
-
-        student_info_data = [
-            [f"Name: {student.first_name} {student.last_name}", f"Class: {result_class}", f"Term: {term.name}"],
-            [f"Session: {session.name}", f"No. in Class: {total_students}", f"Position: {position} of {total_students}"],
-            [f"Total Score: {student_total}", f"Average Score: {student_average}", f"Class Average: {class_average}"],
-            [f"Highest in Class: {highest_in_class}", f"Lowest in Class: {lowest_in_class}", f"Final Grade: {final_grade}"],
+        col3      = INNER / 3
+        info_data = [
+            [ic("Name",             f"{student.first_name} {student.last_name}"),
+             ic("Gender",           getattr(student, 'gender', 'N/A') or 'N/A'),
+             ic("Class",            display_class)],
+            [ic("No. in Class",     total_students),
+             ic("Total Score",      student_total),
+             ic("Class Average",    class_average)],
+            [ic("Highest In Class", highest_in_class),
+             ic("Lowest In Class",  lowest_in_class),
+             ic("Final Grade",      final_grade)],
+            [ic("Final Average",    final_average),
+             ic("POSITION",         ordinal(position)),
+             ic("Next Term Begins", getattr(school, 'next_term_date', 'N/A') if school else 'N/A')],
         ]
-
-        student_table = Table(student_info_data, colWidths=[180, 180, 180])
-        student_table.setStyle(TableStyle([
-            ('GRID', (0, 0), (-1, -1), 0.6, colors.grey),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        info_tbl = Table(info_data, colWidths=[col3, col3, col3])
+        info_tbl.setStyle(TableStyle([
+            ("GRID",          (0,0), (-1,-1), 0.4, colors.grey),
+            ("TOPPADDING",    (0,0), (-1,-1), 4),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 4),
+            ("LEFTPADDING",   (0,0), (-1,-1), 5),
+            ("RIGHTPADDING",  (0,0), (-1,-1), 5),
+            ("ROWBACKGROUNDS",(0,0), (-1,-1), [colors.white, LGREY]),
         ]))
-        elements += [student_table, Spacer(1, 15)]
+        elements += [info_tbl, Spacer(1, 6)]
 
-        max_ca = school.max_ca_score if school else 10
-        max_mid = school.max_midterm_score if school else 30
-        max_exam = school.max_exam_score if school else 60
+        # ── 3. Subject Table ──────────────────────────────────
+        elements.append(section_header("Subjects"))
+        elements.append(Spacer(1, 2))
 
-        # --- Subject Table (with Grid) ---
-        header_style = ParagraphStyle(name='HeaderStyle', fontName='Helvetica-Bold', fontSize=7, alignment=1)
-        # Use f-strings to insert actual max values
-        headers = [
-            "Subject",
-            f"CA<br/>({max_ca})",
-            f"Midterm<br/>({max_mid})",
-            f"Exam<br/>({max_exam})",
-            "Total",
-            "Per (%)",
-            "Grade",
-            "Class<br/>Ave",
-            "POS",
-            "Out<br/>Of",
-            "High<br/>In<br/>Class",
-            "Low<br/>In<br/>Class",
-            "Remark"
-        ]
+        if is_midterm:
+            hdr_row = [Paragraph(h, S["cell_hdr"]) for h in [
+                "Subjects",
+                f"CA<br/>({int(max_ca)})",
+                f"Midterm<br/>Exams<br/>({int(max_mid)})",
+                "Total",
+                "Per<br/>(%)",
+                "Low.<br/>In<br/>Class",
+                "High.<br/>In<br/>Class",
+                "Class<br/>Average",
+                "POS",
+                "Out<br/>Of",
+                "Grade",
+                "Remark",
+            ]]
+        else:
+            hdr_row = [Paragraph(h, S["cell_hdr"]) for h in [
+                "Subjects",
+                f"CA<br/>({int(max_ca)})",
+                f"Midterm<br/>Exams<br/>({int(max_mid)})",
+                f"Exams<br/>({int(max_exam)})",
+                "Total",
+                "Low.<br/>In<br/>Class",
+                "High.<br/>In<br/>Class",
+                "Class<br/>Average",
+                "POS",
+                "Out<br/>Of",
+                "Grade",
+                "Remark",
+            ]]
 
-        table_data = [[Paragraph(h, header_style) for h in headers]]
+        subj_data = [hdr_row]
 
         for r in records:
-            ca = float(r.ca_score or 0)
-            mid = float(r.midterm_score or 0)
-            exam = float(r.exam_score or 0)
+            ca    = float(r.ca_score      or 0)
+            mid   = float(r.midterm_score or 0)
+            exam  = float(r.exam_score    or 0)
             total = ca + mid + exam
-            max_total = sum([10 if ca > 0 else 0, 30 if mid > 0 else 0, 60 if exam > 0 else 0])
-            percentage = round((total / max_total) * 100) if max_total else 0
 
-            subject_results = all_results.filter(subject=r.subject)
-            class_avg = round(sum(
-                float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
-                for s in subject_results
-            ) / len(subject_results), 2) if subject_results else 0
-            high_in_class = max([
-                float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
-                for s in subject_results
-            ], default=0)
-            low_in_class = min([
-                float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0)
-                for s in subject_results
-            ], default=0)
-            pos_sorted = sorted([
-                (s.student_id, float(s.ca_score or 0) + float(s.midterm_score or 0) + float(s.exam_score or 0))
-                for s in subject_results
-            ], key=lambda x: x[1], reverse=True)
-            pos = next((i + 1 for i, (sid_, _) in enumerate(pos_sorted) if sid_ == sid), None)
+            max_total  = max_ca + max_mid
+            percentage = round((total / max_total) * 100) if max_total and is_midterm else 0
 
-            row = [
-                r.subject.title, str(ca), str(mid), str(exam), str(total),
-                f"{percentage}", r.grade_letter, str(class_avg), str(pos),
-                str(len(subject_results)), str(high_in_class), str(low_in_class), r.remark
-            ]
-            table_data.append([Paragraph(str(x), style_center) for x in row])
+            words       = r.subject.title.split()
+            clean_title = ' '.join(
+                w for w in words
+                if not any(w.upper().startswith(p) for p in ['JSS', 'SS'])
+            ).strip()
 
-        page_width = A4[0] - doc.leftMargin - doc.rightMargin
-        col_fractions = [0.10, 0.05, 0.08, 0.06, 0.07, 0.05, 0.07, 0.05, 0.05, 0.06, 0.06, 0.10, 0.20]
-        col_widths = [page_width * frac for frac in col_fractions]
+            s_entries = subject_scores_map[r.subject_id]
+            s_scores  = [sc for _, sc in s_entries]
+            s_count   = len(s_scores)
+            s_avg     = round(sum(s_scores) / s_count, 2) if s_count else 0
+            s_high    = max(s_scores, default=0)
+            s_low     = min(s_scores, default=0)
+            s_sorted  = sorted(s_entries, key=lambda x: x[1], reverse=True)
+            s_pos     = next((i + 1 for i, (sid_, _) in enumerate(s_sorted) if sid_ == sid), None)
+            
+            remark_style = ParagraphStyle(
+                "rs", fontSize=7, fontName="Helvetica", alignment=TA_LEFT, leading=9,
+                textColor=colors.HexColor("#c00000")
+                if r.remark and r.remark.lower() == "fail" else colors.black
+            )
 
-        result_table = Table(table_data, colWidths=col_widths)
-        result_table.setStyle(TableStyle([
-            ('GRID', (0, 0), (-1, -1), 0.4, colors.lightgrey),
-            ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 6),
-            ('FONTSIZE', (0, 1), (-1, -1), 6),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]))
-        elements += [result_table, Spacer(1, 15)]
-
-        # --- Grading Scale ---
-        elements.append(Paragraph("<b>GRADING SCALE</b>", style_left))
-        elements.append(Spacer(1, 4))
-        elements.append(Paragraph("A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39", style_left))
-        elements.append(Spacer(1, 15))
-
-        behavior = StudentBehaviorRecord.objects.filter(
-           
-            session_id=session_id,
-            term_id=term_id
-        ).first()
-
-        elements.append(hr)
-
-        # ── Behavior / Form Teacher ────────────────────────────────────────
-        if behavior:
-            elements.append(Spacer(1, 10))
-            if behavior.form_teacher and behavior.form_teacher.user:
-                elements.append(Paragraph(
-                    f"<b>Form Teacher:</b> {behavior.form_teacher.user.first_name} {behavior.form_teacher.user.last_name}",
-                    style_left
-                ))
+            if is_midterm:
+                subj_data.append([
+                    Paragraph(clean_title,                S["cell_normal"]),
+                    Paragraph(str(ca),                    S["cell_center"]),
+                    Paragraph(str(mid),                   S["cell_center"]),
+                    Paragraph(str(total),                 S["cell_center"]),
+                    Paragraph(f"{percentage}%",           S["cell_center"]),
+                    Paragraph(str(s_low),                 S["cell_center"]),
+                    Paragraph(str(s_high),                S["cell_center"]),
+                    Paragraph(str(s_avg),                 S["cell_center"]),
+                    Paragraph(ordinal(s_pos),             S["cell_center"]),
+                    Paragraph(str(s_count),               S["cell_center"]),
+                    Paragraph(f"<b>{r.grade_letter}</b>", S["cell_center"]),
+                    Paragraph(r.remark or "",             remark_style),
+                ])
             else:
-                elements.append(Paragraph("<b>Form Teacher:</b> N/A", style_left))
-        elements.append(hr)
-        
-        elements.append(hr)
+                subj_data.append([
+                    Paragraph(clean_title,                S["cell_normal"]),
+                    Paragraph(str(ca),                    S["cell_center"]),
+                    Paragraph(str(mid),                   S["cell_center"]),
+                    Paragraph(str(exam),                  S["cell_center"]),
+                    Paragraph(str(total),                 S["cell_center"]),
+                    Paragraph(str(s_low),                 S["cell_center"]),
+                    Paragraph(str(s_high),                S["cell_center"]),
+                    Paragraph(str(s_avg),                 S["cell_center"]),
+                    Paragraph(ordinal(s_pos),             S["cell_center"]),
+                    Paragraph(str(s_count),               S["cell_center"]),
+                    Paragraph(f"<b>{r.grade_letter}</b>", S["cell_center"]),
+                    Paragraph(r.remark or "",             remark_style),
+                ])
 
-        # --- Comments & Signatures ---
-        if school and getattr(school, 'teacher_signature', None):
-            try:
-                sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
-                sig_img = RLImage(sig_data, width=100, height=40)
-                elements.append(sig_img)
-            except Exception:
-                pass
+        if is_midterm:
+            col_fracs  = [0.18, 0.06, 0.10, 0.07, 0.07, 0.06, 0.06, 0.09, 0.06, 0.05, 0.06, 0.07]
+        else:
+            col_fracs  = [0.18, 0.05, 0.09, 0.07, 0.06, 0.06, 0.06, 0.09, 0.06, 0.05, 0.06, 0.07]
 
-        elements.append(Spacer(1, 10))
+        col_widths = [INNER * f for f in col_fracs]
+        col_widths[-1] = INNER - sum(col_widths[:-1])
 
-        if school and getattr(school, 'principal_signature', None):
-            try:
-                sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
-                sig_img = RLImage(sig_data, width=100, height=40)
-                elements.append(sig_img)
-            except Exception:
-                pass
+        subj_tbl = Table(subj_data, colWidths=col_widths, repeatRows=1)
+        subj_tbl.setStyle(TableStyle([
+            ("BACKGROUND",    (0,0),  (-1,0),  LBLUE),
+            ("GRID",          (0,0),  (-1,-1), 0.4, colors.grey),
+            ("FONTSIZE",      (0,0),  (-1,-1), 7),
+            ("VALIGN",        (0,0),  (-1,-1), "MIDDLE"),
+            ("TOPPADDING",    (0,0),  (-1,-1), 3),
+            ("BOTTOMPADDING", (0,0),  (-1,-1), 3),
+            ("ROWBACKGROUNDS",(0,1),  (-1,-1), [colors.white, LGREY]),
+        ]))
+        elements += [subj_tbl, Spacer(1, 4)]
+
+        grade_details = (
+            getattr(school, 'grade_details', None) or
+            "F = 0-45 | E8 = 45-50 | D7 = 50-55 | C6 = 55-60 | C5 = 60-65 | "
+            "C4 = 65-70 | B3 = 70-75 | B2 = 75-91 | A1 = 91-100"
+        )
+        elements.append(Paragraph(
+            f"<b>Grade Details:</b> {grade_details} | No. of Subjects: {num_subjects}",
+            S["small"]
+        ))
+        elements.append(Spacer(1, 6))
+
+        # ── 4 & 5: Only for non-midterm ───────────────────────
+        if not is_midterm:
+            # ── 4. Psychomotor & Affective ────────────────────
+            elements.append(section_header("Psychomotor & Affective Traits"))
+            elements.append(Spacer(1, 2))
+
+            behavior = StudentBehaviorRecord.objects.filter(
+                student=student,
+                session_id=session_id,
+                term_id=term_id
+            ).first()
+
+            half = INNER / 2
+
+            if behavior:
+                psycho_traits = [
+                    ("HANDWRITING",        behavior.handwriting),
+                    ("GAMES",              behavior.games),
+                    ("SPORTS",             behavior.sports),
+                    ("DRAWING & PAINTING", behavior.drawing_painting),
+                    ("CRAFTS",             behavior.crafts),
+                ]
+                affective_traits = [
+                    ("PUNCTUALITY",               behavior.punctuality),
+                    ("ATTENDANCE",                behavior.attendance),
+                    ("RELIABILITY",               behavior.reliability),
+                    ("NEATNESS",                  behavior.neatness),
+                    ("POLITENESS",                behavior.politeness),
+                    ("HONESTY",                   behavior.honesty),
+                    ("RELATIONSHIP WITH STUDENTS",behavior.relationship_with_students),
+                    ("SELF CONTROL",              behavior.self_control),
+                    ("ATTENTIVENESS",             behavior.attentiveness),
+                    ("PERSEVERANCE",              behavior.perseverance),
+                ]
+            else:
+                psycho_traits    = [("HANDWRITING",""), ("GAMES",""), ("SPORTS",""),
+                                    ("DRAWING & PAINTING",""), ("CRAFTS","")]
+                affective_traits = [("PUNCTUALITY",""), ("ATTENDANCE",""), ("RELIABILITY",""),
+                                    ("NEATNESS",""), ("POLITENESS",""), ("HONESTY",""),
+                                    ("RELATIONSHIP WITH STUDENTS",""), ("SELF CONTROL",""),
+                                    ("ATTENTIVENESS",""), ("PERSEVERANCE","")]
+
+            side_tbl = Table(
+                [[trait_table("Default Psychomotor Rating",      psycho_traits,    half),
+                  trait_table("Default Affective Traits Rating", affective_traits, half)]],
+                colWidths=[half, half]
+            )
+            side_tbl.setStyle(TableStyle([
+                ("VALIGN",       (0,0), (-1,-1), "TOP"),
+                ("LEFTPADDING",  (0,0), (-1,-1), 0),
+                ("RIGHTPADDING", (0,0), (-1,-1), 0),
+            ]))
+            elements += [side_tbl, Spacer(1, 6)]
+
+            # ── 5. Comments & Signatures ──────────────────────
+            elements.append(section_header("Remarks & Signatures"))
+            elements.append(Spacer(1, 3))
+
+            form_teacher_name = "N/A"
+            if behavior:
+                teachers = behavior.form_teacher.all()
+                if teachers.exists():
+                    form_teacher_name = ", ".join(
+                        f"{t.first_name} {t.last_name}".strip() for t in teachers
+                    )
+
+            form_comment      = (behavior.form_teacher_comment if behavior else "") or ""
+            principal_comment = (behavior.principal_comment    if behavior else "") or ""
+
+            comments_data = [
+                [Paragraph(f"<b>Form Teacher:</b> {form_teacher_name}", S["label"]), ""],
+                [Paragraph("<b>Form Teacher Comment:</b>", S["label"]), ""],
+                [Paragraph(form_comment      or "No comment.", S["comment"]), ""],
+                [Paragraph("<b>PRINCIPAL'S REMARK:</b>",    S["label"]), ""],
+                [Paragraph(principal_comment or "No remark.", S["comment"]), ""],
+                [
+                    Paragraph("<b>Form Teacher SIGNATURE:</b> _______________________", S["label"]),
+                    Paragraph("<b>PRINCIPAL'S SIGNATURE:</b> _______________________",  S["label"]),
+                ],
+            ]
+
+            if school and getattr(school, 'teacher_signature', None):
+                try:
+                    sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
+                    sig_img  = RLImage(sig_data, width=100, height=40)
+                    comments_data[5][0] = sig_img
+                except Exception:
+                    pass
+
+            if school and getattr(school, 'principal_signature', None):
+                try:
+                    sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
+                    sig_img  = RLImage(sig_data, width=100, height=40)
+                    comments_data[5][1] = sig_img
+                except Exception:
+                    pass
+
+            comment_tbl = Table(comments_data, colWidths=[INNER * 0.6, INNER * 0.4])
+            comment_tbl.setStyle(TableStyle([
+                ("GRID",          (0,0), (-1,-1), 0.3, colors.lightgrey),
+                ("TOPPADDING",    (0,0), (-1,-1), 4),
+                ("BOTTOMPADDING", (0,0), (-1,-1), 4),
+                ("LEFTPADDING",   (0,0), (-1,-1), 6),
+                ("SPAN",          (0,0), (1,0)),
+                ("SPAN",          (0,1), (1,1)),
+                ("SPAN",          (0,2), (1,2)),
+                ("SPAN",          (0,3), (1,3)),
+                ("SPAN",          (0,4), (1,4)),
+                ("BACKGROUND",    (0,0), (-1,0),  LGREY),
+                ("BACKGROUND",    (0,3), (-1,3),  LGREY),
+            ]))
+            elements.append(comment_tbl)
+
+       
+        # ── Principal signature always shows for midterm ──────
+        if is_midterm:
+            elements.append(Spacer(1, 10))
+            elements.append(section_header("Principal's Signature"))
+            elements.append(Spacer(1, 6))
+            if school and getattr(school, 'principal_signature', None):
+                try:
+                    sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
+                    sig_img  = RLImage(sig_data, width=100, height=40)
+                    elements.append(sig_img)
+                except Exception:
+                    elements.append(Paragraph(
+                        "<b>PRINCIPAL'S SIGNATURE:</b> _______________________",
+                        S["label"]
+                    ))
+            else:
+                elements.append(Paragraph(
+                    "<b>PRINCIPAL'S SIGNATURE:</b> _______________________",
+                    S["label"]
+                ))
 
         elements.append(PageBreak())
 
@@ -937,13 +2235,13 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
 from celery.result import AsyncResult
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .tasks import generate_class_pdf_task
+# from .tasks import generate_class_pdf_task
 
 
-@csrf_exempt
-def trigger_class_pdf(request, result_class, session_id, term_id):
-    task = generate_class_pdf_task.delay(result_class, session_id, term_id)
-    return JsonResponse({"task_id": task.id}, status=202)
+# @csrf_exempt
+# def trigger_class_pdf(request, result_class, session_id, term_id):
+#     task = generate_class_pdf_task.delay(result_class, session_id, term_id)
+#     return JsonResponse({"task_id": task.id}, status=202)
 
 
 def class_pdf_status(request, task_id):
@@ -1423,19 +2721,6 @@ from portal.forms import StudentBehaviorRecordForm
 from django.contrib import messages
 
 
-# @login_required
-# def form_teacher_dashboard(request):
-#     teacher = get_object_or_404(Teacher, user=request.user)
-
-#     classes = CourseGrade.objects.filter(
-#         form_teacher=teacher,
-#         is_active=True
-#     ).select_related('session', 'term').prefetch_related('students')
-
-#     return render(request, "portal/form_teacher_dashboard.html", {
-#         "classes": classes,
-#     })
-
 import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -1550,23 +2835,19 @@ def form_teacher_dashboard(request):
 # -----------------------------
 # AI COMMENT (single student)
 # -----------------------------
-
-@login_required
 @login_required(login_url='teacher:teacher_login')
 def generate_form_teacher_comment(request, student_id):
     student = get_object_or_404(NewUser, id=student_id)
 
     session_id = request.GET.get("session")
-    term_id = request.GET.get("term")
-    class_id = request.GET.get("class")
+    term_id    = request.GET.get("term")
+    class_id   = request.GET.get("class")
 
     # ---- VALIDATE FILTERS ----
     if not session_id or not session_id.isdigit():
         return JsonResponse({"comment": "Invalid session ID."})
-
     if not term_id or not term_id.isdigit():
         return JsonResponse({"comment": "Invalid term ID."})
-
     if not class_id or not class_id.isdigit():
         return JsonResponse({"comment": "Invalid class ID."})
 
@@ -1578,79 +2859,172 @@ def generate_form_teacher_comment(request, student_id):
         student__course_grades__id=int(class_id)
     ).first()
 
-    # If behavior record exists, pull latest values
+    def score_label(val):
+        """Convert numeric score to descriptive label using 1-5 scale."""
+        try:
+            v = int(val)
+        except (TypeError, ValueError):
+            return "not assessed"
+        if v == 5: return "excellent"
+        if v == 4: return "good"
+        if v == 3: return "fair"
+        if v == 2: return "poor"
+        if v == 1: return "very poor"
+        return "not assessed"
+
     if behavior_record:
-        hw = request.GET.get(f"handwriting_{student.id}", behavior_record.handwriting)
-        games = request.GET.get(f"games_{student.id}", behavior_record.games)
-        sports = request.GET.get(f"sports_{student.id}", behavior_record.sports)
-        drawing = request.GET.get(f"drawing_{student.id}", behavior_record.drawing_painting)
-        crafts = request.GET.get(f"crafts_{student.id}", behavior_record.crafts)
+        hw           = request.GET.get("handwriting",  behavior_record.handwriting)
+        games        = request.GET.get("games",         behavior_record.games)
+        sports       = request.GET.get("sports",        behavior_record.sports)
+        drawing      = request.GET.get("drawing",       behavior_record.drawing_painting)
+        crafts       = request.GET.get("crafts",        behavior_record.crafts)
+        punctuality  = request.GET.get("punctuality",   behavior_record.punctuality)
+        attendance   = request.GET.get("attendance",    behavior_record.attendance)
+        reliability  = request.GET.get("reliability",   behavior_record.reliability)
+        neatness     = request.GET.get("neatness",      behavior_record.neatness)
+        politeness   = request.GET.get("politeness",    behavior_record.politeness)
+        honesty      = request.GET.get("honesty",       behavior_record.honesty)
+        relationship = request.GET.get("relationship",  behavior_record.relationship_with_students)
+        self_control = request.GET.get("self_control",  behavior_record.self_control)
+        attentive    = request.GET.get("attentive",     behavior_record.attentiveness)
+        perseverance = request.GET.get("perseverance",  behavior_record.perseverance)
 
-        punctuality = request.GET.get(f"punctuality_{student.id}", behavior_record.punctuality)
-        attendance = request.GET.get(f"attendance_{student.id}", behavior_record.attendance)
-        reliability = request.GET.get(f"reliability_{student.id}", behavior_record.reliability)
-        neatness = request.GET.get(f"neatness_{student.id}", behavior_record.neatness)
-        politeness = request.GET.get(f"politeness_{student.id}", behavior_record.politeness)
-        honesty = request.GET.get(f"honesty_{student.id}", behavior_record.honesty)
-        relationship = request.GET.get(f"relationship_{student.id}", behavior_record.relationship_with_students)
-        self_control = request.GET.get(f"self_control_{student.id}", behavior_record.self_control)
-        attentive = request.GET.get(f"attentive_{student.id}", behavior_record.attentiveness)
-        perseverance = request.GET.get(f"perseverance_{student.id}", behavior_record.perseverance)
-
+        # Build rich behavior summary with labels
         behavior_summary = (
-            f"Psychomotor - H/W: {hw}, Games: {games}, Sports: {sports}, Drawing: {drawing}, Crafts: {crafts}\n"
-            f"Affective - Punctuality: {punctuality}, Attendance: {attendance}, Reliability: {reliability}, "
-            f"Neatness: {neatness}, Politeness: {politeness}, Honesty: {honesty}, Relationship: {relationship}, "
-            f"Self-Control: {self_control}, Attentive: {attentive}, Perseverance: {perseverance}"
+            f"Psychomotor Skills (Scale: 1=Very Poor, 2=Poor, 3=Fair, 4=Good, 5=Excellent):\n"
+            f"  - Handwriting: {hw}/5 ({score_label(hw)})\n"
+            f"  - Games: {games}/5 ({score_label(games)})\n"
+            f"  - Sports: {sports}/5 ({score_label(sports)})\n"
+            f"  - Drawing/Painting: {drawing}/5 ({score_label(drawing)})\n"
+            f"  - Crafts: {crafts}/5 ({score_label(crafts)})\n\n"
+            f"Affective/Social Traits (Scale: 1=Very Poor, 2=Poor, 3=Fair, 4=Good, 5=Excellent):\n"
+            f"  - Punctuality: {punctuality}/5 ({score_label(punctuality)})\n"
+            f"  - Attendance: {attendance}/5 ({score_label(attendance)})\n"
+            f"  - Reliability: {reliability}/5 ({score_label(reliability)})\n"
+            f"  - Neatness: {neatness}/5 ({score_label(neatness)})\n"
+            f"  - Politeness: {politeness}/5 ({score_label(politeness)})\n"
+            f"  - Honesty: {honesty}/5 ({score_label(honesty)})\n"
+            f"  - Relationship with Students: {relationship}/5 ({score_label(relationship)})\n"
+            f"  - Self-Control: {self_control}/5 ({score_label(self_control)})\n"
+            f"  - Attentiveness: {attentive}/5 ({score_label(attentive)})\n"
+            f"  - Perseverance: {perseverance}/5 ({score_label(perseverance)})"
         )
     else:
-        behavior_summary = "No behavior records yet."
+        behavior_summary = "No behavior records available for this term."
 
     # ---- GET RESULTS ----
     results = Result_Portal.objects.filter(
         student=student,
         session_id=int(session_id),
         term_id=int(term_id)
-    ).select_related("subject")
+    ).select_related("subject").order_by('-total_score')
 
     if not results.exists():
         return JsonResponse({"comment": "No results found for this student."})
 
-    # Build subject summary
-    subject_scores_text = "\n".join(
-        f"{r.subject.title}: Total={r.total_score}, Grade={r.grade_letter}"
-        for r in results
-    )
+    # Build subject summary with performance labels
+    strong_subjects  = []
+    weak_subjects    = []
+    subject_lines    = []
+
+    for r in results:
+        try:
+            score = float(r.total_score)
+        except (TypeError, ValueError):
+            score = 0
+
+        subject_lines.append(
+            f"  - {r.subject.title}: {r.total_score}/100 (Grade: {r.grade_letter})"
+        )
+        if score >= 70:
+            strong_subjects.append(r.subject.title)
+        elif score < 50:
+            weak_subjects.append(r.subject.title)
+
+    subject_scores_text = "\n".join(subject_lines)
+
+    # Compute overall average
+    total_scores = []
+    for r in results:
+        try:
+            total_scores.append(float(r.total_score))
+        except (TypeError, ValueError):
+            pass
+    avg = round(sum(total_scores) / len(total_scores), 1) if total_scores else 0
+
+    if avg >= 75:
+        overall_performance = "outstanding"
+    elif avg >= 60:
+        overall_performance = "commendable"
+    elif avg >= 50:
+        overall_performance = "satisfactory"
+    else:
+        overall_performance = "below expectation"
+
+    strong_text = ", ".join(strong_subjects[:3]) if strong_subjects else "none highlighted"
+    weak_text   = ", ".join(weak_subjects[:2])   if weak_subjects   else "none highlighted"
+
+    first_name = student.first_name
 
     prompt = f"""
-You are a school form teacher. Write a short, clear, honest comment for this student.
+Below is a real Nigerian school teacher's end-of-term report card comment. Study the tone carefully:
+
+EXAMPLE 1:
+"Amaka has performed admirably this term, particularly in English Language and Biology where she scored above 80. She is a focused and reliable student who participates well in class. However, her performance in Mathematics requires more attention and consistent practice. I urge her to seek help early next term and approach difficult topics with the same confidence she shows in her strong subjects."
+
+EXAMPLE 2:
+"Chukwuemeka showed improvement in his overall conduct this term and his honesty and neatness have been noted. His scores in Civic Education and Christian Religious Studies are commendable. He is encouraged to work harder in Physics and Chemistry, as his current scores suggest he needs to revise more thoroughly. With greater effort and focus, I am confident he will perform better next term."
+
+EXAMPLE 3:
+"Fatima has been a diligent and punctual student throughout this term. Her performance in Islamic Studies and English Language is praiseworthy. She should, however, pay closer attention to her work in Further Mathematics and seek clarification whenever she encounters difficulty. I encourage her to maintain her good attitude and put in more effort to round off her academic performance."
+
+Now write a similar comment for the student below. Write EXACTLY like a real teacher filling a report card — direct, honest, specific, and grounded. Do NOT use flowery or motivational-speaker language. Do NOT say things like "your potential shines brightly" or "every small step is a victory". Sound like a teacher, not a life coach.
 
 Student: {student.first_name} {student.last_name}
+Class Average: {avg}/100 ({overall_performance})
+Strong subjects: {strong_text}
+Weak subjects: {weak_text}
 
-Scores:
+Subject Scores:
 {subject_scores_text}
 
-Behavior:
+Behaviour:
 {behavior_summary}
 
-Make the comment 2–3 sentences. Highlight strengths, mention one improvement.
+Rules:
+- Use the student's first name ({first_name}) once naturally
+- Maximum 3 sentences only, one paragraph, no bullet points
+- Mention at least one specific subject by name
+- Mention one behaviour trait if it stands out (good or poor)
+- End with a clear, direct encouragement for next term
+- Do NOT start with "I am pleased", "It is with pleasure", or "This term has been a journey"
+- Sound like a real Nigerian secondary school teacher writing by hand on a report card
 """
 
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a helpful school teacher assistant."},
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a highly experienced school form teacher with 15 years of experience "
+                        "writing thoughtful, personalized, and encouraging end-of-term student report comments. "
+                        "Your comments are warm, specific, honest, and motivating. "
+                        "You never write generic or templated comments — every student feels seen."
+                    )
+                },
                 {"role": "user", "content": prompt},
             ],
+            temperature=0.5,   # slight creativity for variety across students
+            max_tokens=150,
         )
 
         comment = response.choices[0].message.content.strip()
         return JsonResponse({"comment": comment})
 
     except Exception as e:
-        return JsonResponse({"comment": f"Error generating comment: {str(e)}"})
-                    
+        return JsonResponse({"comment": f"Error generating comment: {str(e)}"})    
 
 
 @login_required
@@ -1853,18 +3227,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-
-
 @csrf_exempt
 def generate_principal_comment(request, student_id):
     session_id = request.GET.get("session")
-    term_id = request.GET.get("term")
-    class_id = request.GET.get("class")
+    term_id    = request.GET.get("term")
+    class_id   = request.GET.get("class")
 
     if not (session_id and term_id and class_id):
         return JsonResponse({"error": "Missing parameters"}, status=400)
-
-    from portal.models import NewUser, Result_Portal
 
     try:
         student = NewUser.objects.get(id=student_id)
@@ -1875,100 +3245,493 @@ def generate_principal_comment(request, student_id):
         student=student,
         session_id=session_id,
         term_id=term_id
-    ).select_related("subject")
+    ).select_related("subject").order_by('-total_score')
 
-    result_lines = [
-        f"{r.subject.title}: Total={r.total_score}, Grade={r.grade_letter}, Remark={r.remark}"
-        for r in results
-    ]
+    if not results.exists():
+        return JsonResponse({"comment": "No results found for this student."})
 
-    result_text = "\n".join(result_lines) if result_lines else "No results yet."
+    # ---- Build subject summary ----
+    strong_subjects = []
+    weak_subjects   = []
+    result_lines    = []
+    total_scores    = []
+
+    for r in results:
+        try:
+            score = float(r.total_score)
+        except (TypeError, ValueError):
+            score = 0
+        total_scores.append(score)
+        result_lines.append(f"  - {r.subject.title}: {r.total_score}/100 (Grade: {r.grade_letter})")
+        if score >= 70:
+            strong_subjects.append(r.subject.title)
+        elif score < 50:
+            weak_subjects.append(r.subject.title)
+
+    result_text  = "\n".join(result_lines)
+    avg          = round(sum(total_scores) / len(total_scores), 1) if total_scores else 0
+    strong_text  = ", ".join(strong_subjects[:3]) if strong_subjects else "none"
+    weak_text    = ", ".join(weak_subjects[:2])   if weak_subjects   else "none"
+    first_name   = student.first_name
+
+    if avg >= 75:
+        overall = "outstanding"
+    elif avg >= 60:
+        overall = "commendable"
+    elif avg >= 50:
+        overall = "satisfactory"
+    else:
+        overall = "below expectation"
 
     prompt = f"""
-    You are an expert school principal.
-    Based on the following student's performance, write a detailed, professional principal comment.
-    
-    Student: {student.first_name} {student.last_name}
-    Results:
-    {result_text}
+Write a principal report card comment exactly like these examples — very short, concise, no full sentences:
 
-    The comment must:
-    - Highlight strong subjects
-    - Highlight weak subjects
-    - Mention overall performance
-    - Be encouraging and actionable
-    - Be 2–3 sentences long
-    """
+EXAMPLE 1:
+"Outstanding performance; excellent in Mathematics and Civic Education; improve Chemistry and Physics. Good conduct. Keep it up."
 
-    # Call OpenAI
+EXAMPLE 2:
+"Satisfactory result; strong in English and Home Economics; needs improvement in Physics and Biology. Fair character traits. More effort needed next term."
+
+EXAMPLE 3:
+"Commendable academic performance; notable in Further Mathematics and Economics; work harder in French. Excellent behaviour. Maintain the standard."
+
+Now write one for this student in the exact same style.
+
+Student: {student.first_name} {student.last_name}
+Overall: {avg}/100 ({overall})
+Strong: {strong_text}
+Weak: {weak_text}
+Results:
+{result_text}
+
+Rules:
+- Max 2 short sentences or phrase-style clauses separated by semicolons
+- Mention 1-2 strong subjects and 1 weak subject by name
+- Add one word on character/behaviour (e.g. "Good conduct", "Excellent traits", "Fair behaviour")
+- End with one short closing phrase (e.g. "Keep excelling.", "More effort needed.", "Maintain this standard.")
+- NO full paragraphs, NO "I am pleased", NO motivational language
+- Be brutally concise like a principal stamping a report card
+"""
+
     try:
         resp = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You generate principal comments with high precision."},
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a Nigerian secondary school principal with 20 years of experience "
+                        "writing end-of-term report card comments. Your comments are direct, professional, "
+                        "specific and grounded. You never use motivational speaker language. "
+                        "You write the way a real principal writes — firm, honest, and encouraging."
+                    )
+                },
                 {"role": "user", "content": prompt},
             ],
-            max_tokens=1800,
-            temperature=0.4,
+            max_tokens=80,
+            temperature=0.5,
         )
-        ai_comment = resp.choices[0].message.content.strip()  # ✅ Correct
+        ai_comment = resp.choices[0].message.content.strip().strip('"').replace('"', '')
     except Exception as e:
         return JsonResponse({"comment": f"Error generating comment: {str(e)}"})
 
     return JsonResponse({"comment": ai_comment})
-    
 
 
-from celery.result import AsyncResult
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from .tasks import generate_comments_task
-
-
+# ── Generate ALL principal comments sequentially ──────────────────────────
 @csrf_exempt
 def generate_all_principal_comments(request):
     session_id = request.GET.get("session")
-    term_id = request.GET.get("term")
-    class_id = request.GET.get("class")
+    term_id    = request.GET.get("term")
+    class_id   = request.GET.get("class")
 
     if not (session_id and term_id and class_id):
         return JsonResponse({"error": "Missing parameters"}, status=400)
 
-    # Fire task in background
-    task = generate_comments_task.delay(session_id, term_id, class_id)
-    return JsonResponse({"task_id": task.id}, status=202)
+    try:
+        class_obj = CourseGrade.objects.get(id=class_id)
+    except CourseGrade.DoesNotExist:
+        return JsonResponse({"error": "Class not found"}, status=404)
+
+    students = class_obj.students.all().order_by('id')
+    comments = {}
+
+    for student in students:
+        results = Result_Portal.objects.filter(
+            student=student,
+            session_id=session_id,
+            term_id=term_id
+        ).select_related("subject").order_by('-total_score')
+
+        if not results.exists():
+            comments[str(student.id)] = "No results found for this student."
+            continue
+
+        # Build subject summary
+        strong_subjects = []
+        weak_subjects   = []
+        result_lines    = []
+        total_scores    = []
+
+        for r in results:
+            try:
+                score = float(r.total_score)
+            except (TypeError, ValueError):
+                score = 0
+            total_scores.append(score)
+            result_lines.append(f"  - {r.subject.title}: {r.total_score}/100 (Grade: {r.grade_letter})")
+            if score >= 70:
+                strong_subjects.append(r.subject.title)
+            elif score < 50:
+                weak_subjects.append(r.subject.title)
+
+        result_text = "\n".join(result_lines)
+        avg         = round(sum(total_scores) / len(total_scores), 1) if total_scores else 0
+        strong_text = ", ".join(strong_subjects[:3]) if strong_subjects else "none"
+        weak_text   = ", ".join(weak_subjects[:2])   if weak_subjects   else "none"
+        first_name  = student.first_name
+
+        if avg >= 75:
+            overall = "outstanding"
+        elif avg >= 60:
+            overall = "commendable"
+        elif avg >= 50:
+            overall = "satisfactory"
+        else:
+            overall = "below expectation"
+
+        prompt = f"""
+Write a principal report card comment exactly like these examples — very short, concise, no full sentences, no flowery language:
+
+EXAMPLE 1:
+"Outstanding performance; excellent in Mathematics and Civic Education; improve Chemistry and Physics. Good conduct. Keep it up."
+
+EXAMPLE 2:
+"Satisfactory result; strong in English and Home Economics; needs improvement in Physics and Biology. Fair character traits. More effort needed next term."
+
+EXAMPLE 3:
+"Commendable academic performance; notable in Further Mathematics and Economics; work harder in French. Excellent behaviour. Maintain the standard."
+
+Now write one for this student in the exact same style.
+
+Student: {student.first_name} {student.last_name}
+Overall: {avg}/100 ({overall})
+Strong: {strong_text}
+Weak: {weak_text}
+Results: {result_text}
+
+Rules:
+- Max 2 short sentences or phrase-style clauses separated by semicolons
+- Mention 1-2 strong subjects and 1 weak subject by name
+- Add one word on character/behaviour (e.g. "Good conduct", "Excellent traits", "Fair behaviour")
+- End with one short closing phrase (e.g. "Keep excelling.", "More effort needed.", "Maintain this standard.")
+- NO full paragraphs, NO "I am pleased", NO motivational language
+- Be brutally concise like a principal stamping a report card
+"""
+
+        try:
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a Nigerian secondary school principal writing end-of-term "
+                            "report card comments. Be direct, professional, specific and grounded. "
+                            "Never use motivational speaker language."
+                        )
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=80,
+                temperature=0.5,
+            )
+            comments[str(student.id)] = resp.choices[0].message.content.strip().strip('"').replace('"', '')
+        except Exception as e:
+            comments[str(student.id)] = f"Error: {str(e)}"
+
+    return JsonResponse({"status": "success", "comments": comments})
 
 
-def get_comment_task_status(request, task_id):
-    """Poll this endpoint to check progress and retrieve comments."""
-    result = AsyncResult(task_id)
+# ── Generate ALL principal comments sequentially ──────────────────────────
+@csrf_exempt
+def generate_principal_comment(request, student_id):
+    session_id = request.GET.get("session")
+    term_id    = request.GET.get("term")
+    class_id   = request.GET.get("class")
 
-    if result.state == "PENDING":
-        return JsonResponse({"state": "PENDING", "progress": 0})
+    if not (session_id and term_id and class_id):
+        return JsonResponse({"error": "Missing parameters"}, status=400)
 
-    elif result.state == "PROGRESS":
-        meta = result.info
-        return JsonResponse({
-            "state": "PROGRESS",
-            "current": meta.get("current", 0),
-            "total": meta.get("total", 1),
-            "comments": meta.get("comments", {}),
-        })
+    try:
+        student = NewUser.objects.get(id=student_id)
+    except NewUser.DoesNotExist:
+        return JsonResponse({"error": "Student not found"}, status=404)
 
-    elif result.state == "SUCCESS":
-        return JsonResponse({
-            "state": "SUCCESS",
-            "comments": result.result.get("comments", {}),
-        })
+    results = Result_Portal.objects.filter(
+        student=student,
+        session_id=session_id,
+        term_id=term_id
+    ).select_related("subject").order_by('-total_score')
 
-    else:  # FAILURE
-        return JsonResponse({"state": "FAILURE", "error": str(result.info)}, status=500)
+    if not results.exists():
+        return JsonResponse({"comment": "No results found for this student."})
+
+    # ---- Build subject summary ----
+    strong_subjects = []
+    weak_subjects   = []
+    result_lines    = []
+    total_scores    = []
+
+    for r in results:
+        try:
+            score = float(r.total_score)
+        except (TypeError, ValueError):
+            score = 0
+        total_scores.append(score)
+        result_lines.append(f"  - {r.subject.title}: {r.total_score}/100 (Grade: {r.grade_letter})")
+        if score >= 70:
+            strong_subjects.append(r.subject.title)
+        elif score < 50:
+            weak_subjects.append(r.subject.title)
+
+    result_text  = "\n".join(result_lines)
+    avg          = round(sum(total_scores) / len(total_scores), 1) if total_scores else 0
+    strong_text  = ", ".join(strong_subjects[:3]) if strong_subjects else "none"
+    weak_text    = ", ".join(weak_subjects[:2])   if weak_subjects   else "none"
+    first_name   = student.first_name
+
+    if avg >= 75:
+        overall = "outstanding"
+    elif avg >= 60:
+        overall = "commendable"
+    elif avg >= 50:
+        overall = "satisfactory"
+    else:
+        overall = "below expectation"
+
+    prompt = f"""
+Write a principal report card comment exactly like these examples — very short, concise, no full sentences:
+
+EXAMPLE 1:
+"Outstanding performance; excellent in Mathematics and Civic Education; improve Chemistry and Physics. Good conduct. Keep it up."
+
+EXAMPLE 2:
+"Satisfactory result; strong in English and Home Economics; needs improvement in Physics and Biology. Fair character traits. More effort needed next term."
+
+EXAMPLE 3:
+"Commendable academic performance; notable in Further Mathematics and Economics; work harder in French. Excellent behaviour. Maintain the standard."
+
+Now write one for this student in the exact same style.
+
+Student: {student.first_name} {student.last_name}
+Overall: {avg}/100 ({overall})
+Strong: {strong_text}
+Weak: {weak_text}
+Results:
+{result_text}
+
+Rules:
+- Max 2 short sentences or phrase-style clauses separated by semicolons
+- Mention 1-2 strong subjects and 1 weak subject by name
+- Add one word on character/behaviour (e.g. "Good conduct", "Excellent traits", "Fair behaviour")
+- End with one short closing phrase (e.g. "Keep excelling.", "More effort needed.", "Maintain this standard.")
+- NO full paragraphs, NO "I am pleased", NO motivational language
+- Be brutally concise like a principal stamping a report card
+"""
+
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a Nigerian secondary school principal with 20 years of experience "
+                        "writing end-of-term report card comments. Your comments are direct, professional, "
+                        "specific and grounded. You never use motivational speaker language. "
+                        "You write the way a real principal writes — firm, honest, and encouraging."
+                    )
+                },
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=80,
+            temperature=0.5,
+        )
+        ai_comment = resp.choices[0].message.content.strip()
+    except Exception as e:
+        return JsonResponse({"comment": f"Error generating comment: {str(e)}"})
+
+    return JsonResponse({"comment": ai_comment})
 
 
-from celery.result import AsyncResult
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from .tasks import generate_comments_task
+# ── Generate ALL principal comments sequentially ──────────────────────────
+@csrf_exempt
+def generate_all_principal_comments(request):
+    session_id = request.GET.get("session")
+    term_id    = request.GET.get("term")
+    class_id   = request.GET.get("class")
+
+    if not (session_id and term_id and class_id):
+        return JsonResponse({"error": "Missing parameters"}, status=400)
+
+    try:
+        class_obj = CourseGrade.objects.get(id=class_id)
+    except CourseGrade.DoesNotExist:
+        return JsonResponse({"error": "Class not found"}, status=404)
+
+    students = class_obj.students.all().order_by('id')
+    comments = {}
+
+    for student in students:
+        results = Result_Portal.objects.filter(
+            student=student,
+            session_id=session_id,
+            term_id=term_id
+        ).select_related("subject").order_by('-total_score')
+
+        if not results.exists():
+            comments[str(student.id)] = "No results found for this student."
+            continue
+
+        # Build subject summary
+        strong_subjects = []
+        weak_subjects   = []
+        result_lines    = []
+        total_scores    = []
+
+        for r in results:
+            try:
+                score = float(r.total_score)
+            except (TypeError, ValueError):
+                score = 0
+            total_scores.append(score)
+            result_lines.append(f"  - {r.subject.title}: {r.total_score}/100 (Grade: {r.grade_letter})")
+            if score >= 70:
+                strong_subjects.append(r.subject.title)
+            elif score < 50:
+                weak_subjects.append(r.subject.title)
+
+        result_text = "\n".join(result_lines)
+        avg         = round(sum(total_scores) / len(total_scores), 1) if total_scores else 0
+        strong_text = ", ".join(strong_subjects[:3]) if strong_subjects else "none"
+        weak_text   = ", ".join(weak_subjects[:2])   if weak_subjects   else "none"
+        first_name  = student.first_name
+
+        if avg >= 75:
+            overall = "outstanding"
+        elif avg >= 60:
+            overall = "commendable"
+        elif avg >= 50:
+            overall = "satisfactory"
+        else:
+            overall = "below expectation"
+
+        prompt = f"""
+Write a principal report card comment exactly like these examples — very short, concise, no full sentences, no flowery language:
+
+EXAMPLE 1:
+"Outstanding performance; excellent in Mathematics and Civic Education; improve Chemistry and Physics. Good conduct. Keep it up."
+
+EXAMPLE 2:
+"Satisfactory result; strong in English and Home Economics; needs improvement in Physics and Biology. Fair character traits. More effort needed next term."
+
+EXAMPLE 3:
+"Commendable academic performance; notable in Further Mathematics and Economics; work harder in French. Excellent behaviour. Maintain the standard."
+
+Now write one for this student in the exact same style.
+
+Student: {student.first_name} {student.last_name}
+Overall: {avg}/100 ({overall})
+Strong: {strong_text}
+Weak: {weak_text}
+Results: {result_text}
+
+Rules:
+- Max 2 short sentences or phrase-style clauses separated by semicolons
+- Mention 1-2 strong subjects and 1 weak subject by name
+- Add one word on character/behaviour (e.g. "Good conduct", "Excellent traits", "Fair behaviour")
+- End with one short closing phrase (e.g. "Keep excelling.", "More effort needed.", "Maintain this standard.")
+- NO full paragraphs, NO "I am pleased", NO motivational language
+- Be brutally concise like a principal stamping a report card
+"""
+
+        try:
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a Nigerian secondary school principal writing end-of-term "
+                            "report card comments. Be direct, professional, specific and grounded. "
+                            "Never use motivational speaker language."
+                        )
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=80,
+                temperature=0.5,
+            )
+            comments[str(student.id)] = resp.choices[0].message.content.strip()
+        except Exception as e:
+            comments[str(student.id)] = f"Error: {str(e)}"
+
+    return JsonResponse({"status": "success", "comments": comments})
+
+    
+
+
+# from celery.result import AsyncResult
+# from django.http import JsonResponse
+# from django.views.decorators.csrf import csrf_exempt
+# from .tasks import generate_comments_task
+
+
+# @csrf_exempt
+# def generate_all_principal_comments(request):
+#     session_id = request.GET.get("session")
+#     term_id = request.GET.get("term")
+#     class_id = request.GET.get("class")
+
+#     if not (session_id and term_id and class_id):
+#         return JsonResponse({"error": "Missing parameters"}, status=400)
+
+#     # Fire task in background
+#     task = generate_comments_task.delay(session_id, term_id, class_id)
+#     return JsonResponse({"task_id": task.id}, status=202)
+
+
+# def get_comment_task_status(request, task_id):
+#     """Poll this endpoint to check progress and retrieve comments."""
+#     result = AsyncResult(task_id)
+
+#     if result.state == "PENDING":
+#         return JsonResponse({"state": "PENDING", "progress": 0})
+
+#     elif result.state == "PROGRESS":
+#         meta = result.info
+#         return JsonResponse({
+#             "state": "PROGRESS",
+#             "current": meta.get("current", 0),
+#             "total": meta.get("total", 1),
+#             "comments": meta.get("comments", {}),
+#         })
+
+#     elif result.state == "SUCCESS":
+#         return JsonResponse({
+#             "state": "SUCCESS",
+#             "comments": result.result.get("comments", {}),
+#         })
+
+#     else:  # FAILURE
+#         return JsonResponse({"state": "FAILURE", "error": str(result.info)}, status=500)
+
+
+# from celery.result import AsyncResult
+# from django.http import JsonResponse
+# from django.views.decorators.csrf import csrf_exempt
+# from .tasks import generate_comments_task
 
 # @csrf_exempt
 # def generate_all_principal_comments(request):

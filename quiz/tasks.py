@@ -67,121 +67,258 @@ def parse_ai_output(output):
     return parsed
 
 
-# @shared_task(bind=True)
-# def generate_ai_questions_task(
-#     self, job_id, course_id, num_questions, difficulty, marks, learning_objectives
-# ):
-#     print("\n🔥🔥🔥 CELERY TASK STARTED 🔥🔥🔥")
-#     print("Job ID:", job_id)
-#     print("Course ID:", course_id)
-#     print("Num Questions:", num_questions)
-#     print("Difficulty:", difficulty)
-#     print("Learning Objectives:", learning_objectives)
-
-#     # Debug OpenAI key
-#     import os
-#     openai_key = os.getenv("OPENAI_API_KEY")
-#     print("OPENAI KEY PRESENT:", bool(openai_key))
-#     if openai_key:
-#         print("OPENAI KEY STARTS WITH:", openai_key[:10])  # just first 10 chars, don't print full key
-
-#     job = GenerationJob.objects.get(job_id=job_id)
-#     job.status = "processing"
-#     job.save()
-
-#     try:
-#         # Fetch course object
-#         course_obj = Courses.objects.get(id=course_id)
-#         course_title = (course_obj.title or "").strip()
-
-#         # Map to Course model and save learning objectives
-#         course_detail = Course.objects.filter(course_name=course_obj).first()
-#         if course_detail:
-#             course_detail.learning_objectives = learning_objectives
-#             course_detail.save()
-
-#         # Batch settings
-#         BATCH_SIZE = 10
-#         total_questions = int(num_questions)
-#         batches = math.ceil(total_questions / BATCH_SIZE)
-#         all_questions = []
-
-#         for b in range(batches):
-#             batch_count = min(BATCH_SIZE, total_questions - (b * BATCH_SIZE))
-
-#             prompt = f"""
-# You are a professional assessment specialist.
-
-# Generate {batch_count} multiple-choice questions strictly based on the learning objectives below:
-
-# Course: {course_title}
-
-# Learning Objectives:
-# {learning_objectives}
-
-# Difficulty Level: {difficulty}
-
-# Each question MUST:
-# - Match the learning objectives
-# - Be clear and unambiguous
-# - Have 4 options (A–D)
-# - Include one correct answer only
-
-# Return ONLY text in this strict format:
-
-# Question: <question text>
-# A. <option>
-# B. <option>
-# C. <option>
-# D. <option>
-# Answer: <A|B|C|D>
-# """
-#             print("Calling OpenAI API…")  # <-- log before call
-#             resp = client.chat.completions.create(
-#                 model="gpt-4o-mini",
-#                 messages=[
-#                     {
-#                         "role": "system",
-#                         "content": "You generate curriculum-aligned exam questions with high precision."
-#                     },
-#                     {"role": "user", "content": prompt},
-#                 ],
-#                 max_tokens=1800,
-#                 temperature=0,
-#             )
-
-#             output = resp.choices[0].message.content
-#             print("RAW AI OUTPUT:\n", output)
-
-#             parsed = parse_ai_output(output)
-#             all_questions.extend(parsed)
-#             print("Parsed questions batch:", parsed)
-
-#             # Update job progress
-#             job.result = {"partial_count": len(all_questions)}
-#             job.save()
-#             time.sleep(0.5)
-
-#         # Final job update
-#         job.result = {"questions": all_questions}
-#         job.status = "completed"
-#         job.save()
-
-#         return {"created": len(all_questions)}
-
-#     except Exception as exc:
-#         print("🔥🔥🔥 TASK ERROR 🔥🔥🔥")
-#         print(exc)
-#         job.status = "failed"
-#         job.error = str(exc)
-#         job.save()
-#         raise
-
 import unicodedata
 import re
 
-#working fine
+@shared_task(bind=True, max_retries=3, default_retry_delay=5)
+def generate_ai_questions_task(
+    self, job_id, course_id, num_questions, difficulty, marks, learning_objectives
+):
+    """
+    Celery task to generate AI questions for a school-specific course.
+    Generates questions in batches without repetition by passing previously
+    generated questions as context to each subsequent batch.
+    """
+    job = GenerationJob.objects.get(job_id=job_id)
+    job.status = "processing"
+    job.save()
 
+    try:
+        # ----------------------------
+        # Fetch school-specific course
+        # ----------------------------
+        course_obj = Course.objects.filter(id=course_id).first()
+        if not course_obj:
+            exc = ValueError(f"Course {course_id} not found")
+            raise self.retry(exc=exc)
+
+        # ----------------------------
+        # Fetch global course title
+        # ----------------------------
+        global_course = course_obj.course_name
+        course_title_raw = global_course.title if global_course else ""
+        print("RAW course title:", repr(course_title_raw))
+
+        # ----------------------------
+        # Clean course title for keyword detection
+        # ----------------------------
+        def clean_course_title_letters(title):
+            title = unicodedata.normalize("NFKC", title or "")
+            title = re.sub(r'[^a-zA-Z]', '', title)
+            return title.lower()
+
+        course_title_clean = clean_course_title_letters(course_title_raw)
+        print("CLEANED course title:", repr(course_title_clean))
+
+        # ----------------------------
+        # Save learning objectives to school-specific course
+        # ----------------------------
+        course_obj.learning_objectives = learning_objectives
+        course_obj.save()
+
+        # ----------------------------
+        # Detect subjects
+        # ----------------------------
+        math_keywords = ["math", "mathematics", "maths"]
+        physics_keywords = ["physics", "physic", "phy"]
+        chem_keywords = ["chemistry", "chem"]
+
+        is_math = any(k in course_title_clean for k in math_keywords)
+        is_physics = any(k in course_title_clean for k in physics_keywords)
+        is_chemistry = any(k in course_title_clean for k in chem_keywords)
+
+        print("IS MATH:", is_math)
+        print("IS PHYSICS:", is_physics)
+        print("IS CHEMISTRY:", is_chemistry)
+
+        # ----------------------------
+        # Batch settings
+        # ----------------------------
+        BATCH_SIZE = 10
+        total_questions = int(num_questions)
+        batches = math.ceil(total_questions / BATCH_SIZE)
+        all_questions = []
+
+        # Tracks question stems already generated to deduplicate across batches
+        generated_question_texts = []
+
+        for b in range(batches):
+            batch_count = min(BATCH_SIZE, total_questions - (b * BATCH_SIZE))
+
+            # ----------------------------
+            # Subject-specific instructions
+            # ----------------------------
+            math_instruction = ""
+            physics_instruction = ""
+            chem_instruction = ""
+
+            if is_math:
+                math_instruction = """
+            Make sure Both questions and options should be formatted as valid MathML format strictly. 
+            - NO LaTeX
+            - NO ^ symbol
+            - Use MathML for all mathematical expressions
+            - Use proper MathML tags for superscripts, subscripts, fractions, roots, etc
+            """
+
+            if is_physics:
+                physics_instruction = """
+           PHYSICS FORMATTING RULES:
+            - Prefer INLINE equations.
+            - Use standard physics formulas, e.g., v = u + at, s = ut + 1/2 at², v² = u² + 2as.
+            - Use proper superscripts and subscripts only with Unicode characters (e.g., ², ³, subscript numbers like H₂).
+            - NO LaTeX.
+            - NO ^ symbol at all.
+            - Use MathML ONLY when absolutely necessary.
+            - Options must be realistic and physically correct.
+            """
+
+            if is_chemistry:
+                chem_instruction = """
+            CHEMISTRY FORMATTING RULES:
+            - Use plain text
+            - Chemical formulas like H2O, NaCl, CO2
+            - DO NOT use MathML
+            """
+
+            # ----------------------------
+            # Build anti-repetition context
+            # Inject previously generated question stems so the model
+            # knows what has already been asked and avoids duplicating them.
+            # ----------------------------
+            already_asked_block = ""
+            if generated_question_texts:
+                already_asked_list = "\n".join(
+                    f"- {q}" for q in generated_question_texts
+                )
+                already_asked_block = f"""
+ALREADY GENERATED QUESTIONS (DO NOT REPEAT OR REPHRASE THESE):
+{already_asked_list}
+
+You MUST generate completely different questions that explore OTHER angles,
+examples, or sub-topics within the same learning objectives.
+"""
+
+            prompt = f"""
+You are a professional assessment specialist.
+
+Generate {batch_count} multiple-choice questions strictly based on the learning objectives below.
+Each question MUST be unique — do NOT repeat or closely rephrase any question already generated.
+Vary the question style: use scenario-based, definition-based, example-identification,
+fill-in-the-blank style, and application questions to ensure diversity.
+
+Course: {course_title_raw}
+
+Learning Objectives:
+{learning_objectives}
+
+{already_asked_block}
+
+{math_instruction}
+{physics_instruction}
+{chem_instruction}
+
+Difficulty Level: {difficulty}
+
+Rules:
+- Questions must strictly match the learning objectives
+- Be clear and unambiguous
+- Each question MUST have exactly four options (A–D)
+- ONLY ONE correct answer per question
+- Do NOT number the questions
+- Vary question phrasing and structure across all questions
+
+Return ONLY text in this EXACT format:
+
+Question: <question text>
+A. <option>
+B. <option>
+C. <option>
+D. <option>
+Answer: <A|B|C|D>
+"""
+
+            # ----------------------------
+            # Call AI API
+            # ----------------------------
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You generate curriculum-aligned exam questions with extreme formatting accuracy. "
+                            "You never repeat or rephrase questions that have already been generated. "
+                            "You vary question styles and explore different aspects of each learning objective."
+                        ),
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=2200,
+                temperature=0.7,  # Raised from 0 to encourage variety while staying on-topic
+            )
+
+            output = resp.choices[0].message.content
+
+            # ----------------------------
+            # HARD GUARD: reject LaTeX in Math subjects
+            # ----------------------------
+            if is_math and ("\\(" in output or "\\[" in output):
+                raise ValueError("LaTeX detected in Mathematics output. Expected MathML only.")
+
+            parsed = parse_ai_output(output)
+
+            # ----------------------------
+            # Deduplicate within this batch and against prior batches.
+            # Compares lowercased, stripped question text for fuzzy safety.
+            # ----------------------------
+            seen_normalized = set(q.strip().lower() for q in generated_question_texts)
+            unique_parsed = []
+            for q in parsed:
+                # Extract the question stem — adjust key name to match your parse_ai_output structure
+                q_text = q.get("question", "").strip().lower()
+                if q_text and q_text not in seen_normalized:
+                    unique_parsed.append(q)
+                    seen_normalized.add(q_text)
+                    # Store original-casing stem for the prompt context in next batch
+                    generated_question_texts.append(q.get("question", "").strip())
+                else:
+                    print(f"[Dedup] Skipped duplicate question: {q_text[:80]}...")
+
+            all_questions.extend(unique_parsed)
+
+            # Update job progress
+            job.result = {"partial_count": len(all_questions)}
+            job.save()
+            time.sleep(0.5)
+
+        # ----------------------------
+        # If deduplication caused a shortfall, log it but don't fail
+        # ----------------------------
+        if len(all_questions) < total_questions:
+            print(
+                f"[Warning] Only {len(all_questions)} unique questions generated "
+                f"out of {total_questions} requested. "
+                f"Consider broadening learning objectives."
+            )
+
+        # ----------------------------
+        # Final job update
+        # ----------------------------
+        job.result = {"questions": all_questions}
+        job.status = "completed"
+        job.save()
+
+        return {"created": len(all_questions)}
+
+    except Exception as exc:
+        job.status = "failed"
+        job.error = str(exc)
+        job.save()
+        raise
+
+
+#working questions generator
 # @shared_task(bind=True, max_retries=3, default_retry_delay=5)
 # def generate_ai_questions_task(
 #     self, job_id, course_id, num_questions, difficulty, marks, learning_objectives
@@ -366,193 +503,6 @@ import re
 #         job.error = str(exc)
 #         job.save()
 #         raise
-
-
-
-@shared_task(bind=True, max_retries=3, default_retry_delay=5)
-def generate_ai_questions_task(
-    self, job_id, course_id, num_questions, difficulty, marks, learning_objectives
-):
-    """
-    Celery task to generate AI questions for a school-specific course.
-
-    - course_id: ID of Course (school-specific)
-    - Uses Course.course_name.title for the global course title
-    """
-    job = GenerationJob.objects.get(job_id=job_id)
-    job.status = "processing"
-    job.save()
-
-    try:
-        # ----------------------------
-        # Fetch school-specific course
-        # ----------------------------
-        course_obj = Course.objects.filter(id=course_id).first()
-        if not course_obj:
-            exc = ValueError(f"Course {course_id} not found")
-            raise self.retry(exc=exc)
-
-        # ----------------------------
-        # Fetch global course title
-        # ----------------------------
-        global_course = course_obj.course_name  # Courses instance
-        course_title_raw = global_course.title if global_course else ""
-        print("RAW course title:", repr(course_title_raw))
-
-        # ----------------------------
-        # Clean course title for keyword detection
-        # ----------------------------
-        def clean_course_title_letters(title):
-            title = unicodedata.normalize("NFKC", title or "")
-            title = re.sub(r'[^a-zA-Z]', '', title)
-            return title.lower()
-
-        course_title_clean = clean_course_title_letters(course_title_raw)
-        print("CLEANED course title:", repr(course_title_clean))
-
-        # ----------------------------
-        # Save learning objectives to school-specific course
-        # ----------------------------
-        course_obj.learning_objectives = learning_objectives
-        course_obj.save()
-
-        # ----------------------------
-        # Detect subjects
-        # ----------------------------
-        math_keywords = ["math", "mathematics", "maths"]
-        physics_keywords = ["physics", "physic", "phy"]
-        chem_keywords = ["chemistry", "chem"]
-
-        is_math = any(k in course_title_clean for k in math_keywords)
-        is_physics = any(k in course_title_clean for k in physics_keywords)
-        is_chemistry = any(k in course_title_clean for k in chem_keywords)
-
-        print("IS MATH:", is_math)
-        print("IS PHYSICS:", is_physics)
-        print("IS CHEMISTRY:", is_chemistry)
-
-        # ----------------------------
-        # Batch settings
-        # ----------------------------
-        BATCH_SIZE = 10
-        total_questions = int(num_questions)
-        batches = math.ceil(total_questions / BATCH_SIZE)
-        all_questions = []
-
-        for b in range(batches):
-            batch_count = min(BATCH_SIZE, total_questions - (b * BATCH_SIZE))
-
-            # ----------------------------
-            # Subject-specific instructions
-            # ----------------------------
-            math_instruction = ""
-            physics_instruction = ""
-            chem_instruction = ""
-
-            if is_math:
-                math_instruction = """
-            Make sure Both questions and options should be formatted as valid MathML format strictly. 
-            - NO LaTeX
-            - NO ^ symbol
-            - Use MathML for all mathematical expressions
-            - Use proper MathML tags for superscripts, subscripts, fractions, roots, etc
-            """
-
-            if is_physics:
-                physics_instruction = """
-           PHYSICS FORMATTING RULES:
-            - Prefer INLINE equations.
-            - Use standard physics formulas, e.g., v = u + at, s = ut + 1/2 at², v² = u² + 2as.
-            - Use proper superscripts and subscripts only with Unicode characters (e.g., ², ³, subscript numbers like H₂).
-            - NO LaTeX.
-            - NO ^ symbol at all.
-            - Use MathML ONLY when absolutely necessary.
-            - Options must be realistic and physically correct.
-            """
-
-            if is_chemistry:
-                chem_instruction = """
-            CHEMISTRY FORMATTING RULES:
-            - Use plain text
-            - Chemical formulas like H2O, NaCl, CO2
-            - DO NOT use MathML
-            """
-
-            prompt = f"""
-You are a professional assessment specialist.
-
-Generate {batch_count} multiple-choice questions strictly based on the learning objectives below.
-
-Course: {course_title_raw}
-
-Learning Objectives:
-{learning_objectives}
-
-{math_instruction}
-{physics_instruction}
-{chem_instruction}
-
-Difficulty Level: {difficulty}
-
-Rules:
-- Questions must strictly match the learning objectives
-- Be clear and unambiguous
-- Each question MUST have exactly four options (A–D)
-- ONLY ONE correct answer per question
-
-Return ONLY text in this EXACT format:
-
-Question: <question text>
-A. <option>
-B. <option>
-C. <option>
-D. <option>
-Answer: <A|B|C|D>
-"""
-
-            # ----------------------------
-            # Call AI API
-            # ----------------------------
-            resp = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "You generate curriculum-aligned exam questions with extreme formatting accuracy."},
-                    {"role": "user", "content": prompt},
-                ],
-                max_tokens=2200,
-                temperature=0,
-            )
-
-            output = resp.choices[0].message.content
-
-            # ----------------------------
-            # HARD GUARD: reject LaTeX in Math subjects
-            # ----------------------------
-            if is_math and ("\\(" in output or "\\[" in output):
-                raise ValueError("LaTeX detected in Mathematics output. Expected MathML only.")
-
-            parsed = parse_ai_output(output)
-            all_questions.extend(parsed)
-
-            # Update job progress
-            job.result = {"partial_count": len(all_questions)}
-            job.save()
-            time.sleep(0.5)
-
-        # ----------------------------
-        # Final job update
-        # ----------------------------
-        job.result = {"questions": all_questions}
-        job.status = "completed"
-        job.save()
-
-        return {"created": len(all_questions)}
-
-    except Exception as exc:
-        job.status = "failed"
-        job.error = str(exc)
-        job.save()
-        raise
 
 #calculate marks celery task
 

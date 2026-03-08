@@ -27,12 +27,22 @@
 
     <!-- Terms -->
     <div class="card p-3 shadow-sm">
-      <h5>Terms. Eg - FIRST, SECOND,THIRD</h5>
-      <ul>
+      <h5>Terms. Eg - FIRST, SECOND, THIRD</h5>
+      <ul class="list-unstyled">
         {% for term in terms %}
-          <li>
-            {{ term.name }}
-            <a href="{% url 'teacher:edit_term' term.id %}" class="text-info ms-2">Edit</a>
+          <li class="d-flex align-items-center gap-2 mb-2">
+            <span>{{ term.name }}</span>
+
+            <a data-term-id="{{ term.id }}"
+               data-midterm="{{ term.is_midterm|lower }}"
+               onclick="toggleMidterm(this)"
+               class="btn btn-sm {% if term.is_midterm %}btn-success{% else %}btn-outline-secondary{% endif %} toggle-btn"
+               style="cursor:pointer;"
+               title="Click to toggle midterm status">
+              {% if term.is_midterm %}✅ Midterm{% else %}⬜ Not Midterm{% endif %}
+            </a>
+
+            <a href="{% url 'teacher:edit_term' term.id %}" class="text-info ms-1">Edit</a>
             <a href="{% url 'teacher:delete_term' term.id %}" class="text-danger ms-1">Delete</a>
           </li>
         {% empty %}
@@ -69,4 +79,40 @@
 
   </div>
 </div>
+
+<script>
+function toggleMidterm(btn) {
+    const termId = btn.dataset.termId;
+
+    // Show loading state
+    btn.textContent = '⏳ Saving...';
+    btn.style.pointerEvents = 'none';
+
+    fetch(`/teacher/toggle-term-midterm/${termId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.is_midterm) {
+            btn.className   = 'btn btn-sm btn-success toggle-btn';
+            btn.textContent = '✅ Midterm';
+            btn.dataset.midterm = 'true';
+        } else {
+            btn.className   = 'btn btn-sm btn-outline-secondary toggle-btn';
+            btn.textContent = '⬜ Not Midterm';
+            btn.dataset.midterm = 'false';
+        }
+        btn.style.pointerEvents = 'auto';
+    })
+    .catch(() => {
+        btn.textContent = '❌ Error';
+        btn.style.pointerEvents = 'auto';
+    });
+}
+</script>
+
 {% endblock %}

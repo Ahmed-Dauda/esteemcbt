@@ -4,22 +4,50 @@
     <meta charset="UTF-8">
     <title>Form Teacher Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .score-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            gap: 8px;
+        }
+        .score-row label {
+            width: 110px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #444;
+            flex-shrink: 0;
+        }
+        .score-row input {
+            width: 70px;
+            font-size: 13px;
+        }
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #fff;
+            background: #343a40;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+    </style>
 </head>
 <body class="p-4">
 
-<h2 class="mb-4">Form Teacher – Behavior & Comments</h2>
+<h2 class="mb-4">Form Teacher – Behavior &amp; Comments</h2>
 
-<!-- FILTER BAR -->
 <!-- FILTER BAR -->
 <form method="get" class="row g-3 mb-4">
-
-    <!-- SESSION FILTER -->
     <div class="col-md-3">
         <label class="form-label fw-bold">Session</label>
         <select name="session" class="form-select" required>
             <option value="">-- Select --</option>
             {% for s in sessions %}
-                <option value="{{ s.id }}" 
+                <option value="{{ s.id }}"
                     {% if selected_session|stringformat:"s" == s.id|stringformat:"s" %}selected{% endif %}>
                     {{ s.name }}
                 </option>
@@ -27,7 +55,6 @@
         </select>
     </div>
 
-    <!-- TERM FILTER -->
     <div class="col-md-3">
         <label class="form-label fw-bold">Term</label>
         <select name="term" class="form-select" required>
@@ -41,13 +68,12 @@
         </select>
     </div>
 
-    <!-- CLASS FILTER (Only teacher’s classes) -->
     <div class="col-md-3">
         <label class="form-label fw-bold">Class</label>
         <select name="class" class="form-select" required>
             <option value="">-- Select --</option>
             {% for cls in classes %}
-                <option value="{{ cls.id }}" 
+                <option value="{{ cls.id }}"
                     {% if selected_class|stringformat:"s" == cls.id|stringformat:"s" %}selected{% endif %}>
                     {{ cls.name }}
                 </option>
@@ -55,13 +81,23 @@
         </select>
     </div>
 
-    <!-- SEARCH BUTTON -->
     <div class="col-md-3 d-flex align-items-end">
         <button class="btn btn-primary w-100">Search</button>
     </div>
 </form>
 
 {% if records %}
+
+<!-- SCALE LEGEND -->
+<div class="alert alert-info d-inline-flex align-items-center gap-4 flex-wrap py-2 px-3 mb-3" style="font-size: 13px;">
+    <strong>&#128202; Scoring Scale:</strong>
+    <span><span class="badge bg-success">5</span> Excellent</span>
+    <span><span class="badge bg-primary">4</span> Good</span>
+    <span><span class="badge bg-warning text-dark">3</span> Fair</span>
+    <span><span class="badge bg-danger">2</span> Poor</span>
+    <span><span class="badge bg-secondary">1</span> Very Poor</span>
+</div>
+
 <form method="post">
     {% csrf_token %}
 
@@ -82,54 +118,115 @@
                 <tr>
                     <td class="fw-bold">{{ r.student.first_name }} {{ r.student.last_name }}</td>
 
-                    <!-- Psychomotor Inputs -->
-                    <td>
-                        <input type="number" name="handwriting_{{ r.student.id }}" value="{{ r.handwriting }}" class="form-control mb-1" placeholder="H/W">
-                        <input type="number" name="games_{{ r.student.id }}" value="{{ r.games }}" class="form-control mb-1" placeholder="Games">
-                        <input type="number" name="sports_{{ r.student.id }}" value="{{ r.sports }}" class="form-control mb-1" placeholder="Sports">
-                        <input type="number" name="drawing_{{ r.student.id }}" value="{{ r.drawing_painting }}" class="form-control mb-1" placeholder="Drawing">
-                        <input type="number" name="crafts_{{ r.student.id }}" value="{{ r.crafts }}" class="form-control" placeholder="Crafts">
+                    <!-- Psychomotor -->
+                    <td style="min-width: 200px;">
+                        <span class="section-title">Psychomotor</span>
+                        <div class="score-row">
+                            <label>Handwriting</label>
+                            <input type="number" name="handwriting_{{ r.student.id }}" value="{{ r.handwriting }}" class="form-control" min="1" max="5">
+                        </div>
+                        <div class="score-row">
+                            <label>Games</label>
+                            <input type="number" name="games_{{ r.student.id }}" value="{{ r.games }}" class="form-control" min="1" max="5">
+                        </div>
+                        <div class="score-row">
+                            <label>Sports</label>
+                            <input type="number" name="sports_{{ r.student.id }}" value="{{ r.sports }}" class="form-control" min="1" max="5">
+                        </div>
+                        <div class="score-row">
+                            <label>Drawing</label>
+                            <input type="number" name="drawing_{{ r.student.id }}" value="{{ r.drawing_painting }}" class="form-control" min="1" max="5">
+                        </div>
+                        <div class="score-row">
+                            <label>Crafts</label>
+                            <input type="number" name="crafts_{{ r.student.id }}" value="{{ r.crafts }}" class="form-control" min="1" max="5">
+                        </div>
                     </td>
 
-                    <!-- Affective Inputs -->
-                    <td>
-                        <input type="number" name="punctuality_{{ r.student.id }}" value="{{ r.punctuality }}" class="form-control mb-1" placeholder="Punctuality">
-                        <input type="number" name="attendance_{{ r.student.id }}" value="{{ r.attendance }}" class="form-control mb-1" placeholder="Attendance">
-                        <input type="number" name="reliability_{{ r.student.id }}" value="{{ r.reliability }}" class="form-control mb-1" placeholder="Reliability">
-                        <input type="number" name="neatness_{{ r.student.id }}" value="{{ r.neatness }}" class="form-control mb-1" placeholder="Neatness">
-                        <input type="number" name="politeness_{{ r.student.id }}" value="{{ r.politeness }}" class="form-control mb-1" placeholder="Politeness">
-                        <input type="number" name="honesty_{{ r.student.id }}" value="{{ r.honesty }}" class="form-control mb-1" placeholder="Honesty">
-                        <input type="number" name="relationship_{{ r.student.id }}" value="{{ r.relationship_with_students }}" class="form-control mb-1" placeholder="Relationship">
-                        <input type="number" name="self_control_{{ r.student.id }}" value="{{ r.self_control }}" class="form-control mb-1" placeholder="Self-Control">
-                        <input type="number" name="attentive_{{ r.student.id }}" value="{{ r.attentiveness }}" class="form-control mb-1" placeholder="Attentive">
-                        <input type="number" name="perseverance_{{ r.student.id }}" value="{{ r.perseverance }}" class="form-control" placeholder="Perseverance">
+                    <!-- Affective -->
+                    <td style="min-width: 210px;">
+                        <span class="section-title">Affective</span>
+                        <div class="score-row">
+                            <label>Punctuality</label>
+                            <input type="number" name="punctuality_{{ r.student.id }}" value="{{ r.punctuality }}" class="form-control" min="1" max="5">
+                        </div>
+                        <div class="score-row">
+                            <label>Attendance</label>
+                            <input type="number" name="attendance_{{ r.student.id }}" value="{{ r.attendance }}" class="form-control" min="1" max="5">
+                        </div>
+                        <div class="score-row">
+                            <label>Reliability</label>
+                            <input type="number" name="reliability_{{ r.student.id }}" value="{{ r.reliability }}" class="form-control" min="1" max="5">
+                        </div>
+                        <div class="score-row">
+                            <label>Neatness</label>
+                            <input type="number" name="neatness_{{ r.student.id }}" value="{{ r.neatness }}" class="form-control" min="1" max="5">
+                        </div>
+                        <div class="score-row">
+                            <label>Politeness</label>
+                            <input type="number" name="politeness_{{ r.student.id }}" value="{{ r.politeness }}" class="form-control" min="1" max="5">
+                        </div>
+                        <div class="score-row">
+                            <label>Honesty</label>
+                            <input type="number" name="honesty_{{ r.student.id }}" value="{{ r.honesty }}" class="form-control" min="1" max="5">
+                        </div>
+                        <div class="score-row">
+                            <label>Relationship</label>
+                            <input type="number" name="relationship_{{ r.student.id }}" value="{{ r.relationship_with_students }}" class="form-control" min="1" max="5">
+                        </div>
+                        <div class="score-row">
+                            <label>Self Control</label>
+                            <input type="number" name="self_control_{{ r.student.id }}" value="{{ r.self_control }}" class="form-control" min="1" max="5">
+                        </div>
+                        <div class="score-row">
+                            <label>Attentiveness</label>
+                            <input type="number" name="attentive_{{ r.student.id }}" value="{{ r.attentiveness }}" class="form-control" min="1" max="5">
+                        </div>
+                        <div class="score-row">
+                            <label>Perseverance</label>
+                            <input type="number" name="perseverance_{{ r.student.id }}" value="{{ r.perseverance }}" class="form-control" min="1" max="5">
+                        </div>
                     </td>
 
                     <!-- Report Card -->
-                    <td>
+                    <td style="min-width: 180px;">
                         {% if r.results %}
                             <small>
                                 {% for res in r.results %}
-                                    {{ res.subject.title }}: {{ res.total_score }} ({{ res.grade_letter }})<br>
+                                    <div class="d-flex justify-content-between">
+                                        <span>{{ res.subject.title }}</span>
+                                        <span><strong>{{ res.total_score }}</strong> ({{ res.grade_letter }})</span>
+                                    </div>
                                 {% endfor %}
-                                <strong>Total:</strong> {{ r.total_score }}<br>
-                                <strong>Average:</strong> {{ r.average_score }}<br>
-                                <strong>Final Grade:</strong> {{ r.final_grade }}
+                                <hr class="my-1">
+                                <div class="d-flex justify-content-between">
+                                    <span>Total</span><strong>{{ r.total_score }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Average</span><strong>{{ r.average_score }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Final Grade</span><strong>{{ r.final_grade }}</strong>
+                                </div>
                             </small>
                         {% else %}
                             <small class="text-muted">No results recorded</small>
                         {% endif %}
                     </td>
 
-                    <!-- Form Teacher Comment -->
-                    <td>
-                        <textarea id="comment-{{ r.student.id }}" name="comment_{{ r.student.id }}" class="form-control" rows="3">{{ r.form_teacher_comment }}</textarea>
+                    <!-- Comment -->
+                    <td style="min-width: 200px;">
+                        <textarea id="comment-{{ r.student.id }}"
+                                  name="comment_{{ r.student.id }}"
+                                  class="form-control" rows="4">{{ r.form_teacher_comment }}</textarea>
                     </td>
 
-                    <!-- AI Generate -->
+                    <!-- AI single -->
                     <td class="text-center">
                         <button type="button" class="btn btn-outline-info btn-sm"
-                                onclick="generateFTComment('{{ r.student.id }}')">🤖 Generate</button>
+                                onclick="generateFTComment('{{ r.student.id }}')">
+                            🤖 Generate
+                        </button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -137,42 +234,130 @@
         </table>
     </div>
 
-    <button type="submit" class="btn btn-success mt-3">💾 Save All</button>
+    <!-- Bottom action buttons -->
+    <div class="d-flex gap-3 mt-3 align-items-center flex-wrap">
+        <button type="submit" class="btn btn-success">💾 Save All</button>
+        <button type="button" id="generate-all-btn" class="btn btn-primary" onclick="generateAllComments()">
+            🤖 AI Generate All Comments
+        </button>
+    </div>
+
+    <!-- Progress bar — hidden until bulk run starts -->
+    <div id="bulk-progress-wrap" class="mt-3" style="display:none; max-width:520px;">
+        <div class="d-flex justify-content-between mb-1">
+            <small id="bulk-status-text" class="text-muted">Starting...</small>
+            <small id="bulk-count-text" class="fw-bold text-dark">0 / 0</small>
+        </div>
+        <div class="progress" style="height:12px;">
+            <div id="bulk-progress-bar"
+                 class="progress-bar progress-bar-striped progress-bar-animated bg-info"
+                 role="progressbar" style="width:0%"></div>
+        </div>
+    </div>
+
 </form>
 
 <script>
-function generateFTComment(studentId) {
-    const box = document.getElementById("comment-" + studentId);
-    box.value = "Generating...";
-
-    // Collect psychomotor and affective inputs
-    const getValue = (field) => document.querySelector(`[name="${field}_${studentId}"]`).value || 0;
-
-    const params = new URLSearchParams({
-        session: "{{ selected_session }}",
-        term: "{{ selected_term }}",
-        class: "{{ selected_class }}",
-        handwriting: getValue('handwriting'),
-        games: getValue('games'),
-        sports: getValue('sports'),
-        drawing: getValue('drawing'),
-        crafts: getValue('crafts'),
-        punctuality: getValue('punctuality'),
-        attendance: getValue('attendance'),
-        reliability: getValue('reliability'),
-        neatness: getValue('neatness'),
-        politeness: getValue('politeness'),
-        honesty: getValue('honesty'),
+// ── Build query params for one student ───────────────────────────────────
+function buildParams(studentId) {
+    const getValue = (field) => {
+        const el = document.querySelector(`[name="${field}_${studentId}"]`);
+        return el ? (el.value || 0) : 0;
+    };
+    return new URLSearchParams({
+        session:      "{{ selected_session }}",
+        term:         "{{ selected_term }}",
+        class:        "{{ selected_class }}",
+        handwriting:  getValue('handwriting'),
+        games:        getValue('games'),
+        sports:       getValue('sports'),
+        drawing:      getValue('drawing'),
+        crafts:       getValue('crafts'),
+        punctuality:  getValue('punctuality'),
+        attendance:   getValue('attendance'),
+        reliability:  getValue('reliability'),
+        neatness:     getValue('neatness'),
+        politeness:   getValue('politeness'),
+        honesty:      getValue('honesty'),
         relationship: getValue('relationship'),
         self_control: getValue('self_control'),
-        attentive: getValue('attentive'),
-        perseverance: getValue('perseverance')
-    });
+        attentive:    getValue('attentive'),
+        perseverance: getValue('perseverance'),
+    }).toString();
+}
 
-    fetch(`/portal/generate-form-teacher-comment/${studentId}/?${params.toString()}`)
+// ── Single student ────────────────────────────────────────────────────────
+function generateFTComment(studentId) {
+    const box = document.getElementById("comment-" + studentId);
+    box.value    = "Generating...";
+    box.disabled = true;
+
+    fetch(`/portal/generate-form-teacher-comment/${studentId}/?${buildParams(studentId)}`)
         .then(res => res.json())
-        .then(data => box.value = data.comment)
-        .catch(() => box.value = "Error generating comment.");
+        .then(data => {
+            box.value    = data.comment || "No comment generated.";
+            box.disabled = false;
+        })
+        .catch(() => {
+            box.value    = "Error generating comment.";
+            box.disabled = false;
+        });
+}
+
+// ── Generate ALL comments one by one ─────────────────────────────────────
+async function generateAllComments() {
+    const boxes = document.querySelectorAll('textarea[id^="comment-"]');
+    const total = boxes.length;
+
+    if (total === 0) { alert("No students found."); return; }
+
+    const btn      = document.getElementById('generate-all-btn');
+    const wrap     = document.getElementById('bulk-progress-wrap');
+    const bar      = document.getElementById('bulk-progress-bar');
+    const statusTx = document.getElementById('bulk-status-text');
+    const countTx  = document.getElementById('bulk-count-text');
+
+    // Reset
+    bar.style.width = '0%';
+    bar.className   = 'progress-bar progress-bar-striped progress-bar-animated bg-info';
+    wrap.style.display = 'block';
+    btn.disabled       = true;
+    btn.textContent    = "⏳ Generating...";
+
+    let done = 0;
+
+    for (const box of boxes) {
+        const studentId = box.id.replace('comment-', '');
+
+        statusTx.textContent = `Generating comment ${done + 1} of ${total}...`;
+        countTx.textContent  = `${done} / ${total}`;
+        bar.style.width      = `${Math.round((done / total) * 100)}%`;
+
+        box.value    = "Generating...";
+        box.disabled = true;
+
+        try {
+            const res  = await fetch(`/portal/generate-form-teacher-comment/${studentId}/?${buildParams(studentId)}`);
+            const data = await res.json();
+            box.value = data.comment || "No comment generated.";
+        } catch (e) {
+            box.value = "Error generating comment.";
+        }
+
+        box.disabled = false;
+        done++;
+
+        // Small delay to avoid hammering the API
+        await new Promise(r => setTimeout(r, 300));
+    }
+
+    // Finished
+    bar.style.width = '100%';
+    bar.className   = 'progress-bar bg-success';
+    statusTx.textContent = `✅ All ${total} comments generated! Click Save All to keep them.`;
+    countTx.textContent  = `${total} / ${total}`;
+    btn.disabled    = false;
+    btn.textContent = "🤖 AI Generate All Comments";
 }
 </script>
 {% endif %}

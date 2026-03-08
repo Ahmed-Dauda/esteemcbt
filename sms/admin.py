@@ -22,12 +22,13 @@ admin.site.register(FrequentlyAskQuestions)
 # admin.site.register(Session)
 # admin.site.register(Term)
 
+@admin.register(Term)
 class TermAdmin(admin.ModelAdmin):
+    list_display = ["name", "school", "order", "is_midterm"]
+    search_fields = ["name", "school__name"]
+    list_filter = ["school", "is_midterm"]
+    ordering = ["order"]
 
-    list_display = ['name','school']
-    search_fields = ['name']  # Add search field for course name
-
-admin.site.register(Term, TermAdmin)
 
 class SessionAdmin(admin.ModelAdmin):
 

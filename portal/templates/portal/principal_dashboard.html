@@ -164,107 +164,73 @@
     </div>
     {% endif %}
 </div>
-
 <script>
+function cleanComment(text) {
+    // Remove all types of quotation marks including smart quotes
+    return text.replace(/["""'']/g, '').trim();
+}
+
 function generateComment(studentId) {
     const target = document.getElementById("comment-" + studentId);
-    const btn = document.getElementById("btn-" + studentId);
+    const btn    = document.getElementById("btn-" + studentId);
 
-    // Show spinner on button
-    btn.disabled = true;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status"></span> Generating...`;
-    target.value = "";
+    btn.disabled   = true;
+    btn.innerHTML  = `<span class="spinner-border spinner-border-sm" role="status"></span> Generating...`;
+    target.value   = "Generating...";
 
     fetch(`/portal/generate-principal-comment/${studentId}/?session={{ selected_session.id }}&term={{ selected_term.id }}&class={{ selected_class.id }}`)
         .then(res => res.json())
         .then(data => {
-            target.value = data.comment;
-            btn.disabled = false;
+            target.value  = cleanComment(data.comment || "No comment generated.");
+            btn.disabled  = false;
             btn.innerHTML = "🤖 Generate";
         })
         .catch(() => {
-            target.value = "Error generating comment.";
-            btn.disabled = false;
+            target.value  = "Error generating comment.";
+            btn.disabled  = false;
             btn.innerHTML = "🤖 Generate";
         });
 }
 
-function generateAllComments() {
+async function generateAllComments() {
     if (!confirm("Generate AI comments for ALL students?")) return;
 
-    document.querySelectorAll("textarea[id^='comment-']").forEach(t => t.value = "Generating...");
-    showProgressBar(0, "Starting...");
+    const boxes = document.querySelectorAll("textarea[id^='comment-']");
+    const total = boxes.length;
+    if (total === 0) { alert("No students found."); return; }
 
-    fetch(`/portal/generate-all-principal-comments/?session={{ selected_session.id }}&term={{ selected_term.id }}&class={{ selected_class.id }}`)
-        .then(res => res.json())
-        .then(data => {
-            if (!data.task_id) { alert("Failed to start task."); return; }
-            pollCommentStatus(data.task_id);
-        })
-        .catch(() => alert("Error starting comment generation."));
-}
+    showProgressBar(0, `Starting... 0 / ${total}`);
 
-function pollCommentStatus(taskId) {
-    const interval = setInterval(() => {
-        fetch(`/portal/generate-all-principal-comments/status/${taskId}/`)
-            .then(res => res.json())
-            .then(data => {
+    let done = 0;
+    for (const box of boxes) {
+        const studentId = box.id.replace('comment-', '');
+        box.value = "Generating...";
 
-                if (data.state === 'PENDING') {
-                    showProgressBar(0, "Waiting in queue...");
-                }
+        try {
+            const res  = await fetch(`/portal/generate-principal-comment/${studentId}/?session={{ selected_session.id }}&term={{ selected_term.id }}&class={{ selected_class.id }}`);
+            const data = await res.json();
+            box.value  = cleanComment(data.comment || "No comment generated.");
+        } catch (e) {
+            box.value = "Error generating comment.";
+        }
 
-                else if (data.state === 'PROGRESS') {
-                    const current = data.current || 0;
-                    const total = data.total || 1;
-                    const pct = Math.round((current / total) * 100);
-                    showProgressBar(pct, `Processing ${current} of ${total} students...`);
+        done++;
+        const pct = Math.round((done / total) * 100);
+        showProgressBar(pct, `Processing ${done} of ${total} students...`);
+        await new Promise(r => setTimeout(r, 300));
+    }
 
-                    // Fill comments as they come in progressively
-                    Object.entries(data.comments || {}).forEach(([studentId, comment]) => {
-                        const target = document.getElementById("comment-" + studentId);
-                        if (target && target.value === "Generating...") {
-                            target.value = comment;
-                        }
-                    });
-                }
-
-                else if (data.state === 'SUCCESS') {
-                    clearInterval(interval);
-                    showProgressBar(100, "Done!");
-
-                    Object.entries(data.comments).forEach(([studentId, comment]) => {
-                        const target = document.getElementById("comment-" + studentId);
-                        if (target) target.value = comment;
-                    });
-
-                    setTimeout(() => hideProgressBar(), 2000);
-                }
-
-                else if (data.state === 'FAILURE') {
-                    clearInterval(interval);
-                    hideProgressBar();
-                    alert("Failed to generate comments.");
-                }
-            })
-            .catch(() => {
-                clearInterval(interval);
-                hideProgressBar();
-                alert("Error checking task status.");
-            });
-    }, 2000);
+    showProgressBar(100, `✅ All ${total} comments generated! Click Save to keep them.`);
+    setTimeout(() => hideProgressBar(), 4000);
 }
 
 function showProgressBar(percent, label) {
-    const wrapper = document.getElementById("progress-wrapper");
+    document.getElementById("progress-wrapper").style.display = "block";
     const bar = document.getElementById("progress-bar");
-    const text = document.getElementById("progress-label");
-
-    wrapper.style.display = "block";
     bar.style.width = percent + "%";
     bar.setAttribute("aria-valuenow", percent);
     bar.textContent = percent + "%";
-    text.textContent = label;
+    document.getElementById("progress-label").textContent = label;
 }
 
 function hideProgressBar() {

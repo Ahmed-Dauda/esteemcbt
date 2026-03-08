@@ -5,6 +5,7 @@ from django.contrib.auth.views import LoginView
 app_name = 'teacher'
 
 urlpatterns = [
+    path('toggle-term-midterm/<int:term_id>/', views.toggle_term_midterm, name='toggle_term_midterm'),
 # ✅ Examiner Class Management URLs
     path('examiner/classes/', views.examiner_class_list_view, name='examiner_class_list'),
     path('examiner/classes/create/', views.examiner_create_class_view, name='examiner_create_class'),
@@ -85,6 +86,7 @@ path('onboarding/', views.onboarding_dashboard_view, name='onboarding_dashboard'
     # path('questions/', views.view_questions, name='view_questions'),
     # path('questions/subject/<int:subject_id>/', views.subject_questions, name='subject_questions'),
     path('teacher/subjects/', views.teacher_subjects_view, name='teacher_subjects'),
+    path('assign-form-teachers/<int:class_id>/', views.assign_form_teachers, name='assign_form_teachers'),
     path('teacher/subject/<int:subject_id>/questions/', views.subject_questions_view, name='subject_questions'),
     path('import/', views.import_data, name='import_data'),
     path('export/', views.export_data, name='export_data'),

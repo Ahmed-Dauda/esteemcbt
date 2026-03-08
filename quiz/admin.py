@@ -70,7 +70,6 @@ class CourseAdmin(admin.ModelAdmin):
 
 admin.site.register(Course, CourseAdmin)
 
-
 @admin.register(CourseGrade)
 class CourseGradeAdmin(admin.ModelAdmin):
     form = CourseGradeForm
@@ -91,32 +90,31 @@ class CourseGradeAdmin(admin.ModelAdmin):
         'students__first_name',
         'students__last_name'
     ]
-    list_filter = ['schools', 'is_active', 'subjects', 'session', 'term']
-    autocomplete_fields = ['students', 'subjects', 'form_teacher']
+    list_filter  = ['schools', 'is_active', 'subjects', 'session', 'term']
 
-    # -------------------------
-    # Display Form Teacher Name
-    # -------------------------
+    # ✅ form_teacher is now M2M so use filter_horizontal, not autocomplete_fields FK
+    autocomplete_fields  = ['students', 'subjects']
+    filter_horizontal    = ['form_teacher']
+
+    # ── Display Form Teacher Names (M2M) ──────────────────────────────────
     def get_form_teacher_name(self, obj):
-        if obj.form_teacher:
-            return f"{obj.form_teacher.first_name} {obj.form_teacher.last_name}"
+        teachers = obj.form_teacher.all()
+        if teachers.exists():
+            return ", ".join(f"{t.first_name} {t.last_name}" for t in teachers)
         return "-"
-    get_form_teacher_name.short_description = "Form Teacher"
+    get_form_teacher_name.short_description = "Form Teacher(s)"
 
-    # ---------------------------------
-    # Filter: Only teachers in same school
-    # ---------------------------------
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    # ── Filter: Only teachers in same school ──────────────────────────────
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "form_teacher":
-            user_school = request.user.school  # School of admin user
-            kwargs["queryset"] = Teacher.objects.filter(
-                school=user_school  # Only teachers from the same school
-            )
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+            try:
+                user_school = request.user.school
+                kwargs["queryset"] = Teacher.objects.filter(school=user_school)
+            except Exception:
+                pass
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
-    # ------------------------
-    # Student details in admin
-    # ------------------------
+    # ── Student details ───────────────────────────────────────────────────
     def get_students_details(self, obj):
         return '\n'.join(
             f"({student.school})-({student.first_name}-{student.last_name}, {student.student_class})"
@@ -124,13 +122,10 @@ class CourseGradeAdmin(admin.ModelAdmin):
         )
     get_students_details.short_description = 'Student Details'
 
-    # ------------------------
-    # Subject names
-    # ------------------------
+    # ── Subject names ─────────────────────────────────────────────────────
     def get_subject_names(self, obj):
         return '\n'.join(str(subject) for subject in obj.subjects.all())
     get_subject_names.short_description = 'Subject Names'
-
 
 
 #real codes

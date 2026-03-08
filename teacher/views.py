@@ -522,6 +522,19 @@ def manage_academic_setup_view(request):
 
     return render(request, 'teacher/dashboard/manage_academic_setup.html', context)
 
+# ── Add this view ──────────────────────────────────────────────────────────
+@login_required(login_url='teacher:teacher_login')
+def toggle_term_midterm(request, term_id):
+    user        = NewUser.objects.select_related('school').get(id=request.user.id)
+    user_school = user.school
+
+    term = get_object_or_404(Term, id=term_id, school=user_school)
+    term.is_midterm = not term.is_midterm
+    term.save()
+
+    return JsonResponse({'is_midterm': term.is_midterm})  # ✅ return JSON not redirect
+
+
 # --- Edit Views ---
 @login_required(login_url='teacher:teacher_login')
 def edit_session_view(request, pk):
@@ -1710,16 +1723,14 @@ from .models import CourseGrade
 from django.contrib.auth.decorators import login_required
 
 
-
 @login_required(login_url='teacher:teacher_login')
 def examiner_dashboard_view(request):
     user = NewUser.objects.select_related('school').get(id=request.user.id)
     user_school = user.school
 
-    # Show ALL classes in this school (even empty ones)
     course_grades = (
         CourseGrade.objects.filter(schools=user_school)
-        .prefetch_related('students', 'subjects')
+        .prefetch_related('students', 'subjects', 'form_teacher')  # ✅ add form_teacher
         .order_by('name')
     )
 
@@ -1729,6 +1740,57 @@ def examiner_dashboard_view(request):
 
     return render(request, 'teacher/dashboard/examiner_dashboard.html', context)
     
+# ── ADD THIS TO your teacher/views.py ────────────────────────────────────
+
+@login_required(login_url='teacher:teacher_login')
+def assign_form_teachers(request, class_id):
+    user        = NewUser.objects.select_related('school').get(id=request.user.id)
+    user_school = user.school
+
+    class_obj    = get_object_or_404(CourseGrade, id=class_id, schools=user_school)
+    all_teachers = Teacher.objects.filter(school=user_school).order_by('first_name', 'last_name')
+
+    if request.method == 'POST':
+        teacher_ids = request.POST.getlist('form_teachers')
+
+        if len(teacher_ids) > 2:
+            messages.error(request, "Maximum 2 form teachers allowed.")
+        else:
+            # ── 1. Assign form teachers to the class ──────────────────────
+            class_obj.form_teacher.set(teacher_ids)
+
+            # ── 2. Update classes_taught and role on assigned teachers ─────
+            for teacher in Teacher.objects.filter(id__in=teacher_ids):
+                teacher.classes_taught.add(class_obj)
+                teacher.form_teacher_role = 'form_teacher'
+                teacher.save()
+
+            # ── 3. Remove class from unassigned teachers ──────────────────
+            removed_teachers = Teacher.objects.filter(
+                form_teacher_classes=class_obj
+            ).exclude(id__in=teacher_ids)
+            for teacher in removed_teachers:
+                teacher.classes_taught.remove(class_obj)
+                teacher.form_teacher_role = 'not_form_teacher'
+                teacher.save()
+
+            # ── 4. Sync form_teacher to all StudentBehaviorRecords ─────────
+            from portal.models import StudentBehaviorRecord
+            for student in class_obj.students.all():
+                records = StudentBehaviorRecord.objects.filter(student=student)
+                for record in records:
+                    record.form_teacher.set(teacher_ids)
+
+            messages.success(request, f"Form teachers assigned to {class_obj.name} successfully.")
+            return redirect('teacher:assign_form_teachers', class_id=class_id)
+
+    current_form_teachers = class_obj.form_teacher.all()
+
+    return render(request, 'teacher/dashboard/assign_form_teachers.html', {
+        'class_obj':             class_obj,
+        'all_teachers':          all_teachers,
+        'current_form_teachers': current_form_teachers,
+    })
 
 
 @login_required(login_url='teacher:teacher_login')
