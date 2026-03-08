@@ -91,6 +91,7 @@
 <!-- SCALE LEGEND -->
 <div class="alert alert-info d-inline-flex align-items-center gap-4 flex-wrap py-2 px-3 mb-3" style="font-size: 13px;">
     <strong>&#128202; Scoring Scale:</strong>
+    <span><span class="badge bg-secondary">0</span> Not Rated</span>
     <span><span class="badge bg-success">5</span> Excellent</span>
     <span><span class="badge bg-primary">4</span> Good</span>
     <span><span class="badge bg-warning text-dark">3</span> Fair</span>
@@ -123,23 +124,23 @@
                         <span class="section-title">Psychomotor</span>
                         <div class="score-row">
                             <label>Handwriting</label>
-                            <input type="number" name="handwriting_{{ r.student.id }}" value="{{ r.handwriting }}" class="form-control" min="1" max="5">
+                            <input type="number" name="handwriting_{{ r.student.id }}" value="{{ r.handwriting|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                         <div class="score-row">
                             <label>Games</label>
-                            <input type="number" name="games_{{ r.student.id }}" value="{{ r.games }}" class="form-control" min="1" max="5">
+                            <input type="number" name="games_{{ r.student.id }}" value="{{ r.games|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                         <div class="score-row">
                             <label>Sports</label>
-                            <input type="number" name="sports_{{ r.student.id }}" value="{{ r.sports }}" class="form-control" min="1" max="5">
+                            <input type="number" name="sports_{{ r.student.id }}" value="{{ r.sports|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                         <div class="score-row">
                             <label>Drawing</label>
-                            <input type="number" name="drawing_{{ r.student.id }}" value="{{ r.drawing_painting }}" class="form-control" min="1" max="5">
+                            <input type="number" name="drawing_{{ r.student.id }}" value="{{ r.drawing_painting|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                         <div class="score-row">
                             <label>Crafts</label>
-                            <input type="number" name="crafts_{{ r.student.id }}" value="{{ r.crafts }}" class="form-control" min="1" max="5">
+                            <input type="number" name="crafts_{{ r.student.id }}" value="{{ r.crafts|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                     </td>
 
@@ -148,43 +149,43 @@
                         <span class="section-title">Affective</span>
                         <div class="score-row">
                             <label>Punctuality</label>
-                            <input type="number" name="punctuality_{{ r.student.id }}" value="{{ r.punctuality }}" class="form-control" min="1" max="5">
+                            <input type="number" name="punctuality_{{ r.student.id }}" value="{{ r.punctuality|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                         <div class="score-row">
                             <label>Attendance</label>
-                            <input type="number" name="attendance_{{ r.student.id }}" value="{{ r.attendance }}" class="form-control" min="1" max="5">
+                            <input type="number" name="attendance_{{ r.student.id }}" value="{{ r.attendance|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                         <div class="score-row">
                             <label>Reliability</label>
-                            <input type="number" name="reliability_{{ r.student.id }}" value="{{ r.reliability }}" class="form-control" min="1" max="5">
+                            <input type="number" name="reliability_{{ r.student.id }}" value="{{ r.reliability|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                         <div class="score-row">
                             <label>Neatness</label>
-                            <input type="number" name="neatness_{{ r.student.id }}" value="{{ r.neatness }}" class="form-control" min="1" max="5">
+                            <input type="number" name="neatness_{{ r.student.id }}" value="{{ r.neatness|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                         <div class="score-row">
                             <label>Politeness</label>
-                            <input type="number" name="politeness_{{ r.student.id }}" value="{{ r.politeness }}" class="form-control" min="1" max="5">
+                            <input type="number" name="politeness_{{ r.student.id }}" value="{{ r.politeness|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                         <div class="score-row">
                             <label>Honesty</label>
-                            <input type="number" name="honesty_{{ r.student.id }}" value="{{ r.honesty }}" class="form-control" min="1" max="5">
+                            <input type="number" name="honesty_{{ r.student.id }}" value="{{ r.honesty|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                         <div class="score-row">
                             <label>Relationship</label>
-                            <input type="number" name="relationship_{{ r.student.id }}" value="{{ r.relationship_with_students }}" class="form-control" min="1" max="5">
+                            <input type="number" name="relationship_{{ r.student.id }}" value="{{ r.relationship_with_students|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                         <div class="score-row">
                             <label>Self Control</label>
-                            <input type="number" name="self_control_{{ r.student.id }}" value="{{ r.self_control }}" class="form-control" min="1" max="5">
+                            <input type="number" name="self_control_{{ r.student.id }}" value="{{ r.self_control|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                         <div class="score-row">
                             <label>Attentiveness</label>
-                            <input type="number" name="attentive_{{ r.student.id }}" value="{{ r.attentiveness }}" class="form-control" min="1" max="5">
+                            <input type="number" name="attentive_{{ r.student.id }}" value="{{ r.attentiveness|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                         <div class="score-row">
                             <label>Perseverance</label>
-                            <input type="number" name="perseverance_{{ r.student.id }}" value="{{ r.perseverance }}" class="form-control" min="1" max="5">
+                            <input type="number" name="perseverance_{{ r.student.id }}" value="{{ r.perseverance|default:0 }}" class="form-control" min="0" max="5">
                         </div>
                     </td>
 
@@ -242,7 +243,7 @@
         </button>
     </div>
 
-    <!-- Progress bar — hidden until bulk run starts -->
+    <!-- Progress bar -->
     <div id="bulk-progress-wrap" class="mt-3" style="display:none; max-width:520px;">
         <div class="d-flex justify-content-between mb-1">
             <small id="bulk-status-text" class="text-muted">Starting...</small>
@@ -258,11 +259,10 @@
 </form>
 
 <script>
-// ── Build query params for one student ───────────────────────────────────
 function buildParams(studentId) {
     const getValue = (field) => {
         const el = document.querySelector(`[name="${field}_${studentId}"]`);
-        return el ? (el.value || 0) : 0;
+        return el ? (el.value !== '' ? el.value : 0) : 0;
     };
     return new URLSearchParams({
         session:      "{{ selected_session }}",
@@ -286,7 +286,6 @@ function buildParams(studentId) {
     }).toString();
 }
 
-// ── Single student ────────────────────────────────────────────────────────
 function generateFTComment(studentId) {
     const box = document.getElementById("comment-" + studentId);
     box.value    = "Generating...";
@@ -304,7 +303,6 @@ function generateFTComment(studentId) {
         });
 }
 
-// ── Generate ALL comments one by one ─────────────────────────────────────
 async function generateAllComments() {
     const boxes = document.querySelectorAll('textarea[id^="comment-"]');
     const total = boxes.length;
@@ -317,9 +315,8 @@ async function generateAllComments() {
     const statusTx = document.getElementById('bulk-status-text');
     const countTx  = document.getElementById('bulk-count-text');
 
-    // Reset
-    bar.style.width = '0%';
-    bar.className   = 'progress-bar progress-bar-striped progress-bar-animated bg-info';
+    bar.style.width    = '0%';
+    bar.className      = 'progress-bar progress-bar-striped progress-bar-animated bg-info';
     wrap.style.display = 'block';
     btn.disabled       = true;
     btn.textContent    = "⏳ Generating...";
@@ -346,18 +343,15 @@ async function generateAllComments() {
 
         box.disabled = false;
         done++;
-
-        // Small delay to avoid hammering the API
         await new Promise(r => setTimeout(r, 300));
     }
 
-    // Finished
-    bar.style.width = '100%';
-    bar.className   = 'progress-bar bg-success';
+    bar.style.width      = '100%';
+    bar.className        = 'progress-bar bg-success';
     statusTx.textContent = `✅ All ${total} comments generated! Click Save All to keep them.`;
     countTx.textContent  = `${total} / ${total}`;
-    btn.disabled    = false;
-    btn.textContent = "🤖 AI Generate All Comments";
+    btn.disabled         = false;
+    btn.textContent      = "🤖 AI Generate All Comments";
 }
 </script>
 {% endif %}
