@@ -508,8 +508,13 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
         exam  = float(r.exam_score    or 0)
         total = ca + mid + exam
 
-        max_total  = max_ca + max_mid
-        percentage = round((total / max_total) * 100) if max_total and is_midterm else 0
+        if is_midterm:
+            midterm_total = ca + mid
+            max_total     = max_ca + max_mid
+            percentage    = round((midterm_total / max_total) * 100) if max_total else 0
+        else:
+            midterm_total = total
+            percentage    = 0
 
         words       = r.subject.title.split()
         clean_title = ' '.join(
@@ -537,7 +542,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
                 Paragraph(clean_title,                S["cell_normal"]),
                 Paragraph(str(ca),                    S["cell_center"]),
                 Paragraph(str(mid),                   S["cell_center"]),
-                Paragraph(str(total),                 S["cell_center"]),
+                Paragraph(str(midterm_total),         S["cell_center"]),
                 Paragraph(f"{percentage}%",           S["cell_center"]),
                 Paragraph(str(s_low),                 S["cell_center"]),
                 Paragraph(str(s_high),                S["cell_center"]),
@@ -564,9 +569,9 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
             ])
 
     if is_midterm:
-        col_fracs  = [0.18, 0.06, 0.10, 0.07, 0.07, 0.06, 0.06, 0.09, 0.06, 0.05, 0.06, 0.07]
+        col_fracs = [0.18, 0.06, 0.10, 0.07, 0.07, 0.06, 0.06, 0.09, 0.06, 0.05, 0.06, 0.07]
     else:
-        col_fracs  = [0.18, 0.05, 0.09, 0.07, 0.06, 0.06, 0.06, 0.09, 0.06, 0.05, 0.06, 0.07]
+        col_fracs = [0.18, 0.05, 0.09, 0.07, 0.06, 0.06, 0.06, 0.09, 0.06, 0.05, 0.06, 0.07]
 
     col_widths = [INNER * f for f in col_fracs]
     col_widths[-1] = INNER - sum(col_widths[:-1])
@@ -713,7 +718,6 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
         elements.append(section_header("Principal's Signature"))
         elements.append(Spacer(1, 6))
 
-        # Form teacher name
         behavior = StudentBehaviorRecord.objects.filter(
             student_id=student_id,
             session_id=session_id,
@@ -727,6 +731,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
                 form_teacher_name = ", ".join(
                     f"{t.first_name} {t.last_name}".strip() for t in teachers
                 )
+
         elements.append(Paragraph(
             f"<b>Form Teacher:</b> {form_teacher_name}",
             S["label"]
@@ -752,6 +757,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     doc.build(elements)
     return response
 
+    
 
 #per student
 # def download_term_report_pdf(request, student_id, session_id, term_id):
@@ -1732,7 +1738,6 @@ from reportlab.lib import colors
 import re
 from collections import defaultdict
 from reportlab.lib.units import mm
-
 def download_class_reports_pdf(request, result_class, session_id, term_id):
     from collections import defaultdict
     from reportlab.lib.units import mm
@@ -2005,8 +2010,13 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
             exam  = float(r.exam_score    or 0)
             total = ca + mid + exam
 
-            max_total  = max_ca + max_mid
-            percentage = round((total / max_total) * 100) if max_total and is_midterm else 0
+            if is_midterm:
+                midterm_total = ca + mid
+                max_total     = max_ca + max_mid
+                percentage    = round((midterm_total / max_total) * 100) if max_total else 0
+            else:
+                midterm_total = total
+                percentage    = 0
 
             words       = r.subject.title.split()
             clean_title = ' '.join(
@@ -2022,7 +2032,7 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
             s_low     = min(s_scores, default=0)
             s_sorted  = sorted(s_entries, key=lambda x: x[1], reverse=True)
             s_pos     = next((i + 1 for i, (sid_, _) in enumerate(s_sorted) if sid_ == sid), None)
-            
+
             remark_style = ParagraphStyle(
                 "rs", fontSize=7, fontName="Helvetica", alignment=TA_LEFT, leading=9,
                 textColor=colors.HexColor("#c00000")
@@ -2034,7 +2044,7 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
                     Paragraph(clean_title,                S["cell_normal"]),
                     Paragraph(str(ca),                    S["cell_center"]),
                     Paragraph(str(mid),                   S["cell_center"]),
-                    Paragraph(str(total),                 S["cell_center"]),
+                    Paragraph(str(midterm_total),         S["cell_center"]),
                     Paragraph(f"{percentage}%",           S["cell_center"]),
                     Paragraph(str(s_low),                 S["cell_center"]),
                     Paragraph(str(s_high),                S["cell_center"]),
@@ -2061,9 +2071,9 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
                 ])
 
         if is_midterm:
-            col_fracs  = [0.18, 0.06, 0.10, 0.07, 0.07, 0.06, 0.06, 0.09, 0.06, 0.05, 0.06, 0.07]
+            col_fracs = [0.18, 0.06, 0.10, 0.07, 0.07, 0.06, 0.06, 0.09, 0.06, 0.05, 0.06, 0.07]
         else:
-            col_fracs  = [0.18, 0.05, 0.09, 0.07, 0.06, 0.06, 0.06, 0.09, 0.06, 0.05, 0.06, 0.07]
+            col_fracs = [0.18, 0.05, 0.09, 0.07, 0.06, 0.06, 0.06, 0.09, 0.06, 0.05, 0.06, 0.07]
 
         col_widths = [INNER * f for f in col_fracs]
         col_widths[-1] = INNER - sum(col_widths[:-1])
@@ -2204,7 +2214,6 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
             ]))
             elements.append(comment_tbl)
 
-       
         # ── Principal signature always shows for midterm ──────
         if is_midterm:
             elements.append(Spacer(1, 10))
