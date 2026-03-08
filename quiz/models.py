@@ -230,7 +230,7 @@ class Question(models.Model):
         ('Option3', 'Option3'),
         ('Option4', 'Option4'),
     ]
-    answer = models.CharField(max_length=20, choices=OPTION_CHOICES, blank=True, null=True)
+    answer = models.CharField(max_length=500, choices=OPTION_CHOICES, blank=True, null=True)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
