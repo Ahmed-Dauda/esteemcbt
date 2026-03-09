@@ -1098,7 +1098,10 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
 
 
 def class_report_list(request):
-    reports = Result_Portal.objects.values(
+    school = getattr(request.user, 'school', None)
+    reports = Result_Portal.objects.filter(
+        schools=school
+    ).values(
         'result_class',
         'session_id',
         'session__name',
@@ -1110,7 +1113,6 @@ def class_report_list(request):
     return render(request, 'portal/class_report_list.html', {
         'reports': reports
     })
-
 
      
 
