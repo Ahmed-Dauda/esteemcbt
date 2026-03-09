@@ -1,5 +1,17 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %} Class Reports List {% endblock %}
+
 {% block content %}
+
 <h4>Student Report Cards</h4>
+
+<input 
+  type="text" 
+  id="studentSearch" 
+  class="form-control mb-3" 
+  placeholder="Search by student name..."
+>
 
 <table class="table table-bordered table-striped">
   <thead>
@@ -11,25 +23,70 @@
       <th>View Report</th>
     </tr>
   </thead>
-  <tbody>
+  <tbody id="reportTableBody">
     {% for report in reports %}
-      <tr>
+      <tr
+        data-name="{{ report.student.first_name|lower }} {{ report.student.last_name|lower }}"
+      >
         <td>{{ report.student.first_name }} {{ report.student.last_name }}</td>
         <td>{{ report.result_class }}</td>
         <td>{{ report.session.name }}</td>
         <td>{{ report.term.name }}</td>
         <td>
           <a href="{% url 'portal:report_card_detail' report.student.id report.session.id report.term.id %}" 
-             class="btn btn-primary">
+             class="btn btn-primary btn-sm">
             View Report
           </a>
         </td>
       </tr>
     {% empty %}
-      <tr>
+      <tr id="emptyRow">
         <td colspan="5">No students found.</td>
       </tr>
     {% endfor %}
   </tbody>
 </table>
+
+<script>
+  let debounceTimer = null;
+
+  document.getElementById('studentSearch').addEventListener('input', function () {
+    const query = this.value;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => filterStudents(query), 200);
+  });
+
+  async function filterStudents(query) {
+    const normalised = query.trim().toLowerCase();
+    const rows       = document.querySelectorAll('#reportTableBody tr[data-name]');
+    let   visibleCount = 0;
+
+    const tasks = Array.from(rows).map(row => {
+      return new Promise(resolve => {
+        const name    = row.dataset.name || '';
+        const visible = name.includes(normalised);
+        row.style.display = visible ? '' : 'none';
+        if (visible) visibleCount++;
+        resolve();
+      });
+    });
+
+    await Promise.all(tasks);
+
+    // Show/hide the "no results" row
+    let noResultsRow = document.getElementById('noResultsRow');
+    if (visibleCount === 0 && normalised !== '') {
+      if (!noResultsRow) {
+        noResultsRow = document.createElement('tr');
+        noResultsRow.id = 'noResultsRow';
+        noResultsRow.innerHTML = '<td colspan="5" class="text-center text-muted">No students match your search.</td>';
+        document.getElementById('reportTableBody').appendChild(noResultsRow);
+      }
+      noResultsRow.style.display = '';
+    } else if (noResultsRow) {
+      noResultsRow.style.display = 'none';
+    }
+  }
+</script>
+
 {% endblock %}

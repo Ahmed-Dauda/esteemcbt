@@ -76,16 +76,17 @@ def subscription_edit(request, school_id):
 def payment_required(request):
     return render(request, "portal/payment_required.html")
 
-
 @require_reportcard_subscription
 def report_card_list(request):
-    # Fetch all results, ordered by class and student
-    all_results = Result_Portal.objects.select_related(
+    school = getattr(request.user, 'school', None)
+
+    all_results = Result_Portal.objects.filter(
+        schools=school
+    ).select_related(
         'student', 'session', 'term'
     ).order_by('result_class', 'student__username')
 
-    # Keep track of unique combinations to avoid duplicates
-    seen = set()
+    seen    = set()
     reports = []
 
     for res in all_results:
@@ -93,16 +94,13 @@ def report_card_list(request):
         if key not in seen:
             seen.add(key)
             reports.append({
-                'student': res.student,
+                'student':      res.student,
                 'result_class': res.result_class,
-                'session': res.session,
-                'term': res.term
+                'session':      res.session,
+                'term':         res.term,
             })
 
-    context = {
-        'reports': reports
-    }
-    return render(request, 'portal/report_card_list.html', context)
+    return render(request, 'portal/report_card_list.html', {'reports': reports})
 
 
 @require_reportcard_subscription
