@@ -3158,17 +3158,9 @@ def principal_dashboard(request):
         created = StudentBehaviorRecord.objects.bulk_create(new_records, ignore_conflicts=True)
 
         # Set M2M form_teacher after bulk_create
-        if selected_class.form_teacher and hasattr(selected_class.form_teacher, 'all'):
-            form_teachers = selected_class.form_teacher.all()
-            for record in StudentBehaviorRecord.objects.filter(
-                student__in=students, school=school,
-                session=selected_session, term=selected_term,
-                form_teacher=None,
-            ):
-                record.form_teacher.set(form_teachers)
-
-        # ── Set form_teacher M2M after bulk_create ────────────────
-        if selected_class.form_teacher:
+        # Set M2M form_teacher on newly created records
+        form_teachers = list(selected_class.form_teacher.all())
+        if form_teachers:
             just_created = StudentBehaviorRecord.objects.filter(
                 student__in=[s for s in students if s.id not in existing],
                 school=school,
@@ -3176,8 +3168,8 @@ def principal_dashboard(request):
                 term=selected_term,
             )
             for rec in just_created:
-                rec.form_teacher.set([selected_class.form_teacher])
-
+                rec.form_teacher.set(form_teachers)
+                
         # ── 2. Fetch all records in one query ─────────────────────
         records = list(
             StudentBehaviorRecord.objects.filter(
