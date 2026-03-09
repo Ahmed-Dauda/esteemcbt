@@ -118,8 +118,12 @@
         <h3 class="mt-2">{{ school.school_name }}</h3>
         {% if request.user.is_superuser %}
             <p class="text-success font-weight-bold">You are logged in as Super Admin</p>
+            <p class="text-success font-weight-bold">{{ request.user.first_name }} {{ request.user.last_name }}</p>
+            <p class="text-success font-weight-bold">{{ request.user.email }}</p>
         {% else %}
             <p class="text-primary font-weight-bold">You are logged in as Teacher</p>
+                        <p class="text-success font-weight-bold">{{ request.user.first_name }} {{ request.user.last_name }}</p>
+            <p class="text-success font-weight-bold">{{ request.user.email }}</p>
         {% endif %}
     </div>
 
