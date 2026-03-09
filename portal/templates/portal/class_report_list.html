@@ -24,7 +24,8 @@
         {% empty %}
             <li class="list-group-item">
                 No class reports available.
-            </li>
+                <a href="{% url 'portal:enter_select'%}">Enter Report</a>
+            </li> 
         {% endfor %}
 
 </ul>
