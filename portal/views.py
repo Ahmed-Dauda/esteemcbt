@@ -3117,6 +3117,7 @@ from django.http import HttpResponseForbidden
 from django.db.models import Prefetch
 from django.http import JsonResponse
 
+
 @login_required
 def principal_dashboard(request):
     if not getattr(request.user, "is_principal", False):
@@ -3150,18 +3151,28 @@ def principal_dashboard(request):
             ).values_list('student_id', flat=True)
         )
 
-        StudentBehaviorRecord.objects.bulk_create([
+        new_records = StudentBehaviorRecord.objects.bulk_create([
             StudentBehaviorRecord(
                 student=student,
                 school=school,
                 session=selected_session,
                 term=selected_term,
-                form_teacher=selected_class.form_teacher,
             )
             for student in students
             if student.id not in existing
         ], ignore_conflicts=True)
 
+        # ── Set form_teacher M2M after bulk_create ────────────────
+        if selected_class.form_teacher:
+            just_created = StudentBehaviorRecord.objects.filter(
+                student__in=[s for s in students if s.id not in existing],
+                school=school,
+                session=selected_session,
+                term=selected_term,
+            )
+            for rec in just_created:
+                rec.form_teacher.set([selected_class.form_teacher])
+                
         # ── 2. Fetch all records in one query ─────────────────────
         records = list(
             StudentBehaviorRecord.objects.filter(
