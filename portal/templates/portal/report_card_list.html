@@ -42,6 +42,7 @@
     {% empty %}
       <tr id="emptyRow">
         <td colspan="5">No students found.</td>
+      <a href="{% url 'portal:enter_select'%}">Enter Report</a>
       </tr>
     {% endfor %}
   </tbody>
