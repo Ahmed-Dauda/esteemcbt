@@ -3144,23 +3144,28 @@ def principal_dashboard(request):
         students = list(selected_class.students.all())
         existing = set(
             StudentBehaviorRecord.objects.filter(
-                student__in=students,
-                school=school,
-                session=selected_session,
-                term=selected_term,
+                student__in=students, school=school,
+                session=selected_session, term=selected_term,
             ).values_list('student_id', flat=True)
         )
-
-        new_records = StudentBehaviorRecord.objects.bulk_create([
+        new_records = [
             StudentBehaviorRecord(
-                student=student,
-                school=school,
-                session=selected_session,
-                term=selected_term,
+                student=student, school=school,
+                session=selected_session, term=selected_term,
             )
-            for student in students
-            if student.id not in existing
-        ], ignore_conflicts=True)
+            for student in students if student.id not in existing
+        ]
+        created = StudentBehaviorRecord.objects.bulk_create(new_records, ignore_conflicts=True)
+
+        # Set M2M form_teacher after bulk_create
+        if selected_class.form_teacher and hasattr(selected_class.form_teacher, 'all'):
+            form_teachers = selected_class.form_teacher.all()
+            for record in StudentBehaviorRecord.objects.filter(
+                student__in=students, school=school,
+                session=selected_session, term=selected_term,
+                form_teacher=None,
+            ):
+                record.form_teacher.set(form_teachers)
 
         # ── Set form_teacher M2M after bulk_create ────────────────
         if selected_class.form_teacher:
@@ -3172,7 +3177,7 @@ def principal_dashboard(request):
             )
             for rec in just_created:
                 rec.form_teacher.set([selected_class.form_teacher])
-                
+
         # ── 2. Fetch all records in one query ─────────────────────
         records = list(
             StudentBehaviorRecord.objects.filter(
