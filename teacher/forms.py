@@ -18,6 +18,25 @@ from django.contrib.auth.forms import AuthenticationForm
 from sms.models import Courses, Session, Term, ExamType
 from quiz.models import Result
 
+
+
+class CoursesForm(forms.ModelForm):
+    class Meta:
+        model = Courses  # Reference the 'Courses' model correctly
+        fields = ['title', 'session', 'term', 'exam_type', 'schools']  # Define the fields to display in the form
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        if user and hasattr(user, 'school') and user.school:
+            school = user.school
+            self.fields['schools'].queryset  = School.objects.filter(id=school.id)
+            self.fields['session'].queryset  = Session.objects.filter(school=school)
+            self.fields['term'].queryset     = Term.objects.filter(school=school)
+            self.fields['exam_type'].queryset = ExamType.objects.filter(school=school)
+            
+
 class ExaminerCreateClassForm(forms.ModelForm):
     class Meta:
         model = CourseGrade

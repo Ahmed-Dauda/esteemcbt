@@ -69,34 +69,46 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 
-
 class SchoolStudentSignupForm(SignupForm):
     first_name = forms.CharField(max_length=222, label='First-name')
     last_name = forms.CharField(max_length=225, label='Last-name')
     admission_no = forms.CharField(max_length=50, label='Admission Number')
-    student_class = forms.ChoiceField(choices=[], label='Student Class')  # Initially empty
-    countries = forms.ChoiceField(choices=country_choice, label='Country')
-    school = forms.ModelChoiceField(queryset=School.objects.all(), label='School', required=True)
+    student_class = forms.ChoiceField(choices=[], label='Student Class')
+    school = forms.ModelChoiceField(queryset=School.objects.all(), label='School', required=False)
 
     # Anti-bot fields
-    honeypot = forms.CharField(required=False,widget=forms.HiddenInput())
+    honeypot   = forms.CharField(required=False, widget=forms.HiddenInput())
     js_honeypot = forms.CharField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super(SchoolStudentSignupForm, self).__init__(*args, **kwargs)
 
+        # Remove email field entirely
+        # Make email required and remove (optional) label
+        if 'email' in self.fields:
+            self.fields['email'].required = True
+
+        # Remove "(optional)" label suffix from all fields
+        for field in self.fields.values():
+            field.label = (field.label or '').replace(' (optional)', '').replace('(optional)', '').strip()
+
         if self.request and self.request.user.is_authenticated:
-            user = NewUser.objects.get(id=self.request.user.id)
+            user       = self.request.user
             user_school = user.school
-            self.fields['school'].queryset = School.objects.filter(id=user_school.id)
+
+            # Hide school — will be auto-assigned in save()
+            self.fields['school'].widget   = forms.HiddenInput()
+            self.fields['school'].required = False
+
             self.fields['student_class'].choices = [
-                (cg.name, cg.name) for cg in CourseGrade.objects.filter(schools=user_school).only('name').distinct()
+                (cg.name, cg.name)
+                for cg in CourseGrade.objects.filter(schools=user_school).only('name').distinct()
             ]
 
         # Show honeypot in debug mode
         if self.request and self.request.GET.get('debug') == '1':
-            self.fields['honeypot'].widget = forms.TextInput(attrs={'placeholder': 'Leave this empty'})
+            self.fields['honeypot'].widget    = forms.TextInput(attrs={'placeholder': 'Leave this empty'})
             self.fields['js_honeypot'].widget = forms.TextInput(attrs={'placeholder': 'Should be "human"'})
 
     def clean(self):
@@ -119,22 +131,26 @@ class SchoolStudentSignupForm(SignupForm):
                     if elapsed < timedelta(seconds=3):
                         raise ValidationError("Form submitted too quickly. Try again.")
                 except Exception:
-                    pass  # Ignore if datetime fails
+                    pass
 
         return cleaned
 
     def save(self, request):
-        user = super(SchoolStudentSignupForm, self).save(request)
+        user            = super(SchoolStudentSignupForm, self).save(request)
         user.first_name = self.cleaned_data['first_name']
-        user.last_name = self.cleaned_data['last_name']
-        user.phone_number = self.cleaned_data.get('phone_number', '')  # Optional
+        user.last_name  = self.cleaned_data['last_name']
+        user.phone_number = self.cleaned_data.get('phone_number', '')
         user.admission_no = self.cleaned_data['admission_no']
         user.student_class = self.cleaned_data['student_class']
-        user.countries = self.cleaned_data['countries']
-        user.school = self.cleaned_data['school']
+
+        # Auto-assign school from logged-in user
+        if request.user.is_authenticated and hasattr(request.user, 'school'):
+            user.school = request.user.school
+        else:
+            user.school = self.cleaned_data.get('school')
+
         user.save()
         return user
-
 
 
 class SchoolSignupForm(forms.ModelForm):

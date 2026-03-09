@@ -1,141 +1,84 @@
-<!-- users/templates/users/referral_signup.html -->
 {% extends 'sms/dashboard/teacherbase.html' %}
 {% load crispy_forms_tags %}
 
 {% block title %} Student registration form {% endblock title %} 
 {% block content %}
 
-
 <div class="container">
     <br><br>
-  <h4>Student registration form</h4>
+    <h4>Student registration form</h4>
 
-  {% if messages %}
-  <ul id="messages" class="messages">
-      {% for message in messages %}
-          <li style="color: green;" {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-      {% endfor %}
-  </ul>
-{% endif %}
+    {% if messages %}
+    <ul id="messages" class="messages">
+        {% for message in messages %}
+            <li style="color: green;" {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
 
-
-
-  <form method="post" id="myForm" class="formcontainer">
-      {% csrf_token %}
-    <div class="form-row">
-        <div class="form-group col-md-6 mb-0">
-            {{ form.email|as_crispy_field }}
-        </div>
-        <div class="form-group col-md-6 mb-0">
-            {{ form.username|as_crispy_field }}
-          </div> 
-          <div class="form-group col-md-6 mb-0">
-            {{form.first_name|as_crispy_field }}
-          </div>
-          <div class="form-group col-md-6 mb-0">
-            {{ form.last_name|as_crispy_field }}
-          </div>
-          
-    </div>
-
-    <div class="form-row">
-        <div class="form-group col-md-4 mb-0">
-            {{ form.student_class|as_crispy_field }}
-          </div>
-          <div class="form-group col-md-4 mb-0">
-            {{ form.countries|as_crispy_field }}
-          </div>
-          <div class="form-group col-md-4 mb-0">
-            {{ form.admission_no|as_crispy_field }}
-          </div>
-          <div class="form-group col-md-4 mb-0">
-            {{ form.honeypot }} 
-          </div>
-          <div class="form-group col-md-4 mb-0">
-            {{ form.js_honeypot }}
-          </div>
-          
-    </div>
-
-    <div class="form-row">    
-          <div class="form-group col-md-4 mb-0">
-            {{ form.school|as_crispy_field }}
-          </div>
-          <div class="form-group col-md-4 mb-0">
-            {{ form.password1|as_crispy_field }}
-          </div>
-          <div class="form-group col-md-4 mb-0">
-            {{ form.password2|as_crispy_field }}
-          </div>
-    </div>
-
-      <div class="form-group">
-          <button type="submit">Submit</button>
-      </div>
-
-  
-
-  </form>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const honeypotField = document.querySelector('input[name="js_honeypot"]');
-        if (honeypotField) {
-            honeypotField.value = 'human';
-        }
-    });
-</script>
-
-  <script>
-    // Wait for the DOM to be fully loaded
-    document.addEventListener('DOMContentLoaded', (event) => {
-      // Select the messages container
-      const messagesContainer = document.getElementById('messages');
-      
-      // Check if the container exists
-      if (messagesContainer) {
-        // Set a timeout to hide the messages after 5 seconds (5000 milliseconds)
-        setTimeout(() => {
-          messagesContainer.style.display = 'none';
-        }, 5000);
-      }
-    });
-  </script>
-  
-    <!-- <form method="post" id="myForm">
+    <form method="post" id="myForm">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Submit</button>
-    </form> -->
 
-    <!-- <script>
-        document.getElementById("myorm").addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent the default form submission
-            var formData = new FormData(this); // Get form data
+        {{ form.school }}
+        {{ form.honeypot }}
+        {{ form.js_honeypot }}
 
-            fetch(window.location.href, { // Send form data to current URL
-                method: "POST",
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    // Display the success message
-                    const messageList = document.querySelector(".messages");
-                    const newMessage = document.createElement("li");
-                    newMessage.textContent = data.message;
-                    newMessage.className = "success"; // You can style this class in CSS
-                    messageList.appendChild(newMessage);
-                }
-            })
-            .catch(error => {
-                console.error("Error submitting form:", error);
-            });
+        <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+
+            <div style="flex: 1 1 45%;">
+                {{ form.email|as_crispy_field }}
+            </div>
+            <div style="flex: 1 1 45%;">
+                {{ form.username|as_crispy_field }}
+            </div>
+
+            <div style="flex: 1 1 45%;">
+                {{ form.first_name|as_crispy_field }}
+            </div>
+            <div style="flex: 1 1 45%;">
+                {{ form.last_name|as_crispy_field }}
+            </div>
+
+            <div style="flex: 1 1 45%;">
+                {{ form.admission_no|as_crispy_field }}
+            </div>
+            <div style="flex: 1 1 45%;">
+                {{ form.student_class|as_crispy_field }}
+            </div>
+
+            <div style="flex: 1 1 45%;">
+                {{ form.password1|as_crispy_field }}
+            </div>
+            <div style="flex: 1 1 45%;">
+                {{ form.password2|as_crispy_field }}
+            </div>
+
+        </div>
+
+        <br>
+        <button type="submit" class="btn btn-primary">Submit</button>
+
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const honeypotField = document.querySelector('input[name="js_honeypot"]');
+            if (honeypotField) {
+                honeypotField.value = 'human';
+            }
         });
-    </script> -->
-  
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const messagesContainer = document.getElementById('messages');
+            if (messagesContainer) {
+                setTimeout(() => {
+                    messagesContainer.style.display = 'none';
+                }, 5000);
+            }
+        });
+    </script>
+
 </div>
 {% endblock %}

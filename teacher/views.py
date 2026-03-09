@@ -2277,7 +2277,7 @@ def exam_list_view(request):
     return render(request, 'teacher/dashboard/exam_list.html', context)
 
   
-from sms.forms import CoursesForm
+from teacher.forms import CoursesForm
 
 from django.contrib import messages  # Import the messages framework
 
@@ -2305,6 +2305,7 @@ from django.contrib import messages  # Import the messages framework
 #         'form': form,
 #     }
 #     return render(request, 'teacher/dashboard/exams_subjects.html', context)
+
 
 @login_required
 def add_course_view(request):
