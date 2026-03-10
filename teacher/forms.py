@@ -76,7 +76,10 @@ class EditSubjectForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if self.user_school:
-            self.fields['schools'].queryset = self.fields['schools'].queryset.filter(id=self.user_school.id)
+            self.fields['schools'].queryset = School.objects.filter(id=self.user_school.id)
+            self.fields['session'].queryset = Session.objects.filter(school=self.user_school)
+            self.fields['term'].queryset = Term.objects.filter(school=self.user_school)
+            self.fields['exam_type'].queryset = ExamType.objects.filter(school=self.user_school)
 
     class Meta:
         model = Courses
