@@ -2329,6 +2329,11 @@ def add_course_view(request):
                 courses_instance.schools.add(user.school)
 
                 # 2️⃣ Get or create Course (FK schools → assign)
+                # Validate exam_type belongs to this school
+                if courses_instance.exam_type and courses_instance.exam_type.school != user.school:
+                    messages.error(request, 'Invalid exam type selected.')
+                    return redirect('teacher:create_course_view')
+
                 course_instance, created = Course.objects.get_or_create(
                     course_name=courses_instance,
                     session=courses_instance.session,

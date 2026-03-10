@@ -15,6 +15,7 @@ from users.models import NewUser, Profile
 # from allauth.account.forms import SignupForm
 from quiz.models import School, Course, CourseGrade, Question
 from django.contrib.auth.forms import AuthenticationForm
+
 from sms.models import Courses, Session, Term, ExamType
 from quiz.models import Result
 
@@ -34,8 +35,8 @@ class CoursesForm(forms.ModelForm):
             self.fields['schools'].queryset  = School.objects.filter(id=school.id)
             self.fields['session'].queryset  = Session.objects.filter(school=school)
             self.fields['term'].queryset     = Term.objects.filter(school=school)
-            self.fields['exam_type'].queryset = ExamType.objects.filter(school=school)
-            
+            self.fields['exam_type'].queryset = ExamType.objects.filter(school__id=school.id)
+
 
 class ExaminerCreateClassForm(forms.ModelForm):
     class Meta:
