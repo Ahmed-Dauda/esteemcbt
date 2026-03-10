@@ -4,6 +4,7 @@ from users.models import Profile, NewUser
 from cloudinary.models import CloudinaryField
 # from sms.models import Courses as smscourses
 from tinymce.models import HTMLField
+
 # from sms.models import Courses
 from sms.models import Session, Term, ExamType
 

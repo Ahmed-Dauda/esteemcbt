@@ -3765,6 +3765,7 @@ from django.db.models import Exists, OuterRef
 from asgiref.sync import sync_to_async
 from django.db.models import Prefetch
 
+
 @login_required
 def take_exams_view(request):
     user = request.user
@@ -3810,31 +3811,52 @@ def take_exams_view(request):
         courses = list(courses_qs)
         cache.set(courses_cache_key, courses, timeout=30)
 
-    # 3️⃣ User Results (cache per user)
-    results_cache_key = f"user_results:{user.id}"
-    user_results = cache.get(results_cache_key)
+    # 3️⃣ & 4️⃣ — batch into one cache key per user
+    user_data_key = f"user_exam_data:{user.id}"
+    user_data = cache.get(user_data_key)
 
-    if not user_results:
-        results_qs = Result.objects.filter(student=user_profile, exam__in=courses).only('exam_id', 'marks')
-        # Convert to dict for fast lookup in template
-        user_results = {res.exam_id: res.marks for res in results_qs}
-        cache.set(results_cache_key, user_results, timeout=30)
+    if not user_data:
+        # Results + CourseGrade in parallel — no extra queries per exam
+        course_ids = [c.id for c in courses]
+        results_qs = (
+            Result.objects
+            .filter(student=user_profile, exam_id__in=course_ids)
+            .values('exam_id', 'marks')
+        )
+        user_results = {r['exam_id']: r['marks'] for r in results_qs}
 
-    # 4️⃣ CourseGrade + Subjects (user-specific, small → no cache needed)
-    course_grade = CourseGrade.objects.prefetch_related('subjects').filter(students=user).first()
-    subjects = list(course_grade.subjects.all()) if course_grade else []
-    sub_grade = course_grade.name if course_grade else None
+        course_grade = (
+            CourseGrade.objects
+            .prefetch_related('subjects')
+            .filter(students=user)
+            .first()
+        )
+        subjects  = list(course_grade.subjects.all()) if course_grade else []
+        sub_grade = course_grade.name if course_grade else None
+
+        user_data = {
+            'user_results': user_results,
+            'subjects':     subjects,
+            'sub_grade':    sub_grade,
+        }
+        cache.set(user_data_key, user_data, timeout=300)  # 5 minutes
+
+    user_results = user_data['user_results']
+    subjects     = user_data['subjects']
+    sub_grade    = user_data['sub_grade']
+    taken_exam_ids = set(user_results.keys())
 
     return render(
         request,
         "student/dashboard/take_exams.html",
         {
-            "courses": courses,
-            "subjects": subjects,
+            "courses":       courses,
+            "subjects":      subjects,
             "student_class": student_class,
-            "school_name": school_name,
-            "sub_grade": sub_grade,
-            "user_results": user_results,
+            "school_name":   school_name,
+            "sub_grade":     sub_grade,
+            "user_results":  user_results,
+            "taken_exam_ids": taken_exam_ids,
         }
     )
 
@@ -4176,7 +4198,8 @@ async def _start_exam_async(request, pk):
         'student/dashboard/start_exams.html',
         context
     )
-    response.set_cookie('course_id', course.id)
+    if course.id:
+        response.set_cookie('course_id', str(course.id))
     return response
 
 
@@ -4197,10 +4220,14 @@ async def get_course(pk):
     key = f"course_{pk}"
     course = cache.get(key)
     if not course:
-        course = await Course.objects.select_related('course_name','exam_type').only(
-            'id','room_name','num_attemps','show_questions','duration_minutes',
-            'course_name__title','exam_type__name'
-        ).aget(id=pk)
+        course = await Course.objects.select_related(
+    'course_name', 'exam_type', 'session', 'term'
+).only(
+    'id', 'room_name', 'num_attemps', 'show_questions',
+    'duration_minutes', 'fullscreencounter',
+    'course_name__title', 'exam_type__name',
+    'session__name', 'term__name',
+).aget(id=pk)
         cache.set(key, course, 600)  # cache 10 mins
     return course
 
@@ -4390,6 +4417,7 @@ from django.db import IntegrityError, transaction
 from django.db import transaction
 from quiz.tasks import grade_exam_task
 
+
 @csrf_exempt
 @login_required
 def calculate_marks_view(request):
@@ -4405,6 +4433,11 @@ def calculate_marks_view(request):
     course_id = request.COOKIES.get('course_id')
     if not course_id:
         return JsonResponse({'success': False, 'error': 'Course ID not found in cookies.'}, status=400)
+
+    # Enqueue grading task (Celery async)
+    # Invalidate cache immediately so "Taken" shows on redirect
+    cache.delete(f"user_exam_data:{request.user.id}")
+    cache.delete(f"user_results:{request.user.id}")
 
     # Enqueue grading task (Celery async)
     task = grade_exam_task.delay(course_id, request.user.id, answers_dict)

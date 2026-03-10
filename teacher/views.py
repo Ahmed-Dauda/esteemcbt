@@ -1680,6 +1680,7 @@ def save_results(request):
 
 from django.contrib import messages  # Add this import
 
+
 @require_cbt_subscription
 @login_required(login_url='teacher:teacher_login')
 def add_question_view(request):
@@ -1703,7 +1704,10 @@ def add_question_view(request):
                     question = form.save(commit=False)
                     question.teacher = teacher
                     question.save()
-            # Add success message here
+                    # Invalidate course cache so students see new questions immediately
+                    if question.course_id:
+                        cache.delete(f"course_{question.course_id}")
+
             messages.success(request, "Questions added successfully!")
             return redirect('teacher:add_question')
     else:
@@ -2362,6 +2366,15 @@ def add_course_view(request):
                         request,
                         'This course is already assigned to you.'
                     )
+
+            # Invalidate courses cache for all classes in this school
+            from django.core.cache import cache
+            from quiz.models import CourseGrade
+            classes = CourseGrade.objects.filter(
+                schools=user.school
+            ).values_list('name', flat=True).distinct()
+            for class_name in classes:
+                cache.delete(f"courses:{user.school.school_name}:{class_name}")
 
             return redirect('teacher:create_course_view')
 

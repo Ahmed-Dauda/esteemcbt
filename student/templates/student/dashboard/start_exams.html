@@ -1,4 +1,3 @@
-
 {% extends 'sms/dashboard/startexambase.html' %}
 
 
@@ -48,36 +47,33 @@ div.quiz p {
 }
 
 .quiz p {
-  text-align: left; /* Align paragraph text to the left */
+  text-align: left;
 }
 
   
 .quiz {
   width: 100%;
   display: flex;
-  border: 1px solid #ccc; /* Add border to the .quiz container */
+  border: 1px solid #ccc;
  
 }
 
 .quiz>* {
   margin: 10px;
-  
   overflow-x: hidden;
 }
 
 .quiz input[type="radio"] {
-    transform: scale(1.5); /* Increase the size by adjusting the scale value */
-    margin-right: 10px; /* Add some spacing between the radio input and label */
-    /* margin-top: -2px; */ 
+    transform: scale(1.5);
+    margin-right: 10px;
 }
 
 .custom-container {
-  background-color: green; /* Change this to your desired color */
+  background-color: green;
   color: white;
   display: inline-block;
   padding: 5px;
-  margin: 5px; /* Add margin to separate entries */
-
+  margin: 5px;
 }
 
 
@@ -93,17 +89,14 @@ div.quiz p {
   }
   
   .clicked {
-      /* background-color: #00ff00; */
       background-color: rgb(211, 247, 211);
   }
 
-/* desktop view of fixed header */
   .question-table {
             margin-top: 10px;
             padding-top: 80px;
         }
 
-    /* small screen view */
     @media (max-width: 767px) {
         .sticky-top {
             position: static;
@@ -115,9 +108,7 @@ div.quiz p {
         }
         .alert div {
             width: 100%;
-           
         }
-        /* phone height setting */
         .question-table {
             margin-top: 0px;
             padding-top: 170px;
@@ -143,7 +134,6 @@ div.quiz p {
             width: 100%;
             margin: 0;
         }
-    /* pagination center  */
     div.dataTables_info {
         position:absolute
     }
@@ -154,7 +144,6 @@ div.quiz p {
     }
     }
 
-    /* Default styles */
     .container {
         display: flex;
         justify-content: center;
@@ -162,7 +151,6 @@ div.quiz p {
         padding: 20px;
     }
  
-/* new css  */
  div.dataTables_wrapper div.dataTables_paginate {
         float:none; text-align:center
     } 
@@ -232,14 +220,10 @@ div.quiz p {
       z-index: 9999;
     }
 
-   
-
     button:hover {
       background: #0b5ed7;
     }
   </style>
-
-<!-- MathJax for math rendering -->
 
 <form novalidate autocomplete="off" class="no-copy" id="quizf" action="/student/calculate_marks" onsubmit="return saveAns()" enctype="multipart/form-data"  method="POST">
     {% csrf_token %}
@@ -382,9 +366,6 @@ div.quiz p {
     
 </form> 
 
-<!-- full screen mode settings -->
-
-<!-- Add this inside your HTML (already have fullscreenPopup div, we’ll update it) -->
 <div id="fullscreenPopup" style="
   display: none;
   justify-content: center;
@@ -421,8 +402,6 @@ div.quiz p {
 </div>
 
 
-<!-- Button with inline CSS -->
-
 <div onclick="resetTabSwitchCount();" class="container buttonheight" style="display: flex; justify-content: center; align-items: center; padding: 20px;">
     <button   class="submit-button" id="submit" type="submit" 
         style="background-color: #28a745; max-height: 50px; border-radius: 10px; border: none; color: white; font-size: 16px; padding: 10px 20px; margin: 0 5px; cursor: pointer; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); transition: background-color 0.3s ease, transform 0.2s ease;"
@@ -433,7 +412,7 @@ div.quiz p {
         Submit
     </button>
  <div id="paginationWrapper" style="text-align: center; margin-top: 20px;">
-    <div id="paginationBoxes" onclick="openFullscreen()"></div>fff
+    <div id="paginationBoxes" onclick="openFullscreen()"></div>
 </div>
 
     </div>
@@ -461,7 +440,6 @@ var table = $('#example').DataTable({
     ]
 });
 
-// ✅ Restore last visited page after table is initialized
 const lastPage = parseInt(localStorage.getItem('lastVisitedPage') || 0);
 table.page(lastPage).draw(false);
 
@@ -489,7 +467,7 @@ function renderCustomPagination(tableInstance) {
     const currentPage = pageInfo.page;
     const storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
 
-    answeredPages = {}; // Reset
+    answeredPages = {};
 
     for (let i = 0; i < totalPages; i++) {
         let isAnswered = false;
@@ -507,14 +485,13 @@ function renderCustomPagination(tableInstance) {
             const value = $(this).val();
             if (storedAnswers[name] && storedAnswers[name] == value) {
                 isAnswered = true;
-                return false; // Break loop
+                return false;
             }
         });
 
         answeredPages[i] = isAnswered;
     }
 
-    // Build pagination HTML
     let html = '';
     for (let i = 0; i < totalPages; i++) {
         let classes = 'custom-page-number';
@@ -526,13 +503,11 @@ function renderCustomPagination(tableInstance) {
     $('#paginationBoxes').html(html);
 }
 
-// Restore answers and render pagination on page load
 $(document).ready(function () {
-    // ✅ Clear quizAnswers only if this is the student's first time loading the page for this course
     const courseKey = 'quizStartedForCourse_{{ course.id }}';
     if (!localStorage.getItem(courseKey)) {
-        localStorage.removeItem('quizAnswers');  // Clear old answers
-        localStorage.setItem(courseKey, 'true'); // Mark this course as started
+        localStorage.removeItem('quizAnswers');
+        localStorage.setItem(courseKey, 'true');
     }
 
     const storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
@@ -560,7 +535,7 @@ $('#paginationBoxes').on('click', '.custom-page-number', function (e) {
     e.preventDefault();
     const page = $(this).data('page');
     table.page(page).draw(false);
-    localStorage.setItem('lastVisitedPage', page); // ✅ Save page on click
+    localStorage.setItem('lastVisitedPage', page);
 });
 
 $(document).on('keydown', function (e) {
@@ -569,12 +544,12 @@ $(document).on('keydown', function (e) {
 
     if (e.key === 'ArrowRight' && currentPage < pageInfo.pages - 1) {
         table.page(currentPage + 1).draw(false);
-        localStorage.setItem('lastVisitedPage', currentPage + 1); // ✅ Save on right arrow
+        localStorage.setItem('lastVisitedPage', currentPage + 1);
     }
 
     if (e.key === 'ArrowLeft' && currentPage > 0) {
         table.page(currentPage - 1).draw(false);
-        localStorage.setItem('lastVisitedPage', currentPage - 1); // ✅ Save on left arrow
+        localStorage.setItem('lastVisitedPage', currentPage - 1);
     }
 });
 
@@ -588,7 +563,7 @@ table.on('draw', function () {
         $(inputSelector).prop('checked', true);
     });
 
-    renderCustomPagination(table);  // Re-render custom pagination
+    renderCustomPagination(table);
 });
 
 
@@ -596,26 +571,22 @@ table.on('draw', function () {
 </script>
 
 
-
-<!-- working codes on timer-->
 <script>
 $(document).ready(function() {
     var timerElement = document.getElementById('timer');
 
-    // Shared timer function
 function updateTimer(time, timerElement) {
-    let courseKey = 'remainingTime_{{ course.id }}'; // Unique key per subject
+    let courseKey = 'remainingTime_{{ course.id }}';
     let storedTime = localStorage.getItem(courseKey);
     let remainingTime;
 
     if (storedTime !== null) {
         remainingTime = parseInt(storedTime);
     } else {
-        remainingTime = time * 60; // Convert minutes to seconds
+        remainingTime = time * 60;
         localStorage.setItem(courseKey, remainingTime);
     }
 
-    // Clear any existing timer
     if (window.timerInterval) {
         clearInterval(window.timerInterval);
     }
@@ -631,11 +602,10 @@ function updateTimer(time, timerElement) {
 
         if (remainingTime <= 0) {
             clearInterval(window.timerInterval);
-            localStorage.removeItem(courseKey); // Only remove current subject's key
+            localStorage.removeItem(courseKey);
             localStorage.clear();  
-            localStorage.removeItem('quizStartedForCourse_{{ course.id }}');  // Reset for next student
-
-            submitQuiz(); // Submit on timeout
+            localStorage.removeItem('quizStartedForCourse_{{ course.id }}');
+            submitQuiz();
             return;
         }
 
@@ -644,24 +614,18 @@ function updateTimer(time, timerElement) {
     }, 1000);
 }
 
-    // Call updateTimer once on page load
     updateTimer({{ course.duration_minutes }}, timerElement);
-
-    // Event handler for manual submit button
-    
 });
 
-// OPTIONAL: If this was meant for end time management, handle it separately
 document.addEventListener('DOMContentLoaded', function() {
     var endTime = new Date("{{ quiz_end_time|date:"Y-m-d\\TH:i:s" }}").getTime();
-    // This block could handle countdown until `endTime`, if needed.
 });
 </script>
 
 
 <script>
   
-// ---------------- Manual submission ----------------
+// ── Manual submission ──────────────────────────────────────────
 function manualSubmitQuiz() {
     if (window.timerInterval) {
         clearInterval(window.timerInterval);
@@ -681,16 +645,18 @@ function manualSubmitQuiz() {
         contentType: "application/json",
         data: jsonData,
         success: function (response) {
-            alert("Quiz submitted successfully!");
+            console.log("Submit response:", response);
             localStorage.removeItem('quizAnswers');
             localStorage.removeItem('lastVisitedPage');
             localStorage.removeItem('tabSwitchCount');
             localStorage.removeItem(courseKey);
             localStorage.removeItem('quizStartedForCourse_{{ course.id }}');
-
-            setTimeout(function () {
-                window.location.reload();
-            }, 1000);
+            alert("Quiz submitted successfully!");
+            window.location.href = "{% url 'student:view_result' %}";
+        },
+        error: function (xhr, status, error) {
+            console.error("Submission error:", xhr.responseText);
+            alert("Submission failed: " + error);
         },
         error: function (xhr, status, error) {
             console.error("Submission error:", error);
@@ -707,8 +673,7 @@ document.getElementById('submit').addEventListener('click', function () {
 });
 
 
-
-// ---------------- Fullscreen logic ----------------
+// ── Fullscreen logic ───────────────────────────────────────────
 
 const elem = document.documentElement;
 
@@ -716,11 +681,9 @@ let fullscreenExitCount = 0;
 let fullscreencounter = Number({{ course.fullscreencounter|default:"3" }});
 let flashInterval = null;
 
-// NEW guards
 let skipFirstFullscreenExit = true;
 let isReturningToFullscreen = false;
 
-// ---------------- Counter UI ----------------
 function updateFullscreenCounter() {
     const counterEl = document.getElementById("fullscreenCounterText");
     if (!counterEl) return;
@@ -741,8 +704,6 @@ function updateFullscreenCounter() {
     }
 }
 
-
-// ---------------- Fullscreen control ----------------
 function openFullscreen() {
     isReturningToFullscreen = true;
 
@@ -756,35 +717,30 @@ function openFullscreen() {
 
     localStorage.setItem("examFullscreen", "true");
 
-    // Ignore fullscreen re-entry event
     setTimeout(() => {
         isReturningToFullscreen = false;
     }, 500);
 }
 
-// ---------------- Exam start ----------------
 function startExam() {
     openFullscreen();
     const btn = document.getElementById("startExamBtn");
     if (btn) btn.style.display = "none";
 }
-// ================= SUBMIT =================
+
 function submitExam(reason = "manual") {
     if (examSubmitted) return;
     examSubmitted = true;
 
-    // send real values
     storedAnswers['fullscreenExitCount'] = fullscreenExitCount;
     storedAnswers['tabSwitchCount'] = tabSwitchCount;
     storedAnswers['submissionReason'] = reason;
 
     document.getElementById("quizForm").submit();
 
-    // reset AFTER submit
     setTimeout(resetExamCounters, 500);
 }
 
-// ---------------- Strike logic ----------------
 let examSubmittedDueToFullscreen = false;
 
 function registerFullscreenStrike() {
@@ -794,34 +750,23 @@ function registerFullscreenStrike() {
     updateFullscreenCounter();
 
     if (fullscreenExitCount === fullscreencounter) {
-    // Prevent further tab switch counting
-    examSubmittedDueToFullscreen = true;
-
-    // Reset tabswitch count
-    tabSwitchCount = 0;
-    localStorage.setItem('tabSwitchCount', '0');
-
-    alert(`❌ You exited fullscreen ${fullscreenExitCount} times. Your exam will be submitted.`);
-    manualSubmitQuiz();
+        examSubmittedDueToFullscreen = true;
+        tabSwitchCount = 0;
+        localStorage.setItem('tabSwitchCount', '0');
+        alert(`❌ You exited fullscreen ${fullscreenExitCount} times. Your exam will be submitted.`);
+        manualSubmitQuiz();
+    }
 }
 
-}
-
-// ---------------- Return button ----------------
 function returnToFullscreen() {
-    openFullscreen(); // ❌ no strike here
+    openFullscreen();
     document.getElementById("fullscreenPopup").style.display = "none";
 }
 
-// ---------------- Detect fullscreen exit ONLY ----------------
 document.addEventListener("fullscreenchange", () => {
-    // Ignore re-enter fullscreen
     if (isReturningToFullscreen) return;
 
-    // Act only on EXIT
     if (!document.fullscreenElement) {
-
-        // Ignore the first exit completely
         if (skipFirstFullscreenExit) {
             skipFirstFullscreenExit = false;
             document.getElementById("fullscreenPopup").style.display = "flex";
@@ -836,7 +781,6 @@ document.addEventListener("fullscreenchange", () => {
     }
 });
 
-// ---------------- Restore fullscreen ----------------
 window.addEventListener("load", () => {
     const wasFull = localStorage.getItem("examFullscreen") === "true";
     if (wasFull) setTimeout(openFullscreen, 500);
@@ -847,17 +791,7 @@ window.addEventListener("load", () => {
     updateFullscreenCounter();
 });
 
-// ---------------- Blur (NO strike) ----------------
-// window.addEventListener("blur", () => {
-//     if (document.fullscreenElement && fullscreenExitCount < fullscreencounter) {
-//         document.getElementById("fullscreenPopup").style.display = "flex";
-//     }
-// });
-
-// ---------------- Block keys ----------------
-
-
-// quiz submit due to time expiration
+// ── Time expiration submit ─────────────────────────────────────
 function submitQuiz() {
     const finalTabSwitchCount = parseInt(localStorage.getItem('tabSwitchCount')) || 0;
 
@@ -877,6 +811,8 @@ function submitQuiz() {
         data: jsonData,
         success: function(response) {
             alert("Quiz submitted automatically due to time expiration!");
+            localStorage.clear();
+            localStorage.removeItem('quizStartedForCourse_{{ course.id }}');
             window.location.href = "{% url 'student:view_result' %}";
         },
         error: function(xhr, status, error) {
@@ -885,28 +821,23 @@ function submitQuiz() {
     });
 }
 
-
 </script>
 
-
-<!-- inactive working codes -->
 
 <script>
 let isManuallySubmitting = false;
 
 document.getElementById('submit').addEventListener('click', function () {
-    isManuallySubmitting = true;  // ✅ Set flag
-    localStorage.setItem('tabSwitchCount', '0');  // ✅ Reset
+    isManuallySubmitting = true;
+    localStorage.setItem('tabSwitchCount', '0');
 });
 
- // Initial variables
   let tabSwitchCount = parseInt(localStorage.getItem('tabSwitchCount')) || 0;
-  const tabLimit = {{ tab_limit }}; // Replace this with {{ tab_limit }} in your actual code
+  const tabLimit = {{ tab_limit }};
   const tabCountDisplay = document.getElementById('tabCount');
   let examAlreadySubmitted = false;
   const studentName = "{{ request.user.first_name|upper }} {{ request.user.last_name|upper }}";
  
-  // Clamp on load
   if (tabSwitchCount > tabLimit) {
     tabSwitchCount = tabLimit;
     localStorage.setItem('tabSwitchCount', tabSwitchCount);
@@ -915,13 +846,11 @@ document.getElementById('submit').addEventListener('click', function () {
   tabCountDisplay.textContent = tabSwitchCount;
 
   document.addEventListener("visibilitychange", function () {
-    console.log('Visibility changed:', document.hidden);
     if (document.hidden && !examAlreadySubmitted && !isManuallySubmitting) {
       tabSwitchCount++;
       if (tabSwitchCount > tabLimit) {
         tabSwitchCount = tabLimit;
       }
-      console.log('Tab switch count:', tabSwitchCount);
 
       tabCountDisplay.textContent = tabSwitchCount;
       localStorage.setItem('tabSwitchCount', tabSwitchCount);
@@ -937,7 +866,6 @@ document.getElementById('submit').addEventListener('click', function () {
         examAlreadySubmitted = true;
         setTimeout(function () {
           alert('Exam will be submitted due to tab switching limit reached.');
-          // Replace this with your actual submit function
           inactivesubmitQuiz();
         }, 300);
       }
@@ -955,7 +883,6 @@ function inactivesubmitQuiz() {
     storedAnswers['tabSwitchCount'] = finalTabSwitchCount;
 
     var jsonData = JSON.stringify(storedAnswers);
-    console.log("jsonData", jsonData);
 
     $.ajax({
         type: "POST",
@@ -979,50 +906,6 @@ function inactivesubmitQuiz() {
 </script>
 
 
-<!-- <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const shouldFullscreen = {{ course.full_screen|yesno:"true,false" }};
-
-    if (shouldFullscreen && !document.fullscreenElement) {
-        const el = document.documentElement;
-        if (el.requestFullscreen) {
-            el.requestFullscreen().catch(err => console.warn("Fullscreen error:", err));
-        } else if (el.webkitRequestFullscreen) {
-            el.webkitRequestFullscreen();
-        } else if (el.mozRequestFullScreen) {
-            el.mozRequestFullScreen();
-        } else if (el.msRequestFullscreen) {
-            el.msRequestFullscreen();
-        }
-    }
-});
-</script> -->
-
-
-
-<!-- <script type="text/javascript">
-
-document.addEventListener('DOMContentLoaded', (event) => {
-    // Disable text selection
-    document.body.style.userSelect = 'none';
-
-    // Disable right-click context menu
-    document.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-    });
-
-
-    // Disable text selection for specific elements
-   
-    elements.forEach((element) => {
-        element.style.userSelect = 'none';
-    });
-});
-  
-</script> -->
-
-
-<!-- network detector -->
 <style>
   #network-status {
     position: fixed;
@@ -1037,11 +920,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
     display: none;
   }
   #network-status.offline {
-    background-color: #d9534f; /* red */
+    background-color: #d9534f;
     display: block;
   }
   #network-status.online {
-    background-color: #5cb85c; /* green */
+    background-color: #5cb85c;
     display: block;
   }
 </style>
@@ -1057,31 +940,25 @@ document.addEventListener('DOMContentLoaded', (event) => {
       networkStatusEl.classList.remove('offline');
       networkStatusEl.classList.add('online');
 
-      // Hide the message after 3 seconds
       setTimeout(() => {
         networkStatusEl.style.display = 'none';
       }, 3000);
     } else {
-      networkStatusEl.textContent = "You are currently offline.Wait for the internet before submitting.";
+      networkStatusEl.textContent = "You are currently offline. Wait for the internet before submitting.";
       networkStatusEl.classList.remove('online');
       networkStatusEl.classList.add('offline');
       networkStatusEl.style.display = 'block';
     }
   }
 
-  // Initial check on page load
   updateNetworkStatus();
 
-  // Listen for network status changes
   window.addEventListener('online', updateNetworkStatus);
   window.addEventListener('offline', updateNetworkStatus);
 </script>
 
 
-<!-- Calculator UI -->
- <!-- TOGGLE BUTTON -->
 <button onclick="toggleCalculator()" style="position: fixed; top: 10px; right: 10px; z-index: 9999;">Calculator</button>
-
 
 <div id="calculator" style="
   position: fixed;
@@ -1096,8 +973,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
   z-index: 9999;
   font-family: Arial, sans-serif;
 ">
-
-
   <div id="calc-header" style="
     cursor: move;
     padding: 4px 8px;
@@ -1120,7 +995,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     " title="Close">✖</button>
   </div>
 
-
   <input type="text" id="calc-display" style="
     width: 100%;
     font-size: 16px;
@@ -1131,7 +1005,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     border-bottom: 1px solid #ccc;
     outline: none;
   " readonly>
-
 
   <div style="padding: 6px;">
     <div>
@@ -1165,7 +1038,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
       <button onclick="toggleScientific()">Sci</button>
     </div>
 
-
     <div id="scientific" style="display: none; margin-top: 6px;">
       <button onclick="appendCalc('Math.sqrt(')">√</button>
       <button onclick="appendCalc('Math.pow(')">xʸ</button>
@@ -1178,9 +1050,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     </div>
   </div>
 </div>
-
-
-
 
 <script>
   function toggleCalculator() {
@@ -1211,7 +1080,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     sci.style.display = (sci.style.display === 'none' || sci.style.display === '') ? 'block' : 'none';
   }
 
-
   document.addEventListener('keydown', function (e) {
     const display = document.getElementById('calc-display');
     if (document.getElementById('calculator').style.display === 'none') return;
@@ -1231,7 +1099,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
   });
 
-  // DRAGGING
   dragElement(document.getElementById("calculator"));
 
   function dragElement(elmnt) {
@@ -1283,12 +1150,8 @@ $(document).on('keydown', function (e) {
         }
     }
 });
-
 </script>
-<!-- end -->
+
 <br><br><br><br><br><br>
 
-<!-- blocking screenshot -->
-
-
-{% endblock %} 
+{% endblock %}

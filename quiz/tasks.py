@@ -508,28 +508,24 @@ Answer: <A|B|C|D>
 
 import json
 
-
-@shared_task(bind=True)
+@shared_task(bind=True, autoretry_for=(Exception,), max_retries=3, countdown=5)
 def grade_exam_task(self, course_id, user_id, answers_dict):
-    """
-    Async grading task for a student's exam.
-    Caches results in Redis to prevent duplicate grading.
-    """
     cache_key = f"graded:{course_id}:{user_id}"
-    
-    # 1️⃣ Check Redis if already graded
+
     if cache.get(cache_key):
         return f"Exam for user {user_id} already graded."
 
     try:
-        course = Course.objects.select_related('schools', 'session', 'term', 'exam_type').get(id=course_id)
+        course = Course.objects.select_related(
+            'schools', 'session', 'term', 'exam_type'
+        ).get(id=course_id)
         student = Profile.objects.select_related('user').get(user_id=user_id)
     except Course.DoesNotExist:
         return f"Course {course_id} not found."
     except Profile.DoesNotExist:
         return f"Student {user_id} profile not found."
 
-    # 2️⃣ Prevent duplicate results in DB
+    # Prevent duplicate results
     if Result.objects.filter(
         student=student,
         exam=course,
@@ -538,20 +534,20 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
         exam_type=course.exam_type,
         result_class=student.student_class
     ).exists():
-        cache.set(cache_key, True, timeout=0)  # mark as graded for 1 hour
+        cache.set(cache_key, True, timeout=3600)  # 1 hour, not forever
         return f"Result for student {user_id} already exists."
 
-    # 3️⃣ Calculate total marks
-    total_marks = 0
-    questions = course.question_set.all()  # assumes related_name='question_set'
+    # Fetch all questions in one query
+    questions = list(
+        Question.objects.filter(course=course).only('id', 'answer', 'marks')
+    )
 
+    total_marks = 0
     for question in questions:
-        qid = str(question.id)
-        selected = answers_dict.get(qid)
+        selected = answers_dict.get(str(question.id))
         if selected and selected == question.answer:
             total_marks += question.marks or 0
 
-    # 4️⃣ Save result in a transaction
     try:
         with transaction.atomic():
             Result.objects.create(
@@ -564,13 +560,18 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
                 student=student,
                 result_class=student.student_class
             )
-        # 5️⃣ Cache that this student is graded
-        cache.set(cache_key, True, timeout=0)  # 1 hour
+
+        # Mark as graded for 1 hour
+        cache.set(cache_key, True, timeout=3600)
+
+        # Invalidate take_exams cache so "Taken" shows immediately
+        cache.delete(f"user_exam_data:{user_id}")
+        cache.delete(f"user_results:{user_id}")
+
         return f"Graded exam for student {user_id}, total marks: {total_marks}"
 
     except IntegrityError:
-        cache.set(cache_key, True, timeout=0)
+        cache.set(cache_key, True, timeout=3600)
         return f"Duplicate result detected for student {user_id}."
     except Exception as e:
-        # Retry if something unexpected happens
-        raise self.retry(exc=e, countdown=5, max_retries=3)    
+        raise self.retry(exc=e, countdown=5, max_retries=3)
