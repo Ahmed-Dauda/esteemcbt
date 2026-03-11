@@ -36,7 +36,7 @@
                                     {{ course.course_name.title }}
                                 </h6>
                                 <small class="text-muted">
-                                    {{ course.session }} – {{ course.term }} – {{ course.exam_type }}
+                                    {{ course.session|default:"—" }} – {{ course.term|default:"—" }} – {{ course.exam_type|default:"—" }}
                                 </small>
                             </div>
 
