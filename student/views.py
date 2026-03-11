@@ -4426,16 +4426,23 @@ def calculate_marks_view(request):
     if not course_id:
         return JsonResponse({'success': False, 'error': 'Course ID not found in cookies.'}, status=400)
 
-    # Invalidate cache immediately so "Taken" shows on redirect
+    # Invalidate all relevant cache keys before grading
     cache.delete(f"user_exam_data:{request.user.id}")
     cache.delete(f"user_results:{request.user.id}")
+    cache.delete(f"graded:{course_id}:{request.user.id}")
 
     try:
         task = grade_exam_task.delay(course_id, request.user.id, answers_dict)
         task_id = task.id
     except Exception as e:
-        # If Celery broker is down, grade synchronously as fallback
-        grade_exam_task(course_id, request.user.id, answers_dict)
+        # Celery broker down — grade synchronously as fallback
+        try:
+            grade_exam_task(course_id, request.user.id, answers_dict)
+        except Exception as fallback_error:
+            return JsonResponse({
+                'success': False,
+                'error': 'Grading failed. Please contact support.'
+            }, status=500)
         task_id = None
 
     return JsonResponse({
@@ -4443,6 +4450,7 @@ def calculate_marks_view(request):
         'message': 'Your answers are being graded! ✅',
         'task_id': task_id
     })
+
 # @login_required
 # def calculate_marks_view(request):
 #     if request.method != "POST":
