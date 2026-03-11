@@ -306,3 +306,14 @@ class StudentAnswer(models.Model):
     def __str__(self):
         return f"{self.result.student.user.username} | Q{self.question.id} | {self.selected_answer}"
 
+
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+from django.core.cache import cache
+
+@receiver(post_delete, sender=Result)
+def clear_result_cache(sender, instance, **kwargs):
+    user_id = instance.student.user_id
+    cache.delete(f"user_exam_data:{user_id}")
+    cache.delete(f"user_results:{user_id}")
+    cache.delete(f"graded:{instance.exam_id}:{user_id}")
