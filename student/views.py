@@ -4436,12 +4436,18 @@ def calculate_marks_view(request):
     cache.delete(f"user_exam_data:{request.user.id}")
     cache.delete(f"user_results:{request.user.id}")
 
-    task = grade_exam_task.delay(course_id, request.user.id, answers_dict)
+    try:
+        task = grade_exam_task.delay(course_id, request.user.id, answers_dict)
+        task_id = task.id
+    except Exception as e:
+        # If Celery broker is down, grade synchronously as fallback
+        grade_exam_task(course_id, request.user.id, answers_dict)
+        task_id = None
 
     return JsonResponse({
         'success': True,
         'message': 'Your answers are being graded! ✅',
-        'task_id': task.id
+        'task_id': task_id
     })
 # @login_required
 # def calculate_marks_view(request):
