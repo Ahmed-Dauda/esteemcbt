@@ -239,7 +239,9 @@ div.quiz p {
                     <div class="col-12 col-md-4" style="padding: 0px;">
                         <div style="position: relative; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
                             <p style="position: absolute; background-color: black; color: white; padding: 0px; top: -10px; left: 0; z-index: 1;">Focus on Camera</p>
-                            <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;" src="{{ course.room_name }}" width="100%" height="120" style="border: none;"></iframe>
+                            {% if course.room_name %}
+<iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;" src="{{ course.room_name }}" width="100%" height="120" style="border: none;"></iframe>
+{% endif %}
                         </div>
                     </div>
                     <!-- Inactivity Warning and Timer -->
