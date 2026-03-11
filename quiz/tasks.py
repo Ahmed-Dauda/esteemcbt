@@ -506,7 +506,6 @@ Answer: <A|B|C|D>
 
 #calculate marks celery task
 
-import json
 @shared_task(bind=True, autoretry_for=(Exception,), max_retries=3, countdown=5)
 def grade_exam_task(self, course_id, user_id, answers_dict):
     cache_key = f"graded:{course_id}:{user_id}"
@@ -524,6 +523,11 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
     except Profile.DoesNotExist:
         return f"Student {user_id} profile not found."
 
+    # ✅ Log what we have before grading
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Grading: user={user_id}, course={course_id}, school={course.schools}, student_class={student.student_class}")
+
     # Prevent duplicate results
     if Result.objects.filter(
         student=student,
@@ -531,12 +535,10 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
         session=course.session,
         term=course.term,
         exam_type=course.exam_type,
-        result_class=student.student_class
     ).exists():
         cache.set(cache_key, True, timeout=3600)
         return f"Result for student {user_id} already exists."
 
-    # Fetch all questions in one query
     questions = list(
         Question.objects.filter(course=course).only('id', 'answer', 'marks')
     )
@@ -546,6 +548,9 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
         selected = answers_dict.get(str(question.id))
         if selected and selected == question.answer:
             total_marks += question.marks or 0
+
+    # ✅ Fallback for missing student_class
+    result_class = student.student_class or course.schools.school_name or "Unknown"
 
     try:
         with transaction.atomic():
@@ -557,7 +562,7 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
                 term=course.term,
                 exam_type=course.exam_type,
                 student=student,
-                result_class=student.student_class
+                result_class=result_class,  # ✅ never blank
             )
 
         cache.set(cache_key, True, timeout=3600)
@@ -566,8 +571,10 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
 
         return f"Graded exam for student {user_id}, total marks: {total_marks}"
 
-    except IntegrityError:
+    except IntegrityError as e:
+        logger.error(f"IntegrityError for user {user_id}: {e}")
         cache.set(cache_key, True, timeout=3600)
         return f"Duplicate result detected for student {user_id}."
     except Exception as e:
+        logger.error(f"Exception grading user {user_id}: {e}")
         raise self.retry(exc=e, countdown=5, max_retries=3)
