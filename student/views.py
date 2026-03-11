@@ -4417,14 +4417,12 @@ from django.db import IntegrityError, transaction
 from django.db import transaction
 from quiz.tasks import grade_exam_task
 
-
 @csrf_exempt
 @login_required
 def calculate_marks_view(request):
     if request.method != "POST":
         return JsonResponse({'success': False, 'error': 'Invalid request method.'}, status=405)
 
-    # Parse JSON safely
     try:
         answers_dict = json.loads(request.body)
     except json.JSONDecodeError:
@@ -4434,12 +4432,10 @@ def calculate_marks_view(request):
     if not course_id:
         return JsonResponse({'success': False, 'error': 'Course ID not found in cookies.'}, status=400)
 
-    # Enqueue grading task (Celery async)
     # Invalidate cache immediately so "Taken" shows on redirect
     cache.delete(f"user_exam_data:{request.user.id}")
     cache.delete(f"user_results:{request.user.id}")
 
-    # Enqueue grading task (Celery async)
     task = grade_exam_task.delay(course_id, request.user.id, answers_dict)
 
     return JsonResponse({
@@ -4447,7 +4443,6 @@ def calculate_marks_view(request):
         'message': 'Your answers are being graded! ✅',
         'task_id': task.id
     })
-
 # @login_required
 # def calculate_marks_view(request):
 #     if request.method != "POST":

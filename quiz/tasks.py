@@ -507,7 +507,6 @@ Answer: <A|B|C|D>
 #calculate marks celery task
 
 import json
-
 @shared_task(bind=True, autoretry_for=(Exception,), max_retries=3, countdown=5)
 def grade_exam_task(self, course_id, user_id, answers_dict):
     cache_key = f"graded:{course_id}:{user_id}"
@@ -534,7 +533,7 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
         exam_type=course.exam_type,
         result_class=student.student_class
     ).exists():
-        cache.set(cache_key, True, timeout=3600)  # 1 hour, not forever
+        cache.set(cache_key, True, timeout=3600)
         return f"Result for student {user_id} already exists."
 
     # Fetch all questions in one query
@@ -561,10 +560,7 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
                 result_class=student.student_class
             )
 
-        # Mark as graded for 1 hour
         cache.set(cache_key, True, timeout=3600)
-
-        # Invalidate take_exams cache so "Taken" shows immediately
         cache.delete(f"user_exam_data:{user_id}")
         cache.delete(f"user_results:{user_id}")
 
