@@ -10,9 +10,23 @@
     <h4>Subject Registration Form</h4>
 
     {% if messages %}
-    <ul id="messages" class="messages">
+    <ul id="messages" class="messages" style="list-style: none; padding: 0;">
         {% for message in messages %}
-            <li style="color: green;" {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            <li {% if message.tags %} class="{{ message.tags }}"{% endif %} style="
+                padding: 10px 15px;
+                margin-bottom: 10px;
+                border-radius: 5px;
+                font-weight: bold;
+                {% if 'warning' in message.tags %}
+                    background-color: #fff3cd; color: #856404; border: 1px solid #ffc107;
+                {% elif 'error' in message.tags %}
+                    background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+                {% elif 'success' in message.tags %}
+                    background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;
+                {% else %}
+                    background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb;
+                {% endif %}
+            ">{{ message }}</li>
         {% endfor %}
     </ul>
     {% endif %}

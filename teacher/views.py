@@ -2335,7 +2335,6 @@ from django.contrib import messages  # Import the messages framework
 #     }
 #     return render(request, 'teacher/dashboard/exams_subjects.html', context)
 
-
 @login_required
 def add_course_view(request):
     if request.method == 'POST':
@@ -2357,29 +2356,63 @@ def add_course_view(request):
                 courses_instance.save()
                 courses_instance.schools.add(user.school)
 
-                # 2️⃣ Get or create Course (FK schools → assign)
-                # Validate exam_type belongs to this school
+                # 2️⃣ Validate exam_type belongs to this school
                 if courses_instance.exam_type and courses_instance.exam_type.school != user.school:
                     messages.error(request, 'Invalid exam type selected.')
+                    courses_instance.delete()
                     return redirect('teacher:create_course_view')
 
+                # 3️⃣ Check for duplicate Course before creating
+                existing = Course.objects.filter(
+                    course_name__title=courses_instance.title,
+                    session=courses_instance.session,
+                    term=courses_instance.term,
+                    exam_type=courses_instance.exam_type,
+                    schools=user.school,
+                ).exclude(
+                    course_name=courses_instance
+                ).first()
+
+                if existing:
+                    # Delete the orphaned sms.Courses just created
+                    courses_instance.delete()
+
+                    messages.warning(
+                        request,
+                        f'"{existing.course_name.title}" already exists for this session, '
+                        f'term and exam type. No duplicate was created.'
+                    )
+                    if not teacher.subjects_taught.filter(pk=existing.pk).exists():
+                        teacher.subjects_taught.add(existing)
+                        messages.success(
+                            request,
+                            f'"{existing.course_name.title}" has been assigned to you.'
+                        )
+                    else:
+                        messages.info(
+                            request,
+                            'This course is already assigned to you.'
+                        )
+                    return redirect('teacher:create_course_view')
+
+                # 4️⃣ Get or create Course (FK schools → assign)
                 course_instance, created = Course.objects.get_or_create(
                     course_name=courses_instance,
                     session=courses_instance.session,
                     term=courses_instance.term,
                     exam_type=courses_instance.exam_type,
+                    schools=user.school,
                     defaults={
                         'room_name': 'Some Room',
-                        'schools': user.school,
                     }
                 )
 
-                # 3️⃣ If it already existed but school was empty
+                # 5️⃣ If it already existed but school was empty
                 if not created and course_instance.schools is None:
                     course_instance.schools = user.school
                     course_instance.save(update_fields=['schools'])
 
-                # 4️⃣ Assign to teacher safely
+                # 6️⃣ Assign to teacher safely
                 if not teacher.subjects_taught.filter(pk=course_instance.pk).exists():
                     teacher.subjects_taught.add(course_instance)
                     messages.success(
@@ -2393,13 +2426,12 @@ def add_course_view(request):
                     )
 
             # Invalidate courses cache for all classes in this school
-            from django.core.cache import cache
             from quiz.models import CourseGrade
             classes = CourseGrade.objects.filter(
                 schools=user.school
             ).values_list('name', flat=True).distinct()
             for class_name in classes:
-                cache.delete(f"courses:{user.school.school_name}:{class_name}")
+                cache.delete(f"courses:{user.school.id}:{class_name}")
 
             return redirect('teacher:create_course_view')
 
@@ -2412,7 +2444,7 @@ def add_course_view(request):
         {'form': form}
     )
 
-
+    
 #real
 # @login_required
 # def add_course_view(request):

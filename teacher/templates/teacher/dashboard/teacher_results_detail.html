@@ -42,7 +42,6 @@
           <td>
             <input type="checkbox" name="selected_results" value="{{ result.id }}" class="check-item">
           </td>
-
           <td>{{ result.student.first_name }} {{ result.student.last_name }}</td>
           <td>{{ result.marks }}</td>
           <td>{{ result.result_class }}</td>
@@ -50,19 +49,13 @@
           <td>{{ result.term.name }}</td>
           <td>{{ result.exam_type.name }}</td>
           <td>{{ result.created|date:"Y-m-d H:i" }}</td>
-
           <td>
             <a href="{% url 'teacher:edit_teacher_results' course.id result.id %}"
                class="btn btn-sm btn-warning mb-1">Edit</a>
-
             <a href="{% url 'teacher:delete_teacher_result' course.id result.id %}"
                class="btn btn-sm btn-danger"
                onclick="return confirm('Are you sure you want to delete this result?');">Delete</a>
           </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="9" class="text-center">No results available for this course.</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -81,8 +74,14 @@
 $(document).ready(function () {
 
     let table = $('#resultsTable').DataTable({
-      "order": [[1, "asc"]],
-      "pageLength": 10
+        "order": [[1, "asc"]],
+        "pageLength": 10,
+        "columnDefs": [
+            { "orderable": false, "targets": [0, 8] }
+        ],
+        "language": {
+            "emptyTable": "No results available for this course."
+        }
     });
 
     // SELECT ALL
@@ -92,7 +91,7 @@ $(document).ready(function () {
 
     // AJAX BULK DELETE
     $('#delete-btn').on('click', function(e) {
-        e.preventDefault();  // prevent normal form submission
+        e.preventDefault();
 
         let selected = $('input.check-item:checked');
         let count = selected.length;
@@ -106,12 +105,11 @@ $(document).ready(function () {
             return false;
         }
 
-        // Prepare data
         let ids = [];
         selected.each(function() { ids.push($(this).val()); });
 
         $.ajax({
-            url: "",  // same URL
+            url: "",
             type: "POST",
             data: {
                 'selected_results[]': ids,
@@ -119,11 +117,15 @@ $(document).ready(function () {
             },
             success: function(response) {
                 if (response.status === 'success') {
-                    // Remove deleted rows from DataTable
                     selected.each(function() {
                         table.row($(this).closest('tr')).remove().draw();
                     });
                     alert(`${response.deleted_count} result(s) deleted successfully.`);
+
+                    // ✅ Reload if table is now empty
+                    if (table.rows().count() === 0) {
+                        location.reload();
+                    }
                 } else {
                     alert(response.message || 'Error deleting results.');
                 }
