@@ -447,14 +447,39 @@ def bulk_update_courses(request):
                 return redirect('teacher:bulk_update_courses')
 
             # ✅ Bulk update safely
+            # Bulk update sms.Courses
+            update_fields = []
             for course in courses:
                 if session:
                     course.session = session
+                    update_fields.append('session')
                 if term:
                     course.term = term
+                    update_fields.append('term')
                 if exam_type:
                     course.exam_type = exam_type
-                course.save()
+                    update_fields.append('exam_type')
+
+            if update_fields:
+                Courses.objects.bulk_update(courses, list(set(update_fields)))
+
+            # Also sync to quiz.Course
+            from quiz.models import Course as QuizCourse
+            quiz_courses = QuizCourse.objects.filter(schools=user_school)
+            for qc in quiz_courses:
+                if session: qc.session = session
+                if term:    qc.term = term
+                if exam_type: qc.exam_type = exam_type
+            if quiz_courses:
+                QuizCourse.objects.bulk_update(quiz_courses, list(set(update_fields)))
+
+            # Invalidate course cache for all classes in this school
+            from quiz.models import CourseGrade
+            classes = CourseGrade.objects.filter(
+                schools=user_school
+            ).values_list('name', flat=True).distinct()
+            for class_name in classes:
+                cache.delete(f"courses:{user_school.school_name}:{class_name}")
 
             messages.success(request, "All subjects updated successfully for your school.")
             return redirect('teacher:teacher-dashboard')
