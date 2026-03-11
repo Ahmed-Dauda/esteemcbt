@@ -659,18 +659,18 @@ function manualSubmitQuiz() {
         error: function (xhr, status, error) {
             console.error("Submission error:", xhr.responseText);
             alert("Submission failed: " + error);
-        },
-        error: function (xhr, status, error) {
-            console.error("Submission error:", error);
         }
     });
 }
 
-// Manual submit button
+let isManuallySubmitting = false;
+
 document.getElementById('submit').addEventListener('click', function () {
     const confirmed = confirm("Are you sure you want to submit the quiz?");
     if (!confirmed) return;
 
+    isManuallySubmitting = true;
+    localStorage.setItem('tabSwitchCount', '0');
     manualSubmitQuiz();
 });
 
@@ -830,8 +830,12 @@ function submitQuiz() {
 let isManuallySubmitting = false;
 
 document.getElementById('submit').addEventListener('click', function () {
+    const confirmed = confirm("Are you sure you want to submit the quiz?");
+    if (!confirmed) return;
+
     isManuallySubmitting = true;
     localStorage.setItem('tabSwitchCount', '0');
+    manualSubmitQuiz();
 });
 
   let tabSwitchCount = parseInt(localStorage.getItem('tabSwitchCount')) || 0;
