@@ -4221,14 +4221,9 @@ async def get_course(pk):
     course = cache.get(key)
     if not course:
         course = await Course.objects.select_related(
-    'course_name', 'exam_type', 'session', 'term'
-).only(
-    'id', 'room_name', 'num_attemps', 'show_questions',
-    'duration_minutes', 'fullscreencounter',
-    'course_name__title', 'exam_type__name',
-    'session__name', 'term__name',
-).aget(id=pk)
-        cache.set(key, course, 600)  # cache 10 mins
+            'course_name', 'exam_type', 'session', 'term'
+        ).aget(id=pk)  # remove .only() entirely — fetch full object
+        cache.set(key, course, timeout=600)  # cache 10 mins
     return course
 
 @sync_to_async
