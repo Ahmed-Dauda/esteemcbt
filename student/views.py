@@ -3784,8 +3784,8 @@ def take_exams_view(request):
             "user_results": {}, "taken_exam_ids": set(),
         })
 
-    school       = user_newuser.school
-    school_name  = school.school_name
+    school        = user_newuser.school
+    school_name   = school.school_name
     student_class = user_newuser.student_class
 
     # 2️⃣ Profile — scoped to same user, used only for Result lookup
@@ -3800,10 +3800,10 @@ def take_exams_view(request):
             Course.objects
             .select_related('schools', 'course_name', 'session', 'term', 'exam_type')
             .filter(
-                schools=school,                          # FK match on school object
-                course_grade__students=user,             # student is enrolled
-                course_grade__name=student_class,        # class name matches
-                course_grade__schools=school,            # coursegrade belongs to same school
+                schools=school,
+                course_grade__students=user,
+                course_grade__name=student_class,
+                course_grade__schools=school,
             )
             .distinct()
             .order_by('-id')[:30]
@@ -3824,12 +3824,12 @@ def take_exams_view(request):
                 .filter(student=user_profile, exam_id__in=course_ids)
                 .values('exam_id', 'marks')
             )
-            user_results = {r['exam_id']: r['marks'] for r in results_qs}
+            user_results = {int(r['exam_id']): r['marks'] for r in results_qs}
 
         course_grade = (
             CourseGrade.objects
             .prefetch_related('subjects')
-            .filter(students=user, schools=school)      # scoped to school
+            .filter(students=user, schools=school)
             .first()
         )
         subjects  = list(course_grade.subjects.all()) if course_grade else []
@@ -3845,7 +3845,7 @@ def take_exams_view(request):
     user_results   = user_data['user_results']
     subjects       = user_data['subjects']
     sub_grade      = user_data['sub_grade']
-    taken_exam_ids = set(user_results.keys())
+    taken_exam_ids = set(int(k) for k in user_results.keys())
 
     return render(
         request,
