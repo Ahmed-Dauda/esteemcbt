@@ -3861,7 +3861,7 @@ def take_exams_view(request):
         }
     )
 
-    
+
 # @login_required
 # def take_exams_view(request):
 #     user = request.user
@@ -4412,7 +4412,6 @@ from django.db import transaction
 from django.db import IntegrityError, transaction
 from django.db import transaction
 from quiz.tasks import grade_exam_task
-
 @csrf_exempt
 @login_required
 def calculate_marks_view(request):
@@ -4452,6 +4451,7 @@ def calculate_marks_view(request):
         'message': 'Your answers are being graded! ✅',
         'task_id': task_id
     })
+
 
 # @login_required
 # def calculate_marks_view(request):
