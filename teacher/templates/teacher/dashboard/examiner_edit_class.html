@@ -5,13 +5,71 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h4 class="mb-3">Edit Class - {{ course_class.name }}</h4>
+    <h4 class="mb-3">Edit Class - {{ course_grade.name }}</h4>
 
     <form method="post">
         {% csrf_token %}
-        {{ form|crispy }}
+
+        <!-- Name field -->
+        <div class="mb-3">
+            {{ form.name|as_crispy_field }}
+        </div>
+
+        <!-- Is Active field -->
+        <div class="mb-3">
+            {{ form.is_active|as_crispy_field }}
+        </div>
+
+        <!-- Subjects -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">Subjects</label>
+            <input type="text" id="subjectSearch" class="form-control mb-2" placeholder="Search subjects...">
+            <div id="subjectList" style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 4px;">
+                {% for checkbox in form.subjects %}
+                <div class="form-check subject-item">
+                    {{ checkbox.tag }}
+                    <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                        {{ checkbox.choice_label }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Students -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">Students</label>
+            <input type="text" id="studentSearch" class="form-control mb-2" placeholder="Search students...">
+            <div id="studentList" style="max-height: 350px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 4px;">
+                {% for checkbox in form.students %}
+                <div class="form-check student-item">
+                    {{ checkbox.tag }}
+                    <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                        {{ checkbox.choice_label }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
         <button type="submit" class="btn btn-primary mt-2">Update Class</button>
         <a href="{% url 'teacher:examiner_class_list' %}" class="btn btn-secondary mt-2">Back</a>
     </form>
 </div>
+
+<script>
+function filterList(inputId, itemClass) {
+    document.getElementById(inputId).addEventListener('input', function () {
+        const query = this.value.toLowerCase();
+        document.querySelectorAll('.' + itemClass).forEach(function (item) {
+            const label = item.querySelector('label').textContent.toLowerCase();
+            item.style.display = label.includes(query) ? 'block' : 'none';
+        });
+    });
+}
+
+filterList('subjectSearch', 'subject-item');
+filterList('studentSearch', 'student-item');
+</script>
+
 {% endblock %}

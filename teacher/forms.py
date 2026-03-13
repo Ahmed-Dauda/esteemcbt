@@ -42,18 +42,24 @@ class ExaminerCreateClassForm(forms.ModelForm):
     class Meta:
         model = CourseGrade
         fields = ['name', 'students', 'subjects', 'is_active']
+        widgets = {
+            'students': forms.CheckboxSelectMultiple(),
+            'subjects': forms.CheckboxSelectMultiple(),
+        }
 
     def __init__(self, *args, **kwargs):
         user_school = kwargs.pop('user_school', None)
         super().__init__(*args, **kwargs)
 
         if user_school:
-            # Filter to show only students from this school
-            self.fields['students'].queryset = NewUser.objects.filter(school=user_school)
+            self.fields['students'].queryset = NewUser.objects.filter(
+                school=user_school
+            ).order_by('first_name', 'last_name')
 
-            # Filter to show only subjects from this school
-            self.fields['subjects'].queryset = Course.objects.filter(schools=user_school)
-
+            self.fields['subjects'].queryset = Course.objects.filter(
+                schools=user_school
+            ).select_related('course_name', 'session', 'term', 'exam_type').order_by('course_name__title')
+            
 
 # class ExaminerCreateClassForm(forms.ModelForm):
 #     class Meta:
