@@ -2852,6 +2852,7 @@ def form_teacher_dashboard(request):
 # -----------------------------
 # AI COMMENT (single student)
 # -----------------------------
+
 @login_required(login_url='teacher:teacher_login')
 def generate_form_teacher_comment(request, student_id):
     student = get_object_or_404(NewUser, id=student_id)
@@ -2939,6 +2940,12 @@ def generate_form_teacher_comment(request, student_id):
     if not results.exists():
         return JsonResponse({"comment": "No results found for this student."})
 
+    # ---- Clean subject title helper ----
+    import re
+    def clean_subject_title(title):
+        words = title.strip().split()
+        return words[0].title() if words else title
+
     # Build subject summary with performance labels
     strong_subjects  = []
     weak_subjects    = []
@@ -2950,13 +2957,14 @@ def generate_form_teacher_comment(request, student_id):
         except (TypeError, ValueError):
             score = 0
 
+        subject_name = clean_subject_title(r.subject.title)
         subject_lines.append(
-            f"  - {r.subject.title}: {r.total_score}/100 (Grade: {r.grade_letter})"
+            f"  - {subject_name}: {r.total_score}/100 (Grade: {r.grade_letter})"
         )
         if score >= 70:
-            strong_subjects.append(r.subject.title)
+            strong_subjects.append(subject_name)
         elif score < 50:
-            weak_subjects.append(r.subject.title)
+            weak_subjects.append(subject_name)
 
     subject_scores_text = "\n".join(subject_lines)
 
@@ -3011,7 +3019,7 @@ Behaviour:
 Rules:
 - Use the student's first name ({first_name}) once naturally
 - Maximum 3 sentences only, one paragraph, no bullet points
-- Mention at least one specific subject by name
+- Mention at least one specific subject by name — use the EXACT subject name given, do NOT expand or rename it
 - Mention one behaviour trait if it stands out (good or poor)
 - End with a clear, direct encouragement for next term
 - Do NOT start with "I am pleased", "It is with pleasure", or "This term has been a journey"
@@ -3028,7 +3036,8 @@ Rules:
                         "You are a highly experienced school form teacher with 15 years of experience "
                         "writing thoughtful, personalized, and encouraging end-of-term student report comments. "
                         "Your comments are warm, specific, honest, and motivating. "
-                        "You never write generic or templated comments — every student feels seen."
+                        "You never write generic or templated comments — every student feels seen. "
+                        "IMPORTANT: Always use the exact subject names provided. Never expand or rename them."
                     )
                 },
                 {"role": "user", "content": prompt},
@@ -3169,7 +3178,7 @@ def principal_dashboard(request):
             )
             for rec in just_created:
                 rec.form_teacher.set(form_teachers)
-                
+
         # ── 2. Fetch all records in one query ─────────────────────
         records = list(
             StudentBehaviorRecord.objects.filter(
@@ -3502,6 +3511,16 @@ def generate_principal_comment(request, student_id):
     if not results.exists():
         return JsonResponse({"comment": "No results found for this student."})
 
+    # ---- Clean subject title — first two words only ----
+    def clean_subject_title(title):
+        # Take first two words max, lowercase first word to prevent AI expansion
+        words = title.strip().split()
+        if not words:
+            return title
+        # Use first two words joined — prevents AI from recognizing and expanding
+        short = ' '.join(words[:2]).title()
+        return short
+
     # ---- Build subject summary ----
     strong_subjects = []
     weak_subjects   = []
@@ -3513,18 +3532,18 @@ def generate_principal_comment(request, student_id):
             score = float(r.total_score)
         except (TypeError, ValueError):
             score = 0
+        subject_name = clean_subject_title(r.subject.title)
         total_scores.append(score)
-        result_lines.append(f"  - {r.subject.title}: {r.total_score}/100 (Grade: {r.grade_letter})")
+        result_lines.append(f"  - {subject_name}: {r.total_score}/100 (Grade: {r.grade_letter})")
         if score >= 70:
-            strong_subjects.append(r.subject.title)
+            strong_subjects.append(subject_name)
         elif score < 50:
-            weak_subjects.append(r.subject.title)
+            weak_subjects.append(subject_name)
 
     result_text  = "\n".join(result_lines)
     avg          = round(sum(total_scores) / len(total_scores), 1) if total_scores else 0
     strong_text  = ", ".join(strong_subjects[:3]) if strong_subjects else "none"
     weak_text    = ", ".join(weak_subjects[:2])   if weak_subjects   else "none"
-    first_name   = student.first_name
 
     if avg >= 75:
         overall = "outstanding"
@@ -3551,8 +3570,8 @@ Now write one for this student in the exact same style.
 
 Student: {student.first_name} {student.last_name}
 Overall: {avg}/100 ({overall})
-Strong: {strong_text}
-Weak: {weak_text}
+Strong subjects (use these EXACT names, do not change or expand them): {strong_text}
+Weak subjects (use these EXACT names, do not change or expand them): {weak_text}
 Results:
 {result_text}
 
@@ -3572,23 +3591,25 @@ Rules:
                 {
                     "role": "system",
                     "content": (
-                        "You are a Nigerian secondary school principal with 20 years of experience "
-                        "writing end-of-term report card comments. Your comments are direct, professional, "
-                        "specific and grounded. You never use motivational speaker language. "
-                        "You write the way a real principal writes — firm, honest, and encouraging."
-                    )
+                    "You are a Nigerian secondary school principal with 20 years of experience "
+                    "writing end-of-term report card comments. Your comments are direct, professional, "
+                    "specific and grounded. You never use motivational speaker language. "
+                    "You write the way a real principal writes — firm, honest, and encouraging. "
+                    "IMPORTANT: Always use the exact subject names given to you. Never expand abbreviations. "
+                    "If given 'Math', write 'Math'. If given 'Basic Science', write 'Basic Science'. "
+                    "Never substitute your own subject names."
+                )
                 },
                 {"role": "user", "content": prompt},
             ],
             max_tokens=80,
             temperature=0.5,
         )
-        ai_comment = resp.choices[0].message.content.strip()
+        ai_comment = resp.choices[0].message.content.strip().strip('"').replace('"', '')
     except Exception as e:
         return JsonResponse({"comment": f"Error generating comment: {str(e)}"})
 
     return JsonResponse({"comment": ai_comment})
-
 
 # ── Generate ALL principal comments sequentially ──────────────────────────
 @csrf_exempt
@@ -3675,6 +3696,7 @@ Results: {result_text}
 Rules:
 - Max 2 short sentences or phrase-style clauses separated by semicolons
 - Mention 1-2 strong subjects and 1 weak subject by name
+- Use the EXACT subject names provided — do NOT expand, rename or paraphrase them (e.g. use "Math" not "Mathematics", use "Basic" not "Basic Science")
 - Add one word on character/behaviour (e.g. "Good conduct", "Excellent traits", "Fair behaviour")
 - End with one short closing phrase (e.g. "Keep excelling.", "More effort needed.", "Maintain this standard.")
 - NO full paragraphs, NO "I am pleased", NO motivational language
