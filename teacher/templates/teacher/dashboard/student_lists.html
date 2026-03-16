@@ -65,6 +65,7 @@
           <th>Name</th>
           <th>Email</th>
           <th>Current Class</th>
+          <th>Gender</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -75,7 +76,9 @@
           <td>{{ student.id }}</td>
           <td class="searchable">{{ student.first_name }} {{ student.last_name }}</td>
           <td class="searchable">{{ student.email }}</td>
+
           <td class="searchable">{{ student.student_class|default:"—" }}</td>
+          <td class="searchable">{{ student.gender}}</td>
           <td>
             <a href="{% url 'teacher:edit_student' student.id %}">Edit</a> |
             <form method="POST" action="{% url 'teacher:delete_student' student.id %}" class="inline">

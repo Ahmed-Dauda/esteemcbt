@@ -74,6 +74,12 @@ class SchoolStudentSignupForm(SignupForm):
     last_name = forms.CharField(max_length=225, label='Last-name')
     admission_no = forms.CharField(max_length=50, label='Admission Number')
     student_class = forms.ChoiceField(choices=[], label='Student Class')
+    gender = forms.ChoiceField(
+        choices=[('', 'Select Gender'), ('Male', 'Male'), ('Female', 'Female')],
+        label='Gender',
+        required=True,
+    )
+
     school = forms.ModelChoiceField(queryset=School.objects.all(), label='School', required=False)
 
     # Anti-bot fields
@@ -142,6 +148,7 @@ class SchoolStudentSignupForm(SignupForm):
         user.phone_number = self.cleaned_data.get('phone_number', '')
         user.admission_no = self.cleaned_data['admission_no']
         user.student_class = self.cleaned_data['student_class']
+        user.gender = self.cleaned_data['gender']
 
         # Auto-assign school from logged-in user
         if request.user.is_authenticated and hasattr(request.user, 'school'):
