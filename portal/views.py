@@ -2334,6 +2334,7 @@ def load_bulk_entry_page(request):
 
 from django.contrib import messages
 
+
 @require_reportcard_subscription
 @login_required
 def enter_results_for_class_subject(request, class_id, subject_id, session_id, term_id):
@@ -2360,6 +2361,11 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
 
     # ── Formset ────────────────────────────────────────────────────────────
     ResultFormset = formset_factory(ResultRowForm, extra=0)
+    form_kwargs = {
+        'max_ca':      max_ca,
+        'max_midterm': max_midterm,
+        'max_exam':    max_exam,
+    }
 
     # ── Context shared across GET and POST ─────────────────────────────────
     base_context = {
@@ -2374,7 +2380,8 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
 
     # ── POST: Save results ─────────────────────────────────────────────────
     if request.method == "POST":
-        formset = ResultFormset(request.POST)
+        formset = ResultFormset(request.POST, form_kwargs=form_kwargs)
+
 
         if formset.is_valid():
             to_update = []
@@ -2480,7 +2487,7 @@ def enter_results_for_class_subject(request, class_id, subject_id, session_id, t
         for s in students
     ]
 
-    formset = ResultFormset(initial=initial_data)
+    formset = ResultFormset(initial=initial_data, form_kwargs=form_kwargs)
     forms_with_students = list(zip(formset.forms, students))
 
     return render(request, "portal/enter_results.html", {
