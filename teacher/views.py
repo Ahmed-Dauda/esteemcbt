@@ -659,21 +659,24 @@ def delete_subject_view(request, course_id):
     if request.method == 'POST':
         from quiz.models import Course as QuizCourse, CourseGrade
 
-        # Remove from all CourseGrades first
+        # 1. Remove sms.Courses from all CourseGrade.subjects M2M
+        for cg in CourseGrade.objects.filter(subjects=course):
+            cg.subjects.remove(course)
+
+        # 2. Remove and delete associated quiz.Course objects
         quiz_courses = QuizCourse.objects.filter(course_name=course)
         for qc in quiz_courses:
-            CourseGrade.objects.filter(subjects=qc).update()
             for cg in CourseGrade.objects.filter(subjects=qc):
                 cg.subjects.remove(qc)
-
-        # Delete associated quiz.Course objects
         quiz_courses.delete()
 
-        # Now safe to delete sms.Courses
+        # 3. Now safe to delete sms.Courses
         course.delete()
 
-        # Invalidate cache
-        classes = CourseGrade.objects.filter(schools=user_school).values_list('name', flat=True).distinct()
+        # 4. Invalidate cache
+        classes = CourseGrade.objects.filter(
+            schools=user_school
+        ).values_list('name', flat=True).distinct()
         for class_name in classes:
             cache.delete(f"courses:{user_school.id}:{class_name}")
 
