@@ -343,25 +343,6 @@ def examiner_create_class_view(request):
         {'form': form}
     )
 
-# @login_required(login_url='teacher:teacher_login')
-# def examiner_create_class_view(request):
-#     user = request.user
-#     school = getattr(user, 'school', None)
-
-#     if request.method == 'POST':
-#         form = ExaminerCreateClassForm(request.POST)
-#         if form.is_valid():
-#             new_class = form.save(commit=False)
-#             new_class.schools = school  # assign the current teacher's school
-#             new_class.save()
-#             form.save_m2m()
-#             messages.success(request, "Class created successfully!")
-#             return redirect('teacher:examiner_class_list')
-#     else:
-#         form = ExaminerCreateClassForm()
-
-#     return render(request, 'teacher/dashboard/examiner_create_class.html', {'form': form})
-
 
 
 def examiner_edit_class_view(request, pk):
@@ -676,10 +657,29 @@ def delete_subject_view(request, course_id):
     )
 
     if request.method == 'POST':
+        from quiz.models import Course as QuizCourse, CourseGrade
+
+        # Remove from all CourseGrades first
+        quiz_courses = QuizCourse.objects.filter(course_name=course)
+        for qc in quiz_courses:
+            CourseGrade.objects.filter(subjects=qc).update()
+            for cg in CourseGrade.objects.filter(subjects=qc):
+                cg.subjects.remove(qc)
+
+        # Delete associated quiz.Course objects
+        quiz_courses.delete()
+
+        # Now safe to delete sms.Courses
         course.delete()
+
+        # Invalidate cache
+        classes = CourseGrade.objects.filter(schools=user_school).values_list('name', flat=True).distinct()
+        for class_name in classes:
+            cache.delete(f"courses:{user_school.id}:{class_name}")
+
         messages.success(request, "Subject deleted successfully.")
         return redirect('teacher:teacher-dashboard')
-
+    
     return render(request, 'teacher/dashboard/confirm_delete_subject.html', {
         'course': course
     })
@@ -2444,7 +2444,7 @@ def add_course_view(request):
         {'form': form}
     )
 
-    
+
 #real
 # @login_required
 # def add_course_view(request):
