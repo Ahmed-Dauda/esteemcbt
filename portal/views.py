@@ -247,6 +247,7 @@ def download_class_report(request):
 
 
 #individual report card PDF generation
+
 def download_term_report_pdf(request, student_id, session_id, term_id):
     from collections import defaultdict
     from reportlab.lib.units import mm
@@ -366,17 +367,25 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
         return Paragraph(f"<b>{label}:</b> {value}", S["cell_normal"])
 
     def trait_table(title, traits, width):
-        hdr  = [[Paragraph(f"<b>{title}</b>", S["cell_hdr"]),
-                 Paragraph("<b>Rating</b>",    S["cell_hdr"])]]
-        rows = [[Paragraph(t, S["cell_normal"]), Paragraph(str(v), S["cell_center"])]
+        tiny_hdr = ParagraphStyle("th", fontSize=6,   fontName="Helvetica-Bold",
+                                  alignment=TA_CENTER, leading=7)
+        tiny_cel = ParagraphStyle("tc", fontSize=6,   fontName="Helvetica",
+                                  alignment=TA_LEFT,   leading=7)
+        tiny_ctr = ParagraphStyle("tv", fontSize=6,   fontName="Helvetica",
+                                  alignment=TA_CENTER, leading=7)
+
+        hdr  = [[Paragraph(f"<b>{title}</b>", tiny_hdr),
+                 Paragraph("<b>Rating</b>",    tiny_hdr)]]
+        rows = [[Paragraph(t, tiny_cel), Paragraph(str(v), tiny_ctr)]
                 for t, v in traits]
-        tbl  = Table(hdr + rows, colWidths=[width * 0.75, width * 0.25])
+        tbl  = Table(hdr + rows, colWidths=[width * 0.78, width * 0.22])
         tbl.setStyle(TableStyle([
             ("BACKGROUND",    (0,0), (-1,0),  LBLUE),
             ("GRID",          (0,0), (-1,-1), 0.4, colors.grey),
-            ("TOPPADDING",    (0,0), (-1,-1), 3),
-            ("BOTTOMPADDING", (0,0), (-1,-1), 3),
-            ("LEFTPADDING",   (0,0), (-1,-1), 4),
+            ("TOPPADDING",    (0,0), (-1,-1), 1),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 1),
+            ("LEFTPADDING",   (0,0), (-1,-1), 2),
+            ("RIGHTPADDING",  (0,0), (-1,-1), 2),
             ("ROWBACKGROUNDS",(0,1), (-1,-1), [colors.white, LGREY]),
         ]))
         return tbl
@@ -462,10 +471,6 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
         ("ROWBACKGROUNDS",(0,0), (-1,-1), [colors.white, LGREY]),
     ]))
     elements += [info_tbl, Spacer(1, 6)]
-
-    # ── 3. Subject Table ──────────────────────────────────────────
-    elements.append(section_header("Subjects"))
-    elements.append(Spacer(1, 2))
 
     if is_midterm:
         hdr_row = [Paragraph(h, S["cell_hdr"]) for h in [
@@ -606,9 +611,6 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
             term_id=term_id
         ).first()
 
-        elements.append(section_header("Psychomotor & Affective Traits"))
-        elements.append(Spacer(1, 2))
-
         half = INNER / 2
 
         if behavior:
@@ -650,10 +652,6 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
             ("RIGHTPADDING", (0,0), (-1,-1), 0),
         ]))
         elements += [side_tbl, Spacer(1, 6)]
-
-        # ── 5. Comments & Signatures ──────────────────────────────
-        elements.append(section_header("Remarks & Signatures"))
-        elements.append(Spacer(1, 3))
 
         form_teacher_name = "N/A"
         if behavior:
@@ -1841,21 +1839,28 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
         return f"{n}{suffix}"
 
     def trait_table(title, traits, width):
-        hdr  = [[Paragraph(f"<b>{title}</b>", S["cell_hdr"]),
-                 Paragraph("<b>Rating</b>",    S["cell_hdr"])]]
-        rows = [[Paragraph(t, S["cell_normal"]), Paragraph(str(v), S["cell_center"])]
+        tiny_hdr = ParagraphStyle("th", fontSize=6,   fontName="Helvetica-Bold",
+                                  alignment=TA_CENTER, leading=7)
+        tiny_cel = ParagraphStyle("tc", fontSize=6,   fontName="Helvetica",
+                                  alignment=TA_LEFT,   leading=7)
+        tiny_ctr = ParagraphStyle("tv", fontSize=6,   fontName="Helvetica",
+                                  alignment=TA_CENTER, leading=7)
+
+        hdr  = [[Paragraph(f"<b>{title}</b>", tiny_hdr),
+                 Paragraph("<b>Rating</b>",    tiny_hdr)]]
+        rows = [[Paragraph(t, tiny_cel), Paragraph(str(v), tiny_ctr)]
                 for t, v in traits]
-        tbl  = Table(hdr + rows, colWidths=[width * 0.75, width * 0.25])
+        tbl  = Table(hdr + rows, colWidths=[width * 0.78, width * 0.22])
         tbl.setStyle(TableStyle([
             ("BACKGROUND",    (0,0), (-1,0),  LBLUE),
             ("GRID",          (0,0), (-1,-1), 0.4, colors.grey),
-            ("TOPPADDING",    (0,0), (-1,-1), 3),
-            ("BOTTOMPADDING", (0,0), (-1,-1), 3),
-            ("LEFTPADDING",   (0,0), (-1,-1), 4),
+            ("TOPPADDING",    (0,0), (-1,-1), 1),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 1),
+            ("LEFTPADDING",   (0,0), (-1,-1), 2),
+            ("RIGHTPADDING",  (0,0), (-1,-1), 2),
             ("ROWBACKGROUNDS",(0,1), (-1,-1), [colors.white, LGREY]),
         ]))
         return tbl
-
     elements = []
 
     # ════════════════════════════════════════════════════════════
@@ -1966,10 +1971,6 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
             ("ROWBACKGROUNDS",(0,0), (-1,-1), [colors.white, LGREY]),
         ]))
         elements += [info_tbl, Spacer(1, 6)]
-
-        # ── 3. Subject Table ──────────────────────────────────
-        elements.append(section_header("Subjects"))
-        elements.append(Spacer(1, 2))
 
         if is_midterm:
             hdr_row = [Paragraph(h, S["cell_hdr"]) for h in [
@@ -2103,9 +2104,6 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
 
         # ── 4 & 5: Only for non-midterm ───────────────────────
         if not is_midterm:
-            # ── 4. Psychomotor & Affective ────────────────────
-            elements.append(section_header("Psychomotor & Affective Traits"))
-            elements.append(Spacer(1, 2))
 
             behavior = StudentBehaviorRecord.objects.filter(
                 student=student,
@@ -2154,10 +2152,6 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
                 ("RIGHTPADDING", (0,0), (-1,-1), 0),
             ]))
             elements += [side_tbl, Spacer(1, 6)]
-
-            # ── 5. Comments & Signatures ──────────────────────
-            elements.append(section_header("Remarks & Signatures"))
-            elements.append(Spacer(1, 3))
 
             form_teacher_name = "N/A"
             if behavior:
