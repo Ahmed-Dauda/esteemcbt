@@ -12,29 +12,44 @@
         padding: 10px;
         text-align: left;
     }
+    .thead-blue th {
+        background-color: #007bff;
+        color: #fff;
+        text-align: center;
+    }
+    .empty-state {
+        color: gray;
+        font-style: italic;
+    }
+    @media (max-width: 768px) {
+        .table th, .table td {
+            font-size: 0.875rem;
+        }
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+    }
 </style>
 
-
-<div style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
-  <a class="nav-link" href="{% url 'teacher:teacher_signup' %}" style="text-decoration: none;">
-    <button type="button" class="btn btn-primary px-4">
-      Add Teachers
-    </button>
-  </a>
-
-  <a class="nav-link" href="{% url 'quiz:examiner_course_list' %}" style="text-decoration: none;">
-    <button type="button" class="btn btn-success px-4">
-      View Questions
-    </button>
-  </a>
+<!-- Top Action Buttons -->
+<div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin: 20px 0;">
+    <a class="nav-link" href="{% url 'teacher:teacher_signup' %}" style="text-decoration: none;">
+        <button type="button" class="btn btn-primary px-4">Add Teachers</button>
+    </a>
+    <a class="nav-link" href="{% url 'quiz:examiner_course_list' %}" style="text-decoration: none;">
+        <button type="button" class="btn btn-success px-4">View Questions</button>
+    </a>
+ 
 </div>
+
 <br>
+
+<!-- Teachers Table -->
 <div class="container mt-4">
-
     <h2 class="mb-4">List of Teachers for {{ request.user.school }}</h2>
-
     <table id="teachersTable" class="table table-striped table-bordered">
-        <thead>
+        <thead class="thead-blue">
             <tr>
                 <th>First Name</th>
                 <th>Last Name</th>
@@ -67,7 +82,8 @@
                 <td>
                     <form action="{% url 'teacher:teacher_delete' teacher.id %}" method="POST">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this teacher?');">Delete</button>
+                        <button type="submit" class="btn btn-sm btn-danger"
+                            onclick="return confirm('Are you sure you want to delete this teacher?');">Delete</button>
                     </form>
                 </td>
             </tr>
@@ -76,7 +92,64 @@
     </table>
 </div>
 
+<br>
 
+<!-- Manage Students' Classes Table -->
+<div class="card shadow-sm mb-4 container">
+    <div class="text-center mt-3">
+        <h6 class="mb-0">Assign Class Teachers</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered table-hover" id="classesTable" width="100%" cellspacing="0">
+                <thead class="thead-blue">
+                    <tr>
+                        <th class="text-center">Class Name</th>
+                        <!-- <th class="text-center">Subjects</th> -->
+                        <th class="text-center">Form Teachers</th>
+                        <th class="text-center" style="padding: 10px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course_grade in course_grades %}
+                        <tr>
+                            <td class="align-middle text-center">{{ course_grade.name }}</td>
+                            <!-- <td class="align-middle">
+                                {% if course_grade.subjects.all.count > 0 %}
+                                    {% for subject in course_grade.subjects.all %}
+                                        {{ subject.course_name }} {{ subject.term }} {{ subject.session }} {{ subject.exam_type }}<br>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="empty-state">No subjects assigned</span>
+                                {% endif %}
+                            </td> -->
+                            <td class="align-middle text-center">
+                                {% if course_grade.form_teacher.all %}
+                                    {% for ft in course_grade.form_teacher.all %}
+                                        <span class="badge bg-success">{{ ft.first_name }} {{ ft.last_name }}</span><br>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="empty-state">Not assigned</span>
+                                {% endif %}
+                            </td>
+                            <td class="align-middle text-center">
+                                <!-- <a href="{% url 'teacher:edit_coursegrade' course_grade.id %}" class="btn btn-sm btn-info mr-2">Edit</a>
+                                <a href="{% url 'teacher:delete_coursegrade' course_grade.id %}" class="btn btn-sm btn-danger">Delete</a> -->
+                                <a href="{% url 'teacher:assign_form_teachers' course_grade.id %}" class="btn btn-sm btn-outline-primary mt-1">
+                                    👨‍🏫 Form Teachers
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No classes found for your school.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 <!-- Initialize DataTables -->
 <script>
@@ -90,8 +163,17 @@
             "autoWidth": false,
             "responsive": true
         });
+
+        $('#classesTable').DataTable({
+            "paging": true,
+            "lengthChange": true,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            "responsive": true
+        });
     });
 </script>
 
 {% endblock %}
-

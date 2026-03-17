@@ -48,26 +48,71 @@ from django.contrib import messages
 from django.shortcuts import redirect
 
 from portal.decorators import require_cbt_subscription, require_reportcard_subscription
-
 @login_required(login_url='teacher:teacher_login')
 def teacher_list_view(request):
     user_school = request.user.school
 
-    # Get all teachers in this school with their subjects and classes
     teachers = Teacher.objects.filter(school=user_school).prefetch_related('subjects_taught', 'classes_taught')
+    course_grades = CourseGrade.objects.filter(schools=user_school).prefetch_related(
+        'form_teacher', 'subjects'
+    ).only('id', 'name')
 
-    # Create a dictionary mapping each teacher to their subjects
-    teacher_subjects = {
-        teacher.id: teacher.subjects_taught.all()
-        for teacher in teachers
-    }
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'assign_classes':
+            teacher_id = request.POST.get('teacher_id')
+            class_ids  = request.POST.getlist('class_ids')
+            teacher = get_object_or_404(Teacher, id=teacher_id, school=user_school)
+            teacher.classes_taught.set(class_ids)
+            messages.success(request, f"Classes updated for {teacher.first_name} {teacher.last_name}.")
+
+        elif action == 'assign_form_teacher':
+            class_id    = request.POST.get('class_id')
+            teacher_ids = request.POST.getlist('teacher_ids')
+            course_grade = get_object_or_404(CourseGrade, id=class_id, schools=user_school)
+            course_grade.form_teacher.set(teacher_ids)
+            messages.success(request, f"Form teachers updated for {course_grade.name}.")
+
+        return redirect('teacher:teacher_list')
 
     context = {
-        'teachers': teachers,
-        'teacher_subjects': teacher_subjects,  # Pass all subjects per teacher
+        'teachers':     teachers,
+        'course_grades': course_grades,
     }
-
     return render(request, 'teacher/dashboard/teacher_list.html', context)
+
+
+# @login_required(login_url='teacher:teacher_login')
+# def teacher_list_view(request):
+#     user_school = request.user.school
+
+#     teachers = Teacher.objects.filter(school=user_school).prefetch_related('subjects_taught', 'classes_taught')
+#     classes   = CourseGrade.objects.filter(schools=user_school).prefetch_related('form_teacher').only('id', 'name')
+
+#     # Handle form teacher assignment POST
+#     if request.method == 'POST':
+#         teacher_id = request.POST.get('teacher_id')
+#         class_ids  = request.POST.getlist('class_ids')
+
+#         teacher = get_object_or_404(Teacher, id=teacher_id, school=user_school)
+
+#         # Remove this teacher as form_teacher from ALL classes first
+#         for cg in CourseGrade.objects.filter(schools=user_school):
+#             cg.form_teacher.remove(teacher)
+
+#         # Add as form_teacher to selected classes
+#         for cg in CourseGrade.objects.filter(id__in=class_ids, schools=user_school):
+#             cg.form_teacher.add(teacher)
+
+#         messages.success(request, f"{teacher.first_name} {teacher.last_name} assigned as class teacher.")
+#         return redirect('teacher:teacher_list')
+
+#     context = {
+#         'teachers': teachers,
+#         'classes':  classes,
+#     }
+#     return render(request, 'teacher/dashboard/teacher_list.html', context)
 
 
 from teacher.forms import TeacherEditForm 
