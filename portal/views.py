@@ -397,11 +397,26 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     elements = []
 
     # ── 1. School Header ──────────────────────────────────────────
+    # ── School logo (left) ────────────────────────────────────────
     logo_img = None
     if school and getattr(school, 'logo', None):
         try:
             logo_data = io.BytesIO(requests.get(school.logo.url).content)
             logo_img  = RLImage(logo_data, width=70, height=70)
+        except Exception:
+            pass
+
+    # ── Student passport photo (right) ───────────────────────────
+    student_img = None
+    default_img = 'https://i.ibb.co/cx34WCc/logo.png'
+    pro_img_url = getattr(student, 'pro_img', None)
+    if pro_img_url:
+        try:
+            url = pro_img_url.url if hasattr(pro_img_url, 'url') else str(pro_img_url)
+            # Skip default placeholder image
+            if url and default_img not in url:
+                student_data = io.BytesIO(requests.get(url).content)
+                student_img  = RLImage(student_data, width=60, height=70)
         except Exception:
             pass
 
@@ -420,9 +435,20 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
                   ParagraphStyle("SA2", fontSize=7.5, fontName="Helvetica", alignment=TA_CENTER)),
     ]
 
-    if logo_img:
+    # Build header based on what images are available
+    if logo_img and student_img:
         header_tbl = Table(
-            [[logo_img, school_details, logo_img]],
+            [[logo_img, school_details, student_img]],
+            colWidths=[70, INNER - 140, 70]
+        )
+    elif logo_img:
+        header_tbl = Table(
+            [[logo_img, school_details, ""]],
+            colWidths=[70, INNER - 140, 70]
+        )
+    elif student_img:
+        header_tbl = Table(
+            [["", school_details, student_img]],
             colWidths=[70, INNER - 140, 70]
         )
     else:
@@ -1736,6 +1762,7 @@ from reportlab.lib import colors
 import re
 from collections import defaultdict
 from reportlab.lib.units import mm
+
 def download_class_reports_pdf(request, result_class, session_id, term_id):
     from collections import defaultdict
     from reportlab.lib.units import mm
@@ -1902,6 +1929,19 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
             except Exception:
                 pass
 
+        # ── Student passport photo (right) ────────────────────
+        student_img = None
+        default_img = 'https://i.ibb.co/cx34WCc/logo.png'
+        pro_img_url = getattr(student, 'pro_img', None)
+        if pro_img_url:
+            try:
+                url = pro_img_url.url if hasattr(pro_img_url, 'url') else str(pro_img_url)
+                if url and default_img not in url:
+                    student_data = io.BytesIO(requests.get(url).content)
+                    student_img  = RLImage(student_data, width=60, height=70)
+            except Exception:
+                pass
+
         school_name_str    = school.school_name    if school else "School Name"
         school_motto_str   = school.school_motto   if school else ""
         school_address_str = school.school_address if school else ""
@@ -1917,9 +1957,19 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
                       ParagraphStyle("SA2", fontSize=7.5, fontName="Helvetica", alignment=TA_CENTER)),
         ]
 
-        if logo_img:
+        if logo_img and student_img:
             header_tbl = Table(
-                [[logo_img, school_details, logo_img]],
+                [[logo_img, school_details, student_img]],
+                colWidths=[70, INNER - 140, 70]
+            )
+        elif logo_img:
+            header_tbl = Table(
+                [[logo_img, school_details, ""]],
+                colWidths=[70, INNER - 140, 70]
+            )
+        elif student_img:
+            header_tbl = Table(
+                [["", school_details, student_img]],
                 colWidths=[70, INNER - 140, 70]
             )
         else:

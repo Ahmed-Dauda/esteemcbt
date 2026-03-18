@@ -24,7 +24,7 @@ class NewUserResource(resources.ModelResource):
 class NewUserAdmin(ImportExportModelAdmin, ExportActionMixin):
     list_display = [
         'email', 'username', 'phone_number', 'first_name', 'last_name',
-        'student_class', 'school', 'countries', 'is_staff', 'is_superuser',
+        'student_class', 'school','pro_img','countries', 'is_staff', 'is_superuser',
         'is_active', 'last_login', 'date_joined'
     ]
     list_filter = [

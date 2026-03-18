@@ -82,8 +82,8 @@ class NewUser(AbstractBaseUser, PermissionsMixin):
     pro_img         = CloudinaryField(
                         'profile_photos', 
                         blank=True, 
-                        null=True, 
-                        default='https://i.ibb.co/cx34WCc/logo.png'
+                        null=True
+                       
                      )
     gender          = models.CharField(choices=gender_choice, max_length=225, blank=True, null=True)
     is_staff        = models.BooleanField(default=False)
