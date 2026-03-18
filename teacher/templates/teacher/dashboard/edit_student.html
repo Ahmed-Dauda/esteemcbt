@@ -8,8 +8,9 @@
 
   <h2>Edit Student: {{ student.first_name }} {{ student.last_name }}</h2>
 
-  <form method="POST">
+  <form method="POST" enctype="multipart/form-data">
     {% csrf_token %}
+
     <label>First Name:</label><br>
     <input type="text" name="first_name" value="{{ student.first_name }}" required><br><br>
 
@@ -32,6 +33,17 @@
         <option value="{{ c.id }}" {% if c.name == student.student_class %}selected{% endif %}>{{ c.name }}</option>
       {% endfor %}
     </select><br><br>
+
+    <label>Profile Photo:</label><br>
+    {% if student.pro_img %}
+      <div style="margin-bottom: 8px;">
+        <img src="{{ student.pro_img.url }}" width="80" height="80"
+             style="border-radius: 50%; object-fit: cover; border: 2px solid #ccc;">
+        <p style="font-size: 12px; color: #666;">Current photo</p>
+      </div>
+    {% endif %}
+    <input type="file" name="pro_img" accept="image/*"><br>
+    <small style="color: #888;">Leave empty to keep current photo.</small><br><br>
 
     <button type="submit">Save Changes</button>
     <a href="{% url 'teacher:student_lists' %}">Cancel</a>

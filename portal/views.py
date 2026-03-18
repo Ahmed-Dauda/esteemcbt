@@ -247,7 +247,6 @@ def download_class_report(request):
 
 
 #individual report card PDF generation
-
 def download_term_report_pdf(request, student_id, session_id, term_id):
     from collections import defaultdict
     from reportlab.lib.units import mm
@@ -305,6 +304,13 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     for r in all_results:
         score = float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
         subject_scores_map[r.subject_id].append((r.student_id, score))
+
+    # ── Fetch behavior record once ────────────────────────────────
+    behavior = StudentBehaviorRecord.objects.filter(
+        student_id=student_id,
+        session_id=session_id,
+        term_id=term_id,
+    ).prefetch_related('form_teacher').first()
 
     # ── PDF Setup ─────────────────────────────────────────────────
     response = HttpResponse(content_type='application/pdf')
@@ -397,7 +403,6 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     elements = []
 
     # ── 1. School Header ──────────────────────────────────────────
-    # ── School logo (left) ────────────────────────────────────────
     logo_img = None
     if school and getattr(school, 'logo', None):
         try:
@@ -413,7 +418,6 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     if pro_img_url:
         try:
             url = pro_img_url.url if hasattr(pro_img_url, 'url') else str(pro_img_url)
-            # Skip default placeholder image
             if url and default_img not in url:
                 student_data = io.BytesIO(requests.get(url).content)
                 student_img  = RLImage(student_data, width=60, height=70)
@@ -435,7 +439,6 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
                   ParagraphStyle("SA2", fontSize=7.5, fontName="Helvetica", alignment=TA_CENTER)),
     ]
 
-    # Build header based on what images are available
     if logo_img and student_img:
         header_tbl = Table(
             [[logo_img, school_details, student_img]],
@@ -498,6 +501,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     ]))
     elements += [info_tbl, Spacer(1, 6)]
 
+    # ── 3. Subject Table ──────────────────────────────────────────
     if is_midterm:
         hdr_row = [Paragraph(h, S["cell_hdr"]) for h in [
             "Subjects",
@@ -630,13 +634,6 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
 
     # ── 4 & 5: Only for non-midterm ───────────────────────────────
     if not is_midterm:
-        # ── 4. Psychomotor & Affective ────────────────────────────
-        behavior = StudentBehaviorRecord.objects.filter(
-            student_id=student_id,
-            session_id=session_id,
-            term_id=term_id
-        ).first()
-
         half = INNER / 2
 
         if behavior:
@@ -734,18 +731,13 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
         ]))
         elements.append(comment_tbl)
 
-    # ── Principal signature + form teacher always shows for midterm
+    # ── Principal signature + form teacher for midterm ────────────
     if is_midterm:
         elements.append(Spacer(1, 10))
         elements.append(section_header("Principal's Signature"))
         elements.append(Spacer(1, 6))
 
-        behavior = StudentBehaviorRecord.objects.filter(
-            student_id=student_id,
-            session_id=session_id,
-            term_id=term_id
-        ).first()
-
+        # behavior already fetched above — reuse it
         form_teacher_name = "N/A"
         if behavior:
             teachers = behavior.form_teacher.all()
@@ -778,7 +770,6 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
 
     doc.build(elements)
     return response
-
 
 
 #per student
@@ -1762,7 +1753,6 @@ from reportlab.lib import colors
 import re
 from collections import defaultdict
 from reportlab.lib.units import mm
-
 def download_class_reports_pdf(request, result_class, session_id, term_id):
     from collections import defaultdict
     from reportlab.lib.units import mm
@@ -1807,6 +1797,15 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
     for res in all_results:
         score = float(res.ca_score or 0) + float(res.midterm_score or 0) + float(res.exam_score or 0)
         subject_scores_map[res.subject_id].append((res.student_id, score))
+
+    # ── Fetch ALL behavior records in one query ───────────────────
+    all_behaviors = StudentBehaviorRecord.objects.filter(
+        student_id__in=list(students.keys()),
+        session_id=session_id,
+        term_id=term_id,
+    ).prefetch_related('form_teacher')
+
+    behavior_map = {b.student_id: b for b in all_behaviors}
 
     # ── PDF Setup ─────────────────────────────────────────────────
     response = HttpResponse(content_type='application/pdf')
@@ -1888,6 +1887,7 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
             ("ROWBACKGROUNDS",(0,1), (-1,-1), [colors.white, LGREY]),
         ]))
         return tbl
+
     elements = []
 
     # ════════════════════════════════════════════════════════════
@@ -1900,6 +1900,9 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
         session    = data['session']
         term       = data['term']
         is_midterm = getattr(term, 'is_midterm', False)
+
+        # ── Behavior from map (no extra query) ────────────────
+        behavior = behavior_map.get(sid)
 
         # ── Stats ─────────────────────────────────────────────
         num_subjects     = len(records)
@@ -2022,6 +2025,7 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
         ]))
         elements += [info_tbl, Spacer(1, 6)]
 
+        # ── 3. Subject Table ──────────────────────────────────
         if is_midterm:
             hdr_row = [Paragraph(h, S["cell_hdr"]) for h in [
                 "Subjects",
@@ -2154,13 +2158,6 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
 
         # ── 4 & 5: Only for non-midterm ───────────────────────
         if not is_midterm:
-
-            behavior = StudentBehaviorRecord.objects.filter(
-                student=student,
-                session_id=session_id,
-                term_id=term_id
-            ).first()
-
             half = INNER / 2
 
             if behavior:
@@ -2263,6 +2260,22 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
             elements.append(Spacer(1, 10))
             elements.append(section_header("Principal's Signature"))
             elements.append(Spacer(1, 6))
+
+            # behavior already from map — reuse it
+            form_teacher_name = "N/A"
+            if behavior:
+                teachers = behavior.form_teacher.all()
+                if teachers.exists():
+                    form_teacher_name = ", ".join(
+                        f"{t.first_name} {t.last_name}".strip() for t in teachers
+                    )
+
+            elements.append(Paragraph(
+                f"<b>Form Teacher:</b> {form_teacher_name}",
+                S["label"]
+            ))
+            elements.append(Spacer(1, 6))
+
             if school and getattr(school, 'principal_signature', None):
                 try:
                     sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
@@ -2283,7 +2296,6 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
 
     doc.build(elements)
     return response
-
 
 from celery.result import AsyncResult
 from django.http import JsonResponse

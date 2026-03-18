@@ -2003,6 +2003,10 @@ def edit_student(request, student_id):
         student.email = email
         student.gender = gender
 
+        # Update profile image if uploaded
+        if request.FILES.get('pro_img'):
+            student.pro_img = request.FILES['pro_img']
+
         # Update class if changed
         if student_class_id:
             new_class = get_object_or_404(CourseGrade, id=student_class_id)

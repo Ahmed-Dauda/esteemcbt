@@ -200,6 +200,11 @@ class StudentBehaviorRecord(models.Model):
 
     class Meta:
         unique_together = ('student', 'term', 'session')
+        indexes = [
+            models.Index(fields=['session', 'term']),           # for bulk class fetch in PDF
+            models.Index(fields=['student', 'session', 'term']), # for single student lookup
+            models.Index(fields=['school', 'session', 'term']),  # for principal dashboard
+        ]
 
     def __str__(self):
         return f"{self.student} - {self.term} - {self.session}"

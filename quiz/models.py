@@ -100,7 +100,7 @@ class CourseGrade(models.Model):
 class School(models.Model):
     name = models.CharField(max_length=255, db_index=True)
     school_name = models.CharField(max_length=255, db_index=True)
-
+    next_term_date = models.DateField(blank=True, null=True)
     course_pay = models.BooleanField(default=False, db_index=True)
     customer = models.BooleanField(default=True, db_index=True)
 

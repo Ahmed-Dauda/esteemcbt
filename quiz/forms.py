@@ -30,12 +30,14 @@ class BulkExamUpdateForm(forms.Form):
         label="Exam Type"
     )
 
+
 class SchoolForm(forms.ModelForm):
     class Meta:
         model = School
         fields = [
             'name',
             'school_name',
+            'next_term_date',
             'course_pay',
             'customer',
             'school_motto',
@@ -53,6 +55,9 @@ class SchoolForm(forms.ModelForm):
             'F_min', 'F_max',
             'A_comment', 'B_comment', 'C_comment', 'P_comment', 'F_comment',
         ]
+        widgets = {
+            'next_term_date': forms.DateInput(attrs={'type': 'date'}),
+        }
         
 
 

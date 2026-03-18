@@ -66,6 +66,7 @@
           <th>Email</th>
           <th>Current Class</th>
           <th>Gender</th>
+          <th>image</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -78,7 +79,16 @@
           <td class="searchable">{{ student.email }}</td>
 
           <td class="searchable">{{ student.student_class|default:"—" }}</td>
+         
           <td class="searchable">{{ student.gender}}</td>
+           <td>
+            {% if student.pro_img %}
+              <img src="{{ student.pro_img.url }}" width="40" height="40"
+                   style="border-radius: 50%; object-fit: cover; border: 1px solid #ccc;">
+            {% else %}
+              <span style="color: #aaa; font-size: 12px;">No photo</span>
+            {% endif %}
+          </td>
           <td>
             <a href="{% url 'teacher:edit_student' student.id %}">Edit</a> |
             <form method="POST" action="{% url 'teacher:delete_student' student.id %}" class="inline">
