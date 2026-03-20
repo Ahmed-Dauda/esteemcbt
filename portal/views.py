@@ -295,11 +295,15 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
         results = results.filter(subject_id__in=active_subject_ids)
 
     # ── Class stats ───────────────────────────────────────────────
+    # ── Class stats ───────────────────────────────────────────────
     all_results = Result_Portal.objects.filter(
         result_class=raw_class,
         session_id=session_id,
-        term_id=term_id
+        term_id=term_id,
     ).select_related('subject')
+    if active_subject_ids:
+        all_results = all_results.filter(subject_id__in=active_subject_ids)
+        
 
     student_total   = sum(
         float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
@@ -1812,7 +1816,7 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
         all_results = all_results.filter(subject_id__in=active_subject_ids)
 
     # ── Group by student ──────────────────────────────────────────
-    
+
     students = {}
     for res in all_results:
         sid = res.student_id
