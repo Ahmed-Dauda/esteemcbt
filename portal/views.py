@@ -2873,15 +2873,8 @@ def form_teacher_dashboard(request):
     sessions = Session.objects.filter(school=school)
     terms    = Term.objects.filter(school=school)
 
-    # Classes where teacher is assigned (either as class teacher or form teacher)
-    # Classes where teacher is assigned (either as class teacher or form teacher)
-    from quiz.models import CourseGrade
-    from django.db.models import Q
-    classes = CourseGrade.objects.filter(
-        schools=school
-    ).filter(
-        Q(teachers=teacher) | Q(form_teacher=teacher)
-    ).distinct()
+    # ✅ Only classes associated with this teacher
+    classes = teacher.classes_taught.all()
 
     # ---- SELECTED FILTERS ----
     selected_session_id = request.GET.get("session")
@@ -2896,13 +2889,34 @@ def form_teacher_dashboard(request):
 
     if selected_session and selected_term and selected_class:
 
-        # ---- LOAD RECORDS ----
+        # ---- Auto-create missing behavior records ────────────
+        students = list(selected_class.students.all())
+        existing = set(
+            StudentBehaviorRecord.objects.filter(
+                student__in=students,
+                session=selected_session,
+                term=selected_term,
+            ).values_list('student_id', flat=True)
+        )
+        new_records = [
+            StudentBehaviorRecord(
+                student=student,
+                school=school,
+                session=selected_session,
+                term=selected_term,
+            )
+            for student in students if student.id not in existing
+        ]
+        if new_records:
+            StudentBehaviorRecord.objects.bulk_create(new_records, ignore_conflicts=True)
+
+        # ---- LOAD RECORDS ────────────────────────────────────
         records = StudentBehaviorRecord.objects.filter(
             session=selected_session,
             term=selected_term,
             student__course_grades=selected_class
         ).select_related("student").distinct()
-
+        
         # ---- HANDLE SAVE (POST) ----
         if request.method == "POST":
             for r in records:
