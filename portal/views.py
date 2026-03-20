@@ -145,10 +145,18 @@ EXAM_TYPES = ['CA', 'Mid-Term', 'Exam']
 
 def report_card_detail(request, student_id, session_id, term_id):
     # Fetch all results for the student in this session & term
+    # Only show subjects currently assigned to the student's class
+    from quiz.models import CourseGrade
+    active_subject_ids = CourseGrade.objects.filter(
+        name=raw_class,
+        schools=school
+    ).values_list('subjects__course_name_id', flat=True)
+
     results = Result_Portal.objects.filter(
         student_id=student_id,
         session_id=session_id,
-        term_id=term_id
+        term_id=term_id,
+        subject_id__in=active_subject_ids
     ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('subject__title')
 
     if not results.exists():
@@ -250,12 +258,13 @@ def download_class_report(request):
 def download_term_report_pdf(request, student_id, session_id, term_id):
     from collections import defaultdict
     from reportlab.lib.units import mm
+    from quiz.models import CourseGrade
 
     # ── Fetch results ─────────────────────────────────────────────
     results = Result_Portal.objects.filter(
         student_id=student_id,
         session_id=session_id,
-        term_id=term_id
+        term_id=term_id,
     ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('subject__title')
 
     if not results.exists():
@@ -268,8 +277,22 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     is_midterm = getattr(term, 'is_midterm', False)
 
     # ── Clean result_class ────────────────────────────────────────
-    raw_class     = getattr(results.first(), 'result_class', '')
-    display_class = raw_class.strip().split()[0]
+    raw_class   = getattr(results.first(), 'result_class', '')
+    school_name = school.school_name if school else ''
+    if school_name and school_name.lower() in raw_class.lower():
+        display_class = raw_class.strip().split()[0]
+    else:
+        display_class = raw_class.strip()
+
+    # ── Filter to only currently assigned subjects ────────────────
+    active_subject_ids = list(
+        CourseGrade.objects.filter(
+            students__id=student_id,
+            schools=school,
+        ).values_list('subjects__course_name_id', flat=True)
+    )
+    if active_subject_ids:
+        results = results.filter(subject_id__in=active_subject_ids)
 
     # ── Class stats ───────────────────────────────────────────────
     all_results = Result_Portal.objects.filter(
@@ -1753,12 +1776,12 @@ from reportlab.lib import colors
 import re
 from collections import defaultdict
 from reportlab.lib.units import mm
+
 def download_class_reports_pdf(request, result_class, session_id, term_id):
     from collections import defaultdict
     from reportlab.lib.units import mm
 
-    # ── Clean display class ───────────────────────────────────────
-    display_class = result_class.strip().split()[0]
+    from quiz.models import CourseGrade
 
     # ── Fetch all results ─────────────────────────────────────────
     all_results = Result_Portal.objects.filter(
@@ -1770,7 +1793,26 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
     if not all_results.exists():
         return HttpResponse("No results found for this class.", status=404)
 
+    # ── Clean display class ───────────────────────────────────────
+    first_result  = all_results.first()
+    school_name   = first_result.schools.school_name if first_result.schools else ''
+    if school_name and school_name.lower() in result_class.lower():
+        display_class = result_class.strip().split()[0]
+    else:
+        display_class = result_class.strip()
+
+    # ── Filter to only currently assigned subjects ────────────────
+    active_subject_ids = list(
+        CourseGrade.objects.filter(
+            name=result_class,
+            schools=first_result.schools,
+        ).values_list('subjects__course_name_id', flat=True)
+    )
+    if active_subject_ids:
+        all_results = all_results.filter(subject_id__in=active_subject_ids)
+
     # ── Group by student ──────────────────────────────────────────
+    
     students = {}
     for res in all_results:
         sid = res.student_id
@@ -2296,6 +2338,8 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
 
     doc.build(elements)
     return response
+
+
 
 from celery.result import AsyncResult
 from django.http import JsonResponse
