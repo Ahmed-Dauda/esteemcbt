@@ -2874,12 +2874,13 @@ def form_teacher_dashboard(request):
     terms    = Term.objects.filter(school=school)
 
     # Classes where teacher is assigned (either as class teacher or form teacher)
+    # Classes where teacher is assigned (either as class teacher or form teacher)
     from quiz.models import CourseGrade
-    from django.db import models
+    from django.db.models import Q
     classes = CourseGrade.objects.filter(
         schools=school
     ).filter(
-        models.Q(teachers=teacher) | models.Q(form_teacher=teacher)
+        Q(teachers=teacher) | Q(form_teacher=teacher)
     ).distinct()
 
     # ---- SELECTED FILTERS ----
