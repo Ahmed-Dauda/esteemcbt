@@ -2873,8 +2873,14 @@ def form_teacher_dashboard(request):
     sessions = Session.objects.filter(school=school)
     terms    = Term.objects.filter(school=school)
 
-    # ✅ Only classes associated with this teacher
-    classes = teacher.classes_taught.all()
+    # Classes where teacher is assigned (either as class teacher or form teacher)
+    from quiz.models import CourseGrade
+    from django.db import models
+    classes = CourseGrade.objects.filter(
+        schools=school
+    ).filter(
+        models.Q(teachers=teacher) | models.Q(form_teacher=teacher)
+    ).distinct()
 
     # ---- SELECTED FILTERS ----
     selected_session_id = request.GET.get("session")
