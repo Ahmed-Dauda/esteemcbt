@@ -76,6 +76,7 @@ def subscription_edit(request, school_id):
 def payment_required(request):
     return render(request, "portal/payment_required.html")
 
+
 @require_reportcard_subscription
 def report_card_list(request):
     school = getattr(request.user, 'school', None)
@@ -142,33 +143,36 @@ from .models import Result_Portal,StudentBehaviorRecord
 from reportlab.lib.units import inch, mm
 
 EXAM_TYPES = ['CA', 'Mid-Term', 'Exam']
-
 def report_card_detail(request, student_id, session_id, term_id):
-    # Fetch all results for the student in this session & term
-    # Only show subjects currently assigned to the student's class
     from quiz.models import CourseGrade
-    active_subject_ids = CourseGrade.objects.filter(
-        name=raw_class,
-        schools=school
-    ).values_list('subjects__course_name_id', flat=True)
 
+    # Fetch results first
     results = Result_Portal.objects.filter(
         student_id=student_id,
         session_id=session_id,
         term_id=term_id,
-        subject_id__in=active_subject_ids
     ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('subject__title')
 
     if not results.exists():
         return HttpResponse("No results found.", status=404)
 
-    student = results.first().student
-    session = results.first().session
-    term = results.first().term
+    student      = results.first().student
+    session      = results.first().session
+    term         = results.first().term
     result_class = getattr(results.first(), 'result_class', '')
+    school       = results.first().schools
+
+    # Filter to only currently assigned subjects
+    active_subject_ids = list(
+        CourseGrade.objects.filter(
+            students__id=student_id,
+            schools=school,
+        ).values_list('subjects__course_name_id', flat=True)
+    )
+    if active_subject_ids:
+        results = results.filter(subject_id__in=active_subject_ids)
 
     # Get school max scores from the first result
-    school = results.first().schools
     max_ca = school.max_ca_score if school else 10
     max_mid = school.max_midterm_score if school else 30
     max_exam = school.max_exam_score if school else 60
@@ -255,6 +259,7 @@ def download_class_report(request):
 
 
 #individual report card PDF generation
+
 def download_term_report_pdf(request, student_id, session_id, term_id):
     from collections import defaultdict
     from reportlab.lib.units import mm
@@ -303,7 +308,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     ).select_related('subject')
     if active_subject_ids:
         all_results = all_results.filter(subject_id__in=active_subject_ids)
-        
+
 
     student_total   = sum(
         float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
