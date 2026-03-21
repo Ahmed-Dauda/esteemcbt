@@ -35,6 +35,11 @@ class SchoolForm(forms.ModelForm):
     class Meta:
         model = School
         fields = [
+            'show_psychomotor',
+    'show_affective',
+    'show_form_teacher_comment',
+    'show_principal_comment',
+    'show_position',
             'name',
             'school_name',
             'next_term_date',
@@ -56,6 +61,11 @@ class SchoolForm(forms.ModelForm):
             'A_comment', 'B_comment', 'C_comment', 'P_comment', 'F_comment',
         ]
         widgets = {
+            'show_psychomotor':           forms.CheckboxInput(),
+    'show_affective':             forms.CheckboxInput(),
+    'show_form_teacher_comment':  forms.CheckboxInput(),
+    'show_principal_comment':     forms.CheckboxInput(),
+    'show_position':              forms.CheckboxInput(),
             'next_term_date': forms.DateInput(attrs={'type': 'date'}),
         }
         

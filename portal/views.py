@@ -259,7 +259,6 @@ def download_class_report(request):
 
 
 #individual report card PDF generation
-
 def download_term_report_pdf(request, student_id, session_id, term_id):
     from collections import defaultdict
     from reportlab.lib.units import mm
@@ -300,7 +299,6 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
         results = results.filter(subject_id__in=active_subject_ids)
 
     # ── Class stats ───────────────────────────────────────────────
-    # ── Class stats ───────────────────────────────────────────────
     all_results = Result_Portal.objects.filter(
         result_class=raw_class,
         session_id=session_id,
@@ -308,7 +306,6 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     ).select_related('subject')
     if active_subject_ids:
         all_results = all_results.filter(subject_id__in=active_subject_ids)
-
 
     student_total   = sum(
         float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
@@ -411,7 +408,6 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
                                   alignment=TA_LEFT,   leading=7)
         tiny_ctr = ParagraphStyle("tv", fontSize=6,   fontName="Helvetica",
                                   alignment=TA_CENTER, leading=7)
-
         hdr  = [[Paragraph(f"<b>{title}</b>", tiny_hdr),
                  Paragraph("<b>Rating</b>",    tiny_hdr)]]
         rows = [[Paragraph(t, tiny_cel), Paragraph(str(v), tiny_ctr)]
@@ -427,6 +423,13 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
             ("ROWBACKGROUNDS",(0,1), (-1,-1), [colors.white, LGREY]),
         ]))
         return tbl
+
+    # ── Feature toggles ───────────────────────────────────────────
+    show_psychomotor          = getattr(school, 'show_psychomotor',          True)
+    show_affective            = getattr(school, 'show_affective',            True)
+    show_form_teacher_comment = getattr(school, 'show_form_teacher_comment', True)
+    show_principal_comment    = getattr(school, 'show_principal_comment',    True)
+    show_position             = getattr(school, 'show_position',             True)
 
     max_ca   = float(school.max_ca_score)      if school and school.max_ca_score      else 10.0
     max_mid  = float(school.max_midterm_score) if school and school.max_midterm_score  else 20.0
@@ -519,7 +522,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
          ic("Lowest In Class",  lowest_in_class),
          ic("Final Grade",      final_grade)],
         [ic("Final Average",    student_average),
-         ic("POSITION",         ordinal(position)),
+         ic("POSITION",         ordinal(position) if show_position else "—"),
          ic("Next Term Begins", getattr(school, 'next_term_date', 'N/A') if school else 'N/A')],
     ]
     info_tbl = Table(info_data, colWidths=[col3, col3, col3])
@@ -696,17 +699,23 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
                                 ("RELATIONSHIP WITH STUDENTS",""), ("SELF CONTROL",""),
                                 ("ATTENTIVENESS",""), ("PERSEVERANCE","")]
 
-        side_tbl = Table(
-            [[trait_table("Default Psychomotor Rating",      psycho_traits,    half),
-              trait_table("Default Affective Traits Rating", affective_traits, half)]],
-            colWidths=[half, half]
-        )
-        side_tbl.setStyle(TableStyle([
-            ("VALIGN",       (0,0), (-1,-1), "TOP"),
-            ("LEFTPADDING",  (0,0), (-1,-1), 0),
-            ("RIGHTPADDING", (0,0), (-1,-1), 0),
-        ]))
-        elements += [side_tbl, Spacer(1, 6)]
+        # ── Trait tables (toggle controlled) ─────────────────────
+        if show_psychomotor or show_affective:
+            cols   = []
+            widths = []
+            if show_psychomotor:
+                cols.append(trait_table("Psychomotor Rating", psycho_traits, half))
+                widths.append(half)
+            if show_affective:
+                cols.append(trait_table("Affective Traits", affective_traits, half))
+                widths.append(half)
+            side_tbl = Table([cols], colWidths=widths)
+            side_tbl.setStyle(TableStyle([
+                ("VALIGN",       (0,0), (-1,-1), "TOP"),
+                ("LEFTPADDING",  (0,0), (-1,-1), 0),
+                ("RIGHTPADDING", (0,0), (-1,-1), 0),
+            ]))
+            elements += [side_tbl, Spacer(1, 6)]
 
         form_teacher_name = "N/A"
         if behavior:
@@ -719,48 +728,63 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
         form_comment      = (behavior.form_teacher_comment if behavior else "") or ""
         principal_comment = (behavior.principal_comment    if behavior else "") or ""
 
-        comments_data = [
-            [Paragraph(f"<b>Form Teacher:</b> {form_teacher_name}", S["label"]), ""],
-            [Paragraph("<b>Form Teacher Comment:</b>", S["label"]), ""],
-            [Paragraph(form_comment      or "No comment.", S["comment"]), ""],
-            [Paragraph("<b>PRINCIPAL'S REMARK:</b>",    S["label"]), ""],
-            [Paragraph(principal_comment or "No remark.", S["comment"]), ""],
-            [
-                Paragraph("<b>Form Teacher SIGNATURE:</b> _______________________", S["label"]),
-                Paragraph("<b>PRINCIPAL'S SIGNATURE:</b> _______________________",  S["label"]),
-            ],
-        ]
+        # ── Build comments table dynamically ─────────────────────
+        comments_data  = [[Paragraph(f"<b>Form Teacher:</b> {form_teacher_name}", S["label"]), ""]]
+        span_commands  = [("SPAN", (0, 0), (1, 0))]
+        bg_commands    = [("BACKGROUND", (0, 0), (-1, 0), LGREY)]
+        row            = 1
+
+        if show_form_teacher_comment:
+            comments_data += [
+                [Paragraph("<b>Form Teacher Comment:</b>", S["label"]), ""],
+                [Paragraph(form_comment or "No comment.", S["comment"]), ""],
+            ]
+            span_commands += [
+                ("SPAN", (0, row),   (1, row)),
+                ("SPAN", (0, row+1), (1, row+1)),
+            ]
+            row += 2
+
+        if show_principal_comment:
+            comments_data += [
+                [Paragraph("<b>PRINCIPAL'S REMARK:</b>", S["label"]), ""],
+                [Paragraph(principal_comment or "No remark.", S["comment"]), ""],
+            ]
+            span_commands += [
+                ("SPAN", (0, row),   (1, row)),
+                ("SPAN", (0, row+1), (1, row+1)),
+            ]
+            bg_commands.append(("BACKGROUND", (0, row), (-1, row), LGREY))
+            row += 2
+
+        # Signature row — always last
+        sig_left  = Paragraph("<b>Form Teacher SIGNATURE:</b> _______________________", S["label"])
+        sig_right = Paragraph("<b>PRINCIPAL'S SIGNATURE:</b> _______________________",  S["label"])
 
         if school and getattr(school, 'teacher_signature', None):
             try:
                 sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
-                sig_img  = RLImage(sig_data, width=100, height=40)
-                comments_data[5][0] = sig_img
+                sig_left = RLImage(sig_data, width=100, height=40)
             except Exception:
                 pass
 
         if school and getattr(school, 'principal_signature', None):
             try:
                 sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
-                sig_img  = RLImage(sig_data, width=100, height=40)
-                comments_data[5][1] = sig_img
+                sig_right = RLImage(sig_data, width=100, height=40)
             except Exception:
                 pass
 
-        comment_tbl = Table(comments_data, colWidths=[INNER * 0.6, INNER * 0.4])
-        comment_tbl.setStyle(TableStyle([
+        comments_data.append([sig_left, sig_right])
+
+        base_style = [
             ("GRID",          (0,0), (-1,-1), 0.3, colors.lightgrey),
             ("TOPPADDING",    (0,0), (-1,-1), 4),
             ("BOTTOMPADDING", (0,0), (-1,-1), 4),
             ("LEFTPADDING",   (0,0), (-1,-1), 6),
-            ("SPAN",          (0,0), (1,0)),
-            ("SPAN",          (0,1), (1,1)),
-            ("SPAN",          (0,2), (1,2)),
-            ("SPAN",          (0,3), (1,3)),
-            ("SPAN",          (0,4), (1,4)),
-            ("BACKGROUND",    (0,0), (-1,0),  LGREY),
-            ("BACKGROUND",    (0,3), (-1,3),  LGREY),
-        ]))
+        ]
+        comment_tbl = Table(comments_data, colWidths=[INNER * 0.6, INNER * 0.4])
+        comment_tbl.setStyle(TableStyle(base_style + span_commands + bg_commands))
         elements.append(comment_tbl)
 
     # ── Principal signature + form teacher for midterm ────────────
@@ -769,7 +793,6 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
         elements.append(section_header("Principal's Signature"))
         elements.append(Spacer(1, 6))
 
-        # behavior already fetched above — reuse it
         form_teacher_name = "N/A"
         if behavior:
             teachers = behavior.form_teacher.all()
@@ -1786,6 +1809,7 @@ import re
 from collections import defaultdict
 from reportlab.lib.units import mm
 
+
 def download_class_reports_pdf(request, result_class, session_id, term_id):
     from collections import defaultdict
     from reportlab.lib.units import mm
@@ -1811,14 +1835,26 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
         display_class = result_class.strip()
 
     # ── Filter to only currently assigned subjects ────────────────
+    # ── Filter to only currently assigned subjects ────────────────
+    school_obj = first_result.schools
     active_subject_ids = list(
         CourseGrade.objects.filter(
             name=result_class,
-            schools=first_result.schools,
+            schools=school_obj,
         ).values_list('subjects__course_name_id', flat=True)
     )
+    if not active_subject_ids:
+        first_word = result_class.strip().split()[0]
+        active_subject_ids = list(
+            CourseGrade.objects.filter(
+                name__istartswith=first_word,
+                schools=school_obj,
+            ).values_list('subjects__course_name_id', flat=True)
+        )
     if active_subject_ids:
-        all_results = all_results.filter(subject_id__in=active_subject_ids)
+        filtered = all_results.filter(subject_id__in=active_subject_ids)
+        if filtered.exists():
+            all_results = filtered
 
     # ── Group by student ──────────────────────────────────────────
 
@@ -1952,10 +1988,18 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
         term       = data['term']
         is_midterm = getattr(term, 'is_midterm', False)
 
-        # ── Behavior from map (no extra query) ────────────────
+       # ── Behavior from map (no extra query) ────────────────
         behavior = behavior_map.get(sid)
 
+        # ── Feature toggles ───────────────────────────────────
+        show_psychomotor          = getattr(school, 'show_psychomotor',          True)
+        show_affective            = getattr(school, 'show_affective',            True)
+        show_form_teacher_comment = getattr(school, 'show_form_teacher_comment', True)
+        show_principal_comment    = getattr(school, 'show_principal_comment',    True)
+        show_position             = getattr(school, 'show_position',             True)
+
         # ── Stats ─────────────────────────────────────────────
+
         num_subjects     = len(records)
         student_total    = sum(
             float(r.ca_score or 0) + float(r.midterm_score or 0) + float(r.exam_score or 0)
@@ -2062,7 +2106,7 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
              ic("Lowest In Class",  lowest_in_class),
              ic("Final Grade",      final_grade)],
             [ic("Final Average",    final_average),
-             ic("POSITION",         ordinal(position)),
+             ic("POSITION",         ordinal(position) if show_position else "—"),
              ic("Next Term Begins", getattr(school, 'next_term_date', 'N/A') if school else 'N/A')],
         ]
         info_tbl = Table(info_data, colWidths=[col3, col3, col3])
@@ -2239,17 +2283,22 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
                                     ("RELATIONSHIP WITH STUDENTS",""), ("SELF CONTROL",""),
                                     ("ATTENTIVENESS",""), ("PERSEVERANCE","")]
 
-            side_tbl = Table(
-                [[trait_table("Default Psychomotor Rating",      psycho_traits,    half),
-                  trait_table("Default Affective Traits Rating", affective_traits, half)]],
-                colWidths=[half, half]
-            )
-            side_tbl.setStyle(TableStyle([
-                ("VALIGN",       (0,0), (-1,-1), "TOP"),
-                ("LEFTPADDING",  (0,0), (-1,-1), 0),
-                ("RIGHTPADDING", (0,0), (-1,-1), 0),
-            ]))
-            elements += [side_tbl, Spacer(1, 6)]
+            if show_psychomotor or show_affective:
+                cols   = []
+                widths = []
+                if show_psychomotor:
+                    cols.append(trait_table("Psychomotor Rating", psycho_traits, half))
+                    widths.append(half)
+                if show_affective:
+                    cols.append(trait_table("Affective Traits", affective_traits, half))
+                    widths.append(half)
+                side_tbl = Table([cols], colWidths=widths)
+                side_tbl.setStyle(TableStyle([
+                    ("VALIGN",       (0,0), (-1,-1), "TOP"),
+                    ("LEFTPADDING",  (0,0), (-1,-1), 0),
+                    ("RIGHTPADDING", (0,0), (-1,-1), 0),
+                ]))
+                elements += [side_tbl, Spacer(1, 6)]
 
             form_teacher_name = "N/A"
             if behavior:
@@ -2262,50 +2311,57 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
             form_comment      = (behavior.form_teacher_comment if behavior else "") or ""
             principal_comment = (behavior.principal_comment    if behavior else "") or ""
 
-            comments_data = [
-                [Paragraph(f"<b>Form Teacher:</b> {form_teacher_name}", S["label"]), ""],
-                [Paragraph("<b>Form Teacher Comment:</b>", S["label"]), ""],
-                [Paragraph(form_comment      or "No comment.", S["comment"]), ""],
-                [Paragraph("<b>PRINCIPAL'S REMARK:</b>",    S["label"]), ""],
-                [Paragraph(principal_comment or "No remark.", S["comment"]), ""],
-                [
-                    Paragraph("<b>Form Teacher SIGNATURE:</b> _______________________", S["label"]),
-                    Paragraph("<b>PRINCIPAL'S SIGNATURE:</b> _______________________",  S["label"]),
-                ],
-            ]
+            comments_data = [[Paragraph(f"<b>Form Teacher:</b> {form_teacher_name}", S["label"]), ""]]
+            span_commands = [("SPAN", (0, 0), (1, 0))]
+            bg_commands   = [("BACKGROUND", (0, 0), (-1, 0), LGREY)]
+            row           = 1
+
+            if show_form_teacher_comment:
+                comments_data += [
+                    [Paragraph("<b>Form Teacher Comment:</b>", S["label"]), ""],
+                    [Paragraph(form_comment or "No comment.", S["comment"]), ""],
+                ]
+                span_commands += [("SPAN", (0, row), (1, row)), ("SPAN", (0, row+1), (1, row+1))]
+                row += 2
+
+            if show_principal_comment:
+                comments_data += [
+                    [Paragraph("<b>PRINCIPAL'S REMARK:</b>", S["label"]), ""],
+                    [Paragraph(principal_comment or "No remark.", S["comment"]), ""],
+                ]
+                span_commands += [("SPAN", (0, row), (1, row)), ("SPAN", (0, row+1), (1, row+1))]
+                bg_commands.append(("BACKGROUND", (0, row), (-1, row), LGREY))
+                row += 2
+
+            sig_left  = Paragraph("<b>Form Teacher SIGNATURE:</b> _______________________", S["label"])
+            sig_right = Paragraph("<b>PRINCIPAL'S SIGNATURE:</b> _______________________",  S["label"])
 
             if school and getattr(school, 'teacher_signature', None):
                 try:
                     sig_data = io.BytesIO(requests.get(school.teacher_signature.url).content)
-                    sig_img  = RLImage(sig_data, width=100, height=40)
-                    comments_data[5][0] = sig_img
+                    sig_left = RLImage(sig_data, width=100, height=40)
                 except Exception:
                     pass
 
             if school and getattr(school, 'principal_signature', None):
                 try:
                     sig_data = io.BytesIO(requests.get(school.principal_signature.url).content)
-                    sig_img  = RLImage(sig_data, width=100, height=40)
-                    comments_data[5][1] = sig_img
+                    sig_right = RLImage(sig_data, width=100, height=40)
                 except Exception:
                     pass
 
-            comment_tbl = Table(comments_data, colWidths=[INNER * 0.6, INNER * 0.4])
-            comment_tbl.setStyle(TableStyle([
+            comments_data.append([sig_left, sig_right])
+
+            base_style = [
                 ("GRID",          (0,0), (-1,-1), 0.3, colors.lightgrey),
                 ("TOPPADDING",    (0,0), (-1,-1), 4),
                 ("BOTTOMPADDING", (0,0), (-1,-1), 4),
                 ("LEFTPADDING",   (0,0), (-1,-1), 6),
-                ("SPAN",          (0,0), (1,0)),
-                ("SPAN",          (0,1), (1,1)),
-                ("SPAN",          (0,2), (1,2)),
-                ("SPAN",          (0,3), (1,3)),
-                ("SPAN",          (0,4), (1,4)),
-                ("BACKGROUND",    (0,0), (-1,0),  LGREY),
-                ("BACKGROUND",    (0,3), (-1,3),  LGREY),
-            ]))
+            ]
+            comment_tbl = Table(comments_data, colWidths=[INNER * 0.6, INNER * 0.4])
+            comment_tbl.setStyle(TableStyle(base_style + span_commands + bg_commands))
             elements.append(comment_tbl)
-
+            
         # ── Principal signature always shows for midterm ──────
         if is_midterm:
             elements.append(Spacer(1, 10))
@@ -2916,7 +2972,7 @@ def form_teacher_dashboard(request):
             term=selected_term,
             student__course_grades=selected_class
         ).select_related("student").distinct()
-        
+
         # ---- HANDLE SAVE (POST) ----
         if request.method == "POST":
             for r in records:

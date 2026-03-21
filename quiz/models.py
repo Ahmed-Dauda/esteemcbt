@@ -146,6 +146,14 @@ class School(models.Model):
     P_comment = models.CharField(max_length=255, blank=True, null=True, default='Pass')
     F_comment = models.CharField(max_length=255, blank=True, null=True, default='Fail')
 
+    # Report card feature toggles
+    show_psychomotor    = models.BooleanField(default=True)
+    show_affective      = models.BooleanField(default=True)
+    show_form_teacher_comment = models.BooleanField(default=True)
+    show_principal_comment    = models.BooleanField(default=True)
+    show_position       = models.BooleanField(default=True)
+
+
     def __str__(self):
         return f"{self.school_name}"
 
