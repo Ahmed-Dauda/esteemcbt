@@ -48,8 +48,15 @@ urlpatterns = [
     # ── Report Cards ──────────────────────────────────────────────────────
     path('report-cards/', views.report_card_list, name='report_card_list'),
     path('my-report-cards/', views.my_report_cards, name='my_report_cards'),
+    path('view-report/<int:student_id>/<int:session_id>/<int:term_id>/', 
+         views.view_report_card, name='view_report_card'),
+
     path('report-card/<int:student_id>/<int:session_id>/<int:term_id>/',
          views.report_card_detail, name='report_card_detail'),
+    path('student-report-card/<int:student_id>/<int:session_id>/<int:term_id>/',
+         views.view_report_card, name='view_report_card'),
+
+         
     path('report-card/term/pdf/<int:student_id>/<int:session_id>/<int:term_id>/',
          views.download_term_report_pdf, name='download_term_report_pdf'),
 

@@ -104,33 +104,143 @@ def report_card_list(request):
     return render(request, 'portal/report_card_list.html', {'reports': reports})
 
 
+from django.db.models import Avg, Count, Q
+
+from django.db.models import Avg, Count
+
+from django.shortcuts import render
+from django.db.models import Avg, Count
+from .models import Result_Portal
+from .decorators import require_reportcard_subscription
+
+
 @require_reportcard_subscription
 def my_report_cards(request):
-    """
-    Display all report cards for the logged-in student.
-    """
-    user = request.user
+    school = getattr(request.user, 'school', None)
 
-    # Fetch distinct term/class/session combinations for this student
-    reports = (
-        Result_Portal.objects.filter(student=user)
-        .select_related('student', 'session', 'term')
-        .values('result_class', 'session__id', 'term__id')
-        .distinct()
+    # Get only current student's results
+    all_results = Result_Portal.objects.filter(
+        schools=school,
+        student=request.user
+    ).select_related('student', 'session', 'term')
+
+    seen = set()
+    reports = []
+
+    for res in all_results:
+        key = (res.result_class, res.session_id, res.term_id)
+
+        if key not in seen:
+            seen.add(key)
+
+            # ✅ Aggregate stats per report
+            summary = Result_Portal.objects.filter(
+                student=request.user,
+                result_class=res.result_class,
+                session=res.session,
+                term=res.term
+            ).aggregate(
+                avg_score=Avg('total_score'),   # ✅ FIXED FIELD
+                total_subjects=Count('id')
+            )
+
+            reports.append({
+                'student': res.student,
+                'result_class': res.result_class,
+                'session': res.session,
+                'term': res.term,
+                'avg_score': round(summary['avg_score'], 1) if summary['avg_score'] else None,
+                'total_subjects': summary['total_subjects'],
+            })
+
+    # ✅ Unique sessions count
+    sessions_count = len(set(r['session'] for r in reports))
+
+    context = {
+        'reports': reports,
+        'sessions_count': sessions_count,
+    }
+
+    return render(request, 'portal/my_report_cards.html', context)
+
+
+
+
+EXAM_TYPES = ['CA', 'Mid-Term', 'Exam']
+
+@require_reportcard_subscription
+def view_report_card(request, student_id, session_id, term_id):
+    from quiz.models import CourseGrade
+
+    # Fetch results first
+    results = Result_Portal.objects.filter(
+        student_id=student_id,
+        session_id=session_id,
+        term_id=term_id,
+    ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('subject__title')
+
+    if not results.exists():
+        return HttpResponse("No results found.", status=404)
+
+    student      = results.first().student
+    session      = results.first().session
+    term         = results.first().term
+    result_class = getattr(results.first(), 'result_class', '')
+    school       = results.first().schools
+
+    # Filter to only currently assigned subjects
+    active_subject_ids = list(
+        CourseGrade.objects.filter(
+            students__id=student_id,
+            schools=school,
+        ).values_list('subjects__course_name_id', flat=True)
     )
+    if active_subject_ids:
+        results = results.filter(subject_id__in=active_subject_ids)
 
-    # Prepare report objects for the template
-    report_list = []
-    for r in reports:
-        report_list.append({
-            'student': user,
-            'result_class': r['result_class'],
-            'session': Session.objects.get(id=r['session__id']),
-            'term': Term.objects.get(id=r['term__id'])
-        })
+    # Get school max scores from the first result
+    max_ca = school.max_ca_score if school else 10
+    max_mid = school.max_midterm_score if school else 30
+    max_exam = school.max_exam_score if school else 60
 
-    context = {'reports': report_list}
-    return render(request, 'portal/report_card_list.html', context)
+    # Total and average per student (normalized in model)
+    student_total = sum([float(res.total_score) for res in results])
+    student_average = round(student_total / len(results), 2) if results else 0
+
+    # Class total, average, and position
+    all_students_results = Result_Portal.objects.filter(
+        result_class=result_class,
+        session_id=session_id,
+        term_id=term_id
+    ).select_related('student')
+
+    class_totals = {}
+    for res in all_students_results:
+        sid = res.student_id
+        class_totals[sid] = class_totals.get(sid, 0) + float(res.total_score or 0)
+
+    class_average = round(sum(class_totals.values()) / len(class_totals), 2) if class_totals else 0
+    sorted_totals = sorted(class_totals.items(), key=lambda x: x[1], reverse=True)
+    position = next((i + 1 for i, (sid, total) in enumerate(sorted_totals) if sid == student_id), None)
+    total_students = len(class_totals)
+
+    context = {
+        'student': student,
+        'results': results,
+        'result_class': result_class,
+        'session': session,
+        'term': term,
+        'student_total': student_total,
+        'student_average': student_average,
+        'class_average': class_average,
+        'position': position,
+        'total_students': total_students,
+        'max_ca': max_ca,
+        'max_mid': max_mid,
+        'max_exam': max_exam,
+    }
+
+    return render(request, 'portal/view_report_card.html', context)
 
 
 from django.shortcuts import render
@@ -141,6 +251,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from .models import Result_Portal,StudentBehaviorRecord
 from reportlab.lib.units import inch, mm
+
 
 EXAM_TYPES = ['CA', 'Mid-Term', 'Exam']
 def report_card_detail(request, student_id, session_id, term_id):
@@ -2403,7 +2514,7 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
                 names = [f"{fn} {ln}".strip() for fn, ln in cg_teachers if fn or ln]
                 if names:
                     form_teacher_name = ", ".join(set(names))
-                    
+
             elements.append(Paragraph(
                 f"<b>Form Teacher:</b> {form_teacher_name}",
                 S["label"]
