@@ -724,6 +724,15 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
                 form_teacher_name = ", ".join(
                     f"{t.first_name} {t.last_name}".strip() for t in teachers
                 )
+        if form_teacher_name == "N/A":
+            from quiz.models import CourseGrade
+            cg_teachers = CourseGrade.objects.filter(
+                students__id=student_id,
+                schools=school,
+            ).values_list('form_teacher__first_name', 'form_teacher__last_name')
+            names = [f"{fn} {ln}".strip() for fn, ln in cg_teachers if fn or ln]
+            if names:
+                form_teacher_name = ", ".join(set(names))
 
         form_comment      = (behavior.form_teacher_comment if behavior else "") or ""
         principal_comment = (behavior.principal_comment    if behavior else "") or ""
@@ -2299,7 +2308,7 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
                     ("RIGHTPADDING", (0,0), (-1,-1), 0),
                 ]))
                 elements += [side_tbl, Spacer(1, 6)]
-
+            #g
             form_teacher_name = "N/A"
             if behavior:
                 teachers = behavior.form_teacher.all()
@@ -2307,6 +2316,15 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
                     form_teacher_name = ", ".join(
                         f"{t.first_name} {t.last_name}".strip() for t in teachers
                     )
+            if form_teacher_name == "N/A":
+                from quiz.models import CourseGrade
+                cg_teachers = CourseGrade.objects.filter(
+                    students__id=sid,
+                    schools=school,
+                ).values_list('form_teacher__first_name', 'form_teacher__last_name')
+                names = [f"{fn} {ln}".strip() for fn, ln in cg_teachers if fn or ln]
+                if names:
+                    form_teacher_name = ", ".join(set(names))
 
             form_comment      = (behavior.form_teacher_comment if behavior else "") or ""
             principal_comment = (behavior.principal_comment    if behavior else "") or ""
@@ -2361,14 +2379,14 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
             comment_tbl = Table(comments_data, colWidths=[INNER * 0.6, INNER * 0.4])
             comment_tbl.setStyle(TableStyle(base_style + span_commands + bg_commands))
             elements.append(comment_tbl)
-            
+
         # ── Principal signature always shows for midterm ──────
         if is_midterm:
             elements.append(Spacer(1, 10))
             elements.append(section_header("Principal's Signature"))
             elements.append(Spacer(1, 6))
 
-            # behavior already from map — reuse it
+            #behavior already from map — reuse it
             form_teacher_name = "N/A"
             if behavior:
                 teachers = behavior.form_teacher.all()
@@ -2376,7 +2394,16 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
                     form_teacher_name = ", ".join(
                         f"{t.first_name} {t.last_name}".strip() for t in teachers
                     )
-
+            if form_teacher_name == "N/A":
+                from quiz.models import CourseGrade
+                cg_teachers = CourseGrade.objects.filter(
+                    students__id=sid,
+                    schools=school,
+                ).values_list('form_teacher__first_name', 'form_teacher__last_name')
+                names = [f"{fn} {ln}".strip() for fn, ln in cg_teachers if fn or ln]
+                if names:
+                    form_teacher_name = ", ".join(set(names))
+                    
             elements.append(Paragraph(
                 f"<b>Form Teacher:</b> {form_teacher_name}",
                 S["label"]
