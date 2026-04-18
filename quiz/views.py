@@ -163,6 +163,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from .models import School
 from .forms import SchoolForm
+
+
 @login_required(login_url='teacher:teacher_login')
 def edit_school(request):
     # Get the examiner's school
@@ -310,6 +312,140 @@ def ai_summative_assessment(request):
     return render(request, "quiz/dashboard/ai_summative_assessment.html", {
         "courses": courses,
     })
+
+
+
+
+@login_required
+def paste_questions(request):
+    try:
+        teacher = request.user.teacher
+    except:
+        if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': 'Teacher account not found.'})
+        messages.error(request, "Teacher account not found.")
+        return redirect("dashboard")
+
+    courses = teacher.subjects_taught.all()
+
+    # ── SAVE (reuses same logic as ai_summative_assessment) ──
+    if request.method == "POST" and request.POST.get("confirm_save") == "1":
+        total_questions = int(request.POST.get("total_questions", 0))
+        course_id = request.POST.get("course_id")
+        marks = int(request.POST.get("marks", 1))
+
+        try:
+            course_detail = Course.objects.get(id=course_id, teachers=teacher)
+        except Course.DoesNotExist:
+            if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': 'You do not have permission to add questions to this course.'})
+            messages.error(request, "Permission denied.")
+            return redirect("quiz:paste_questions")
+
+        saved = 0
+        for i in range(1, total_questions + 1):
+            question_text = request.POST.get(f"question_{i}", "").strip()
+            options = [
+                request.POST.get(f"option1_{i}", "").strip(),
+                request.POST.get(f"option2_{i}", "").strip(),
+                request.POST.get(f"option3_{i}", "").strip(),
+                request.POST.get(f"option4_{i}", "").strip(),
+            ]
+            answer = request.POST.get(f"answer_{i}", "Option1").strip()
+
+            if question_text and all(options):
+                Question.objects.create(
+                    course=course_detail,
+                    marks=marks,
+                    question=question_text,
+                    option1=options[0],
+                    option2=options[1],
+                    option3=options[2],
+                    option4=options[3],
+                    answer=answer
+                )
+                saved += 1
+
+        message_text = f"{saved} question{'s' if saved != 1 else ''} saved successfully." if saved > 0 else "No questions were saved."
+
+        if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'success' if saved > 0 else 'warning', 'message': message_text})
+
+        messages.success(request, message_text) if saved > 0 else messages.warning(request, message_text)
+        return redirect("quiz:paste_questions")
+
+    # ── PARSE via Claude API ──
+    # ── PARSE via OpenAI ──
+    if request.method == "POST" and request.POST.get("action") == "parse":
+        raw_text = request.POST.get("raw_text", "").strip()
+        course_id = request.POST.get("course_id", "")
+
+        if not raw_text:
+            return JsonResponse({'status': 'error', 'message': 'No text provided.'})
+
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a question parser. Convert pasted MCQ text into structured JSON. "
+                            "Return ONLY valid JSON, no markdown fences, no extra text."
+                        )
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""Parse the following into this exact JSON format:
+    {{
+    "questions": [
+        {{
+        "question": "Question text here",
+        "option1": "Option A text",
+        "option2": "Option B text",
+        "option3": "Option C text",
+        "option4": "Option D text",
+        "answer": "Option1"
+        }}
+    ]
+    }}
+
+    Rules:
+    - answer must be one of: Option1, Option2, Option3, Option4 (Option1=A, Option2=B, Option3=C, Option4=D)
+    - Every question must have exactly 4 options
+
+    Pasted text:
+    {raw_text}"""
+                    }
+                ],
+                temperature=0,
+            )
+
+            raw_json = response.choices[0].message.content.strip()
+
+            # Strip markdown fences if model adds them anyway
+            if raw_json.startswith("```"):
+                raw_json = raw_json.split("```")[1]
+                if raw_json.startswith("json"):
+                    raw_json = raw_json[4:]
+            raw_json = raw_json.strip()
+
+            parsed = json.loads(raw_json)
+            questions = parsed.get("questions", [])
+
+            if not questions:
+                return JsonResponse({'status': 'error', 'message': 'No questions could be parsed.'})
+
+            return JsonResponse({'status': 'success', 'questions': questions, 'course_id': course_id})
+
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Failed to parse AI response. Please try again.'})
+        except Exception as e:
+            logger.error(f"Paste parse error: {e}")
+            return JsonResponse({'status': 'error', 'message': f'Error: {str(e)}'})
+        
+    return render(request, "quiz/dashboard/paste_questions.html", {"courses": courses})
+
 
 #working fine
 # @login_required
@@ -571,141 +707,3 @@ def job_status(request, job_id):
     })
 
 
-# @login_required
-# def ai_summative_assessment(request):
-#     courses = Courses.objects.all()
-
-#     if request.method == 'POST' and request.POST.get("confirm_save") == "1":
-#         # --- save manually entered questions (same as before) ---
-#         total_questions = int(request.POST.get("total_questions", 0))
-#         course_id = request.POST.get("course_id")
-#         marks = int(request.POST.get("marks", 1))
-
-#         try:
-#             course_obj = Courses.objects.get(id=course_id)
-#         except Courses.DoesNotExist:
-#             messages.error(request, "Invalid course selected.")
-#             return redirect('quiz:ai_summative_assessment')
-
-#         course_detail = Course.objects.filter(course_name=course_obj).first()
-#         if not course_detail:
-#             messages.error(request, "No course details found for the selected course.")
-#             return redirect('quiz:ai_summative_assessment')
-
-#         saved = 0
-#         for i in range(1, total_questions + 1):
-#             question_text = request.POST.get(f"question_{i}", "").strip()
-#             options = [
-#                 request.POST.get(f"option1_{i}", "").strip(),
-#                 request.POST.get(f"option2_{i}", "").strip(),
-#                 request.POST.get(f"option3_{i}", "").strip(),
-#                 request.POST.get(f"option4_{i}", "").strip(),
-#             ]
-#             answer = request.POST.get(f"answer_{i}", "Option1").strip()
-
-#             if question_text and all(options):
-#                 Question.objects.create(
-#                     course=course_detail,
-#                     marks=marks,
-#                     question=question_text,
-#                     option1=options[0],
-#                     option2=options[1],
-#                     option3=options[2],
-#                     option4=options[3],
-#                     answer=answer
-#                 )
-#                 saved += 1
-
-#         messages.success(request, f"{saved} questions saved successfully.")
-#         return redirect('quiz:ai_summative_assessment')
-
-#     elif request.method == 'POST':
-#         # --- AI generated questions ---
-#         course_id = request.POST.get('course')
-#         num_questions = int(request.POST.get('num_questions', 5))
-#         marks = int(request.POST.get('marks', 1))
-#         difficulty = request.POST.get('difficulty', 'medium').lower()
-
-#         try:
-#             course_obj = Courses.objects.get(id=course_id)
-#         except Courses.DoesNotExist:
-#             messages.error(request, "Invalid course selected.")
-#             return redirect('quiz:ai_summative_assessment')
-
-#         course_title = course_obj.title or ""
-#         course_detail = Course.objects.filter(course_name=course_obj).first()
-#         if not course_detail:
-#             messages.error(request, "No course details found for this course.")
-#             return redirect('quiz:ai_summative_assessment')
-
-#         prompt = f"""
-#         You are an expert in learning assessment.
-
-#         Generate {num_questions} {difficulty}-level multiple-choice questions based strictly on the topic '{course_title}'.
-#         Strictly follow this format (no explanations, no numbering):
-
-#         Question: <question text>
-#         A. <option>
-#         B. <option>
-#         C. <option>
-#         D. <option>
-#         Answer: <correct option letter>
-#         """
-
-#         try:
-#             response = client.chat.completions.create(
-#                 model="gpt-4o-mini",
-#                 messages=[
-#                     {"role": "system", "content": "You are a helpful assistant that generates professional learning quiz questions."},
-#                     {"role": "user", "content": prompt},
-#                 ],
-#                 max_tokens=6000,
-#                 temperature=0,
-#             )
-
-#             if not response.choices:
-#                 messages.error(request, "OpenAI returned no content.")
-#                 return redirect('quiz:ai_summative_assessment')
-
-#             questions_text = response.choices[0].message.content.strip()
-#             blocks = re.split(r'\n\s*\n', questions_text)
-
-#             preview_questions = []
-#             skipped_blocks = 0
-
-#             for block in blocks:
-#                 lines = [line.strip() for line in block.split("\n") if line.strip()]
-#                 if len(lines) == 6:
-#                     question_text = lines[0].replace("Question:", "").strip()
-#                     options = [line.split('. ', 1)[1].strip() for line in lines[1:5]]
-#                     answer_letter = lines[5].split(':')[-1].strip().upper()
-#                     answer_map = {'A': 'Option1', 'B': 'Option2', 'C': 'Option3', 'D': 'Option4'}
-#                     answer = answer_map.get(answer_letter, 'Option1')
-
-#                     preview_questions.append({
-#                         'question': question_text,
-#                         'option1': options[0],
-#                         'option2': options[1],
-#                         'option3': options[2],
-#                         'option4': options[3],
-#                         'answer': answer
-#                     })
-#                 else:
-#                     skipped_blocks += 1
-
-#             if skipped_blocks > 0:
-#                 messages.warning(request, f"Skipped {skipped_blocks} malformed question blocks from AI response.")
-
-#             return render(request, 'quiz/dashboard/ai_summative_assessment.html', {
-#                 'courses': courses,
-#                 'preview_questions': preview_questions,
-#                 'course_id': course_id,
-#                 'marks': marks,
-#             })
-
-#         except Exception as e:
-#             messages.error(request, f"OpenAI error: {str(e)}")
-#             return redirect('quiz:ai_summative_assessment')
-
-#     # GET request
-#     return render(request, 'quiz/dashboard/ai_summative_assessment.html', {'courses': courses})

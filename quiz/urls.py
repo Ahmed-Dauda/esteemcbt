@@ -6,12 +6,12 @@ from . import views
 app_name = 'quiz'
 
 urlpatterns = [
-
+path('paste-questions/', views.paste_questions, name='paste_questions'),
     path('ai-summative-assessment/', views.ai_summative_assessment, name='ai_summative_assessment'),
     path('api/generate/', views.start_generation, name='ai_generate_api'),
     path('api/job-status/<str:job_id>/', views.job_status, name='job_status'),
     
-#  path('ai-summative-assessment/', views.ai_summative_assessment, name='ai_summative_assessment'),
+
     path('school/edit/', views.edit_school, name='edit_school'),
     path('examiner/courses/', views.examiner_course_list, name='examiner_course_list'),
     path(

@@ -221,10 +221,9 @@ class StudentExamSession(models.Model):
     
 
 class Question(models.Model):
-    course = models.ForeignKey('Course', on_delete=models.CASCADE, blank=True, null=True)
-
+    course = models.ForeignKey('Course', on_delete=models.SET_NULL, blank=True, null=True)
+    # course = models.ForeignKey('Course', on_delete=models.CASCADE, blank=True, null=True)
     marks = models.PositiveIntegerField(default=1)
-
     question = HTMLField(blank=True, null=True)
     img_quiz = CloudinaryField('image', blank=True, null=True)
 

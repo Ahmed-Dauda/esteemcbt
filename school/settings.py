@@ -239,8 +239,7 @@ from celery.schedules import crontab
 #         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
 #     }
 # }
-import os
-import os
+
 from django.core.exceptions import ImproperlyConfigured
 
 import os
@@ -283,36 +282,6 @@ else:
     CELERY_RESULT_BACKEND = REDIS_URL
 
 
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-#     }
-# }
-
-
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://127.0.0.1:6379/1",
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#         }
-#     }
-# }
-
-# LOGGING = {
-#     'version': 1,
-#     'handlers': {
-#         'console': {
-#             'class': 'logging.StreamHandler',
-#         },
-#     },
-#     'root': {
-#         'handlers': ['console'],
-#         'level': 'DEBUG',
-#     },
-# }
-
 
 CSRF_COOKIE_SECURE=False
 ROOT_URLCONF = 'school.urls'
@@ -345,17 +314,6 @@ import os
 
 # settings.py
 import dj_database_url
-
-
-# DATABASES = {
-#     'default': dj_database_url.config(
-#         conn_max_age=0,  # or even 10
-#         ssl_require=False
-#     )
-# }
-
-# DATABASES['default']['CONN_MAX_AGE'] = 0  # For PgBouncer
-import dj_database_url
 from pathlib import Path
 
 DATABASES = {
@@ -367,10 +325,10 @@ DATABASES = {
 
 DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
-import ssl
+# import ssl
 
-CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
-CELERY_REDIS_BACKEND_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
+# CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
+# CELERY_REDIS_BACKEND_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -499,12 +457,6 @@ CLOUDINARY_API_KEY    = env("CLOUDINARY_API_KEY")
 CLOUDINARY_API_SECRET = env("CLOUDINARY_API_SECRET")
 # ASGI application
 ASGI_APPLICATION = 'school.asgi.application'
-
-# import dj_database_url
-# Update database configuration from $DATABASE_URL.
-
-# db_from_env = dj_database_url.config(conn_max_age=500)
-# DATABASES['default'].update(db_from_env)
 
 
 # STATIC_ROOT = BASE_DIR / 'staticfiles'
