@@ -31,6 +31,8 @@ from quiz.models import CourseGrade
 
 
 
+
+
 def assign_course_grade(student):
     try:
         # Use filter() to get all CourseGrade objects that match the student's class

@@ -65,6 +65,7 @@ class Teacher(models.Model):
         return f"{self.school} - {self.first_name} {self.last_name}"
 
 
+
 class Subject_obj(models.Model):
 
     user = models.OneToOneField(NewUser, on_delete=models.CASCADE, blank=True, null=True)

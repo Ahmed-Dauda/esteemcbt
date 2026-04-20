@@ -213,6 +213,7 @@ class ExamType(models.Model):
 #     def __str__(self):
 #         return self.name
 
+
 class Courses(models.Model):
 
     title = models.CharField(max_length=225, blank=True, null=True)

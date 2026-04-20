@@ -41,45 +41,40 @@ from django.db.models import Min, Max, Avg, Sum
 from django.db import models
 
 
-# @login_required
-# def student_list_view(request):
-#     students = NewUser.objects.filter(
-#         school=request.user.school,
-#         is_staff=False,
-#         is_superuser=False,
-#         is_active=True,
-#         first_name__isnull=False,
-#         last_name__isnull=False,
-#         student_class__isnull=False
-#     ).exclude(
-#         first_name='', last_name='', student_class=''
-#     )
-#     return render(request, 'student/dashboard/student_list.html', {'students': students})
+from django.contrib.auth import authenticate, login
 
+import logging
+logger = logging.getLogger(__name__)
 
-# # views.py
-# from .forms import StudentEditForm
+def student_login_view(request):
+    error = None
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        logger.info(f"Student login attempt: username='{username}'")
 
-# @login_required
-# def student_edit_view(request, pk):
-#     student = get_object_or_404(NewUser, pk=pk, school=request.user.school, is_staff=False)
-#     if request.method == 'POST':
-#         form = StudentEditForm(request.POST, request.FILES, instance=student)
-#         if form.is_valid():
-#             form.save()
-#             return redirect('student:student_list')
-#     else:
-#         form = StudentEditForm(instance=student)
-#     return render(request, 'student/dashboard/student_edit.html', {'form': form})
+        user = authenticate(request, username=username)
+        logger.info(f"Authenticate result: {user}")
 
+        if user is not None:
+            login(request, user, backend='users.backends.UsernameOnlyBackend')
+            return redirect('student:take-exam')
+        else:
+            # Check why authentication failed
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            exists = User.objects.filter(username=username).exists()
+            logger.info(f"User exists in DB: {exists}")
 
-# @login_required
-# def student_delete_view(request, pk):
-#     student = get_object_or_404(NewUser, pk=pk, school=request.user.school, is_staff=False)
-#     if request.method == 'POST':
-#         student.delete()
-#         return redirect('student:student_list')
-#     return render(request, 'student/dashboard/student_confirm_delete.html', {'student': student})
+            if exists:
+                u = User.objects.get(username=username)
+                logger.info(f"is_staff={u.is_staff}, is_superuser={u.is_superuser}, is_active={u.is_active}")
+            else:
+                logger.info(f"No user found with username='{username}' — check exact spelling/case")
+
+            error = 'Invalid username. Please try again.'
+
+    return render(request, 'student/dashboard/student_login.html', {'error': error})
+
 
   
 
@@ -3765,11 +3760,109 @@ from django.db.models import Exists, OuterRef
 from asgiref.sync import sync_to_async
 from django.db.models import Prefetch
 
+
+#before deleting the score
+
+# @login_required
+# def take_exams_view(request):
+#     user = request.user
+
+#     # 1️⃣ Single source of truth — NewUser has school + student_class
+#     user_newuser = (
+#         NewUser.objects
+#         .select_related('school')
+#         .filter(id=user.id)
+#         .first()
+#     )
+
+#     if not user_newuser or not user_newuser.school:
+#         return render(request, "student/dashboard/take_exams.html", {
+#             "courses": [], "subjects": [], "student_class": None,
+#             "school_name": None, "sub_grade": None,
+#             "user_results": {}, "taken_exam_ids": set(),
+#         })
+
+#     school        = user_newuser.school
+#     school_name   = school.school_name
+#     student_class = user_newuser.student_class
+
+#     # 2️⃣ Profile — scoped to same user, used only for Result lookup
+#     user_profile = Profile.objects.filter(user=user).first()
+
+#     # 3️⃣ Courses — scoped to school AND student's class
+#     courses_cache_key = f"courses:{school.id}:{student_class}"
+#     courses = cache.get(courses_cache_key)
+
+#     if not courses:
+#         courses = list(
+#             Course.objects
+#             .select_related('schools', 'course_name', 'session', 'term', 'exam_type')
+#             .filter(
+#                 schools=school,
+#                 course_grade__students=user,
+#                 course_grade__name=student_class,
+#                 course_grade__schools=school,
+#             )
+#             .distinct()
+#             .order_by('-id')[:30]
+#         )
+#         cache.set(courses_cache_key, courses, timeout=300)
+
+#     # 4️⃣ Results + CourseGrade batched
+#     user_data_key = f"user_exam_data:{user.id}"
+#     user_data = cache.get(user_data_key)
+
+#     if not user_data:
+#         course_ids = [c.id for c in courses]
+
+#         user_results = {}
+#         if user_profile and course_ids:
+#             results_qs = (
+#                 Result.objects
+#                 .filter(student=user_profile, exam_id__in=course_ids)
+#                 .values('exam_id', 'marks')
+#             )
+#             user_results = {int(r['exam_id']): r['marks'] for r in results_qs}
+
+#         course_grade = (
+#             CourseGrade.objects
+#             .prefetch_related('subjects')
+#             .filter(students=user, schools=school)
+#             .first()
+#         )
+#         subjects  = list(course_grade.subjects.all()) if course_grade else []
+#         sub_grade = course_grade.name if course_grade else None
+
+#         user_data = {
+#             'user_results': user_results,
+#             'subjects':     subjects,
+#             'sub_grade':    sub_grade,
+#         }
+#         cache.set(user_data_key, user_data, timeout=300)
+
+#     user_results   = user_data['user_results']
+#     subjects       = user_data['subjects']
+#     sub_grade      = user_data['sub_grade']
+#     taken_exam_ids = set(int(k) for k in user_results.keys())
+
+#     return render(
+#         request,
+#         "student/dashboard/take_exams.html",
+#         {
+#             "courses":        courses,
+#             "subjects":       subjects,
+#             "student_class":  student_class,
+#             "school_name":    school_name,
+#             "sub_grade":      sub_grade,
+#             "user_results":   user_results,
+#             "taken_exam_ids": taken_exam_ids,
+#         }
+#     )
+
 @login_required
 def take_exams_view(request):
     user = request.user
 
-    # 1️⃣ Single source of truth — NewUser has school + student_class
     user_newuser = (
         NewUser.objects
         .select_related('school')
@@ -3782,84 +3875,76 @@ def take_exams_view(request):
             "courses": [], "subjects": [], "student_class": None,
             "school_name": None, "sub_grade": None,
             "user_results": {}, "taken_exam_ids": set(),
+            "taken_course_keys": set(),
         })
 
     school        = user_newuser.school
     school_name   = school.school_name
     student_class = user_newuser.student_class
 
-    # 2️⃣ Profile — scoped to same user, used only for Result lookup
     user_profile = Profile.objects.filter(user=user).first()
 
-    # 3️⃣ Courses — scoped to school AND student's class
-    courses_cache_key = f"courses:{school.id}:{student_class}"
-    courses = cache.get(courses_cache_key)
-
-    if not courses:
-        courses = list(
-            Course.objects
-            .select_related('schools', 'course_name', 'session', 'term', 'exam_type')
-            .filter(
-                schools=school,
-                course_grade__students=user,
-                course_grade__name=student_class,
-                course_grade__schools=school,
-            )
-            .distinct()
-            .order_by('-id')[:30]
+    # ── Courses ──
+    courses = list(
+        Course.objects
+        .select_related('schools', 'course_name', 'session', 'term', 'exam_type')
+        .filter(
+            schools=school,
+            course_grade__students=user,
+            course_grade__name=student_class,
+            course_grade__schools=school,
         )
-        cache.set(courses_cache_key, courses, timeout=300)
+        .distinct()
+        .order_by('-id')[:30]
+    )
 
-    # 4️⃣ Results + CourseGrade batched
-    user_data_key = f"user_exam_data:{user.id}"
-    user_data = cache.get(user_data_key)
+    # ── Results ──
+    course_ids = [c.id for c in courses]
+    user_results = {}
+    taken_course_keys = set()
 
-    if not user_data:
-        course_ids = [c.id for c in courses]
-
-        user_results = {}
-        if user_profile and course_ids:
-            results_qs = (
-                Result.objects
-                .filter(student=user_profile, exam_id__in=course_ids)
-                .values('exam_id', 'marks')
-            )
-            user_results = {int(r['exam_id']): r['marks'] for r in results_qs}
-
-        course_grade = (
-            CourseGrade.objects
-            .prefetch_related('subjects')
-            .filter(students=user, schools=school)
-            .first()
+    if user_profile and course_ids:
+        results_qs = (
+            Result.objects
+            .filter(student=user_profile, exam_id__in=course_ids)
+            .values('exam_id', 'session_id', 'term_id', 'exam_type_id', 'marks')
         )
-        subjects  = list(course_grade.subjects.all()) if course_grade else []
-        sub_grade = course_grade.name if course_grade else None
+        for r in results_qs:
+            user_results[int(r['exam_id'])] = r['marks']
+            taken_course_keys.add(
+                f"{r['exam_id']}_{r['session_id']}_{r['term_id']}_{r['exam_type_id']}"
+            )
 
-        user_data = {
-            'user_results': user_results,
-            'subjects':     subjects,
-            'sub_grade':    sub_grade,
-        }
-        cache.set(user_data_key, user_data, timeout=300)
+    # ── CourseGrade ──
+    course_grade = (
+        CourseGrade.objects
+        .prefetch_related('subjects')
+        .filter(students=user, schools=school)
+        .first()
+    )
+    subjects       = list(course_grade.subjects.all()) if course_grade else []
+    sub_grade      = course_grade.name if course_grade else None
+    taken_exam_ids = set(user_results.keys())
 
-    user_results   = user_data['user_results']
-    subjects       = user_data['subjects']
-    sub_grade      = user_data['sub_grade']
-    taken_exam_ids = set(int(k) for k in user_results.keys())
+    logger.info(f"taken_course_keys: {taken_course_keys}")
+    logger.info(f"course keys in template would be: {[f'{c.id}_{c.session_id}_{c.term_id}_{c.exam_type_id}' for c in courses]}")
+
 
     return render(
         request,
         "student/dashboard/take_exams.html",
         {
-            "courses":        courses,
-            "subjects":       subjects,
-            "student_class":  student_class,
-            "school_name":    school_name,
-            "sub_grade":      sub_grade,
-            "user_results":   user_results,
-            "taken_exam_ids": taken_exam_ids,
+            "courses":           courses,
+            "subjects":          subjects,
+            "student_class":     student_class,
+            "school_name":       school_name,
+            "sub_grade":         sub_grade,
+            "user_results":      user_results,
+            "taken_exam_ids":    taken_exam_ids,
+            "taken_course_keys": taken_course_keys,
         }
     )
+
 
 
 # @login_required
@@ -4150,6 +4235,7 @@ from asgiref.sync import sync_to_async
 from django.db.models import Case, When
 
 
+#before deleting the score
 
 @csrf_exempt
 def start_exams_view(request: HttpRequest, pk: int) -> HttpResponse:
@@ -4229,13 +4315,23 @@ async def get_course(pk):
 
 @sync_to_async
 def check_result_exists(profile, course):
-    """
-    .exists() does NOT need select_related / only
-    """
     return Result.objects.filter(
         student=profile,
-        exam=course
+        exam=course,
+        session=course.session,
+        term=course.term,
+        exam_type=course.exam_type,
     ).exists()
+
+# @sync_to_async
+# def check_result_exists(profile, course):
+#     """
+#     .exists() does NOT need select_related / only
+#     """
+#     return Result.objects.filter(
+#         student=profile,
+#         exam=course
+#     ).exists()
 
 
 async def get_course_question_ids(course):
@@ -4412,6 +4508,8 @@ from django.db import transaction
 from django.db import IntegrityError, transaction
 from django.db import transaction
 from quiz.tasks import grade_exam_task
+
+
 @csrf_exempt
 @login_required
 def calculate_marks_view(request):

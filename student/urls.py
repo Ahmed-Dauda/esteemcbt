@@ -8,6 +8,7 @@ app_name = 'student'
 
 urlpatterns = [
     
+    path('student-login/', views.student_login_view, name='student-login'),
     path('exams-conducted-statistics/', views.exams_conducted_statistics_view, name='exams_conducted_statistics'),
     path('download-statistics/', views.download_statistics_view, name='download_statistics'),
     # path('badge-list/', views.badge_list_view, name='badge_list_view'),

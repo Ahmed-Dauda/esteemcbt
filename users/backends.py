@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 User = get_user_model()
 
@@ -7,10 +8,16 @@ class UsernameOnlyBackend:
         if not username:
             return None
         try:
-            user = User.objects.get(username=username)
+            user = User.objects.get(Q(username=username) | Q(email=username))
         except User.DoesNotExist:
             return None
-        # Optional: block staff/admins
+        except User.MultipleObjectsReturned:
+            # If multiple users share the same email, fall back to username only
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                return None
+
         if user.is_staff or user.is_superuser:
             return None
         return user

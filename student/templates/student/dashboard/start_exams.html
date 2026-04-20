@@ -211,6 +211,7 @@ button:hover { background: #0b5ed7; }
   </p>
   <p id="fullscreenCounterText" style="font-size: 1rem; margin-bottom: 2rem; color: yellow;">
     Fullscreen Strikes: 0
+    <span></span>
   </p>
   <button onclick="returnToFullscreen()" style="
     background: #fff; color: #000; border: none;
@@ -547,7 +548,7 @@ let isReturningToFullscreen = false;
 function updateFullscreenCounter() {
   const el = document.getElementById("fullscreenCounterText");
   if (!el) return;
-  el.innerText = `Fullscreen Strikes: ${fullscreenExitCount} / ${fullscreencounter}`;
+  el.innerText = `You exited Fullscreen: ${fullscreenExitCount} / ${fullscreencounter} times. If you reach ${fullscreencounter} times, your exam will be submitted.`;
   if (fullscreenExitCount === fullscreencounter) {
     if (!flashInterval) {
       flashInterval = setInterval(() => {
@@ -581,7 +582,7 @@ function registerFullscreenStrike() {
   updateFullscreenCounter();
   if (fullscreenExitCount >= fullscreencounter) {
     localStorage.setItem('tabSwitchCount', '0');
-    alert(`❌ You exited fullscreen ${fullscreenExitCount} times. Your exam will be submitted.`);
+    alert(`❌ You exited fullscreen ${fullscreenExitCount} times. Your exam was submitted successfully.`);
     doSubmit('fullscreen');
   }
 }

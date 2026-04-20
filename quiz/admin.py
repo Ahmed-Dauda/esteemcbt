@@ -52,14 +52,51 @@ def delete_unused_placeholder_courses(modeladmin, request, queryset):
 
     modeladmin.message_user(request, f"Deleted {deleted_count} unused Placeholder Title course(s).")
 
+from django.contrib import messages
 
-class CourseAdmin(admin.ModelAdmin):    
-    list_display = ['get_school_name', 'full_screen','show_questions', 'course_name', 'session','term','exam_type','question_number', 'total_marks', 'num_attemps', 'fullscreencounter','duration_minutes','learning_objectives', 'ai_question_num','created']
-    search_fields = ['course_name__title', 'schools__school_name','term__name', 'exam_type__name']  # Add search field for course name and school name
+@admin.action(description="Duplicate course for new term/exam type")
+def duplicate_course(modeladmin, request, queryset):
+    for course in queryset:
+        # Store related data before duplication
+        old_teachers = list(course.teachers.all())
+        old_grades   = list(course.course_grade.all())
+        old_questions = list(Question.objects.filter(course=course))
+
+        # Duplicate the Course record
+        course.pk        = None
+        course.id        = None
+        course.term      = None
+        course.exam_type = None
+        course.session   = None
+        course.save()
+
+        # Reassign teachers automatically
+        course.teachers.set(old_teachers)
+
+        # Reassign to same student classes automatically
+        for grade in old_grades:
+            grade.subjects.add(course)
+
+        # Duplicate questions into new course
+        for question in old_questions:
+            question.pk     = None
+            question.id     = None
+            question.course = course
+            question.save()
+
+    messages.success(
+        request,
+        f"{queryset.count()} course(s) duplicated successfully with teachers, classes and questions. "
+        f"Please update the term/session/exam_type on each new record."
+    )
+
+
+class CourseAdmin(admin.ModelAdmin):
+    list_display = ['get_school_name', 'full_screen', 'show_questions', 'course_name', 'session', 'term', 'exam_type', 'question_number', 'total_marks', 'num_attemps', 'fullscreencounter', 'duration_minutes', 'learning_objectives', 'ai_question_num', 'created']
+    search_fields = ['course_name__title', 'schools__school_name', 'term__name', 'exam_type__name']
     autocomplete_fields = ['schools']
-    actions = [delete_unused_placeholder_courses]
-    
-    
+    actions = [delete_unused_placeholder_courses, duplicate_course]
+
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         return queryset.select_related('schools', 'course_name')
@@ -69,6 +106,26 @@ class CourseAdmin(admin.ModelAdmin):
     get_school_name.short_description = 'School Name'
 
 admin.site.register(Course, CourseAdmin)
+
+
+# class CourseAdmin(admin.ModelAdmin):    
+#     list_display = ['get_school_name', 'full_screen','show_questions', 'course_name', 'session','term','exam_type','question_number', 'total_marks', 'num_attemps', 'fullscreencounter','duration_minutes','learning_objectives', 'ai_question_num','created']
+#     search_fields = ['course_name__title', 'schools__school_name','term__name', 'exam_type__name']  # Add search field for course name and school name
+#     autocomplete_fields = ['schools']
+#     actions = [delete_unused_placeholder_courses]
+    
+    
+#     def get_queryset(self, request):
+#         queryset = super().get_queryset(request)
+#         return queryset.select_related('schools', 'course_name')
+
+#     def get_school_name(self, obj):
+#         return obj.schools.school_name if obj.schools else "Enable Exam"
+#     get_school_name.short_description = 'School Name'
+
+# admin.site.register(Course, CourseAdmin)
+
+
 
 @admin.register(CourseGrade)
 class CourseGradeAdmin(admin.ModelAdmin):
@@ -205,19 +262,38 @@ class ResultResource(resources.ModelResource):
         )
         
 
-class ResultAdmin(ImportExportModelAdmin, ExportActionMixin):    
+class ResultAdmin(ImportExportModelAdmin, ExportActionMixin):
     resource_class = ResultResource
-    list_display = ['student', 'exam', 'schools', 'marks', 'exam_type', 'result_class', 'session', 'term', 'created']
+    list_display = ['student', 'get_exam_name', 'schools', 'marks', 'exam_type', 'result_class', 'session', 'term', 'created']
     list_filter = ['schools', 'exam', 'exam_type', 'session', 'term', 'created']
     search_fields = [
         'student__first_name',
         'student__last_name',
         'exam__course_name__title',
-        'schools__school_name',  # or 'schools__name' if that's your field
+        'schools__school_name',
     ]
     ordering = ['exam__course_name']
 
+    def get_exam_name(self, obj):
+        return obj.exam.course_name.title if obj.exam and obj.exam.course_name else '—'
+    get_exam_name.short_description = 'Exam'
+
 admin.site.register(Result, ResultAdmin)
+
+#working
+# class ResultAdmin(ImportExportModelAdmin, ExportActionMixin):    
+#     resource_class = ResultResource
+#     list_display = ['student', 'exam', 'schools', 'marks', 'exam_type', 'result_class', 'session', 'term', 'created']
+#     list_filter = ['schools', 'exam', 'exam_type', 'session', 'term', 'created']
+#     search_fields = [
+#         'student__first_name',
+#         'student__last_name',
+#         'exam__course_name__title',
+#         'schools__school_name',  # or 'schools__name' if that's your field
+#     ]
+#     ordering = ['exam__course_name']
+
+# admin.site.register(Result, ResultAdmin)
 
 # class ResultAdmin(ImportExportModelAdmin, ExportActionMixin):    
 #     resource_class = ResultResource

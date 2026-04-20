@@ -334,17 +334,27 @@ def edit_subjects_view(request, course_id):
     user = NewUser.objects.select_related('school').get(id=request.user.id)
     user_school = user.school
 
-    # ✅ For ManyToManyField, use __in or exact match with filter
     course = get_object_or_404(
         Courses.objects.prefetch_related('schools'),
         schools=user_school,
         id=course_id
     )
-
+    
     if request.method == 'POST':
         form = EditSubjectForm(request.POST, instance=course, user_school=user_school)
         if form.is_valid():
             form.save()
+
+            # Sync matching Course records with updated session/term/exam_type
+            Course.objects.filter(
+                course_name=course,
+                schools=user_school,
+            ).update(
+                session=course.session,
+                term=course.term,
+                exam_type=course.exam_type,
+            )
+
             return redirect('teacher:teacher-dashboard')
     else:
         form = EditSubjectForm(instance=course, user_school=user_school)
@@ -353,6 +363,7 @@ def edit_subjects_view(request, course_id):
         'form': form,
         'course': course
     })
+
 
 
 @login_required(login_url='teacher:teacher_login')

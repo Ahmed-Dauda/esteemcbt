@@ -16,7 +16,7 @@ class Course(models.Model):
     
     room_name = models.CharField(max_length=100, blank=True, null=True)
     schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='course', blank=True, null=True, db_index=True)
-    course_name = models.ForeignKey("sms.Courses", on_delete=models.CASCADE, blank=True, null=True, db_index=True)
+    course_name = models.ForeignKey("sms.Courses", on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
     question_number = models.PositiveIntegerField(blank=True, null=True)
     course_pay = models.BooleanField(default=False)
     full_screen = models.BooleanField(default=False)

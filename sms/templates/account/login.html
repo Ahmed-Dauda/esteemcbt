@@ -42,8 +42,11 @@
       <div class="col-md-6 mb-3">
         <div class="card border-primary">
           <div class="card-body">
-            <h3 class="text-danger">Now you can login with only username</h3>
-            <h3 class="card-title text-center"><i class="fas fa-user-graduate"></i> Login as Student</h3>
+            <h3 class="text-danger">Login as Student</h3>
+            <a href="{% url 'student:student-login' %}" class="btn btn-primary btn-lg">
+              <i class="fas fa-user-graduate"></i> Student Login
+            </a>
+            <!-- <h3 class="card-title text-center"><i class="fas fa-user-graduate"></i> Login as Student</h3>
             <form method="POST" action="{% url 'account_login' %}">
               {% csrf_token %}
               {{ form.as_p }}
@@ -59,20 +62,13 @@
                 </button>
               </div>
             </form>
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const passwordField = document.querySelector('#id_password');
-    if (passwordField) {
-      passwordField.closest('p').style.display = 'none';
-    }
-  });
-</script> -->
+
 
 {% endblock %}
