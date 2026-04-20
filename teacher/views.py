@@ -699,7 +699,6 @@ def delete_exam_type_view(request, pk):
 #         'courses': courses
 #     })
 
-
 @login_required(login_url='teacher:teacher_login')
 def delete_subject_view(request, course_id):
     user = request.user
@@ -715,21 +714,21 @@ def delete_subject_view(request, course_id):
     if request.method == 'POST':
         from quiz.models import Course as QuizCourse, CourseGrade
 
-        # 1. Remove sms.Courses from all CourseGrade.subjects M2M
-        for cg in CourseGrade.objects.filter(subjects=course):
-            cg.subjects.remove(course)
-
-        # 2. Remove and delete associated quiz.Course objects
+        # 1. Find all quiz.Course objects linked to this sms.Courses
         quiz_courses = QuizCourse.objects.filter(course_name=course)
+
+        # 2. Remove quiz.Course from all CourseGrade.subjects M2M
         for qc in quiz_courses:
             for cg in CourseGrade.objects.filter(subjects=qc):
                 cg.subjects.remove(qc)
+
+        # 3. Delete the quiz.Course objects
         quiz_courses.delete()
 
-        # 3. Now safe to delete sms.Courses
+        # 4. Now safe to delete sms.Courses
         course.delete()
 
-        # 4. Invalidate cache
+        # 5. Invalidate cache
         classes = CourseGrade.objects.filter(
             schools=user_school
         ).values_list('name', flat=True).distinct()
@@ -738,11 +737,10 @@ def delete_subject_view(request, course_id):
 
         messages.success(request, "Subject deleted successfully.")
         return redirect('teacher:teacher-dashboard')
-    
+
     return render(request, 'teacher/dashboard/confirm_delete_subject.html', {
         'course': course
     })
-
 
 def some_view(request):
     # Assuming the user is logged in and has a school attribute
