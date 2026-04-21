@@ -5,6 +5,7 @@ from django.contrib.auth.views import LoginView
 app_name = 'teacher'
 
 urlpatterns = [
+    path('export-filtered-csv/', views.export_filtered_results_csv, name='export_filtered_results_csv'),
     path('toggle-term-midterm/<int:term_id>/', views.toggle_term_midterm, name='toggle_term_midterm'),
 # ✅ Examiner Class Management URLs
     path('examiner/classes/', views.examiner_class_list_view, name='examiner_class_list'),

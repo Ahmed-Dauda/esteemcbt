@@ -153,7 +153,7 @@ button:hover { background: #0b5ed7; }
           {% endif %}
 
           <label style="font-size: 18px; {% if q.img_quiz.url %}text-align: center; display: block;{% endif %}">
-            {{ q.question|safe }}
+            {{ q.question }}
           </label>
 
           <h6 style="text-align: right;">[marks {{ q.marks }}]</h6>
@@ -162,7 +162,7 @@ button:hover { background: #0b5ed7; }
           <div class="quiz">
             <div class="radio-container">
               <input class="radio-button" type="radio" name="{{ q.id }}" id="option1-{{ q.id }}" value="Option1" required>
-              <label for="option1-{{ q.id }}">{{ q.option1|safe }}</label>
+              <label for="option1-{{ q.id }}">{{ q.option1 }}</label>
             </div>
           </div>
           {% endif %}
@@ -171,7 +171,7 @@ button:hover { background: #0b5ed7; }
           <div class="quiz">
             <div class="radio-container">
               <input class="radio-button" type="radio" name="{{ q.id }}" id="option2-{{ q.id }}" value="Option2" required>
-              <label for="option2-{{ q.id }}">{{ q.option2|safe }}</label>
+              <label for="option2-{{ q.id }}">{{ q.option2 }}</label>
             </div>
           </div>
           {% endif %}
@@ -180,7 +180,7 @@ button:hover { background: #0b5ed7; }
           <div class="quiz">
             <div class="radio-container">
               <input class="radio-button" type="radio" name="{{ q.id }}" id="option3-{{ q.id }}" value="Option3" required>
-              <label for="option3-{{ q.id }}">{{ q.option3|safe }}</label>
+              <label for="option3-{{ q.id }}">{{ q.option3 }}</label>
             </div>
           </div>
           {% endif %}
@@ -189,7 +189,7 @@ button:hover { background: #0b5ed7; }
           <div class="quiz">
             <div class="radio-container">
               <input class="radio-button" type="radio" name="{{ q.id }}" id="option4-{{ q.id }}" value="Option4" required>
-              <label for="option4-{{ q.id }}">{{ q.option4|safe }}</label>
+              <label for="option4-{{ q.id }}">{{ q.option4 }}</label>
             </div>
           </div>
           {% endif %}

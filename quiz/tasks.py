@@ -254,7 +254,7 @@ Answer: <A|B|C|D>
                     },
                     {"role": "user", "content": prompt},
                 ],
-                max_tokens=2200,
+                max_tokens=5000,
                 temperature=0.7,  # Raised from 0 to encourage variety while staying on-topic
             )
 

@@ -2171,7 +2171,6 @@ def edit_examiner_exam(request, course_id):
             )
         )
 
-
     if request.method == 'POST':
         form = CourseSelectionForm(request.POST, instance=course, user_school=user_school)
         if form.is_valid():
@@ -2185,6 +2184,7 @@ def edit_examiner_exam(request, course_id):
         'course': course,
     }
     return render(request, 'teacher/dashboard/edit_examiner_exam.html', context)
+
 
 
 @login_required(login_url='teacher:teacher_login')
@@ -2652,12 +2652,20 @@ from django.db.models.functions import Lower
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
+import csv
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, render
+
+
+
 @login_required(login_url='teacher:teacher_login')
 def teacher_course_results_view(request, course_id):
     course = get_object_or_404(Course, id=course_id)
 
+    # AJAX bulk delete
     if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        selected_ids = request.POST.getlist('selected_results[]')  # note the []
+        selected_ids = request.POST.getlist('selected_results[]')
         if selected_ids:
             count = Result.objects.filter(id__in=selected_ids).delete()[0]
             return JsonResponse({'status': 'success', 'deleted_count': count})
@@ -2677,6 +2685,45 @@ def teacher_course_results_view(request, course_id):
         'course': course,
         'results': results,
     })
+
+
+
+# @login_required(login_url='teacher:teacher_login')
+# def export_results_csv(request):
+#     course_id = request.GET.get('course_id')
+#     ids = request.GET.getlist('ids')
+
+#     if not ids:
+#         return HttpResponse("No results selected for export.", status=400)
+
+#     results = (
+#         Result.objects
+#         .select_related('student', 'exam', 'term', 'session', 'exam_type')
+#         .filter(id__in=ids, exam__id=course_id)
+#         .order_by(
+#             Lower('student__first_name').asc(nulls_last=True),
+#             Lower('student__last_name').asc(nulls_last=True)
+#         )
+#     )
+
+#     response = HttpResponse(content_type='text/csv')
+#     response['Content-Disposition'] = 'attachment; filename="filtered_results.csv"'
+
+#     writer = csv.writer(response)
+#     writer.writerow(['Student', 'Marks', 'Result Class', 'Session', 'Term', 'Exam Type', 'Created'])
+
+#     for r in results:
+#         writer.writerow([
+#             f"{r.student.first_name} {r.student.last_name}",
+#             r.marks,
+#             r.result_class,
+#             r.session.name,
+#             r.term.name,
+#             r.exam_type.name,
+#             r.created.strftime('%Y-%m-%d %H:%M'),
+#         ])
+
+#     return response
 
 
 
@@ -2935,6 +2982,124 @@ def export_results_csv(request):
         return render(request, 'teacher/dashboard/export_results.html', {'subjects_taught': subjects_taught})
 
     return redirect('export_results_csv')
+
+
+import csv
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib.units import inch
+
+@login_required(login_url='teacher:teacher_login')
+@require_cbt_subscription
+def export_filtered_results_csv(request):
+    if request.method == 'POST':
+        course_id = request.POST.get('course_id')
+        ids = request.POST.getlist('ids')
+        fmt = request.POST.get('format', 'csv')
+    else:
+        course_id = request.GET.get('course_id')
+        ids = request.GET.getlist('ids')
+        fmt = request.GET.get('format', 'csv')
+
+    if not ids or not course_id:
+        return HttpResponse("No results selected for export.", status=400)
+
+    results = (
+        Result.objects
+        .select_related('student', 'exam', 'term', 'session', 'exam_type')
+        .filter(id__in=ids, exam__id=course_id)
+        .order_by(
+            Lower('student__first_name').asc(nulls_last=True),
+            Lower('student__last_name').asc(nulls_last=True)
+        )
+    )
+
+    # ── CSV ──────────────────────────────────────────────
+    if fmt == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="filtered_results.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['Student', 'Marks', 'Result Class', 'Session', 'Term', 'Exam Type', 'Created'])
+        for r in results:
+            writer.writerow([
+                f"{r.student.first_name} {r.student.last_name}",
+                r.marks,
+                r.result_class,
+                r.session.name,
+                r.term.name,
+                r.exam_type.name,
+                r.created.strftime('%Y-%m-%d %H:%M'),
+            ])
+        return response
+
+    # ── PDF ──────────────────────────────────────────────
+    elif fmt == 'pdf':
+        course = get_object_or_404(Course, id=course_id)
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="filtered_results.pdf"'
+
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter,
+                                leftMargin=0.75*inch, rightMargin=0.75*inch,
+                                topMargin=0.75*inch, bottomMargin=0.75*inch)
+        elements = []
+
+        from reportlab.platypus import Paragraph, Spacer, PageBreak
+        from reportlab.lib.styles import getSampleStyleSheet
+        styles = getSampleStyleSheet()
+        elements.append(Paragraph(f"Results — {course.course_name}", styles['Title']))
+        elements.append(Spacer(1, 12))
+
+        # Build data rows
+        data = [['#', 'Student', 'Marks', 'Result Class', 'Session', 'Term', 'Exam Type']]
+        for i, r in enumerate(results, 1):
+            data.append([
+                str(i),
+                f"{r.student.first_name} {r.student.last_name}",
+                str(r.marks),
+                r.result_class,
+                r.session.name,
+                r.term.name,
+                r.exam_type.name,
+            ])
+
+        style = TableStyle([
+            ('BACKGROUND',    (0, 0), (-1, 0),  colors.HexColor('#1a7a4a')),
+            ('TEXTCOLOR',     (0, 0), (-1, 0),  colors.white),
+            ('FONTNAME',      (0, 0), (-1, 0),  'Helvetica-Bold'),
+            ('FONTSIZE',      (0, 0), (-1, 0),  10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0),  8),
+            ('TOPPADDING',    (0, 0), (-1, 0),  8),
+            ('ROWBACKGROUNDS',(0, 1), (-1, -1), [colors.white, colors.HexColor('#f2f9f5')]),
+            ('FONTNAME',      (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE',      (0, 1), (-1, -1), 9),
+            ('TOPPADDING',    (0, 1), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+            ('GRID',          (0, 0), (-1, -1), 0.4, colors.HexColor('#cccccc')),
+            ('ALIGN',         (0, 0), (-1, -1), 'LEFT'),
+        ])
+
+        # Split into pages of 50 rows each
+        ROWS_PER_PAGE = 50
+        chunks = [data[1:][i:i+ROWS_PER_PAGE] for i in range(0, len(data[1:]), ROWS_PER_PAGE)]
+
+        for chunk in chunks:
+            t = Table([data[0]] + chunk, repeatRows=1, hAlign='LEFT')
+            t.setStyle(style)
+            elements.append(t)
+            elements.append(PageBreak())
+
+        doc.build(elements)
+        pdf = buffer.getvalue()
+        buffer.close()
+        response.write(pdf)
+        return response
+
+    return HttpResponse("Invalid format.", status=400)
+
+
 
 
  # Import your models

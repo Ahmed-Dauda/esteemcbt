@@ -269,7 +269,7 @@ class CourseSelectionForm(forms.ModelForm):
         model = Course
         fields = [
             'schools', 'show_questions', 'question_number',
-            'total_marks', 'num_attemps', 'duration_minutes'
+            'total_marks', 'num_attemps','fullscreencounter' ,'duration_minutes'
         ]
     
     def __init__(self, *args, **kwargs):
