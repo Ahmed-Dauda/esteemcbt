@@ -76,10 +76,9 @@ def generate_ai_questions_task(
 ):
     """
     Celery task to generate AI questions for a school-specific course.
-    Guarantees exactly num_questions unique questions by retrying any
-    batch that returns fewer than expected due to AI inconsistency or deduplication.
-    Enforces strict MathML for math subjects — discards and retries any question
-    that contains plain math notation.
+    - Guarantees exactly num_questions unique questions
+    - Enforces strict MathML with xmlns for math subjects
+    - Sanitizes and validates MathML structure before saving
     """
     job = GenerationJob.objects.get(job_id=job_id)
     job.status = "processing"
@@ -125,8 +124,8 @@ def generate_ai_questions_task(
         physics_keywords = ["physics", "physic", "phy"]
         chem_keywords = ["chemistry", "chem"]
 
-        is_math = any(k in course_title_clean for k in math_keywords)
-        is_physics = any(k in course_title_clean for k in physics_keywords)
+        is_math     = any(k in course_title_clean for k in math_keywords)
+        is_physics  = any(k in course_title_clean for k in physics_keywords)
         is_chemistry = any(k in course_title_clean for k in chem_keywords)
 
         print("IS MATH:", is_math)
@@ -143,28 +142,39 @@ def generate_ai_questions_task(
         if is_math:
             math_instruction = """
 MATHEMATICS FORMATTING — STRICTLY ENFORCED:
-You MUST format ALL mathematical expressions using valid MathML wrapped in <math> tags.
-This includes: numbers with operations, fractions, exponents, roots, equations, variables.
+You MUST wrap ALL mathematical expressions using MathML with the EXACT xmlns attribute shown below.
+Every <math> tag MUST include xmlns="http://www.w3.org/1998/Math/MathML".
 
-CORRECT EXAMPLE:
-Question: What is <math><msup><mi>x</mi><mn>2</mn></msup></math> when x = 3?
-A. <math><mn>6</mn></math>
-B. <math><mn>9</mn></math>
-C. <math><mn>12</mn></math>
-D. <math><mn>3</mn></math>
-Answer: B
+CORRECT EXAMPLES:
 
-RULES:
-- Use <math>...</math> for EVERY mathematical expression, no exceptions
-- Use <msup> for powers/exponents (NOT ^ symbol)
-- Use <mfrac> for fractions
+Exponent:
+<math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi>x</mi><mn>2</mn></msup></math>
+
+Fraction:
+<math xmlns="http://www.w3.org/1998/Math/MathML"><mfrac><mrow><mi>x</mi><mo>+</mo><mn>4</mn></mrow><mrow><mn>1</mn></mrow></mfrac></math>
+
+Square root:
+<math xmlns="http://www.w3.org/1998/Math/MathML"><msqrt><mn>16</mn></msqrt></math>
+
+Inverse function:
+<math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi>f</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mo>(</mo><mi>x</mi><mo>)</mo></math>
+
+Equation:
+<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>y</mi><mo>=</mo><mfrac><mrow><mi>x</mi><mo>+</mo><mn>4</mn></mrow><mrow><mn>3</mn></mrow></mfrac></math>
+
+STRICT RULES:
+- EVERY <math> tag MUST have xmlns="http://www.w3.org/1998/Math/MathML"
+- Use <msup> for exponents — NEVER use ^ symbol
+- Use <mfrac><mrow>numerator</mrow><mrow>denominator</mrow></mfrac> for fractions
 - Use <msqrt> for square roots
-- Use <mi> for variables (x, y, n)
+- Use <mi> for variables (x, y, n, f)
 - Use <mn> for numbers
-- Use <mo> for operators (+, -, ×, ÷, =)
+- Use <mo> for operators (+, -, ×, ÷, =, (, ))
+- Use <mrow> to group multiple elements inside <msup>, <mfrac>, <msqrt>
+- NEVER use HTML tags like <sup>, <sub>, <b>, <i> inside math
 - NEVER use LaTeX (no \\( \\[ $ symbols)
-- NEVER use ^ symbol
-- NEVER write plain math like x^2 or 2/3
+- NEVER write plain math like x^2 or 2/3 outside <math> tags
+- NEVER put bare text or operators directly inside <mfrac> without <mrow>
 """
 
         if is_physics:
@@ -175,7 +185,7 @@ PHYSICS FORMATTING RULES:
 - Use proper superscripts and subscripts only with Unicode characters (e.g., ², ³, H₂).
 - NO LaTeX.
 - NO ^ symbol at all.
-- Use MathML ONLY when absolutely necessary.
+- Use MathML with xmlns="http://www.w3.org/1998/Math/MathML" ONLY when absolutely necessary.
 - Options must be realistic and physically correct.
 """
 
@@ -188,48 +198,127 @@ CHEMISTRY FORMATTING RULES:
 """
 
         # ----------------------------
-        # MathML validator/enforcer
-        # Discards questions that contain plain math notation so the
-        # retry loop can request replacements.
+        # MathML xmlns fixer
+        # Ensures every <math> tag has the correct xmlns attribute
+        # ----------------------------
+        def add_mathml_xmlns(text):
+            """
+            Replaces <math> and <math ...> (without xmlns) with
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+            """
+            # Already has xmlns — leave it
+            # Missing xmlns — add it
+            fixed = re.sub(
+                r'<math(?!\s[^>]*xmlns)([^>]*)>',
+                r'<math xmlns="http://www.w3.org/1998/Math/MathML"\1>',
+                text
+            )
+            return fixed
+
+        # ----------------------------
+        # MathML sanitizer
+        # Fixes common structural mistakes the AI makes
+        # ----------------------------
+        def sanitize_mathml(text):
+            # Add xmlns to any <math> tag missing it
+            text = add_mathml_xmlns(text)
+
+            # Fix <sup>...</sup> inside math → <msup>base<mrow>exp</mrow></msup>
+            def fix_sup(match):
+                full_math = match.group(0)
+                fixed = re.sub(
+                    r'(<m[a-z]+[^>]*>[^<]*</m[a-z]+>)\s*<sup>([^<]*)</sup>',
+                    r'<msup>\1<mrow><mn>\2</mn></mrow></msup>',
+                    full_math
+                )
+                return fixed
+            text = re.sub(r'<math[^>]*>.*?</math>', fix_sup, text, flags=re.DOTALL)
+
+            # Fix <mfrac> missing <mrow> wrappers around children
+            def fix_mfrac(match):
+                inner = match.group(1)
+                children = re.findall(r'<m[^/][^>]*>.*?</m[a-z]+>', inner, re.DOTALL)
+                if len(children) >= 2:
+                    numerator = "".join(children[:-1])
+                    denominator = children[-1]
+                    return f'<mfrac><mrow>{numerator}</mrow><mrow>{denominator}</mrow></mfrac>'
+                return match.group(0)
+            text = re.sub(r'<mfrac>(.*?)</mfrac>', fix_mfrac, text, flags=re.DOTALL)
+
+            # Wrap bare operators between MathML tags with <mo>
+            def fix_operators(match):
+                full_math = match.group(0)
+                fixed = re.sub(
+                    r'(?<=>)\s*([+\-=×÷])\s*(?=<)',
+                    r'<mo>\1</mo>',
+                    full_math
+                )
+                return fixed
+            text = re.sub(r'<math[^>]*>.*?</math>', fix_operators, text, flags=re.DOTALL)
+
+            return text
+
+        # ----------------------------
+        # Plain math enforcer
+        # Discards questions with ^ LaTeX $ plain fractions etc.
         # ----------------------------
         def enforce_mathml(questions):
             plain_math_patterns = [
-                r'\^',           # x^2
-                r'\$',           # LaTeX $
-                r'\\\(',         # LaTeX \(
-                r'\\\[',         # LaTeX \[
-                r'\d+/\d+',      # plain fractions like 2/3
-                r'sqrt\(',       # sqrt(
+                r'\^',
+                r'\$',
+                r'\\\(',
+                r'\\\[',
+                r'\d+/\d+',
+                r'sqrt\(',
             ]
-            clean_questions = []
+            clean = []
             for q in questions:
                 q_text = q.get("question", "")
-                options = [
-                    q.get("A", ""), q.get("B", ""),
-                    q.get("C", ""), q.get("D", "")
-                ]
+                options = [q.get("A",""), q.get("B",""), q.get("C",""), q.get("D","")]
                 all_text = q_text + " ".join(options)
-                has_plain_math = any(re.search(p, all_text) for p in plain_math_patterns)
-                if has_plain_math:
+                has_plain = any(re.search(p, all_text) for p in plain_math_patterns)
+                if has_plain:
                     print(f"[MathML Guard] Plain math detected, discarding: {q_text[:80]}...")
                 else:
-                    clean_questions.append(q)
-            return clean_questions
+                    clean.append(q)
+            return clean
+
+        # ----------------------------
+        # MathML structure validator
+        # After sanitizing, discards anything still structurally broken
+        # ----------------------------
+        def validate_mathml_structure(questions):
+            bad_patterns = [
+                r'<sup>',
+                r'<sub>',
+                r'<b>',
+                r'(?<!</m[a-z]{1,6}>)\s*[+\-=]\s*(?=<m)',  # bare operator between tags
+            ]
+            clean = []
+            for q in questions:
+                # Sanitize each field first
+                for key in ["question", "A", "B", "C", "D"]:
+                    q[key] = sanitize_mathml(q.get(key, ""))
+
+                all_text = q.get("question","") + "".join(q.get(k,"") for k in ["A","B","C","D"])
+                still_bad = any(re.search(p, all_text) for p in bad_patterns)
+
+                # Also check every <math> block has xmlns
+                missing_xmlns = re.search(r'<math(?!\s[^>]*xmlns)[^>]*>', all_text)
+
+                if still_bad or missing_xmlns:
+                    print(f"[MathML Validate] Unfixable MathML, discarding: {q.get('question','')[:80]}...")
+                else:
+                    clean.append(q)
+            return clean
 
         # ----------------------------
         # Helper: call AI and return parsed unique questions
         # ----------------------------
         def fetch_questions(needed, generated_question_texts, seen_normalized):
-            """
-            Ask the AI for exactly `needed` questions, deduplicate against
-            seen_normalized, enforce MathML for math subjects,
-            and return only the new unique clean ones.
-            """
             already_asked_block = ""
             if generated_question_texts:
-                already_asked_list = "\n".join(
-                    f"- {q}" for q in generated_question_texts
-                )
+                already_asked_list = "\n".join(f"- {q}" for q in generated_question_texts)
                 already_asked_block = f"""
 ALREADY GENERATED QUESTIONS (DO NOT REPEAT OR REPHRASE THESE):
 {already_asked_list}
@@ -288,12 +377,13 @@ Answer: <A|B|C|D>
                         "role": "system",
                         "content": (
                             "You generate curriculum-aligned exam questions with extreme formatting accuracy. "
-                            f"You ALWAYS return EXACTLY the number of questions requested. "
+                            "You ALWAYS return EXACTLY the number of questions requested. "
                             "You never repeat or rephrase questions that have already been generated. "
                             "You vary question styles and explore different aspects of each learning objective. "
                             + (
-                                "For mathematics, you ALWAYS use MathML (<math> tags) for every expression. "
-                                "You NEVER use LaTeX, plain fractions like 2/3, or ^ for exponents."
+                                'For mathematics, EVERY <math> tag MUST include xmlns="http://www.w3.org/1998/Math/MathML". '
+                                "You NEVER use LaTeX, plain fractions like 2/3, or ^ for exponents. "
+                                "You NEVER use HTML tags like <sup> or <sub> inside math expressions."
                                 if is_math else ""
                             )
                         ),
@@ -306,14 +396,14 @@ Answer: <A|B|C|D>
 
             output = resp.choices[0].message.content
 
-            # Hard guard: reject LaTeX in Math
+            # Hard guard: reject LaTeX
             if is_math and ("\\(" in output or "\\[" in output):
-                print("[MathML Hard Guard] LaTeX detected in output — discarding entire batch.")
+                print("[MathML Hard Guard] LaTeX detected — discarding entire batch.")
                 return []
 
             parsed = parse_ai_output(output)
 
-            # Deduplicate against already generated questions
+            # Deduplicate
             unique_new = []
             for q in parsed:
                 q_text = q.get("question", "").strip().lower()
@@ -323,9 +413,10 @@ Answer: <A|B|C|D>
                 else:
                     print(f"[Dedup] Skipped duplicate: {q_text[:80]}...")
 
-            # Enforce MathML for math subjects
+            # Math quality pipeline
             if is_math:
-                unique_new = enforce_mathml(unique_new)
+                unique_new = enforce_mathml(unique_new)           # discard plain math
+                unique_new = validate_mathml_structure(unique_new) # sanitize + discard broken
 
             return unique_new
 
@@ -338,8 +429,8 @@ Answer: <A|B|C|D>
         total_questions = int(num_questions)
 
         all_questions = []
-        generated_question_texts = []  # original-casing stems for prompt context
-        seen_normalized = set()        # lowercased stems for dedup
+        generated_question_texts = []
+        seen_normalized = set()
 
         while len(all_questions) < total_questions:
             still_needed = total_questions - len(all_questions)
@@ -350,7 +441,6 @@ Answer: <A|B|C|D>
             got_new = []
             attempts = 0
 
-            # Retry this batch until we get enough unique questions or hit cap
             while len(got_new) < batch_count and attempts < MAX_BATCH_RETRIES:
                 attempts += 1
                 remaining_needed = batch_count - len(got_new)
@@ -386,9 +476,8 @@ Answer: <A|B|C|D>
             job.save()
             time.sleep(0.5)
 
-        # Trim to exact count in the rare case of overshoot
+        # Trim to exact count
         all_questions = all_questions[:total_questions]
-
         print(f"[Generator] Final count: {len(all_questions)}/{total_questions}")
 
         # ----------------------------
@@ -405,7 +494,6 @@ Answer: <A|B|C|D>
         job.error = str(exc)
         job.save()
         raise
-
 
 
 #last working codes
