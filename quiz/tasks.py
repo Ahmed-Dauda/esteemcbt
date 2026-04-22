@@ -78,6 +78,8 @@ def generate_ai_questions_task(
     Celery task to generate AI questions for a school-specific course.
     Guarantees exactly num_questions unique questions by retrying any
     batch that returns fewer than expected due to AI inconsistency or deduplication.
+    Enforces strict MathML for math subjects — discards and retries any question
+    that contains plain math notation.
     """
     job = GenerationJob.objects.get(job_id=job_id)
     job.status = "processing"
@@ -132,7 +134,7 @@ def generate_ai_questions_task(
         print("IS CHEMISTRY:", is_chemistry)
 
         # ----------------------------
-        # Subject-specific instructions (built once)
+        # Subject-specific instructions
         # ----------------------------
         math_instruction = ""
         physics_instruction = ""
@@ -140,42 +142,88 @@ def generate_ai_questions_task(
 
         if is_math:
             math_instruction = """
-        Make sure Both questions and options should be formatted as valid MathML format strictly.
-        - NO LaTeX
-        - NO ^ symbol
-        - Use MathML for all mathematical expressions
-        - Use proper MathML tags for superscripts, subscripts, fractions, roots, etc
-        """
+MATHEMATICS FORMATTING — STRICTLY ENFORCED:
+You MUST format ALL mathematical expressions using valid MathML wrapped in <math> tags.
+This includes: numbers with operations, fractions, exponents, roots, equations, variables.
+
+CORRECT EXAMPLE:
+Question: What is <math><msup><mi>x</mi><mn>2</mn></msup></math> when x = 3?
+A. <math><mn>6</mn></math>
+B. <math><mn>9</mn></math>
+C. <math><mn>12</mn></math>
+D. <math><mn>3</mn></math>
+Answer: B
+
+RULES:
+- Use <math>...</math> for EVERY mathematical expression, no exceptions
+- Use <msup> for powers/exponents (NOT ^ symbol)
+- Use <mfrac> for fractions
+- Use <msqrt> for square roots
+- Use <mi> for variables (x, y, n)
+- Use <mn> for numbers
+- Use <mo> for operators (+, -, ×, ÷, =)
+- NEVER use LaTeX (no \\( \\[ $ symbols)
+- NEVER use ^ symbol
+- NEVER write plain math like x^2 or 2/3
+"""
 
         if is_physics:
             physics_instruction = """
-        PHYSICS FORMATTING RULES:
-        - Prefer INLINE equations.
-        - Use standard physics formulas, e.g., v = u + at, s = ut + 1/2 at², v² = u² + 2as.
-        - Use proper superscripts and subscripts only with Unicode characters (e.g., ², ³, H₂).
-        - NO LaTeX.
-        - NO ^ symbol at all.
-        - Use MathML ONLY when absolutely necessary.
-        - Options must be realistic and physically correct.
-        """
+PHYSICS FORMATTING RULES:
+- Prefer INLINE equations.
+- Use standard physics formulas, e.g., v = u + at, s = ut + 1/2 at², v² = u² + 2as.
+- Use proper superscripts and subscripts only with Unicode characters (e.g., ², ³, H₂).
+- NO LaTeX.
+- NO ^ symbol at all.
+- Use MathML ONLY when absolutely necessary.
+- Options must be realistic and physically correct.
+"""
 
         if is_chemistry:
             chem_instruction = """
-        CHEMISTRY FORMATTING RULES:
-        - Use plain text
-        - Chemical formulas like H2O, NaCl, CO2
-        - DO NOT use MathML
-        """
+CHEMISTRY FORMATTING RULES:
+- Use plain text
+- Chemical formulas like H2O, NaCl, CO2
+- DO NOT use MathML
+"""
+
+        # ----------------------------
+        # MathML validator/enforcer
+        # Discards questions that contain plain math notation so the
+        # retry loop can request replacements.
+        # ----------------------------
+        def enforce_mathml(questions):
+            plain_math_patterns = [
+                r'\^',           # x^2
+                r'\$',           # LaTeX $
+                r'\\\(',         # LaTeX \(
+                r'\\\[',         # LaTeX \[
+                r'\d+/\d+',      # plain fractions like 2/3
+                r'sqrt\(',       # sqrt(
+            ]
+            clean_questions = []
+            for q in questions:
+                q_text = q.get("question", "")
+                options = [
+                    q.get("A", ""), q.get("B", ""),
+                    q.get("C", ""), q.get("D", "")
+                ]
+                all_text = q_text + " ".join(options)
+                has_plain_math = any(re.search(p, all_text) for p in plain_math_patterns)
+                if has_plain_math:
+                    print(f"[MathML Guard] Plain math detected, discarding: {q_text[:80]}...")
+                else:
+                    clean_questions.append(q)
+            return clean_questions
 
         # ----------------------------
         # Helper: call AI and return parsed unique questions
-        # Only returns questions not already in seen_normalized
         # ----------------------------
         def fetch_questions(needed, generated_question_texts, seen_normalized):
             """
             Ask the AI for exactly `needed` questions, deduplicate against
-            seen_normalized, and return only the new unique ones.
-            Max 3 attempts per call to avoid infinite loops.
+            seen_normalized, enforce MathML for math subjects,
+            and return only the new unique clean ones.
             """
             already_asked_block = ""
             if generated_question_texts:
@@ -230,8 +278,11 @@ D. <option>
 Answer: <A|B|C|D>
 """
 
+            # Use gpt-4o for math (better MathML compliance), mini for others
+            model = "gpt-4o" if is_math else "gpt-4o-mini"
+
             resp = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=model,
                 messages=[
                     {
                         "role": "system",
@@ -239,7 +290,12 @@ Answer: <A|B|C|D>
                             "You generate curriculum-aligned exam questions with extreme formatting accuracy. "
                             f"You ALWAYS return EXACTLY the number of questions requested. "
                             "You never repeat or rephrase questions that have already been generated. "
-                            "You vary question styles and explore different aspects of each learning objective."
+                            "You vary question styles and explore different aspects of each learning objective. "
+                            + (
+                                "For mathematics, you ALWAYS use MathML (<math> tags) for every expression. "
+                                "You NEVER use LaTeX, plain fractions like 2/3, or ^ for exponents."
+                                if is_math else ""
+                            )
                         ),
                     },
                     {"role": "user", "content": prompt},
@@ -252,11 +308,12 @@ Answer: <A|B|C|D>
 
             # Hard guard: reject LaTeX in Math
             if is_math and ("\\(" in output or "\\[" in output):
-                raise ValueError("LaTeX detected in Mathematics output. Expected MathML only.")
+                print("[MathML Hard Guard] LaTeX detected in output — discarding entire batch.")
+                return []
 
             parsed = parse_ai_output(output)
 
-            # Deduplicate
+            # Deduplicate against already generated questions
             unique_new = []
             for q in parsed:
                 q_text = q.get("question", "").strip().lower()
@@ -266,6 +323,10 @@ Answer: <A|B|C|D>
                 else:
                     print(f"[Dedup] Skipped duplicate: {q_text[:80]}...")
 
+            # Enforce MathML for math subjects
+            if is_math:
+                unique_new = enforce_mathml(unique_new)
+
             return unique_new
 
         # ----------------------------
@@ -273,7 +334,7 @@ Answer: <A|B|C|D>
         # Keeps going until we have exactly total_questions
         # ----------------------------
         BATCH_SIZE = 10
-        MAX_BATCH_RETRIES = 5  # max AI calls per batch slot before giving up
+        MAX_BATCH_RETRIES = 5
         total_questions = int(num_questions)
 
         all_questions = []
@@ -289,7 +350,7 @@ Answer: <A|B|C|D>
             got_new = []
             attempts = 0
 
-            # Retry this batch until we get enough unique questions or hit the retry cap
+            # Retry this batch until we get enough unique questions or hit cap
             while len(got_new) < batch_count and attempts < MAX_BATCH_RETRIES:
                 attempts += 1
                 remaining_needed = batch_count - len(got_new)
@@ -306,7 +367,7 @@ Answer: <A|B|C|D>
 
                 if len(got_new) < batch_count:
                     print(
-                        f"[Retry] Attempt {attempts}: got {len(got_new)}/{batch_count} unique. "
+                        f"[Retry] Attempt {attempts}: got {len(got_new)}/{batch_count}. "
                         f"Retrying for {batch_count - len(got_new)} more..."
                     )
                     time.sleep(0.5)
@@ -314,7 +375,7 @@ Answer: <A|B|C|D>
             if len(got_new) < batch_count:
                 print(
                     f"[Warning] After {MAX_BATCH_RETRIES} attempts, only got "
-                    f"{len(got_new)}/{batch_count} unique questions for this batch. "
+                    f"{len(got_new)}/{batch_count} for this batch. "
                     f"Learning objectives may be too narrow."
                 )
 
@@ -325,7 +386,7 @@ Answer: <A|B|C|D>
             job.save()
             time.sleep(0.5)
 
-        # Trim to exact count in the rare case we overshoot
+        # Trim to exact count in the rare case of overshoot
         all_questions = all_questions[:total_questions]
 
         print(f"[Generator] Final count: {len(all_questions)}/{total_questions}")
@@ -344,7 +405,9 @@ Answer: <A|B|C|D>
         job.error = str(exc)
         job.save()
         raise
-    
+
+
+
 #last working codes
 # @shared_task(bind=True, max_retries=3, default_retry_delay=5)
 # def generate_ai_questions_task(
