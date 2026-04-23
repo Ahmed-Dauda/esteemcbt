@@ -231,6 +231,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 @login_required
 def ai_summative_assessment(request):
     # Ensure teacher exists

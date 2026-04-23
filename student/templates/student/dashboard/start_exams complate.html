@@ -1,805 +1,673 @@
-
 {% extends 'sms/dashboard/startexambase.html' %}
-
 
 {% load hitcount_tags %}
 {% load cloudinary %}
-
 {% load embed_video_tags %}
 {% block title %} Courses list view page {% endblock %}
 
+{% block content %} 
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 
-{% block content %}   
-
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.1/css/dataTables.dataTables.css">
-    <!-- Include necessary libraries (jQuery and DataTables) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.5/js/jquery.dataTables.min.js"></script>
-    
-    <!-- prism.css and prism.js -->
-    <link rel="stylesheet" type="text/css" href="/static/sms/prism.css">
-    <script src="/static/sms/prism.js"> </script>
-      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-      
-      <!-- mathjax -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-      <script type="text/x-mathjax-config">
-          MathJax.Hub.Config({
-              tex2jax: {
-                  inlineMath: [['$', '$'], ['\\(', '\\)']],
-                  displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                  processEscapes: true
-              }
-          });
-      </script>
-      <style>
-          body {
-              font-family: Arial, sans-serif;
-              margin: 20px;
-          }
-          #rendered {
-              padding: 10px;
-              border: 1px solid #ddd;
-              margin-top: 10px;
-          }
-      </style>
+<script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.5/js/jquery.dataTables.min.js"></script>
+<!-- Add to your <head> -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 <style>
-  
+div.quiz p { text-align: left; }
+.quiz p { text-align: left; }
 .quiz {
   width: 100%;
   display: flex;
-  cursor: pointer;
-  border: 1px solid #ccc; /* Add border to the .quiz container */
- 
+  border: 1px solid #ccc;
 }
-
-.quiz>* {
+.quiz > * {
   margin: 10px;
-  
   overflow-x: hidden;
 }
-
 .quiz input[type="radio"] {
-    transform: scale(1.5); /* Increase the size by adjusting the scale value */
-    margin-right: 5px; /* Add some spacing between the radio input and label */
-    /* margin-top: -2px; */
-   
+  transform: scale(1.5);
+  margin-right: 10px;
 }
-
 .custom-container {
-  background-color: green; /* Change this to your desired color */
+  background-color: green;
   color: white;
   display: inline-block;
   padding: 5px;
-  margin: 5px; /* Add margin to separate entries */
-
+  margin: 5px;
 }
-/* .custom-td {
-  display: inline;
-  padding: 5px;
-  background-color: green; 
-  width: 100%;
-  color: white;
-} */
-      </style>
-   <!-- mark as completed -->
+.pagination-box {
+  display: inline-block;
+  width: 100px;
+  height: 30px;
+  border: 1px solid #ccc;
+  text-align: center;
+  line-height: 30px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+.clicked { background-color: rgb(211, 247, 211); }
+.question-table {
+  margin-top: 10px;
+  padding-top: 80px;
+}
+@media (max-width: 767px) {
+  .sticky-top { position: static; top: 0; }
+  .alert { flex-direction: column; align-items: center; }
+  .alert div { width: 100%; }
+  .question-table { margin-top: 0px; padding-top: 170px; }
+  .container { display: flex; flex-direction: column; align-items: center; padding: 20px; }
+  .examinfo { color: red; display: none; }
+  .pagination-boxes { margin-bottom: 10px; width: 100%; }
+  .submit-button { width: 100%; margin: 0; }
+  div.dataTables_info { position: absolute; }
+  div.dataTables_wrapper div.dataTables_paginate { float: none; text-align: center; padding: 30px; }
+}
+.container { display: flex; justify-content: center; align-items: center; padding: 20px; }
+div.dataTables_wrapper div.dataTables_paginate { float: none; text-align: center; }
+</style>
 
 <style>
-  .pagination-box {
-      display: inline-block;
-      width: 100px;
-      height: 30px;
-      border: 1px solid #ccc;
-      text-align: center;
-      line-height: 30px;
-      margin-right: 5px;
-      cursor: pointer;
-  }
-  
-  .clicked {
-      /* background-color: #00ff00; */
-      background-color: rgb(211, 247, 211);
-  }
-
-  .radio-container {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
+.custom-page-number {
+  cursor: pointer;
+  padding: 5px;
+  margin: 2px;
+  border: 1px solid #ccc;
+  user-select: none;
 }
+.active-page { font-weight: bold; text-decoration: underline; }
+.answered-page { background-color: green; color: white !important; border-radius: 4px; }
+math { font-size: 1.2em; margin: 0 4px; vertical-align: middle; }
+</style>
 
-.radio-label {
-    flex: 1;
-    margin-left: 2px; /* Adjust as needed */
+<style>
+#calculator button {
+  width: 48px; height: 36px; margin: 2px;
+  font-size: 14px; cursor: pointer;
+  border: 1px solid #ccc; border-radius: 4px;
+  background-color: #fff;
 }
+#calculator button:hover { background-color: #e9ecef; }
+</style>
 
+<style>
+.exam-container { text-align: center; }
+#fullscreenPopup {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.95);
+  color: #fff; display: none;
+  justify-content: center; align-items: center;
+  flex-direction: column; z-index: 9999;
+}
+button:hover { background: #0b5ed7; }
+</style>
 
-  </style>   
-
- 
-  <script>
-  function goBack() {
-    window.history.back();
-  }
- 
-  </script>
-
- <!-- <h1>{{quiz_end_time}}</h1>  -->
-
-
-
-
- <!-- Script to Access Camera -->
- <!-- <script>
-     navigator.mediaDevices.getUserMedia({ video: true })
-         .then(function(stream) {
-             var video = document.getElementById('cameraFeed');
-             video.srcObject = stream;
-         })
-         .catch(function(error) {
-             console.error('Error accessing camera:', error);
-         });
- </script> -->
-
-<!--end quiz timer  -->
-<!-- In the body of your HTML template -->
-
-
-
-  <div class="card">
-  <div class="card-header">
-   
-<form id="quizf" action="/student/calculate_marks" onsubmit="return saveAns()" enctype="multipart/form-data"  method="POST">
+<form novalidate autocomplete="off" class="no-copy" id="quizf" action="/student/calculate_marks" onsubmit="return false;" enctype="multipart/form-data" method="POST">
   {% csrf_token %}
-  <!-- <span style="padding: 5px 10px;font-size: 30px;" onclick="goBack()" class="bi bi-arrow-left "></span> -->
 
-  <input type="hidden" name="csrfmiddlewaretoken" value="C24rUotmdHawVQJL3KrqiWxvti8UffOFYUc8TRbZtLt36AVLdP3jbkzUVe3beRAa">
-   <!-- quiz timer  -->
-   <div class='sticky-top' style="position: fixed; top: 0px; width: 100%; z-index: 1000;">
-    <div class="row justify-content-left">
-        <div class="col-mx-auto">
-            <div class="alert alert-success" role="alert" style="padding-bottom: 1px; display: flex; flex-wrap: wrap;">
-                <div style="width: 33.33%; padding: 10px;">
-        <!-- <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;"
-        src="{{ course.room_name }}" width="350px">
-        </iframe> -->
-        <div style="position: relative;">
-          <p style="position: absolute;background-color: black; top: -7px; left: 0; z-index: 0.5;">Focus on camera</p>
-          <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;" src="{{ course.room_name }}" width="350px"></iframe>
-      </div>
-      
-                </div>
-                <div style="width: 33.33%; padding: 10px;">
-                    <h6 id="inactiveCountDisplay"><span id="inactiveCount">0</span> attempts to leave the exam page detected.</h6>
-                    <center><div id="timer">00:00</div></center>
-                </div>
-                <div style="width: 33.33%; padding: 10px;">
-                    <h6>{{course.course_name}} Quiz</h6>
-                    <p>Number of Questions: {{q_count}}</p>
-                    <p>Student Info: {{request.user.first_name}} {{request.user.last_name}} -- {{student_class}}</p>
-                </div>
+  <div class="sticky-top" style="position: fixed; top: 0; width: 100%; z-index: 1000; background-color: #dfe8f2; border-bottom: 1px solid #dee2e6;">
+    <div class="row justify-content-left" style="margin: 0;">
+      <div class="col-12">
+        <div class="alert alert-success" role="alert" style="padding: 5px; display: flex; flex-wrap: wrap; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+          <!-- Camera Frame -->
+          <div class="col-12 col-md-4" style="padding: 0px;">
+            <div style="position: relative; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+              <p style="position: absolute; background-color: black; color: white; padding: 0px; top: -10px; left: 0; z-index: 1;">Focus on Camera</p>
+              {% if course.room_name %}
+              <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;"
+                src="{{ course.room_name }}" width="100%" height="120" style="border: none;"></iframe>
+              {% endif %}
             </div>
+          </div>
+          <!-- Timer -->
+          <div class="col-12 col-md-4" style="padding: 10px;">
+            <p style="color: red; text-align: center;">
+              <span id="tabCount">0</span> / {{ course.num_attemps }} attempts to leave the exam page detected.
+            </p>
+            <div id="timer" style="font-size: 24px; font-weight: bold; color: #333; text-align: center; margin: 10px 0;">00:00</div>
+          </div>
+          <!-- Exam Info -->
+          <div class="examinfo col-12 col-md-4" style="padding: 10px;">
+            <h6 style="font-size: 12px; font-weight: bold;">{{ course.course_name }} -- {{ course.exam_type }}</h6>
+            <p style="margin: 5px 0;">Number of Questions: {{ q_count }} -- {{ course.session }} -- {{ course.term }}</p>
+            <h4 style="font-weight: bold; color: black;">{{ request.user.first_name|upper }} {{ request.user.last_name|upper }}</h4>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
+
+  <table id="example" class="display question-table" style="width:98%;">
+    <thead><tr></tr></thead>
+    <tbody onclick="openFullscreen()" style="user-select: noe;">
+      {% for q in page_obj %}
+      <tr>
+        <td colspan="4">
+          {% if q.img_quiz.url %}
+          <div class="text-center">
+            <img src="{{ q.img_quiz.url|safe }}" width="40%" height="250px" alt="">
+          </div><br>
+          {% endif %}
+
+          <label style="font-size: 18px; {% if q.img_quiz.url %}text-align: center; display: block;{% endif %}">
+            {{ q.question|safe }}
+          </label>
+
+          <h6 style="text-align: right;">[marks {{ q.marks }}]</h6>
+
+          {% if q.option1 %}
+          <div class="quiz">
+            <div class="radio-container">
+              <input class="radio-button" type="radio" name="{{ q.id }}" id="option1-{{ q.id }}" value="Option1" required>
+              <label for="option1-{{ q.id }}">{{ q.option1|safe }}</label>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if q.option2 %}
+          <div class="quiz">
+            <div class="radio-container">
+              <input class="radio-button" type="radio" name="{{ q.id }}" id="option2-{{ q.id }}" value="Option2" required>
+              <label for="option2-{{ q.id }}">{{ q.option2|safe }}</label>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if q.option3 %}
+          <div class="quiz">
+            <div class="radio-container">
+              <input class="radio-button" type="radio" name="{{ q.id }}" id="option3-{{ q.id }}" value="Option3" required>
+              <label for="option3-{{ q.id }}">{{ q.option3|safe }}</label>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if q.option4 %}
+          <div class="quiz">
+            <div class="radio-container">
+              <input class="radio-button" type="radio" name="{{ q.id }}" id="option4-{{ q.id }}" value="Option4" required>
+              <label for="option4-{{ q.id }}">{{ q.option4|safe }}</label>
+            </div>
+          </div>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</form>
+
+<!-- Fullscreen Popup -->
+<div id="fullscreenPopup" style="
+  display: none; justify-content: center; align-items: center; flex-direction: column;
+  position: fixed; inset: 0; background: rgba(0,0,0,0.9); color: #fff;
+  z-index: 999999; font-family: Arial, sans-serif; text-align: center;">
+  <h2 style="font-size: 2rem; margin-bottom: 1rem;">⚠️ Exam Paused</h2>
+  <p id="fullscreenWarningText" style="font-size: 1.2rem; margin-bottom: 1rem;">
+    You exited fullscreen. Please return to continue your exam.
+  </p>
+  <p id="fullscreenCounterText" style="font-size: 1rem; margin-bottom: 2rem; color: yellow;">
+    Fullscreen Strikes: 0
+    <span></span>
+  </p>
+  <button onclick="returnToFullscreen()" style="
+    background: #fff; color: #000; border: none;
+    padding: 0.75rem 1.5rem; font-size: 1rem;
+    border-radius: 6px; cursor: pointer; font-weight: bold;">
+    Re-enter Fullscreen
+  </button>
 </div>
 
-<br><br>
-
-
-    <table id="example" class="display question-table" style="width:100%">
-
-      <thead>
-          <tr>
-    
-          </tr>
-      </thead>
-      <tbody>
-    
-        {% for q in  page_obj %}
-          <tr>
-              <td colspan="4">
-              {% if q.img_quiz.url %}
-                <div  class="text-center" ><img src="{{q.img_quiz.url}}"  width="40%" height="250px" alt=""> </div><br>
-                {% endif %}
-            
-                {% if q.img_quiz.url %}
-                <label style="font-size: 18px; text-align: center; display: block;">
-                {{ q.question|safe }}
-              </label>
-              
-                {% else %}
-                <label style="font-size: 18px;">
-                  {{ q.question|safe }}
-                </label>
-                <!-- <p class="d-flex" style="overflow-x: auto; white-space: pre-wrap; font-size: 20px;font-family: sans-serif;" >
-                  {{ q.question }}</p> -->
-                 
-                {% endif %}
-                
-                <h6 style="text-align: right;">[marks {{q.marks}}]</h6>
-    
-                {% if q.option1 %}
-                <div class="quiz">
-                    <div class="radio-container">
-                        <input class="radio-button" type="radio"  name="{{forloop.counter}}" id="option1" value="Option1" required>
-                        <label id="label-option1" data-original-text="{{ q.option1|safe|striptags }}" for="option1" data-label="my-label-button" class="radio-label"> </label>
-                    </div>
-                    <label>{{q.option1|safe}}</label>
-                </div>
-                {% endif %}
-                
-                {% if q.option2 %}
-                <div class="quiz">
-                    <div class="radio-container">
-                        <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option2" value="Option2" required>
-                        <label id="label-option2" data-original-text="{{ q.option2|safe|striptags }}" for="option2" data-label="my-label-button" class="radio-label"> {{q.otion2|safe|striptags}} </label>
-                    </div>
-                    <label>{{q.option2|safe}}</label>
-                </div>
-                {% endif %}
-                
-                {% if q.option3 %}
-                <div class="quiz">
-                    <div class="radio-container">
-                   
-                        <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option3" value="Option3" required>
-                        <label id="label-option3" data-original-text="{{ q.option3|safe|striptags }}" for="option3" data-label="my-label-button" class="radio-label"> {{q.opton3|safe|striptags}} </label>
-                    </div>
-                    <label>{{q.option3|safe}}</label>
-                </div>
-                {% endif %}
-                
-                {% if q.option4 %}
-                <div class="quiz">
-                    <div class="radio-container">
-                    
-                        <input class="radio-button" type="radio" name="{{forloop.counter}}" id="option4" value="Option4" required>
-                        <label id="label-option4" data-original-text="{{ q.option4|safe|striptags }}" for="option4" data-label="my-label-button" class="radio-label"> {{q.optin4|safe|striptags}} </label>
-                    </div>
-                    <label>{{q.option4|safe}}</label>
-                </div>
-                {% endif %}
-                
-              </td>
-
-          </tr>
-          {% endfor %}
-        
-      </tbody>
-    
-    </table>
-    
-   
-</form> 
-
-
-<button id="submit" type="submit" >Submit Quiz</button>
-
-<div class="progress mt-4">
-  <div class="progress-bar bg-success" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0% Complete</div>
-</div>
-<br>
-  <div id="paginationBoxes"></div>
-
-</div>
+<!-- Submit + Pagination -->
+<div class="container buttonheight" style="display: flex; justify-content: center; align-items: center; padding: 20px;">
+  <button class="submit-button" id="submit" type="button"
+    style="background-color: #28a745; max-height: 50px; border-radius: 10px; border: none; color: white;
+           font-size: 16px; padding: 10px 20px; margin: 0 5px; cursor: pointer;
+           box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: background-color 0.3s ease, transform 0.2s ease;"
+    onmouseover="this.style.backgroundColor='#218838';"
+    onmouseout="this.style.backgroundColor='#28a745';"
+    onmousedown="this.style.backgroundColor='#1e7e34'; this.style.transform='scale(0.98)';"
+    onmouseup="this.style.backgroundColor='#218838'; this.style.transform='scale(1)';">
+    Submit
+  </button>
+  <div id="paginationWrapper" style="text-align: center; margin-top: 20px;">
+    <div id="paginationBoxes" onclick="openFullscreen()"></div>
+  </div>
 </div>
 
-
-<!-- new js -->
-<script> 
-
-  $.fn.dataTable.ext.errMode = 'none';
-
-  var table = $('#example').DataTable({
-      pageLength: 1,
-      order: [[3, 'desc']],
-      lengthChange: false, 
-      sDom: 'lrtip',
-      stateSave: true,
-      "ordering": false,
-     
-      dom: '<"top"fi>rt<"bottom"lp><"clear">',
-      columnDefs: [
-          {
-              orderable: false,
-              targets: [1, 2, 3]
-          }
-      ]
-  
-      
-  });
-
-
-  </script>
-
-
-    <!-- end of quiz timer --> 
-
-    <script>
-$(document).ready(function() {
-    var timerInterval; // Variable to store the timer interval ID
-    var timerElement = document.getElementById('timer'); // Define timerElement here
-
-    // Function to update the timer
-    function updateTimer(time) {
-        let storedTime = localStorage.getItem('remainingTime');
-        let remainingTime;
-
-        if (storedTime !== null) {
-            remainingTime = parseInt(storedTime);
-        } else {
-            remainingTime = time * 60; // Convert minutes to seconds
-            localStorage.setItem('remainingTime', remainingTime);
-        }
-
-        const timer = setInterval(() => {
-            let minutes = Math.floor(remainingTime / 60);
-            let seconds = remainingTime % 60;
-
-            let displayMinutes = minutes < 10 ? '0' + minutes : minutes;
-            let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
-
-            timerElement.innerHTML = `<b>Time Left: ${displayMinutes}:${displaySeconds}</b>`;
-
-            if (remainingTime <= 0) {
-                clearInterval(timer);
-                localStorage.removeItem('remainingTime');
-                submitQuiz(); // Call the function to submit the quiz when time is over
-                return;
-            }
-
-            remainingTime--;
-            localStorage.setItem('remainingTime', remainingTime); // Update stored remaining time
-        }, 1000);
-
-        // Store the timer interval ID
-        timerInterval = timer;
-    }
-
-    // Call the updateTimer function
-    updateTimer({{ course.duration_minutes }});
-
-
-    // Event handler for manual submit button click
-    $('#submit').on('click', function (e) {
-        var confirmation = confirm("Are you sure you want to submit the quiz?");
-        if (confirmation) {
-            e.preventDefault();
-            
-            // Clear timer interval and local storage
-            clearInterval(timerInterval);
-            localStorage.removeItem('remainingTime');
-            
-            // Restart the timer
-            updateTimer({{ course.duration_minutes }});
-            
-            // Proceed with the quiz submission
-            var formData = table.$('input, select').serialize();
-            var dataArray = formData.split('&');
-            var quizData = {};
-            for (var i = 0; i < dataArray.length; i++) {
-                var keyValue = dataArray[i].split('=');
-                var questionIndex = parseInt(keyValue[0]);
-                var answer = keyValue[1];
-                quizData[questionIndex] = answer;
-            }
-            var jsonData = JSON.stringify(quizData);
-
-            $.ajax({
-                type: "POST",
-                url: "/student/calculate_marks",
-                data: jsonData,
-                success: function(response) {
-                    alert("Quiz submitted successfully!");
-                    window.location.href = "{% url 'student:view_result' %}";
-                },
-                error: function(xhr, status, error) {
-                    console.error("Error:", error);
-                }
-            });
-        }
-    });
-});
-
-
-document.addEventListener('DOMContentLoaded', function() {
-    var endTime = new Date("{{ quiz_end_time|date:"Y-m-d\TH:i:s" }}").getTime();
-    var timerElement = document.getElementById('timer');
-    var quizForm = document.getElementById('quizf');
-
-    // Function to update the time
-    
-    function updateTimer(time, timerElement) {
-        let storedTime = localStorage.getItem('remainingTime');
-        let remainingTime;
-
-        if (storedTime !== null) {
-            remainingTime = parseInt(storedTime);
-        } else {
-            remainingTime = time * 60; // Convert minutes to seconds
-            localStorage.setItem('remainingTime', remainingTime);
-        }
-
-        const timer = setInterval(() => {
-            let minutes = Math.floor(remainingTime / 60);
-            let seconds = remainingTime % 60;
-
-            let displayMinutes = minutes < 10 ? '0' + minutes : minutes;
-            let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
-
-            timerElement.innerHTML = `<b>Time Left: ${displayMinutes}:${displaySeconds}</b>`;
-
-            if (remainingTime <= 0) {
-                clearInterval(timer);
-                localStorage.removeItem('remainingTime');
-                // submitQuiz(); // Call the function to submit the quiz when time is over
-                return;
-            }
-            if (minutes <= 0 && seconds <= 0) {
-                clearInterval(timer);
-                localStorage.removeItem('remainingTime');
-                submitQuiz(); // Call the function to submit the quiz when time is over
-            }
-
-            remainingTime--;
-            localStorage.setItem('remainingTime', remainingTime); // Update stored remaining time
-        }, 1000);
-
-        // Store the timer interval ID
-        window.timerInterval = timer; // Assigning to a global variable
-    }
-
-    // Call the updateTimer function
-    updateTimer({{ course.duration_minutes }}, timerElement); // Pass timerElement
-});
-
-
-    function showAlert(message) {
-    alert(message);
+<!-- Network Status -->
+<style>
+#network-status {
+  position: fixed; top: 0; left: 0; width: 100%;
+  padding: 10px; color: white; text-align: center;
+  font-weight: bold; z-index: 9999; display: none;
 }
+#network-status.offline { background-color: #d9534f; display: block; }
+#network-status.online  { background-color: #5cb85c; display: block; }
+</style>
+<div id="network-status"></div>
 
-function submitQuiz(inactiveCount) {
-    // Clear local storage
-    localStorage.clear();
-    window.location.reload();
-    // Gather form data
-    var formData = table.$('input, select').serialize(); // Serialize the form data within the table
-    var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
-    var pageInfo = table.page.info();
-    // Extract the total number of pages
-    var totalPages = pageInfo.pages;
+<!-- Calculator -->
+<button onclick="toggleCalculator()" style="position: fixed; top: 10px; right: 10px; z-index: 9999;">Calculator</button>
+<div id="calculator" style="
+  position: fixed; top: 50px; right: 10px; width: 260px;
+  background-color: #f8f9fa; border: 1px solid #ccc; border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: none; z-index: 9999;">
+  <div id="calc-header" style="
+    cursor: move; padding: 4px 8px; background: #007bff; color: white;
+    font-weight: bold; font-size: 14px; border-radius: 6px 6px 0 0;
+    display: flex; justify-content: space-between; align-items: center;">
+    <span>Calc</span>
+    <button onclick="toggleCalculator()" style="background:none;border:none;color:white;font-size:14px;cursor:pointer;">✖</button>
+  </div>
+  <input type="text" id="calc-display" style="
+    width: 100%; font-size: 16px; padding: 6px; box-sizing: border-box;
+    border: none; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; outline: none;" readonly>
+  <div style="padding: 6px;">
+    <div>
+      <button onclick="appendCalc('7')">7</button>
+      <button onclick="appendCalc('8')">8</button>
+      <button onclick="appendCalc('9')">9</button>
+      <button onclick="appendCalc('/')">÷</button>
+    </div>
+    <div>
+      <button onclick="appendCalc('4')">4</button>
+      <button onclick="appendCalc('5')">5</button>
+      <button onclick="appendCalc('6')">6</button>
+      <button onclick="appendCalc('*')">×</button>
+    </div>
+    <div>
+      <button onclick="appendCalc('1')">1</button>
+      <button onclick="appendCalc('2')">2</button>
+      <button onclick="appendCalc('3')">3</button>
+      <button onclick="appendCalc('-')">−</button>
+    </div>
+    <div>
+      <button onclick="appendCalc('0')">0</button>
+      <button onclick="appendCalc('.')">.</button>
+      <button onclick="calculate()">=</button>
+      <button onclick="appendCalc('+')">+</button>
+    </div>
+    <div>
+      <button onclick="clearCalc()">C</button>
+      <button onclick="appendCalc('(')">(</button>
+      <button onclick="appendCalc(')')">)</button>
+      <button onclick="toggleScientific()">Sci</button>
+    </div>
+    <div id="scientific" style="display: none; margin-top: 6px;">
+      <button onclick="appendCalc('Math.sqrt(')">√</button>
+      <button onclick="appendCalc('Math.pow(')">xʸ</button>
+      <button onclick="appendCalc('Math.sin(')">sin</button>
+      <button onclick="appendCalc('Math.cos(')">cos</button>
+      <button onclick="appendCalc('Math.tan(')">tan</button>
+      <button onclick="appendCalc('Math.log(')">log</button>
+      <button onclick="appendCalc('Math.PI')">π</button>
+      <button onclick="appendCalc('Math.E')">e</button>
+    </div>
+  </div>
+</div>
 
-    // Process each key-value pair
-    var quizData = {};
-    for (var i = 0; i < dataArray.length; i++) {
-        var keyValue = dataArray[i].split('=');
-        var questionIndex = parseInt(keyValue[0]);
-        var answer = keyValue[1];
-        quizData[questionIndex] = answer;
-    }
-
-    // Convert data to JSON
-    var jsonData = JSON.stringify(quizData);
-    console.log("jsonData", jsonData);
-    // Send the data to the calculate_marks view using AJAX
-    $.ajax({
-        type: "POST",
-        url: "/student/calculate_marks", // URL of the calculate_marks view
-        contentType: "application/json",
-        data: jsonData,
-        success: function(response) {
-            // You can do further processing based on the response here
-        },
-        error: function(xhr, status, error) {
-            // Handle error
-            console.error("Error:", error);
-        }
-    });
-    
-    showAlert("Quiz submitted automatically due to time expiration!");
-    window.location.href = "{% url 'student:view_result' %}";
-}
-
-
-// function submitQuizinactive(inactiveCount) {
-//     // Clear local storage
-//     localStorage.clear();
-//     window.location.reload();
-//     // Gather form data
-//     var formData = table.$('input, select').serialize(); // Serialize the form data within the table
-//     var dataArray = formData.split('&'); // Split the serialized data into an array of key-value pairs
-//     var pageInfo = table.page.info();
-//     // Extract the total number of pages
-//     var totalPages = pageInfo.pages;
-
-//     // Process each key-value pair
-//     var quizData = {};
-//     for (var i = 0; i < dataArray.length; i++) {
-//         var keyValue = dataArray[i].split('=');
-//         var questionIndex = parseInt(keyValue[0]);
-//         var answer = keyValue[1];
-//         quizData[questionIndex] = answer;
-//     }
-
-//     // Convert data to JSON
-//     var jsonData = JSON.stringify(quizData);
-//     console.log("jsonData", jsonData);
-//     // Send the data to the calculate_marks view using AJAX
-//     $.ajax({
-//         type: "POST",
-//         url: "/student/calculate_marks", // URL of the calculate_marks view
-//         contentType: "application/json",
-//         data: jsonData,
-//         success: function(response) {
-//             // You can do further processing based on the response here
-//         },
-//         error: function(xhr, status, error) {
-//             // Handle error
-//             console.error("Error:", error);
-//         }
-//     });
-    
-//     // showAlert("Quiz submitted automatically due to " + inactiveCount + " attemp of malpractice!");
-//     window.location.href = "{% url 'student:view_result' %}";
-// }
-
-
-var isTabActive = true; // Initialize the variable
-var inactiveCount = parseInt(localStorage.getItem("inactiveCount")) || 0; // Retrieve count from localStorage or set to 0 if not present
-
-window.onfocus = function () { 
-  isTabActive = true; 
-}; 
-
-window.onblur = function () { 
-  isTabActive = false; 
-  inactiveCount++; 
-  localStorage.setItem("inactiveCount", inactiveCount); // Store the updated count in localStorage
-  document.getElementById("inactiveCount").innerText = inactiveCount; 
-  if (inactiveCount >= {{ num_attemps }}) {
-    // Perform action when count exceeds the threshold
-    submitQuiz(inactiveCount);
-    localStorage.clear(); // Clear localStorage correctly
-    window.location.reload();
-  }
-}; 
-
-setInterval(function () { 
-  if (isTabActive && inactiveCount >= {{ num_attemps }}) {
-    submitQuiz(inactiveCount); 
-    localStorage.clear(); // Clear localStorage correctly
-    window.location.reload();
-  } 
-}, 1000);
-
-// function submitQuiz(inactiveCount) {
-//   // Define your function to handle the inactive count reaching the threshold
-//   console.log(`Quiz submitted due to inactivity: ${inactiveCount} times`);
-//   // Add your submission logic here
-// }
-
-        //  test 
-    function updateTimer(time) {
-    const timerElement = document.getElementById('timer'); // Define timerElement here
-    let storedTime = localStorage.getItem('remainingTime');
-    let remainingTime;
-
-    if (storedTime !== null) {
-        remainingTime = parseInt(storedTime);
-    } else {
-        remainingTime = time * 60; // Convert minutes to seconds
-        localStorage.setItem('remainingTime', remainingTime);
-    }
-
-    const timer = setInterval(() => {
-        let minutes = Math.floor(remainingTime / 60);
-        let seconds = remainingTime % 60;
-
-        let displayMinutes = minutes < 10 ? '0' + minutes : minutes;
-        let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
-
-        timerElement.innerHTML = `<b>Time Left: ${displayMinutes}:${displaySeconds}</b>`;
-
-        if (remainingTime <= 0) {
-            clearInterval(timer);
-            localStorage.removeItem('remainingTime');
-            submitQuiz(); // Call the function to submit the quiz when time is over
-            return;
-        }
-
-        if (minutes <= 0 && seconds <= 0) {
-            clearInterval(timer);
-            localStorage.removeItem('remainingTime');
-            submitQuiz(); // Call the function to submit the quiz when time is over
-            return;
-        }
-
-        remainingTime--;
-        localStorage.setItem('remainingTime', remainingTime); // Update stored remaining time
-    }, 1000);
-
-    // Store the timer interval ID
-    window.timerInterval = timer;
-}
-
-    </script>
-    
-
-<script>
-
-
-  $(document).ready(function() {
-    // Function to update pagination boxes with values
-    function updatePagination() {
-        // Clear previous pagination content
-        $('#paginationBoxes').empty();
-        // Serialized data
-        var data = table.$('input, select').serialize();
-        // Get information about the table's paging state
-        var pageInfo = table.page.info();
-        // Extract the total number of pages
-        var totalPages = pageInfo.pages;
-        // Loop through each page
-        for (var i = 1; i <= totalPages; i++) {
-            // Create a pagination box element
-            var paginationBox = $('<div class="pagination-box"></div>');
-            // Check if the current page is clicked or not
-            var matchFound = false;
-            var serializedData = table.$('input, select').serialize(); 
-            var dataArray = serializedData.split('&');
-            var dataCount = 0;
-        // Count the number of key-value pairs in serialized data
-            if (serializedData) {
-                var keyValuePairs = dataArray;
-                dataCount = keyValuePairs.length;
-            }
-
-               // Calculate progress
-            var answeredCount = dataCount;
-            var progress = (answeredCount / totalPages) * 100;
-            // Update progress bar
-            $('.progress-bar').css('width', progress + '%').attr('aria-valuenow', progress).text(progress + '% Complete');  
-            
-            // test 
-          for (var j = 0; j < dataArray.length; j++) {
-          var keyValue = dataArray[j].split('=');
-
-          if (parseInt(keyValue[0]) === i) {      
-              matchFound = true;
-              //2222 console.log("id and name", keyValue[0], keyValue[1]);
-              var radioButtons = document.querySelectorAll('input[name="' + i + '"]');
-               radioButtons.forEach(function(radioButton) {
-                // Store the original label text
-                radioButton.dataset.originalText = "";
-                radioButton.addEventListener('change', function() {
-                    if (radioButton.checked) {
-                      radioButtons.forEach(function(rb) {
-                        // Restore original label text for all radio buttons
-                        radioButton.labels[0].textContent  = rb.dataset.originalText;
-                        
-                
-                    });
-                  
-                        
-                    }
-                });
-            });
-
-                paginationBox.addClass('clicked');
-                break; // exit the loop after finding a match
-            }
-        }
-
-
-//3333 Retrieve the stored value from local storage for each question
-var allRadioButtons = document.querySelectorAll('.radio-button');
-
-allRadioButtons.forEach(function (radioButton) {
-    var questionName = radioButton.getAttribute('name');
-    var storedCheckedValue = localStorage.getItem('checked_' + questionName);
-
-    if (storedCheckedValue !== null) {
-        if (radioButton.value === storedCheckedValue) {
-            radioButton.checked = true;
-            radioButton.nextElementSibling.textContent = radioButton.nextElementSibling.dataset.originalText;
-            radioButton.style.color = 'red';
-            radioButton.nextElementSibling.style.display = 'none'; // Hide the label initially
-        } else {
-            radioButton.nextElementSibling.textContent = radioButton.nextElementSibling.dataset.originalText;
-            radioButton.nextElementSibling.style.display = 'none'; // Show the label initially
-        }
-    }
-    
-    radioButton.addEventListener('click', function () {
-        if (radioButton.checked) {
-            radioButton.nextElementSibling.style.display = 'none'; // Hide the label when clicked
-        } else {
-            radioButton.nextElementSibling.style.display = 'none'; // Show the label when unclicked
-        }
-        
-        // Update local storage when radio button is clicked
-        var selectedValue = radioButton.value;
-        localStorage.setItem('checked_' + questionName, selectedValue);
-    });
-});
-
-// Event listener to update local storage when radio button is changed
-document.addEventListener('change', function(event) {
-    var target = event.target;
-    if (target.matches('.radio-button')) {
-        var selectedValue = target.value;
-        var questionName = target.getAttribute('name');
-        // Store the selected value in local storage with a unique key for each question
-        localStorage.setItem('checked_' + questionName, selectedValue);
-    }
-});
-
-
-// Event listener to clear local storage when submit button is clicked
-var submitButton = document.getElementById('submit');
-submitButton.addEventListener('click', function() {
-    localStorage.clear();
-    window.location.reload();
-});
-
-          // test
-
-            // Set the content of the pagination box
-            if (matchFound) {
-                paginationBox.text('answered: ' + i);
-                var answeredBoxCount = $('#paginationBoxes').length;
-
-            } else {
-                paginationBox.text('unanswered: ' + i);
-            }
-
-            // Append the pagination box to the paginationBoxes container
-            $('#paginationBoxes').append(paginationBox);
-        }
-    }
-    
-    // Call the updatePagination function initially
-    updatePagination();
-
-    // setInterval(updatePagination, 1000);
-    setInterval(updatePagination, 700);
- 
-});
-
-  </script>
-
-<script>
-    // Disable right-clicking
-    document.addEventListener('contextmenu', function(event) {
-        event.preventDefault();
-    });
-  
-    // Disable keyboard shortcuts (Ctrl+C, Ctrl+V)
-    document.addEventListener('keydown', function(event) {
-        // Check if Ctrl key is pressed along with C or V
-        if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'C' || event.key === 'v' || event.key === 'V')) {
-            event.preventDefault();
-        }
-    });
-  
-  </script>
-  
-  
-  <script>
-  document.addEventListener('DOMContentLoaded', function() {
-      // Get the element with id "timer"
-      var timerElement = document.getElementById('timer');
-      // Add a click event listener to it
-      timerElement.addEventListener('click', function() {
-          // Reload the page
-          location.reload();
-      });
-  });
-  
-  </script>
-  
 <br><br><br><br><br><br>
 
-<!-- latex -->
+<!-- ============================================================ -->
+<!--  ALL JAVASCRIPT                                              -->
+<!-- ============================================================ -->
+<script>
+// ── DataTable ────────────────────────────────────────────────
+$.fn.dataTable.ext.errMode = 'none';
 
-{% endblock %} 
+var table = $('#example').DataTable({
+  pageLength: 1,
+  lengthChange: false,
+  stateSave: true,
+  ordering: false,
+  dom: 'rtp',
+  pagingType: "simple",
+  columnDefs: [{ orderable: false, targets: [1, 2, 3] }]
+});
+
+const lastPage = parseInt(localStorage.getItem('lastVisitedPage') || 0);
+table.page(lastPage).draw(false);
+
+// ── Pagination ───────────────────────────────────────────────
+function renderCustomPagination(tableInstance) {
+  const pageInfo    = tableInstance.page.info();
+  const totalPages  = pageInfo.pages;
+  const currentPage = pageInfo.page;
+  const storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+
+  let html = '';
+  for (let i = 0; i < totalPages; i++) {
+    const startIndex = i * pageInfo.length;
+    const rows       = tableInstance.rows({ order: 'applied' }).nodes();
+    const pageRows   = $(rows).slice(startIndex, startIndex + pageInfo.length);
+
+    let isAnswered = false;
+    pageRows.find('input[type=radio], input[type=checkbox]').each(function () {
+      const name  = $(this).attr('name');
+      const value = $(this).val();
+      if (storedAnswers[name] && storedAnswers[name] == value) {
+        isAnswered = true;
+        return false;
+      }
+    });
+
+    let classes = 'custom-page-number';
+    if (i === currentPage) classes += ' active-page';
+    if (isAnswered)        classes += ' answered-page';
+    html += `<span class="${classes}" data-page="${i}" style="cursor:pointer;padding:5px;">${i + 1}</span> `;
+  }
+  $('#paginationBoxes').html(html);
+}
+
+$(document).ready(function () {
+  const courseKey = 'quizStartedForCourse_{{ course.id }}';
+  if (!localStorage.getItem(courseKey)) {
+    localStorage.removeItem('quizAnswers');
+    localStorage.setItem(courseKey, 'true');
+  }
+  const storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+  Object.keys(storedAnswers).forEach(function (qid) {
+    $(`input[name="${qid}"][value="${storedAnswers[qid]}"]`).prop('checked', true);
+  });
+  renderCustomPagination(table);
+});
+
+$('#example tbody').on('change', 'input[type=checkbox], input[type=radio]', function () {
+  let stored = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+  stored[$(this).attr('name')] = $(this).val();
+  localStorage.setItem('quizAnswers', JSON.stringify(stored));
+  renderCustomPagination(table);
+});
+
+$('#paginationBoxes').on('click', '.custom-page-number', function (e) {
+  e.preventDefault();
+  const page = $(this).data('page');
+  table.page(page).draw(false);
+  localStorage.setItem('lastVisitedPage', page);
+});
+
+table.on('draw', function () {
+  const stored = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+  Object.keys(stored).forEach(function (qid) {
+    $(`input[name="${qid}"][value="${stored[qid]}"]`).prop('checked', true);
+  });
+  renderCustomPagination(table);
+});
+
+// Arrow key navigation
+$(document).on('keydown', function (e) {
+  const info = table.page.info();
+  if (e.key === 'ArrowRight' && info.page < info.pages - 1) {
+    table.page(info.page + 1).draw(false);
+    localStorage.setItem('lastVisitedPage', info.page + 1);
+  }
+  if (e.key === 'ArrowLeft' && info.page > 0) {
+    table.page(info.page - 1).draw(false);
+    localStorage.setItem('lastVisitedPage', info.page - 1);
+  }
+});
+
+
+// ── Timer ────────────────────────────────────────────────────
+$(document).ready(function () {
+  const timerElement   = document.getElementById('timer');
+  const courseTimerKey = 'remainingTime_{{ course.id }}';
+  let storedTime       = localStorage.getItem(courseTimerKey);
+  let remainingTime    = storedTime !== null ? parseInt(storedTime) : {{ course.duration_minutes }} * 60;
+
+  if (storedTime === null) localStorage.setItem(courseTimerKey, remainingTime);
+  if (window.timerInterval) clearInterval(window.timerInterval);
+
+  window.timerInterval = setInterval(() => {
+    const m = Math.floor(remainingTime / 60);
+    const s = remainingTime % 60;
+    timerElement.innerHTML = `<span>Time Left: ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span>`;
+
+    if (remainingTime <= 0) {
+      clearInterval(window.timerInterval);
+      localStorage.removeItem(courseTimerKey);
+      localStorage.removeItem('quizStartedForCourse_{{ course.id }}');
+      doSubmit('timeout');
+      return;
+    }
+    remainingTime--;
+    localStorage.setItem(courseTimerKey, remainingTime);
+  }, 1000);
+});
+
+
+// ── Core submit function (single source of truth) ────────────
+let isManuallySubmitting = false;
+let examAlreadySubmitted = false;
+
+function doSubmit(reason) {
+  if (examAlreadySubmitted) return;
+  examAlreadySubmitted = true;
+
+  if (window.timerInterval) clearInterval(window.timerInterval);
+
+  const courseTimerKey = 'remainingTime_{{ course.id }}';
+  const tabCount       = parseInt(localStorage.getItem('tabSwitchCount')) || 0;
+  const storedAnswers  = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+  storedAnswers['tabSwitchCount']    = tabCount;
+  storedAnswers['submissionReason']  = reason;
+
+  $.ajax({
+    type: "POST",
+    url: "/student/calculate_marks",
+    contentType: "application/json",
+    data: JSON.stringify(storedAnswers),
+    success: function (response) {
+      console.log("Submit response:", response);
+      localStorage.removeItem('quizAnswers');
+      localStorage.removeItem('lastVisitedPage');
+      localStorage.removeItem('tabSwitchCount');
+      localStorage.removeItem(courseTimerKey);
+      localStorage.removeItem('quizStartedForCourse_{{ course.id }}');
+      localStorage.removeItem('examFullscreen');
+
+      const msg = reason === 'timeout'    ? "Time's up! Your exam has been submitted."
+                : reason === 'tabswitch'  ? "Exam submitted due to tab switching limit."
+                : reason === 'fullscreen' ? "Exam submitted due to fullscreen violations."
+                :                          "Quiz submitted successfully!";
+      alert(msg);
+      window.location.href = "{% url 'student:view_result' %}";
+    },
+    error: function (xhr, status, error) {
+      examAlreadySubmitted = false; // allow retry on error
+      console.error("Submission error:", xhr.responseText);
+      alert("Submission failed. Please try again.");
+    }
+  });
+}
+
+// Convenience aliases
+function manualSubmitQuiz()   { doSubmit('manual'); }
+function submitQuiz()         { doSubmit('timeout'); }
+function inactivesubmitQuiz() { doSubmit('tabswitch'); }
+
+
+// ── Single submit button listener ───────────────────────────
+document.getElementById('submit').addEventListener('click', function () {
+  if (!confirm("Are you sure you want to submit the quiz?")) return;
+  isManuallySubmitting = true;
+  localStorage.setItem('tabSwitchCount', '0');
+  doSubmit('manual');
+});
+
+
+// ── Tab switch detection ─────────────────────────────────────
+let tabSwitchCount    = parseInt(localStorage.getItem('tabSwitchCount')) || 0;
+const tabLimit        = {{ tab_limit }};
+const tabCountDisplay = document.getElementById('tabCount');
+const studentName     = "{{ request.user.first_name|upper }} {{ request.user.last_name|upper }}";
+
+if (tabSwitchCount > tabLimit) {
+  tabSwitchCount = tabLimit;
+  localStorage.setItem('tabSwitchCount', tabSwitchCount);
+}
+tabCountDisplay.textContent = tabSwitchCount;
+
+document.addEventListener("visibilitychange", function () {
+  if (!document.hidden || examAlreadySubmitted || isManuallySubmitting) return;
+
+  tabSwitchCount = Math.min(tabSwitchCount + 1, tabLimit);
+  tabCountDisplay.textContent = tabSwitchCount;
+  localStorage.setItem('tabSwitchCount', tabSwitchCount);
+
+  if ('speechSynthesis' in window) {
+    const msg = new SpeechSynthesisUtterance(
+      `${tabSwitchCount} out of ${tabLimit} attempts to leave the exam page detected. ${studentName}`
+    );
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(msg);
+  }
+
+  if (tabSwitchCount >= tabLimit) {
+    examAlreadySubmitted = true;
+    setTimeout(function () {
+      alert('Exam will be submitted due to tab switching limit reached.');
+      doSubmit('tabswitch');
+    }, 300);
+  }
+});
+
+
+// ── Fullscreen ───────────────────────────────────────────────
+const elem = document.documentElement;
+let fullscreenExitCount     = 0;
+let fullscreencounter       = Number({{ course.fullscreencounter|default:"3" }});
+let flashInterval           = null;
+let skipFirstFullscreenExit = true;
+let isReturningToFullscreen = false;
+
+function updateFullscreenCounter() {
+  const el = document.getElementById("fullscreenCounterText");
+  if (!el) return;
+  el.innerText = `You exited Fullscreen: ${fullscreenExitCount} / ${fullscreencounter} times. If you reach ${fullscreencounter} times, your exam will be submitted.`;
+  if (fullscreenExitCount === fullscreencounter) {
+    if (!flashInterval) {
+      flashInterval = setInterval(() => {
+        el.style.color = el.style.color === "yellow" ? "red" : "yellow";
+      }, 500);
+    }
+  } else {
+    clearInterval(flashInterval);
+    flashInterval = null;
+    el.style.color = "yellow";
+  }
+}
+
+function openFullscreen() {
+  isReturningToFullscreen = true;
+  if (elem.requestFullscreen)            elem.requestFullscreen();
+  else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+  else if (elem.msRequestFullscreen)     elem.msRequestFullscreen();
+  localStorage.setItem("examFullscreen", "true");
+  setTimeout(() => { isReturningToFullscreen = false; }, 500);
+}
+
+function returnToFullscreen() {
+  openFullscreen();
+  document.getElementById("fullscreenPopup").style.display = "none";
+}
+
+function registerFullscreenStrike() {
+  if (fullscreenExitCount >= fullscreencounter) return;
+  fullscreenExitCount++;
+  updateFullscreenCounter();
+  if (fullscreenExitCount >= fullscreencounter) {
+    localStorage.setItem('tabSwitchCount', '0');
+    alert(`❌ You exited fullscreen ${fullscreenExitCount} times. Your exam was submitted successfully.`);
+    doSubmit('fullscreen');
+  }
+}
+
+document.addEventListener("fullscreenchange", () => {
+  if (isReturningToFullscreen || document.fullscreenElement) return;
+  if (skipFirstFullscreenExit) {
+    skipFirstFullscreenExit = false;
+    document.getElementById("fullscreenPopup").style.display = "flex";
+    return;
+  }
+  registerFullscreenStrike();
+  if (fullscreenExitCount < fullscreencounter) {
+    document.getElementById("fullscreenPopup").style.display = "flex";
+  }
+});
+
+window.addEventListener("load", () => {
+  if (localStorage.getItem("examFullscreen") === "true") setTimeout(openFullscreen, 500);
+  document.querySelectorAll(".radio-button").forEach(r => r.addEventListener("click", openFullscreen));
+  updateFullscreenCounter();
+});
+
+
+// ── Network status ───────────────────────────────────────────
+const networkStatusEl = document.getElementById('network-status');
+function updateNetworkStatus() {
+  if (navigator.onLine) {
+    networkStatusEl.textContent = "Back online! Your exam is syncing...";
+    networkStatusEl.className = 'online';
+    setTimeout(() => { networkStatusEl.style.display = 'none'; }, 3000);
+  } else {
+    networkStatusEl.textContent = "You are currently offline. Wait for internet before submitting.";
+    networkStatusEl.className = 'offline';
+  }
+}
+updateNetworkStatus();
+window.addEventListener('online',  updateNetworkStatus);
+window.addEventListener('offline', updateNetworkStatus);
+
+
+// ── Calculator ───────────────────────────────────────────────
+function toggleCalculator() {
+  const c = document.getElementById('calculator');
+  c.style.display = (c.style.display === 'none' || !c.style.display) ? 'block' : 'none';
+}
+function appendCalc(v) { document.getElementById('calc-display').value += v; }
+function clearCalc()   { document.getElementById('calc-display').value = ''; }
+function calculate() {
+  const d = document.getElementById('calc-display');
+  try { d.value = eval(d.value); } catch { d.value = 'Error'; }
+}
+function toggleScientific() {
+  const s = document.getElementById('scientific');
+  s.style.display = s.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('keydown', function (e) {
+  if (document.getElementById('calculator').style.display !== 'block') return;
+  const d = document.getElementById('calc-display');
+  if ((e.key >= '0' && e.key <= '9') || ['+','-','*','/','.',`(`,`)`].includes(e.key)) {
+    d.value += e.key;
+  } else if (e.key === 'Enter')   { e.preventDefault(); calculate(); }
+  else if (e.key === 'Backspace') { d.value = d.value.slice(0, -1); }
+  else if (e.key === 'Escape')    { clearCalc(); }
+});
+
+dragElement(document.getElementById("calculator"));
+function dragElement(elmnt) {
+  const header = document.getElementById("calc-header");
+  let pos1=0, pos2=0, pos3=0, pos4=0;
+  if (header) header.onmousedown = function(e) {
+    e.preventDefault();
+    pos3 = e.clientX; pos4 = e.clientY;
+    document.onmouseup   = () => { document.onmouseup = null; document.onmousemove = null; };
+    document.onmousemove = function(e) {
+      e.preventDefault();
+      pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
+      pos3 = e.clientX;        pos4 = e.clientY;
+      elmnt.style.top  = (elmnt.offsetTop  - pos2) + "px";
+      elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+    };
+  };
+}
+</script>
+
+{% endblock %}
