@@ -221,8 +221,8 @@
   <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
       <h6 class="m-0 font-weight-bold text-dark">Exam Questions</h6>
-      <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete selected questions?');">
-        <i class="fas fa-trash"></i> Delete Selected
+      <button type="submit" class="btn btn-danger btn-sm" id="deleteBtn" onclick="return confirmDelete();" disabled>
+        <i class="fas fa-trash"></i> Delete Selected (<span id="selectedCount">0</span>)
       </button>
     </div>
 
@@ -287,9 +287,29 @@
 
 <!-- JavaScript for Select All -->
 <script>
-  document.getElementById('select-all').addEventListener('click', function(e) {
-    const checkboxes = document.querySelectorAll('input[name="selected_questions"]');
-    checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+  const selectAll = document.getElementById('select-all');
+  const deleteBtn = document.getElementById('deleteBtn');
+  const selectedCount = document.getElementById('selectedCount');
+
+  function updateCount() {
+    const checked = document.querySelectorAll('input[name="selected_questions"]:checked');
+    const count = checked.length;
+    selectedCount.textContent = count;
+    deleteBtn.disabled = count === 0;
+  }
+
+  function confirmDelete() {
+    const count = document.querySelectorAll('input[name="selected_questions"]:checked').length;
+    return confirm(`Are you sure you want to delete ${count} selected question${count !== 1 ? 's' : ''}?`);
+  }
+
+  selectAll.addEventListener('click', function () {
+    document.querySelectorAll('input[name="selected_questions"]').forEach(cb => cb.checked = this.checked);
+    updateCount();
+  });
+
+  document.querySelectorAll('input[name="selected_questions"]').forEach(cb => {
+    cb.addEventListener('change', updateCount);
   });
 </script>
 

@@ -131,6 +131,9 @@
 <h4>If you have prepared quesions <a href="{% url 'quiz:paste_questions' %}">click here</a></h4>
   <div id="preview-area" style="margin-top:20px;"></div>
   <div id="preview-save-container"></div>
+
+  <hr>
+  
 </div>
 
 <!-- Load jQuery if not already loaded -->
@@ -287,6 +290,9 @@ if (typeof jQuery == 'undefined') {
             cursor: pointer;
             min-width: 220px;
           ">✅ Save All Questions</button>
+          <a href="{% url 'teacher:teacher_subjects' %}">
+    <button type="button" class="btn-primary">View Questions</button>
+  </a>
           <div id="save-spinner" style="
             display: none;
             margin: 14px auto 0;

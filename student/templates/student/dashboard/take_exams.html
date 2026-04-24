@@ -15,7 +15,7 @@
 <!-- Welcome -->
 <div class="text-center mt-4 mb-4">
     <div class="alert alert-info mx-auto" style="max-width: 600px;">
-        <strong>Welcome, {{ request.user.profile.first_name|title }}!</strong>
+        <strong> <h2>Welcome, {{ request.user.profile.first_name|title }} {{ request.user.profile.last_name|title }}!</h2></strong>
         <p class="mb-1">You can begin with any exam.</p>
         <p class="mb-0 text-muted">Ensure you answer all questions before submitting.</p>
     </div>
