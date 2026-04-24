@@ -8,6 +8,17 @@ from .models import Teacher, SampleCodes, ColumnLock
 admin.site.register(SampleCodes)
 admin.site.register(ColumnLock)
 
+
+from .models import TeacherCourseObjective
+
+@admin.register(TeacherCourseObjective)
+class TeacherCourseObjectiveAdmin(admin.ModelAdmin):
+    list_display = ('teacher', 'course', 'updated_at')
+    list_filter = ('course', 'updated_at')
+    search_fields = ('teacher__first_name', 'teacher__last_name', 'course__course_name')
+    readonly_fields = ('updated_at',)
+
+
 class AdminTeacher(admin.ModelAdmin):
     list_display = ['id','first_name', 'last_name', 'email', 'username', 'display_subjects_taught', 'display_classes_taught', 'school']
     search_fields = ['first_name', 'last_name', 'school__school_name']

@@ -11,6 +11,8 @@ from urllib.parse import unquote
 from string import ascii_uppercase  # Import uppercase letters
 from django.contrib.sessions.models import Session
 from django.http import HttpResponse
+
+from teacher.models import TeacherCourseObjective
 from .models import CourseGrade
 from users.models import Profile, NewUser
 from .forms import MoveGroupForm
@@ -225,16 +227,13 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
-
+from django.db import transaction
 
 import logging
 
 logger = logging.getLogger(__name__)
-
-
 @login_required
 def ai_summative_assessment(request):
-    # Ensure teacher exists
     try:
         teacher = request.user.teacher
     except:
@@ -245,19 +244,32 @@ def ai_summative_assessment(request):
 
     courses = teacher.subjects_taught.all()
 
-    # ADD DEBUGGING
     if request.method == "POST":
         logger.info(f"POST request received")
         logger.info(f"confirm_save value: {request.POST.get('confirm_save')}")
         logger.info(f"Is AJAX: {request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest'}")
         logger.info(f"POST data keys: {list(request.POST.keys())}")
 
-    # Check if this is a SAVE request (not generation)
     if request.method == "POST" and request.POST.get("confirm_save") == "1":
         logger.info("Processing SAVE request")
-        
-        total_questions = int(request.POST.get("total_questions", 0))
+
+        learning_objectives = request.POST.get("learning_objectives", "").strip()
         course_id = request.POST.get("course_id")
+
+        # ── Save objectives per teacher per course ──
+        if learning_objectives and course_id:
+            try:
+                with transaction.atomic():
+                    TeacherCourseObjective.objects.update_or_create(
+                        teacher=teacher,
+                        course_id=course_id,
+                        defaults={"learning_objectives": learning_objectives}
+                    )
+                    logger.info(f"Saved objectives for course {course_id}")
+            except Exception as e:
+                logger.error(f"Failed to save objectives: {e}")
+
+        total_questions = int(request.POST.get("total_questions", 0))
         marks = int(request.POST.get("marks", 1))
 
         try:
@@ -268,32 +280,49 @@ def ai_summative_assessment(request):
             messages.error(request, "You do not have permission to add questions to this course.")
             return redirect("quiz:ai_summative_assessment")
 
-        saved = 0
-        for i in range(1, total_questions + 1):
-            question_text = request.POST.get(f"question_{i}", "").strip()
-            options = [
-                request.POST.get(f"option1_{i}", "").strip(),
-                request.POST.get(f"option2_{i}", "").strip(),
-                request.POST.get(f"option3_{i}", "").strip(),
-                request.POST.get(f"option4_{i}", "").strip(),
-            ]
-            answer = request.POST.get(f"answer_{i}", "Option1").strip()
+        # ── Wrap entire question save in atomic to prevent partial saves ──
+        try:
+            with transaction.atomic():
+                saved = 0
+                for i in range(1, total_questions + 1):
+                    question_text = request.POST.get(f"question_{i}", "").strip()
+                    options = [
+                        request.POST.get(f"option1_{i}", "").strip(),
+                        request.POST.get(f"option2_{i}", "").strip(),
+                        request.POST.get(f"option3_{i}", "").strip(),
+                        request.POST.get(f"option4_{i}", "").strip(),
+                    ]
+                    answer = request.POST.get(f"answer_{i}", "Option1").strip()
 
-            if question_text and all(options):
-                Question.objects.create(
-                    course=course_detail,
-                    marks=marks,
-                    question=question_text,
-                    option1=options[0],
-                    option2=options[1],
-                    option3=options[2],
-                    option4=options[3],
-                    answer=answer
-                )
-                saved += 1
+                    if question_text and all(options):
+                        Question.objects.create(
+                            course=course_detail,
+                            marks=marks,
+                            question=question_text,
+                            option1=options[0],
+                            option2=options[1],
+                            option3=options[2],
+                            option4=options[3],
+                            answer=answer
+                        )
+                        saved += 1
 
-        message_text = f"{saved} question{'s' if saved != 1 else ''} saved successfully." if saved > 0 else "No questions were saved. Please check your entries."
+        except Exception as e:
+            logger.error(f"Question save failed — type: {type(e).__name__}, detail: {e}", exc_info=True)
+            if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Save failed: {type(e).__name__}: {str(e)}'  # ← show real error to browser temporarily
+                })
+            messages.error(request, "Something went wrong saving questions. Please try again.")
+            return redirect("quiz:ai_summative_assessment")
 
+
+        message_text = (
+            f"{saved} question{'s' if saved != 1 else ''} saved successfully."
+            if saved > 0
+            else "No questions were saved. Please check your entries."
+        )
         logger.info(f"Saved {saved} questions")
 
         if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
@@ -309,10 +338,105 @@ def ai_summative_assessment(request):
 
         return redirect("quiz:ai_summative_assessment")
 
-    # If we get here, it's a GET request - render the form
+    # ── GET: build objectives map for all teacher's courses ──
+    objectives_map = {
+        obj.course_id: obj.learning_objectives
+        for obj in TeacherCourseObjective.objects.filter(teacher=teacher)
+    }
+
+    first_course = courses.first()
+    saved_objectives = objectives_map.get(first_course.id, "") if first_course else ""
+
     return render(request, "quiz/dashboard/ai_summative_assessment.html", {
         "courses": courses,
+        "saved_objectives": saved_objectives,
+        "objectives_map": objectives_map,
     })
+
+
+
+#before adding save learning objectives and ai question num
+# @login_required
+# def ai_summative_assessment(request):
+#     # Ensure teacher exists
+#     try:
+#         teacher = request.user.teacher
+#     except:
+#         if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+#             return JsonResponse({'status': 'error', 'message': 'Teacher account not found.'})
+#         messages.error(request, "Teacher account not found.")
+#         return redirect("dashboard")
+
+#     courses = teacher.subjects_taught.all()
+
+#     # ADD DEBUGGING
+#     if request.method == "POST":
+#         logger.info(f"POST request received")
+#         logger.info(f"confirm_save value: {request.POST.get('confirm_save')}")
+#         logger.info(f"Is AJAX: {request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest'}")
+#         logger.info(f"POST data keys: {list(request.POST.keys())}")
+
+#     # Check if this is a SAVE request (not generation)
+#     if request.method == "POST" and request.POST.get("confirm_save") == "1":
+#         logger.info("Processing SAVE request")
+        
+#         total_questions = int(request.POST.get("total_questions", 0))
+#         course_id = request.POST.get("course_id")
+#         marks = int(request.POST.get("marks", 1))
+
+#         try:
+#             course_detail = Course.objects.get(id=course_id, teachers=teacher)
+#         except Course.DoesNotExist:
+#             if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+#                 return JsonResponse({'status': 'error', 'message': 'You do not have permission to add questions to this course.'})
+#             messages.error(request, "You do not have permission to add questions to this course.")
+#             return redirect("quiz:ai_summative_assessment")
+
+#         saved = 0
+#         for i in range(1, total_questions + 1):
+#             question_text = request.POST.get(f"question_{i}", "").strip()
+#             options = [
+#                 request.POST.get(f"option1_{i}", "").strip(),
+#                 request.POST.get(f"option2_{i}", "").strip(),
+#                 request.POST.get(f"option3_{i}", "").strip(),
+#                 request.POST.get(f"option4_{i}", "").strip(),
+#             ]
+#             answer = request.POST.get(f"answer_{i}", "Option1").strip()
+
+#             if question_text and all(options):
+#                 Question.objects.create(
+#                     course=course_detail,
+#                     marks=marks,
+#                     question=question_text,
+#                     option1=options[0],
+#                     option2=options[1],
+#                     option3=options[2],
+#                     option4=options[3],
+#                     answer=answer
+#                 )
+#                 saved += 1
+
+#         message_text = f"{saved} question{'s' if saved != 1 else ''} saved successfully." if saved > 0 else "No questions were saved. Please check your entries."
+
+#         logger.info(f"Saved {saved} questions")
+
+#         if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+#             return JsonResponse({
+#                 'status': 'success' if saved > 0 else 'warning',
+#                 'message': message_text
+#             })
+
+#         if saved > 0:
+#             messages.success(request, message_text)
+#         else:
+#             messages.warning(request, message_text)
+
+#         return redirect("quiz:ai_summative_assessment")
+
+#     # If we get here, it's a GET request - render the form
+#     return render(request, "quiz/dashboard/ai_summative_assessment.html", {
+#         "courses": courses,
+#     })
 
 
 

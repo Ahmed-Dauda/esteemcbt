@@ -151,33 +151,28 @@
 <script>
   $(document).ready(function() {
     $('.select2').select2({
-      placeholder: "Search and select multiple options",
-      closeOnSelect: false,   // ✅ keeps dropdown open
+      placeholder: "Search and select...",
+      closeOnSelect: false,
       allowClear: true,
       width: '100%',
-      templateResult: function (option) {
-        if (!option.id) return option.text;
-        return $('<span><input type="checkbox"/> ' + option.text + '</span>');
-      },
-      templateSelection: function (option) {
-        return option.text;
-      }
+      hideSelected: false,
     });
 
-    // ✅ Check already selected items
-    $('.select2').on('select2:select', function (e) {
-      var el = $(e.target);
-      var selectedEl = $(e.params.data.element);
-      selectedEl.prop('selected', true);
-    });
-
-    $('.select2').on('select2:unselect', function (e) {
-      var el = $(e.target);
-      var selectedEl = $(e.params.data.element);
-      selectedEl.prop('selected', false);
+    // Keep already-selected items visible and checked when dropdown opens
+    $('.select2').on('select2:open', function() {
+      // Small delay to let the dropdown render
+      setTimeout(function() {
+        $('.select2-results__option').each(function() {
+          const val = $(this).data('data') && $(this).data('data').id;
+          if (!val) return;
+          const isSelected = $('option[value="' + val + '"]', $(this).closest('.select2-container').prev('select')).is(':selected');
+          if (isSelected) {
+            $(this).attr('aria-selected', 'true');
+          }
+        });
+      }, 50);
     });
   });
 </script>
-
 </body>
 </html>

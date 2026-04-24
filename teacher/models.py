@@ -65,6 +65,19 @@ class Teacher(models.Model):
         return f"{self.school} - {self.first_name} {self.last_name}"
 
 
+class TeacherCourseObjective(models.Model):
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='course_objectives')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='teacher_objectives')
+    learning_objectives = models.TextField(blank=True, default='')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('teacher', 'course')
+
+    def __str__(self):
+        return f"{self.teacher} - {self.course}"
+    
+    
 
 class Subject_obj(models.Model):
 

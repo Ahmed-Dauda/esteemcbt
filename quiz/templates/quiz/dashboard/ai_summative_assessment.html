@@ -94,7 +94,7 @@
 
     <div class="form-group">
       <label>Learning Objectives:</label>
-      <textarea id="learning_objectives" name="learning_objectives" rows="4" placeholder="Enter learning objectives..." required></textarea>
+      <textarea id="learning_objectives" name="learning_objectives" rows="4" placeholder="Enter learning objectives..." required>{{ saved_objectives }}</textarea>
     </div>
 
     <div class="form-group">
@@ -143,6 +143,14 @@ if (typeof jQuery == 'undefined') {
 }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+
+<script>
+if (typeof jQuery == 'undefined') {
+  document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 (function() {
   function initializeForm() {
@@ -158,6 +166,16 @@ if (typeof jQuery == 'undefined') {
       $('#difficulty').select2({width:'100%'});
 
       const csrftoken = '{{ csrf_token }}';
+
+      // ── Objectives per course from Django context ──
+      const objectivesMap = {{ objectives_map|safe }};
+
+      // ── Populate objectives when course changes ──
+      $('#course').on('change', function() {
+        const courseId = parseInt($(this).val());
+        const obj = objectivesMap[courseId] || '';
+        $('#learning_objectives').val(obj);
+      });
 
       function showMessage(message, type='success') {
         const toast = $(`<div class="toast-message toast-${type}">${message}</div>`);
@@ -177,7 +195,7 @@ if (typeof jQuery == 'undefined') {
       }
 
       $('#generate-form').off('submit');
-      
+
       $('#generate-form').on('submit', function(e){
         e.preventDefault();
         e.stopPropagation();
@@ -228,26 +246,26 @@ if (typeof jQuery == 'undefined') {
               $('#progress-bar').css('width',percent+'%');
               $('#progress_text').text(`${partial}/${totalQuestions} generated`);
               setTimeout(()=>pollStatus(jobId,totalQuestions),1500);
-            } 
+            }
             else if(data.status==='completed'){
               $('#loader-container').hide();
               setLoading($('#generate-btn'), false, '⚙️ Generate AI Questions');
               renderPreview(data.result.questions || []);
-            } 
+            }
             else if(data.status==='failed'){
               showMessage('Generation failed: ' + (data.error||'unknown'), 'error');
               $('#loader-container').hide();
               setLoading($('#generate-btn'), false, '⚙️ Generate AI Questions');
-            } 
+            }
             else setTimeout(()=>pollStatus(jobId,totalQuestions),1500);
           })
           .catch(()=>setTimeout(()=>pollStatus(jobId,totalQuestions),3000));
       }
 
       function renderPreview(questions){
-        if(!questions.length){ 
-          $('#preview-area').html('<p>No questions returned</p>'); 
-          return; 
+        if(!questions.length){
+          $('#preview-area').html('<p>No questions returned</p>');
+          return;
         }
 
         let html = `<div class="form-section"><h3>✏️ Review Questions Before Saving</h3>
@@ -256,7 +274,8 @@ if (typeof jQuery == 'undefined') {
           <input type="hidden" name="course_id" value="${$('#course').val()}">
           <input type="hidden" name="total_questions" value="${questions.length}">
           <input type="hidden" name="marks" value="1">
-          <input type="hidden" name="difficulty" value="${$('#difficulty').val()}">`;
+          <input type="hidden" name="difficulty" value="${$('#difficulty').val()}">
+          <input type="hidden" name="learning_objectives" value="${escapeHtml($('#learning_objectives').val())}">`;
 
         questions.forEach((q,i)=>{
           const idx=i+1;
@@ -277,7 +296,6 @@ if (typeof jQuery == 'undefined') {
             </div></div>`;
         });
 
-        /* ✅ Save button with visible spinner below it */
         html+=`<div style="text-align:center; margin-top:16px;">
           <button type="submit" id="save-btn" style="
             padding: 12px 28px;
@@ -291,8 +309,8 @@ if (typeof jQuery == 'undefined') {
             min-width: 220px;
           ">✅ Save All Questions</button>
           <a href="{% url 'teacher:teacher_subjects' %}">
-    <button type="button" class="btn-primary">View Questions</button>
-  </a>
+            <button type="button" class="btn-primary">View Questions</button>
+          </a>
           <div id="save-spinner" style="
             display: none;
             margin: 14px auto 0;
@@ -307,20 +325,24 @@ if (typeof jQuery == 'undefined') {
 
         $('#preview-save-container').html(html);
 
+        // ── Double-submission guard ──
+        let isSaving = false;
+
         $('#preview-save-form').off('submit').on('submit', function(e){
           e.preventDefault();
           e.stopPropagation();
+
+          if (isSaving) return false;
+          isSaving = true;
 
           const saveBtn     = document.getElementById('save-btn');
           const spinner     = document.getElementById('save-spinner');
           const spinnerText = document.getElementById('save-spinner-text');
 
-          // Hide button, show spinning circle
           saveBtn.style.display = 'none';
           spinner.style.display = 'block';
           spinnerText.style.display = 'block';
 
-          // Start the spin animation via JS keyframes
           let deg = 0;
           const spinInterval = setInterval(function() {
             deg += 10;
@@ -338,11 +360,21 @@ if (typeof jQuery == 'undefined') {
           .then(r => r.json())
           .then(resp => {
             showMessage(resp.message, resp.status || 'success');
-            // Stop spinner and show saved confirmation
             clearInterval(spinInterval);
             spinner.style.display     = 'none';
             spinnerText.style.display = 'none';
-            // Show a green saved badge instead
+            isSaving = false;
+
+            // ── Keep objectivesMap in sync so course switch shows latest ──
+            if (resp.status === 'success' || resp.status === 'warning') {
+              const savedCourseId = parseInt(formData.get('course_id'));
+              const savedObj = formData.get('learning_objectives');
+              if (savedCourseId && savedObj) {
+                objectivesMap[savedCourseId] = savedObj;
+                $('#learning_objectives').val(savedObj);
+              }
+            }
+
             const savedBadge = document.createElement('div');
             savedBadge.innerHTML = '✅ Questions Saved!';
             savedBadge.style.cssText = 'margin-top:12px; color:#28a745; font-weight:bold; font-size:15px;';
@@ -351,11 +383,11 @@ if (typeof jQuery == 'undefined') {
           .catch(err => {
             console.error(err);
             showMessage('Error saving questions', 'error');
-            // On error: stop spinner and show button again so user can retry
             clearInterval(spinInterval);
             spinner.style.display     = 'none';
             spinnerText.style.display = 'none';
             saveBtn.style.display     = 'inline-block';
+            isSaving = false;
           });
 
           return false;
@@ -376,5 +408,6 @@ if (typeof jQuery == 'undefined') {
   initializeForm();
 })();
 </script>
+
 
 {% endblock %}

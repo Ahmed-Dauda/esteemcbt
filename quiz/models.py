@@ -220,6 +220,7 @@ class StudentExamSession(models.Model):
         return f"{self.course}"
     
 
+
 class Question(models.Model):
     course = models.ForeignKey('Course', on_delete=models.SET_NULL, blank=True, null=True)
     # course = models.ForeignKey('Course', on_delete=models.CASCADE, blank=True, null=True)

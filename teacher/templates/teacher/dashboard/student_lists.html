@@ -89,7 +89,7 @@
     </thead>
     <tbody>
       {% for student in students %}
-      <tr>
+      <tr data-username="{{ student.username }}">
         <td class="checkbox-col"><input type="checkbox" name="selected_students" value="{{ student.id }}"></td>
         <td>{{ student.id }}</td>
         <td class="searchable">{{ student.first_name }} {{ student.last_name }}</td>
@@ -172,16 +172,15 @@ function getVisibleStudentData() {
     if (row.style.display === "none") return;
     const cells = row.querySelectorAll("td");
     data.push({
-      id:     cells[1].textContent.trim(),
-      name:   cells[2].textContent.trim(),
-      email:  cells[3].textContent.trim(),
-      cls:    cells[4].textContent.trim(),
-      gender: cells[5].textContent.trim(),
+      username: row.getAttribute("data-username") || "—",
+      name:     cells[2].textContent.trim(),  // col 2
+      email:    cells[3].textContent.trim(),  // col 3
+      cls:      cells[4].textContent.trim(),  // col 4
+      gender:   cells[5].textContent.trim(),  // col 5
     });
   });
   return data;
 }
-
 // PDF Export
 function exportToPDF() {
   const students = getVisibleStudentData();
@@ -190,24 +189,30 @@ function exportToPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
   const title = classFilter.value ? `Student List — ${classFilter.value}` : "Student List — All Classes";
+const schoolName = "{{ request.user.school.school_name }}";  // or however you access school
 
-  doc.setFontSize(16);
-  doc.setTextColor(30, 30, 30);
-  doc.text(title, 40, 40);
+doc.setFontSize(16);
+doc.setTextColor(30, 30, 30);
+doc.text(schoolName, 40, 28);          // school name on top
 
-  doc.setFontSize(10);
-  doc.setTextColor(100);
-  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 40, 58);
+doc.setFontSize(13);
+doc.text(title, 40, 48);               // class below it
 
-  doc.autoTable({
-    startY: 70,
-    head: [["#", "ID", "Name", "Email", "Class", "Gender"]],
-    body: students.map((s, i) => [i + 1, s.id, s.name, s.email, s.cls, s.gender]),
-    styles: { fontSize: 9, cellPadding: 5 },
-    headStyles: { fillColor: [44, 130, 201], textColor: 255, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: [245, 249, 255] },
-    margin: { left: 40, right: 40 },
-  });
+doc.setFontSize(10);
+doc.setTextColor(100);
+doc.text(`Generated: ${new Date().toLocaleDateString()}`, 40, 64);
+
+
+doc.autoTable({
+  startY: 76,
+  head: [["#", "Name", "Username", "Email", "Class", "Gender"]],
+  body: students.map((s, i) => [i + 1, s.name, s.username, s.email, s.cls, s.gender]),
+  styles: { fontSize: 9, cellPadding: 5 },
+  headStyles: { fillColor: [44, 130, 201], textColor: 255, fontStyle: "bold" },
+  alternateRowStyles: { fillColor: [245, 249, 255] },
+  margin: { left: 40, right: 40 },
+});
+
 
   const filename = (classFilter.value || "all_classes").replace(/\s+/g, "_").toLowerCase() + "_students.pdf";
   doc.save(filename);
