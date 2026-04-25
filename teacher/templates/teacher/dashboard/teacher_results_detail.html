@@ -5,7 +5,6 @@
 {% block content %}
 
 <style>
-  /* ── AI Chat Panel ── */
   #ai-fab {
     position: fixed;
     bottom: 28px;
@@ -32,8 +31,8 @@
     bottom: 90px;
     right: 28px;
     z-index: 1049;
-    width: 380px;
-    max-height: 580px;
+    width: 390px;
+    max-height: 620px;
     background: #fff;
     border-radius: 14px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.18);
@@ -73,6 +72,8 @@
     border-bottom: 1px solid #f0f0f0;
     flex-shrink: 0;
     background: #fafafa;
+    overflow-y: auto;
+    max-height: 200px;
   }
   .ai-suggestion-btn {
     font-size: 11px;
@@ -86,6 +87,21 @@
     white-space: nowrap;
   }
   .ai-suggestion-btn:hover { background: #6f42c1; color: #fff; }
+  .ai-suggestion-btn.chart-btn { border-color: #1a7a4a; color: #1a7a4a; }
+  .ai-suggestion-btn.chart-btn:hover { background: #1a7a4a; color: #fff; }
+
+  .suggestions-divider {
+    width: 100%;
+    border-top: 1px dashed #ddd;
+    margin: 2px 0;
+  }
+  .suggestions-label {
+    font-size: 10px;
+    color: #999;
+    width: 100%;
+    display: block;
+    margin-bottom: 2px;
+  }
 
   #ai-messages {
     flex: 1;
@@ -97,7 +113,7 @@
     min-height: 180px;
   }
   .ai-msg {
-    max-width: 90%;
+    max-width: 92%;
     padding: 9px 13px;
     border-radius: 12px;
     font-size: 13px;
@@ -108,6 +124,30 @@
   .ai-msg.user      { align-self: flex-end; background: #0d6efd; color: #fff; border-bottom-right-radius: 3px; }
   .ai-msg.assistant { align-self: flex-start; background: #f1f3f5; color: #212529; border-bottom-left-radius: 3px; }
   .ai-msg.thinking  { color: #888; font-style: italic; background: #f8f9fa; align-self: flex-start; }
+
+  #chart-mode-bar {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #fff8e1;
+    border-bottom: 1px solid #ffe082;
+    font-size: 11px;
+    color: #795548;
+    flex-shrink: 0;
+  }
+  #chart-mode-bar.active { display: flex; }
+  #chart-mode-bar strong { color: #e65100; }
+  #exit-chart-mode {
+    margin-left: auto;
+    background: none;
+    border: 1px solid #e65100;
+    color: #e65100;
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 10px;
+    cursor: pointer;
+  }
 
   #ai-input-row {
     display: flex;
@@ -154,9 +194,7 @@
 
   <h2 class="mt-2 mb-3">Results for {{ course.course_name }}</h2>
 
-  <!-- ACTION BUTTONS -->
   <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
-
     <button type="submit" class="btn btn-danger me-2" id="delete-btn">
       <i class="fas fa-trash"></i> Delete Selected
     </button>
@@ -192,7 +230,6 @@
     </span>
   </div>
 
-  <!-- FILTER ROW -->
   <div class="row mb-3 g-2 align-items-end">
     <div class="col-auto">
       <label class="form-label mb-1 fw-semibold" style="font-size:13px;">Term</label>
@@ -271,17 +308,24 @@
 
 </div>
 
-<!-- ── AI Floating Button ── -->
+<!-- AI Floating Button -->
 <button id="ai-fab" title="AI Assistant">🤖</button>
 
-<!-- ── AI Chat Panel ── -->
+<!-- AI Chat Panel -->
 <div id="ai-panel">
   <div id="ai-panel-header">
     <span>🤖 AI Results Assistant</span>
     <button onclick="toggleAiPanel()">✕</button>
   </div>
 
+  <!-- Chart mode indicator bar -->
+  <div id="chart-mode-bar">
+    📊 <strong>Chart mode</strong> — type to modify the chart above
+    <button id="exit-chart-mode" onclick="exitChartMode()">✕ Exit</button>
+  </div>
+
   <div id="ai-suggestions">
+    <span class="suggestions-label">💬 Analysis</span>
     <button class="ai-suggestion-btn" onclick="sendSuggestion('Summarise the overall performance of students in this subject')">📊 Class Summary</button>
     <button class="ai-suggestion-btn" onclick="sendSuggestion('Which students scored the lowest marks and need attention?')">⚠️ Struggling Students</button>
     <button class="ai-suggestion-btn" onclick="sendSuggestion('Who are the top performing students by marks?')">🏆 Top Performers</button>
@@ -290,46 +334,67 @@
     <button class="ai-suggestion-btn" onclick="sendSuggestion('Write a professional subject performance report I can present to the school')">📝 Subject Report</button>
     <button class="ai-suggestion-btn" onclick="sendSuggestion('Compare student performance across different terms if available')">📅 Term Comparison</button>
     <button class="ai-suggestion-btn" onclick="sendSuggestion('Draft a parent communication letter about the results for this subject')">✉️ Parent Letter</button>
+
+    <div class="suggestions-divider"></div>
+
+    <span class="suggestions-label">📊 Charts</span>
+    <button class="ai-suggestion-btn chart-btn" onclick="generateChart('bar')">📊 Marks Bar Chart</button>
+    <button class="ai-suggestion-btn chart-btn" onclick="generateChart('grade_distribution')">🥧 Grade Pie Chart</button>
+    <button class="ai-suggestion-btn chart-btn" onclick="generateChart('histogram')">📉 Marks Distribution</button>
+    <button class="ai-suggestion-btn chart-btn" onclick="generateChart('term_comparison')">📅 Term Comparison</button>
+    <button class="ai-suggestion-btn chart-btn" onclick="generateChart('heatmap')">🌡️ Heatmap</button>
+    <button class="ai-suggestion-btn chart-btn" onclick="generateChart('boxplot')">📦 Boxplot</button>
   </div>
 
   <div id="ai-messages"></div>
 
   <div id="ai-input-row">
-    <textarea id="ai-input" placeholder="Ask anything about these results…" rows="1"></textarea>
+    <textarea id="ai-input" placeholder="Ask anything about results, or modify the chart…" rows="1"></textarea>
     <button id="ai-send-btn" onclick="sendAiMessage()">➤</button>
   </div>
 </div>
-
-<!-- ── Build results context from Django template ── -->
 <script>
-// Embed all result data once at page render — no extra DB call per message
 const RESULTS_CONTEXT = {
     course:         "{{ course.course_name }}",
     total_students: {{ results|length }},
     students: [
         {% for result in results %}
         {
-            name:       "{{ result.student.first_name }} {{ result.student.last_name }}",
-            marks:      "{{ result.marks }}",
+            name:         "{{ result.student.first_name }} {{ result.student.last_name }}",
+            marks:        "{{ result.marks }}",
             result_class: "{{ result.result_class }}",
-            session:    "{{ result.session.name }}",
-            term:       "{{ result.term.name }}",
-            exam_type:  "{{ result.exam_type.name }}",
+            session:      "{{ result.session.name }}",
+            term:         "{{ result.term.name }}",
+            exam_type:    "{{ result.exam_type.name }}",
         },
         {% endfor %}
     ]
 };
 
 const CSRF_TOKEN   = "{{ csrf_token }}";
-const AI_CHAT_URL  = "{% url 'teacher:teacher_results_ai_chat' %}";
+const AI_CHAT_URL  = "{% url 'teacher:teacher_results_ai' %}";
+const CHART_URL    = "{% url 'teacher:teacher_results_chart' %}";
+const CHART_AI_URL = "{% url 'teacher:teacher_chart_ai' %}";
 
-// ── Panel toggle ──
+let aiIsBusy  = false;
+let lastChart = null;
+
 function toggleAiPanel() {
     document.getElementById('ai-panel').classList.toggle('open');
 }
 document.getElementById('ai-fab').addEventListener('click', toggleAiPanel);
 
-// ── Auto-resize textarea ──
+function enterChartMode() {
+    document.getElementById('chart-mode-bar').classList.add('active');
+    document.getElementById('ai-input').placeholder = 'Modify chart — e.g. "make it red", "remove grid", "change title"…';
+}
+
+function exitChartMode() {
+    lastChart = null;
+    document.getElementById('chart-mode-bar').classList.remove('active');
+    document.getElementById('ai-input').placeholder = 'Ask anything about results, or modify the chart…';
+}
+
 const aiInput = document.getElementById('ai-input');
 aiInput.addEventListener('input', function() {
     this.style.height = 'auto';
@@ -342,24 +407,36 @@ aiInput.addEventListener('keydown', function(e) {
     }
 });
 
-// ── Suggestion click ──
-function sendSuggestion(prompt) {
-    document.getElementById('ai-input').value = prompt;
-    sendAiMessage();
-}
-
 function appendMessage(role, text) {
     const box = document.getElementById('ai-messages');
     const el  = document.createElement('div');
-    el.className    = `ai-msg ${role}`;
-    el.textContent  = text;
+    el.className   = 'ai-msg ' + role;
+    el.textContent = text;
     box.appendChild(el);
-    box.scrollTop   = box.scrollHeight;
+    box.scrollTop  = box.scrollHeight;
     return el;
 }
 
-// ── Concurrency guard — one request at a time per tab ──
-let aiIsBusy = false;
+function sendSuggestion(prompt) {
+    aiInput.value = prompt;
+    sendAiMessage();
+}
+
+function isChartEditRequest(msg) {
+    const keywords = [
+        'color', 'colour', 'green', 'red', 'blue', 'purple', 'orange', 'yellow', 'pink',
+        'black', 'white', 'dark', 'light', 'bright', 'bold',
+        'title', 'label', 'xlabel', 'ylabel', 'grid', 'font', 'size',
+        'bigger', 'smaller', 'wider', 'taller', 'larger',
+        'remove', 'hide', 'show', 'rotate', 'horizontal', 'vertical',
+        'palette', 'theme', 'style', 'background',
+        'change', 'make it', 'make the', 'update', 'rename', 'set the',
+        'no grid', 'add grid', 'turn off', 'turn on',
+        'bars', 'pie', 'histogram', 'heatmap', 'boxplot',
+    ];
+    const lower = msg.toLowerCase();
+    return keywords.some(function(k) { return lower.includes(k); });
+}
 
 async function sendAiMessage() {
     if (aiIsBusy) return;
@@ -367,6 +444,13 @@ async function sendAiMessage() {
     const sendBtn = document.getElementById('ai-send-btn');
     const message = aiInput.value.trim();
     if (!message) return;
+
+    if (lastChart && isChartEditRequest(message)) {
+        await modifyChart(message);
+        return;
+    }
+
+    exitChartMode();
 
     aiIsBusy         = true;
     sendBtn.disabled = true;
@@ -379,19 +463,12 @@ async function sendAiMessage() {
     try {
         const response = await fetch(AI_CHAT_URL, {
             method:  'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken':  CSRF_TOKEN,
-            },
-            body: JSON.stringify({
-                message: message,
-                context: RESULTS_CONTEXT
-            })
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+            body: JSON.stringify({ message: message, context: RESULTS_CONTEXT })
         });
 
-        if (!response.ok) throw new Error(`Server error ${response.status}`);
+        if (!response.ok) throw new Error('Server error ' + response.status);
 
-        // Switch thinking bubble to streaming assistant bubble
         thinkingEl.className   = 'ai-msg assistant';
         thinkingEl.textContent = '';
 
@@ -400,14 +477,13 @@ async function sendAiMessage() {
         let buffer    = '';
 
         while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
+            const chunk = await reader.read();
+            if (chunk.done) break;
+            buffer += decoder.decode(chunk.value, { stream: true });
             const lines = buffer.split('\n');
-            buffer = lines.pop(); // hold incomplete line
-
-            for (const line of lines) {
+            buffer = lines.pop();
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
                 if (!line.startsWith('data: ')) continue;
                 const payload = line.slice(6).trim();
                 if (payload === '[DONE]') break;
@@ -418,11 +494,11 @@ async function sendAiMessage() {
                         document.getElementById('ai-messages').scrollTop =
                             document.getElementById('ai-messages').scrollHeight;
                     }
-                } catch {}
+                } catch(e) {}
             }
         }
 
-    } catch (err) {
+    } catch(err) {
         thinkingEl.className   = 'ai-msg assistant';
         thinkingEl.textContent = '❌ ' + err.message;
     } finally {
@@ -430,97 +506,128 @@ async function sendAiMessage() {
         sendBtn.disabled = false;
     }
 }
-</script>
 
-<script>
-$(document).ready(function () {
+async function modifyChart(message) {
+    const sendBtn = document.getElementById('ai-send-btn');
+    aiIsBusy         = true;
+    sendBtn.disabled = true;
+    aiInput.value    = '';
+    aiInput.style.height = 'auto';
 
-    ['#termFilter', '#sessionFilter', '#examTypeFilter'].forEach(function(sel) {
-        let seen = {};
-        $(sel + ' option').each(function() {
-            let val = $(this).val();
-            if (seen[val]) $(this).remove();
-            else seen[val] = true;
+    appendMessage('user', message);
+    const thinkingEl = appendMessage('thinking', '⏳ Updating chart...');
+
+    try {
+        const paramRes = await fetch(CHART_AI_URL, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+            body: JSON.stringify({
+                message:        message,
+                chart_type:     lastChart.chartType,
+                current_params: lastChart.customParams,
+            }),
         });
-    });
 
-    let table = $('#resultsTable').DataTable({
-        "order": [[1, "asc"]],
-        "pageLength": 10,
-        "columnDefs": [{ "orderable": false, "targets": [0, 8] }],
-        "language": { "emptyTable": "No results available for this course." }
-    });
+        const paramData = await paramRes.json();
+        if (paramData.error) {
+            thinkingEl.className   = 'ai-msg assistant';
+            thinkingEl.textContent = '❌ ' + paramData.error;
+            return;
+        }
 
-    function updateCount() {
-        let count = table.rows({ search: 'applied' }).count();
-        $('#export-count').text(count + ' record(s) ready to export');
+        thinkingEl.remove();
+        await renderChart(lastChart.chartType, paramData.custom_params, true);
+
+    } catch(err) {
+        thinkingEl.className   = 'ai-msg assistant';
+        thinkingEl.textContent = '❌ ' + err.message;
+    } finally {
+        aiIsBusy         = false;
+        sendBtn.disabled = false;
     }
-    updateCount();
-    table.on('draw', updateCount);
+}
 
-    $('#termFilter').on('change', function () { table.column(5).search($(this).val()).draw(); });
-    $('#sessionFilter').on('change', function () { table.column(4).search($(this).val()).draw(); });
-    $('#examTypeFilter').on('change', function () { table.column(6).search($(this).val()).draw(); });
-    $('#clear-filters').on('click', function () {
-        $('#termFilter, #sessionFilter, #examTypeFilter').val('');
-        table.columns([4, 5, 6]).search('').draw();
-    });
+async function generateChart(chartType, customParams) {
+    customParams = customParams || {};
+    const labels = {
+        bar:                '📊 Marks Bar Chart',
+        grade_distribution: '🥧 Grade Distribution',
+        histogram:          '📉 Marks Distribution',
+        term_comparison:    '📅 Term Comparison',
+        heatmap:            '🌡️ Heatmap',
+        boxplot:            '📦 Boxplot by Grade',
+    };
+    appendMessage('user', labels[chartType] || 'Generate Chart');
+    await renderChart(chartType, customParams, false);
+}
 
-    $('#select-all').on('click', function () {
-        let checked = this.checked;
-        table.rows({ search: 'applied' }).every(function () {
-            $(this.node()).find('input.check-item').prop('checked', checked);
-        });
-    });
-
-    $('#delete-btn').on('click', function(e) {
-        e.preventDefault();
-        let selected = $('input.check-item:checked');
-        let count    = selected.length;
-        if (count === 0) { alert("No results selected to delete."); return; }
-        if (!confirm(`Are you sure you want to delete ${count} selected result(s)?`)) return;
-
-        let ids = [];
-        selected.each(function() { ids.push($(this).val()); });
-
-        $.ajax({
-            url: "",
-            type: "POST",
-            data: { 'selected_results[]': ids, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-            success: function(response) {
-                if (response.status === 'success') {
-                    selected.each(function() { table.row($(this).closest('tr')).remove().draw(); });
-                    alert(`${response.deleted_count} result(s) deleted successfully.`);
-                    if (table.rows().count() === 0) location.reload();
-                } else {
-                    alert(response.message || 'Error deleting results.');
-                }
-            },
-            error: function() { alert('AJAX request failed. Please try again.'); }
-        });
-    });
-
-    function doExport(fmt) {
-        let ids = [];
-        table.rows({ search: 'applied' }).every(function () {
-            let checkbox = $(this.node()).find('input.check-item');
-            if (checkbox.length) ids.push(checkbox.val());
-        });
-        if (ids.length === 0) { alert("No results to export."); return; }
-
-        let form = $('<form method="POST" action="{% url 'teacher:export_filtered_results_csv' %}" style="display:none;">');
-        form.append('<input name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
-        form.append('<input name="course_id" value="{{ course.id }}">');
-        form.append('<input name="format" value="' + fmt + '">');
-        ids.forEach(function(id) { form.append('<input name="ids" value="' + id + '">'); });
-        $('body').append(form);
-        form.submit();
-        form.remove();
+async function renderChart(chartType, customParams, silent) {
+    const sendBtn = document.getElementById('ai-send-btn');
+    if (!silent) {
+        aiIsBusy         = true;
+        sendBtn.disabled = true;
     }
 
-    $('#export-btn').on('click', function () { doExport('csv'); });
-    $('#export-btn-pdf').on('click', function () { doExport('pdf'); });
-});
+    const thinkingEl = appendMessage('thinking', '⏳ Generating chart...');
+
+    try {
+        const response = await fetch(CHART_URL, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+            body: JSON.stringify({
+                chart_type:    chartType,
+                context:       RESULTS_CONTEXT,
+                custom_params: customParams,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            thinkingEl.className   = 'ai-msg assistant';
+            thinkingEl.textContent = '❌ ' + data.error;
+            return;
+        }
+
+        thinkingEl.className   = 'ai-msg assistant';
+        thinkingEl.textContent = '';
+
+        const img = document.createElement('img');
+        img.src           = 'data:image/png;base64,' + data.image;
+        img.style.cssText = 'max-width:100%;border-radius:8px;margin-top:4px;cursor:pointer;display:block;';
+        img.title         = 'Click to open full size';
+        img.addEventListener('click', function() {
+            const win = window.open();
+            win.document.write('<img src="' + img.src + '" style="max-width:100%;">');
+        });
+        thinkingEl.appendChild(img);
+
+        if (!silent) {
+            const hint = document.createElement('div');
+            hint.style.cssText = 'font-size:11px;color:#888;margin-top:6px;font-style:italic;';
+            hint.textContent   = '💬 Now type to modify — e.g. "make it red", "remove the grid", "change title to Class Results"';
+            thinkingEl.appendChild(hint);
+        }
+
+        lastChart = {
+            chartType:    chartType,
+            customParams: data.custom_params || customParams,
+        };
+        enterChartMode();
+
+        document.getElementById('ai-messages').scrollTop =
+            document.getElementById('ai-messages').scrollHeight;
+
+    } catch(err) {
+        thinkingEl.className   = 'ai-msg assistant';
+        thinkingEl.textContent = '❌ ' + err.message;
+    } finally {
+        if (!silent) {
+            aiIsBusy         = false;
+            sendBtn.disabled = false;
+        }
+    }
+}
 </script>
 
 {% endblock %}

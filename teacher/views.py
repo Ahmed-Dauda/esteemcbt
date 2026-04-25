@@ -2693,65 +2693,339 @@ from django.http import StreamingHttpResponse, JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 
+import io
+import base64
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')  # non-GUI backend — required for Django
+import matplotlib.pyplot as plt
+import seaborn as sns
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 
 @login_required(login_url='teacher:teacher_login')
 @require_POST
-def teacher_results_ai_chat(request):
+def teacher_chart_ai(request):
     try:
         data           = json.loads(request.body)
-        message        = data.get("message", "").strip()
-        context_data   = data.get("context", {})
+        message        = data.get("message", "")
+        chart_type     = data.get("chart_type", "bar")
+        current_params = data.get("current_params", {})
+
+        system_prompt = """You are a chart customisation assistant. The user describes how they want to modify a matplotlib/seaborn chart.
+
+Respond with ONLY a valid JSON object — no explanation, no markdown, no code fences.
+
+Available keys (only include keys the user wants to change, merged with current params):
+- palette: seaborn palette name e.g. "Greens_d", "Reds_d", "Blues_d", "Purples_d", "Oranges_d", "viridis", "magma", "Set2", "Set1", "coolwarm"
+- bar_color: single hex color e.g. "#e74c3c" (for solid single-color requests; set palette to null)
+- title: string
+- xlabel: string
+- ylabel: string
+- figsize: [width, height] e.g. [12, 6]
+- rotation: x-axis label rotation in degrees e.g. 45
+- show_values: true or false
+- grid: true or false
+- style_theme: one of "whitegrid", "darkgrid", "white", "dark", "ticks"
+- bins: number (histogram only)
+- kde: true or false (histogram only)
+- cmap: colormap for heatmap e.g. "YlOrRd", "Blues", "RdYlGn", "coolwarm"
+
+Current params: """ + json.dumps(current_params) + """
+
+Merge the user's changes into the current params and return the full updated object."""
+
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            max_tokens=300,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": message},
+            ],
+        )
+
+        raw = response.choices[0].message.content.strip()
+        raw = raw.replace("```json", "").replace("```", "").strip()
+        new_params = json.loads(raw)
+
+        return JsonResponse({"custom_params": new_params})
+
+    except Exception as e:
+        logger.error(f"Chart AI error: {e}", exc_info=True)
+        return JsonResponse({"error": str(e)}, status=500)
+    
+    
+@login_required(login_url='teacher:teacher_login')
+@require_POST
+def teacher_results_ai(request):
+    try:
+        data    = json.loads(request.body)
+        message = data.get("message", "")
+        context = data.get("context", {})
 
         if not message:
             return JsonResponse({"error": "No message provided"}, status=400)
 
-        students_summary = ""
-        for s in context_data.get("students", []):
-            students_summary += (
-                f"\n- {s['name']}: Marks={s.get('marks','N/A')}, "
-                f"Grade={s.get('result_class','N/A')}, "
-                f"Term={s.get('term','N/A')}, "
-                f"Session={s.get('session','N/A')}, "
-                f"Exam Type={s.get('exam_type','N/A')}"
-            )
+        students_text = "\n".join([
+            f"- {s['name']}: {s['marks']} marks ({s['result_class']}), "
+            f"Term: {s['term']}, Session: {s['session']}, Exam: {s['exam_type']}"
+            for s in context.get("students", [])
+        ])
 
-        system_prompt = f"""You are an expert school AI assistant helping a teacher analyse subject results.
+        system_prompt = f"""You are an expert academic assistant helping a teacher analyse student results.
 
-Subject: {context_data.get('course', 'N/A')}
-Total Students: {context_data.get('total_students', 0)}
+Course: {context.get('course', 'Unknown')}
+Total students: {context.get('total_students', 0)}
 
-Student Results:
-{students_summary}
+Student data:
+{students_text}
 
-Be concise, specific, and professional. Use student names in your responses.
-Format summaries and reports clearly."""
+Provide concise, insightful analysis. Use bullet points where helpful.
+Be specific — reference actual student names and marks from the data above."""
 
-        def stream_response():
-            client = OpenAI()
+        def event_stream():
             stream = client.chat.completions.create(
                 model="gpt-4o",
-                max_tokens=1000,
+                max_tokens=1024,
                 stream=True,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user",   "content": message},
-                ]
+                ],
             )
             for chunk in stream:
-                delta = chunk.choices[0].delta
-                if delta and delta.content:
-                    yield f"data: {json.dumps({'text': delta.content})}\n\n"
+                text = chunk.choices[0].delta.content
+                if text:
+                    yield f"data: {json.dumps({'text': text})}\n\n"
             yield "data: [DONE]\n\n"
 
-        response = StreamingHttpResponse(stream_response(), content_type="text/event-stream")
-        response["Cache-Control"]     = "no-cache"
-        response["X-Accel-Buffering"] = "no"
-        return response
+        return StreamingHttpResponse(
+            event_stream(),
+            content_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+            },
+        )
 
     except Exception as e:
         logger.error(f"AI chat error: {e}", exc_info=True)
         return JsonResponse({"error": str(e)}, status=500)
 
+
+@login_required(login_url='teacher:teacher_login')
+@require_POST
+def teacher_results_chart(request):
+    try:
+        data         = json.loads(request.body)
+        chart_type   = data.get("chart_type", "bar")
+        context_data = data.get("context", {})
+        students     = context_data.get("students", [])
+
+        custom      = data.get("custom_params", {})
+        palette     = custom.get("palette", "Blues_d")
+        bar_color   = custom.get("bar_color", None)
+        title       = custom.get("title", None)
+        xlabel      = custom.get("xlabel", None)
+        ylabel      = custom.get("ylabel", None)
+        figsize     = custom.get("figsize", [10, 5])
+        grid        = custom.get("grid", True)
+        style_theme = custom.get("style_theme", "whitegrid")
+        rotation    = custom.get("rotation", 45)
+        show_values = custom.get("show_values", True)
+
+        # If a single hex color is given, clear palette to avoid seaborn conflict
+        if bar_color:
+            palette = None
+
+        if not students:
+            return JsonResponse({"error": "No student data provided"}, status=400)
+
+        df = pd.DataFrame(students)
+        df['marks'] = pd.to_numeric(df['marks'], errors='coerce').fillna(0)
+        df['name']  = df['name'].apply(lambda x: x.split()[0] + ' ' + x.split()[1] if len(x.split()) > 1 else x)
+
+        sns.set_theme(style=style_theme, palette="muted")
+        fig, ax = plt.subplots(figsize=tuple(figsize))
+
+        course        = context_data.get('course', '')
+        default_title = f"Student Marks — {course}"
+
+        if chart_type == "bar":
+            # color= accepts hex, palette= accepts named palettes — never pass both
+            if bar_color:
+                bars = sns.barplot(data=df, x='name', y='marks', ax=ax, color=bar_color)
+            else:
+                bars = sns.barplot(data=df, x='name', y='marks', ax=ax, palette=palette)
+
+            ax.set_title(title or default_title, fontsize=14, fontweight='bold')
+            ax.set_xlabel(xlabel or "Student")
+            ax.set_ylabel(ylabel or "Marks")
+            ax.tick_params(axis='x', rotation=rotation)
+            if show_values:
+                for bar in bars.patches:
+                    ax.text(
+                        bar.get_x() + bar.get_width() / 2,
+                        bar.get_height() + 0.5,
+                        f'{bar.get_height():.0f}',
+                        ha='center', va='bottom', fontsize=9
+                    )
+
+        elif chart_type == "grade_distribution":
+            grade_counts = df['result_class'].value_counts()
+            if bar_color:
+                colors = [bar_color] * len(grade_counts)
+            else:
+                colors = sns.color_palette(palette or "Set2", len(grade_counts))
+            ax.pie(
+                grade_counts.values,
+                labels=grade_counts.index,
+                autopct='%1.1f%%',
+                colors=colors,
+                startangle=140,
+                wedgeprops={'edgecolor': 'white', 'linewidth': 1.5}
+            )
+            ax.set_title(title or f"Grade Distribution — {course}", fontsize=14, fontweight='bold')
+
+        elif chart_type == "histogram":
+            sns.histplot(
+                df['marks'],
+                bins=custom.get("bins", 10),
+                kde=custom.get("kde", True),
+                ax=ax,
+                color=bar_color or 'steelblue'
+            )
+            ax.set_title(title or f"Marks Distribution — {course}", fontsize=14, fontweight='bold')
+            ax.set_xlabel(xlabel or "Marks")
+            ax.set_ylabel(ylabel or "Number of Students")
+
+        elif chart_type == "term_comparison":
+            if 'term' in df.columns and df['term'].nunique() > 1:
+                pivot = df.groupby(['name', 'term'])['marks'].mean().reset_index()
+                if bar_color:
+                    sns.barplot(data=pivot, x='name', y='marks', hue='term', ax=ax, color=bar_color)
+                else:
+                    sns.barplot(data=pivot, x='name', y='marks', hue='term', ax=ax, palette=palette or "Set1")
+                ax.set_title(title or f"Term Comparison — {course}", fontsize=14, fontweight='bold')
+                ax.set_xlabel(xlabel or "Student")
+                ax.set_ylabel(ylabel or "Average Marks")
+                ax.tick_params(axis='x', rotation=rotation)
+                ax.legend(title="Term", bbox_to_anchor=(1.05, 1), loc='upper left')
+            else:
+                if bar_color:
+                    sns.barplot(data=df, x='name', y='marks', ax=ax, color=bar_color)
+                else:
+                    sns.barplot(data=df, x='name', y='marks', ax=ax, palette=palette or "Set1")
+                ax.set_title(title or f"Marks by Term — {course}", fontsize=14, fontweight='bold')
+                ax.set_xlabel(xlabel or "Student")
+                ax.set_ylabel(ylabel or "Marks")
+                ax.tick_params(axis='x', rotation=rotation)
+
+        elif chart_type == "heatmap":
+            cmap = custom.get("cmap", "YlOrRd")
+            # For heatmap, bar_color overrides the cmap if provided
+            if bar_color:
+                from matplotlib.colors import LinearSegmentedColormap
+                cmap = LinearSegmentedColormap.from_list("custom", ["white", bar_color])
+            if 'term' in df.columns and df['term'].nunique() > 1:
+                pivot_table = df.pivot_table(index='name', columns='term', values='marks', aggfunc='mean')
+                sns.heatmap(pivot_table, annot=True, fmt='.0f', cmap=cmap,
+                            ax=ax, linewidths=0.5, cbar_kws={'label': 'Marks'})
+                ax.set_title(title or f"Marks Heatmap — {course}", fontsize=14, fontweight='bold')
+                ax.set_xlabel(xlabel or "Term")
+                ax.set_ylabel(ylabel or "Student")
+            else:
+                pivot_table = df.set_index('name')[['marks']].T
+                sns.heatmap(pivot_table, annot=True, fmt='.0f', cmap=cmap,
+                            ax=ax, linewidths=0.5, cbar_kws={'label': 'Marks'})
+                ax.set_title(title or f"Marks Heatmap — {course}", fontsize=14, fontweight='bold')
+
+        elif chart_type == "boxplot":
+            if bar_color:
+                sns.boxplot(data=df, x='result_class', y='marks', ax=ax, color=bar_color)
+            else:
+                sns.boxplot(data=df, x='result_class', y='marks', ax=ax, palette=palette or "Set3")
+            ax.set_title(title or f"Marks Spread by Grade — {course}", fontsize=14, fontweight='bold')
+            ax.set_xlabel(xlabel or "Grade")
+            ax.set_ylabel(ylabel or "Marks")
+
+        if not grid:
+            ax.grid(False)
+
+        plt.tight_layout()
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=130, bbox_inches='tight')
+        buf.seek(0)
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        plt.close(fig)
+        buf.close()
+
+        return JsonResponse({"image": img_base64, "chart_type": chart_type, "custom_params": custom})
+
+    except Exception as e:
+        logger.error(f"Chart generation error: {e}", exc_info=True)
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+
+from django.http import StreamingHttpResponse
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
+@login_required(login_url='teacher:teacher_login')
+@require_POST
+def teacher_chart_ai(request):
+    """Translates a user's natural language chart edit request into custom_params JSON."""
+    try:
+        data         = json.loads(request.body)
+        message      = data.get("message", "")
+        chart_type   = data.get("chart_type", "bar")
+        current_params = data.get("current_params", {})
+
+        system_prompt = """You are a chart customisation assistant. The user describes how they want to modify a matplotlib/seaborn chart.
+
+You must respond with ONLY a valid JSON object — no explanation, no markdown, no code fences.
+
+The JSON must contain only these keys (include only keys the user wants to change, merge with current params):
+- palette: seaborn palette name (e.g. "Greens_d", "Reds_d", "viridis", "magma", "Set2", "coolwarm", "Blues_d", "Purples_d", "Oranges_d")
+- bar_color: single hex color string like "#e74c3c" (use this for solid single-color requests, set palette to null)
+- title: string
+- xlabel: string
+- ylabel: string
+- figsize: [width, height] as numbers e.g. [12, 6]
+- rotation: x-axis label rotation in degrees (number)
+- show_values: true or false
+- grid: true or false
+- style_theme: one of "whitegrid", "darkgrid", "white", "dark", "ticks"
+- bins: number (histogram only)
+- kde: true or false (histogram only)
+- cmap: colormap name for heatmap (e.g. "YlOrRd", "Blues", "RdYlGn", "coolwarm")
+
+Current params: """ + json.dumps(current_params) + """
+
+Merge the user's requested changes into the current params and return the full updated params object."""
+
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            max_tokens=300,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": message},
+            ],
+        )
+
+        raw = response.choices[0].message.content.strip()
+        # Strip markdown fences if model adds them
+        raw = raw.replace("```json", "").replace("```", "").strip()
+        new_params = json.loads(raw)
+
+        return JsonResponse({"custom_params": new_params})
+
+    except Exception as e:
+        logger.error(f"Chart AI error: {e}", exc_info=True)
+        return JsonResponse({"error": str(e)}, status=500)
+            
+            
 
 # @login_required(login_url='teacher:teacher_login')
 # def export_results_csv(request):
