@@ -1,569 +1,715 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assign Principal Comments</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        textarea { resize: none; }
-        .strong-subject { background-color: #d4edda; }
-        .weak-subject   { background-color: #f8d7da; }
+{% extends 'sms/dashboard/teacherbase.html' %}
 
-        /* ── Intel Panel shell ── */
-        .intel-panel {
-            background: linear-gradient(135deg, #0f1729 0%, #1e2a50 100%);
-            border-radius: 16px;
-            padding: 24px 28px;
-            margin-bottom: 28px;
-            color: #fff;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.22);
-        }
-        .intel-title {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: #7c8db5;
-            margin-bottom: 18px;
-        }
-        .intel-title span { color: #f6c90e; }
+{% block title %}Principal Dashboard{% endblock %}
 
-        /* ── Stat cards row ── */
-        .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .sc {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.10);
-            border-radius: 10px;
-            padding: 14px 16px;
-        }
-        .sc-label {
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: #7c8db5;
-            margin-bottom: 5px;
-        }
-        .sc-value {
-            font-size: 1.55rem;
-            font-weight: 800;
-            line-height: 1.1;
-            color: #fff;
-        }
-        .sc-value.sm { font-size: 0.92rem; padding-top: 3px; }
-        .sc-sub  { font-size: 10px; color: #7c8db5; margin-top: 4px; }
+{% block content %}
 
-        .sc.blue   { border-color: #63b3ed; } .sc.blue   .sc-value { color: #63b3ed; }
-        .sc.green  { border-color: #68d391; } .sc.green  .sc-value { color: #68d391; }
-        .sc.yellow { border-color: #f6c90e; } .sc.yellow .sc-value { color: #f6c90e; }
-        .sc.red    { border-color: #fc8181; } .sc.red    .sc-value { color: #fc8181; }
-        .sc.orange { border-color: #f6ad55; } .sc.orange .sc-value { color: #f6ad55; }
-        .sc.purple { border-color: #b794f4; } .sc.purple .sc-value { color: #b794f4; }
-        .sc.teal   { border-color: #4fd1c5; } .sc.teal   .sc-value { color: #4fd1c5; }
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 
-        /* ── Divider ── */
-        .intel-div { border-top: 1px solid rgba(255,255,255,0.08); margin: 18px 0; }
+<style>
+:root {
+    --ink:     #0a0d14;
+    --ink2:    #141824;
+    --ink3:    #1e2535;
+    --border:  rgba(255,255,255,0.07);
+    --muted:   #4a5568;
+    --dim:     #718096;
+    --text:    #e2e8f0;
+    --gold:    #e8b84b;
+    --gold2:   #f6d980;
+    --emerald: #34d399;
+    --ruby:    #f87171;
+    --sky:     #60a5fa;
+    --violet:  #a78bfa;
+    --amber:   #fb923c;
+    --mono:    'JetBrains Mono', monospace;
+    --serif:   'DM Serif Display', Georgia, serif;
+    --sans:    'DM Sans', system-ui, sans-serif;
+}
 
-        /* ── Section labels ── */
-        .sect-label {
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.09em;
-            text-transform: uppercase;
-            color: #63b3ed;
-            margin-bottom: 10px;
-        }
+* { box-sizing: border-box; }
 
-        /* ── Grade bars ── */
-        .g-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 12px; }
-        .g-lbl { width: 18px; font-weight: 700; color: #a0aec0; }
-        .g-bg  { flex:1; background: rgba(255,255,255,0.07); border-radius: 4px; height: 9px; overflow: hidden; }
-        .g-fill { height: 100%; border-radius: 4px; }
-        .g-n   { width: 22px; text-align: right; color: #e2e8f0; font-weight: 600; font-size: 11px; }
+textarea { resize: none; }
+.strong-subject { background-color: #d4edda; }
+.weak-subject   { background-color: #f8d7da; }
 
-        /* ── Subject bars ── */
-        .s-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 11px; }
-        .s-name { width: 110px; color: #cbd5e0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .s-bg   { flex:1; background: rgba(255,255,255,0.07); border-radius: 4px; height: 8px; overflow: hidden; }
-        .s-fill { height: 100%; border-radius: 4px; }
-        .s-val  { width: 32px; text-align: right; font-weight: 600; font-size: 11px; }
+/* ── Page header ── */
+.dash-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.dash-header h2 {
+    font-family: var(--serif);
+    font-size: 2rem;
+    font-style: italic;
+    color: var(--ink);
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+.dash-header .badge-term {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--ink);
+    color: var(--gold);
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
 
-        /* ── Insight cards ── */
-        .insight {
-            background: rgba(246,201,14,0.07);
-            border-left: 3px solid #f6c90e;
-            border-radius: 0 8px 8px 0;
-            padding: 9px 13px;
-            font-size: 12px;
-            color: #e2e8f0;
-            margin-bottom: 7px;
-            line-height: 1.5;
-        }
-        .insight.red-ins  { border-left-color: #fc8181; background: rgba(252,129,129,0.07); }
-        .insight.green-ins{ border-left-color: #68d391; background: rgba(104,211,145,0.07); }
-        .insight strong   { color: #f6c90e; }
-        .insight.red-ins  strong { color: #fc8181; }
-        .insight.green-ins strong { color: #68d391; }
+/* ── Filter card ── */
+.filter-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 28px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.filter-card label { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 
-        /* ── Comment status pill ── */
-        .comment-pill {
-            display: inline-block;
-            padding: 2px 9px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: 700;
-        }
-        .pill-done    { background: #276749; color: #9ae6b4; }
-        .pill-pending { background: #744210; color: #fbd38d; }
-    </style>
-</head>
-<body class="bg-light">
+/* ── Intelligence Panel ── */
+.intel {
+    background: var(--ink);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 32px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    position: relative;
+}
 
-<div class="container my-5">
-    <h2 class="mb-4">Assign Comments to Students</h2>
+/* Decorative corner accent */
+.intel::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle at top right, rgba(232,184,75,0.08) 0%, transparent 65%);
+    pointer-events: none;
+}
 
-    <!-- FILTER FORM -->
-    <form method="get" class="row g-3 mb-4">
+.intel-top {
+    padding: 28px 32px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.intel-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 4px;
+}
+
+.intel-heading {
+    font-family: var(--serif);
+    font-size: 1.6rem;
+    font-style: italic;
+    color: var(--text);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.intel-class-badge {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(232,184,75,0.12);
+    border: 1px solid rgba(232,184,75,0.25);
+    color: var(--gold2);
+    padding: 6px 14px;
+    border-radius: 6px;
+    letter-spacing: 0.05em;
+}
+
+/* ── Stat grid ── */
+.stat-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+    gap: 0;
+    border-top: 1px solid var(--border);
+    margin-top: 24px;
+}
+
+.stat-cell {
+    padding: 22px 24px;
+    border-right: 1px solid var(--border);
+    position: relative;
+    transition: background 0.2s;
+}
+.stat-cell:last-child { border-right: none; }
+.stat-cell:hover { background: rgba(255,255,255,0.03); }
+
+.stat-cell::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 24px; right: 24px;
+    height: 2px;
+    border-radius: 2px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.stat-cell:hover::after { opacity: 1; }
+
+.stat-cell.c-gold::after  { background: var(--gold); }
+.stat-cell.c-em::after    { background: var(--emerald); }
+.stat-cell.c-ruby::after  { background: var(--ruby); }
+.stat-cell.c-sky::after   { background: var(--sky); }
+.stat-cell.c-violet::after{ background: var(--violet); }
+.stat-cell.c-amber::after { background: var(--amber); }
+
+.stat-lbl {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+.stat-val {
+    font-family: var(--mono);
+    font-size: 1.8rem;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+.stat-val.sm { font-family: var(--sans); font-size: 0.88rem; font-weight: 600; line-height: 1.3; margin-bottom: 2px; }
+.stat-sub { font-family: var(--sans); font-size: 10px; color: var(--muted); }
+
+.c-gold   .stat-val { color: var(--gold); }
+.c-em     .stat-val { color: var(--emerald); }
+.c-ruby   .stat-val { color: var(--ruby); }
+.c-sky    .stat-val { color: var(--sky); }
+.c-violet .stat-val { color: var(--violet); }
+.c-amber  .stat-val { color: var(--amber); }
+
+/* ── Bottom 3-col section ── */
+.intel-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    border-top: 1px solid var(--border);
+}
+@media (max-width: 768px) {
+    .intel-bottom { grid-template-columns: 1fr; }
+    .stat-strip   { grid-template-columns: repeat(2, 1fr); }
+}
+
+.intel-col {
+    padding: 24px 28px;
+    border-right: 1px solid var(--border);
+}
+.intel-col:last-child { border-right: none; }
+
+.col-heading {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Grade bars */
+.g-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.g-lbl { font-family: var(--mono); font-size: 11px; font-weight: 600; width: 16px; color: var(--dim); }
+.g-bg  { flex: 1; background: rgba(255,255,255,0.05); border-radius: 2px; height: 6px; overflow: hidden; }
+.g-fill{ height: 100%; border-radius: 2px; transition: width 1s cubic-bezier(.16,1,.3,1); }
+.g-n   { font-family: var(--mono); font-size: 11px; font-weight: 600; width: 20px; text-align: right; color: var(--dim); }
+
+/* Subject bars */
+.s-row  { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.s-name { font-family: var(--sans); font-size: 11px; color: #94a3b8; width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.s-bg   { flex: 1; background: rgba(255,255,255,0.05); border-radius: 2px; height: 5px; overflow: hidden; }
+.s-fill { height: 100%; border-radius: 2px; transition: width 1s cubic-bezier(.16,1,.3,1); }
+.s-val  { font-family: var(--mono); font-size: 11px; font-weight: 600; width: 30px; text-align: right; }
+
+/* Insights */
+.insight-card {
+    display: flex;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--sans);
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.55;
+}
+.insight-card:last-child { border-bottom: none; }
+.insight-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+}
+.insight-card strong { color: var(--text); font-weight: 600; }
+.ins-gold  .insight-dot { background: var(--gold); }
+.ins-red   .insight-dot { background: var(--ruby); }
+.ins-green .insight-dot { background: var(--emerald); }
+.ins-sky   .insight-dot { background: var(--sky); }
+
+/* ── Form / table area ── */
+.section-title {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-style: italic;
+    color: var(--ink);
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+}
+
+/* ── Progress bar ── */
+#progress-wrapper {
+    background: var(--ink);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+#progress-wrapper .pw-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+}
+.pw-track {
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+}
+.pw-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold2));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+#progress-label { font-family: var(--sans); font-size: 11px; color: var(--dim); margin-top: 6px; }
+
+/* ── Buttons ── */
+.btn-gen-all {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    background: var(--ink);
+    color: var(--gold);
+    border: 1px solid rgba(232,184,75,0.3);
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+.btn-gen-all:hover { background: var(--ink3); border-color: var(--gold); }
+
+/* Animate bars in on load */
+@keyframes barIn {
+    from { width: 0 !important; }
+}
+.g-fill, .s-fill { animation: barIn 0s; } /* overridden by JS */
+</style>
+
+<div class="dash-header">
+    <h2>Principal Dashboard</h2>
+    {% if selected_class %}
+    <span class="badge-term">{{ selected_class.name }}</span>
+    {% endif %}
+    {% if selected_term %}
+    <span class="badge-term" style="background:#f0f4ff; color:#3b5bdb;">{{ selected_term }}</span>
+    {% endif %}
+</div>
+
+<!-- ── FILTER ── -->
+<div class="filter-card">
+    <form method="get" class="row g-3">
         <div class="col-md-3">
-            <label class="form-label fw-bold">Session</label>
+            <label class="form-label">Session</label>
             <select name="session" class="form-select" required>
-                <option value="">--Select Session--</option>
+                <option value="">-- Select Session --</option>
                 {% for session in sessions %}
-                    <option value="{{ session.id }}" {% if selected_session and session.id == selected_session.id %}selected{% endif %}>
-                        {{ session }}
-                    </option>
+                    <option value="{{ session.id }}" {% if selected_session and session.id == selected_session.id %}selected{% endif %}>{{ session }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="col-md-3">
-            <label class="form-label fw-bold">Term</label>
+            <label class="form-label">Term</label>
             <select name="term" class="form-select" required>
-                <option value="">--Select Term--</option>
+                <option value="">-- Select Term --</option>
                 {% for term in terms %}
-                    <option value="{{ term.id }}" {% if selected_term and term.id == selected_term.id %}selected{% endif %}>
-                        {{ term }}
-                    </option>
+                    <option value="{{ term.id }}" {% if selected_term and term.id == selected_term.id %}selected{% endif %}>{{ term }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="col-md-3">
-            <label class="form-label fw-bold">Class</label>
+            <label class="form-label">Class</label>
             <select name="class" class="form-select" required>
-                <option value="">--Select Class--</option>
+                <option value="">-- Select Class --</option>
                 {% for cls in classes %}
-                    <option value="{{ cls.id }}" {% if selected_class and cls.id == selected_class.id %}selected{% endif %}>
-                        {{ cls.name }}
-                    </option>
+                    <option value="{{ cls.id }}" {% if selected_class and cls.id == selected_class.id %}selected{% endif %}>{{ cls.name }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="col-md-3 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Show Students</button>
+            <button type="submit" class="btn btn-primary w-100" style="font-family:var(--sans);font-weight:600;">Show Students</button>
         </div>
     </form>
-
-    {% if selected_session and selected_term and selected_class %}
-
-    <!-- ══════════════════════════════════════════════════════════════
-         PERFORMANCE: Embed all data as JSON once from Django.
-         JS reads this single object — zero DOM scraping needed.
-    ═══════════════════════════════════════════════════════════════ -->
-    <script>
-    /* Injected server-side — computed once, costs nothing in browser */
-    const INTEL = {
-        students: [
-            {% for record in records %}
-            {
-                name:    "{{ record.student.first_name|escapejs }} {{ record.student.last_name|escapejs }}",
-                avg:     {{ record.average_score|default:0 }},
-                total:   {{ record.total_score|default:0 }},
-                grade:   "{{ record.final_grade|default:'—'|escapejs }}",
-                hasComment: {{ record.principal_comment|yesno:"true,false" }},
-                subjects: [
-                    {% for r in record.results %}
-                    {
-                        name:  "{{ r.subject.title|escapejs }}",
-                        score: {{ r.total_score|default:0 }}
-                    }{% if not forloop.last %},{% endif %}
-                    {% endfor %}
-                ]
-            }{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        ]
-    };
-    </script>
-
-    <!-- ── INTELLIGENCE PANEL ── -->
-    <div class="intel-panel">
-        <div class="intel-title">🧠 Principal Dashboard &nbsp;<span>Intelligence</span></div>
-
-        <!-- Row 1: Stat Cards -->
-        <div class="stat-grid" id="statGrid"></div>
-
-        <div class="intel-div"></div>
-
-        <!-- Row 2: Three columns -->
-        <div class="row g-4">
-            <!-- Grade Distribution -->
-            <div class="col-md-4">
-                <div class="sect-label">Grade Distribution</div>
-                <div id="gradeBars"></div>
-            </div>
-            <!-- Subject Performance -->
-            <div class="col-md-4">
-                <div class="sect-label">Subject Averages</div>
-                <div id="subjectBars"></div>
-            </div>
-            <!-- Insights -->
-            <div class="col-md-4">
-                <div class="sect-label">Insights & Actions</div>
-                <div id="insights"></div>
-            </div>
-        </div>
-    </div>
-    <!-- ── END INTELLIGENCE PANEL ── -->
-
-    <form method="post">
-        {% csrf_token %}
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped align-middle">
-                <thead class="table-secondary">
-                    <tr>
-                        <th>Student</th>
-                        <th>Subjects</th>
-                        <th>AI Comment</th>
-                        <th>Principal Comment</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for record in records %}
-                    <tr>
-                        <td>{{ record.student.first_name }} {{ record.student.last_name }}</td>
-
-                        <td>
-                            <table class="table table-sm mb-0">
-                                <thead>
-                                    <tr><th>Subj</th><th>Total</th><th>Grade</th></tr>
-                                </thead>
-                                <tbody>
-                                    {% for result in record.results %}
-                                    <tr class="{% if result.total_score >= 70 %}strong-subject{% elif result.total_score < 45 %}weak-subject{% endif %}">
-                                        <td>{{ result.subject.title }}</td>
-                                        <td>{{ result.total_score }}</td>
-                                        <td>{{ result.grade_letter }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </td>
-
-                        <td class="text-center">
-                            <button type="button"
-                                    id="btn-{{ record.student.id }}"
-                                    class="btn btn-sm btn-outline-info mb-1"
-                                    onclick="generateComment('{{ record.student.id }}')">
-                                🤖 Generate
-                            </button>
-                            <p class="mb-0">
-                                <small>Total: {{ record.total_score }} | Avg: {{ record.average_score }} | Grade: {{ record.final_grade }}</small>
-                            </p>
-                        </td>
-
-                        <td>
-                            <textarea id="comment-{{ record.student.id }}"
-                                      name="comment_{{ record.student.id }}"
-                                      class="form-control"
-                                      rows="3">{{ record.principal_comment|default:'' }}</textarea>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <button type="submit" class="btn btn-success mb-4">💾 Save All Comments</button>
-    </form>
-    {% endif %}
-
-    <!-- Progress Bar -->
-    <div id="progress-wrapper" style="display:none;" class="mb-4">
-        <div class="d-flex justify-content-between mb-1">
-            <span class="fw-bold text-primary">Generating AI Comments</span>
-            <span id="progress-label" class="text-muted small">Starting...</span>
-        </div>
-        <div class="progress" style="height:28px;">
-            <div id="progress-bar"
-                 class="progress-bar progress-bar-striped progress-bar-animated bg-warning text-dark fw-bold"
-                 role="progressbar" style="width:0%"
-                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
-        </div>
-    </div>
-
-    <div class="text-end mb-4">
-        <button class="btn btn-warning btn-lg" onclick="generateAllComments()">
-            🔄 Generate AI Comments for ALL Students
-        </button>
-    </div>
-
-    {% if messages %}
-    <div class="alert alert-success mt-3">
-        {% for message in messages %}<div>{{ message }}</div>{% endfor %}
-    </div>
-    {% endif %}
 </div>
 
+{% if selected_session and selected_term and selected_class %}
+
+<!-- ── DATA INJECTION ── -->
 <script>
-// ══════════════════════════════════════════════════════════════════════════
-//  INTELLIGENCE PANEL — single-pass computation, no DOM scraping
-//  Runs after DOMContentLoaded so it never blocks page render
-// ══════════════════════════════════════════════════════════════════════════
+const INTEL = {
+    className: "{{ selected_class.name|escapejs }}",
+    students: [
+        {% for record in records %}
+        {
+            name: "{{ record.student.first_name|escapejs }} {{ record.student.last_name|escapejs }}",
+            avg:  {{ record.average_score|default:0 }},
+            total: {{ record.total_score|default:0 }},
+            grade: "{{ record.final_grade|default:'—'|escapejs }}",
+            hasComment: {{ record.principal_comment|yesno:"true,false" }},
+            subjects: [{% for r in record.results %}{"name":"{{ r.subject.title|escapejs }}","score":{{ r.total_score|default:0 }}}{% if not forloop.last %},{% endif %}{% endfor %}]
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+};
+</script>
+
+<!-- ── INTELLIGENCE PANEL ── -->
+<div class="intel">
+    <div class="intel-top">
+        <div>
+            <div class="intel-eyebrow">🧠 Intelligence Report</div>
+            <h3 class="intel-heading">Class Performance Overview</h3>
+        </div>
+        <div class="intel-class-badge" id="classBadge">—</div>
+    </div>
+
+    <!-- Stat strip -->
+    <div class="stat-strip" id="statStrip"></div>
+
+    <!-- Bottom 3-col -->
+    <div class="intel-bottom">
+        <div class="intel-col">
+            <div class="col-heading">Grade Distribution</div>
+            <div id="gradeBars"></div>
+        </div>
+        <div class="intel-col">
+            <div class="col-heading">Subject Averages</div>
+            <div id="subjectBars"></div>
+        </div>
+        <div class="intel-col">
+            <div class="col-heading">Insights &amp; Actions</div>
+            <div id="insights"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ── STUDENT TABLE ── -->
+<div class="section-title">Student Comments</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-secondary">
+                <tr>
+                    <th style="font-family:var(--sans);font-size:12px;font-weight:700;">Student</th>
+                    <th style="font-family:var(--sans);font-size:12px;font-weight:700;">Subjects</th>
+                    <th style="font-family:var(--sans);font-size:12px;font-weight:700;">AI Comment</th>
+                    <th style="font-family:var(--sans);font-size:12px;font-weight:700;">Principal Comment</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td style="font-family:var(--sans);font-weight:600;font-size:13px;">
+                        {{ record.student.first_name }} {{ record.student.last_name }}
+                    </td>
+                    <td>
+                        <table class="table table-sm mb-0">
+                            <thead><tr><th>Subj</th><th>Total</th><th>Grade</th></tr></thead>
+                            <tbody>
+                                {% for result in record.results %}
+                                <tr class="{% if result.total_score >= 70 %}strong-subject{% elif result.total_score < 45 %}weak-subject{% endif %}">
+                                    <td style="font-size:11px;">{{ result.subject.title }}</td>
+                                    <td style="font-family:var(--mono);font-size:11px;">{{ result.total_score }}</td>
+                                    <td style="font-size:11px;">{{ result.grade_letter }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </td>
+                    <td class="text-center">
+                        <button type="button" id="btn-{{ record.student.id }}"
+                                class="btn btn-sm btn-outline-info mb-1"
+                                onclick="generateComment('{{ record.student.id }}')">
+                            🤖 Generate
+                        </button>
+                        <p class="mb-0">
+                            <small style="font-family:var(--mono);font-size:10px;color:#64748b;">
+                                Avg: {{ record.average_score }} · {{ record.final_grade }}
+                            </small>
+                        </p>
+                    </td>
+                    <td>
+                        <textarea id="comment-{{ record.student.id }}"
+                                  name="comment_{{ record.student.id }}"
+                                  class="form-control"
+                                  rows="3"
+                                  style="font-family:var(--sans);font-size:13px;">{{ record.principal_comment|default:'' }}</textarea>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <button type="submit" class="btn btn-success mb-4" style="font-family:var(--sans);font-weight:600;">
+        💾 Save All Comments
+    </button>
+</form>
+{% endif %}
+
+<!-- ── PROGRESS BAR ── -->
+<div id="progress-wrapper" style="display:none;" class="mb-4">
+    <div class="pw-label">Generating AI Comments &nbsp;<span id="progress-label" style="font-weight:400;color:var(--dim);">Starting...</span></div>
+    <div class="pw-track">
+        <div class="pw-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-5">
+    <button class="btn-gen-all" onclick="generateAllComments()">
+        🔄 Generate AI Comments for ALL Students
+    </button>
+</div>
+
+{% if messages %}
+<div class="alert alert-success mt-3" style="font-family:var(--sans);">
+    {% for message in messages %}<div>{{ message }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<script>
 document.addEventListener('DOMContentLoaded', function () {
     if (typeof INTEL === 'undefined' || !INTEL.students.length) return;
 
-    const S      = INTEL.students;
-    const count  = S.length;
+    const S = INTEL.students, count = S.length;
+    document.getElementById('classBadge').textContent = INTEL.className;
 
-    // ── Single pass over students ─────────────────────────────────────────
-    let sumAvg = 0, passing = 0, atRisk = 0, commentsDone = 0;
-    let topStudent = S[0], bottomStudent = S[0];
-    const gradeCounts = {};
-    const subjectMap  = {};   // { subjectName: { sum, count } }
+    // ── Single pass ──────────────────────────────────────────────────────
+    let sumAvg=0, passing=0, atRisk=0, commentsDone=0;
+    let top=S[0], bot=S[0];
+    const gradeCounts={}, subjectMap={};
 
-    for (let i = 0; i < count; i++) {
-        const s = S[i];
-        sumAvg += s.avg;
-        if (s.avg >= 50) passing++;
-        if (s.avg < 40)  atRisk++;
+    for (let i=0;i<count;i++) {
+        const s=S[i];
+        sumAvg+=s.avg;
+        if (s.avg>=50) passing++;
+        if (s.avg<40)  atRisk++;
         if (s.hasComment) commentsDone++;
-        if (s.avg > topStudent.avg)    topStudent    = s;
-        if (s.avg < bottomStudent.avg) bottomStudent = s;
-
-        const g = s.grade || '—';
-        gradeCounts[g] = (gradeCounts[g] || 0) + 1;
-
-        // Subject aggregation
-        for (let j = 0; j < s.subjects.length; j++) {
-            const subj = s.subjects[j];
-            if (!subjectMap[subj.name]) subjectMap[subj.name] = { sum: 0, count: 0 };
-            subjectMap[subj.name].sum   += subj.score;
-            subjectMap[subj.name].count += 1;
+        if (s.avg>top.avg) top=s;
+        if (s.avg<bot.avg) bot=s;
+        const g=s.grade||'—';
+        gradeCounts[g]=(gradeCounts[g]||0)+1;
+        for (let j=0;j<s.subjects.length;j++) {
+            const sb=s.subjects[j];
+            if (!subjectMap[sb.name]) subjectMap[sb.name]={sum:0,n:0};
+            subjectMap[sb.name].sum+=sb.score;
+            subjectMap[sb.name].n+=1;
         }
     }
 
-    const classAvg      = (sumAvg / count).toFixed(1);
-    const passRate       = Math.round((passing / count) * 100);
-    const failing        = count - passing;
-    const commentsPending = count - commentsDone;
-    const scoreRange     = (topStudent.avg - bottomStudent.avg).toFixed(1);
+    const classAvg=(sumAvg/count).toFixed(1);
+    const passRate=Math.round((passing/count)*100);
+    const failing=count-passing;
+    const pending=count-commentsDone;
+    const range=(top.avg-bot.avg).toFixed(1);
 
-    // Subject averages — sort
-    const subjectAvgs = Object.entries(subjectMap).map(([name, d]) => ({
-        name, avg: (d.sum / d.count).toFixed(1)
-    })).sort((a, b) => b.avg - a.avg);
+    const subAvgs=Object.entries(subjectMap)
+        .map(([nm,d])=>({nm,avg:(d.sum/d.n).toFixed(1)}))
+        .sort((a,b)=>b.avg-a.avg);
+    const bestSubj=subAvgs[0]||null;
+    const weakSubj=subAvgs[subAvgs.length-1]||null;
 
-    const bestSubject   = subjectAvgs[0]  || null;
-    const weakestSubject = subjectAvgs[subjectAvgs.length - 1] || null;
+    // ── Stat strip ───────────────────────────────────────────────────────
+    const pCol = passRate>=70?'c-em':passRate>=50?'c-gold':'c-ruby';
+    const rCol = atRisk===0?'c-em':atRisk<=2?'c-amber':'c-ruby';
+    const cCol = pending===0?'c-em':'c-amber';
 
-    // ── Build stat cards (one innerHTML write) ────────────────────────────
-    const passColor = passRate >= 70 ? 'green' : passRate >= 50 ? 'yellow' : 'red';
-    const riskColor = atRisk === 0 ? 'green' : atRisk <= 2 ? 'orange' : 'red';
-    const cmtColor  = commentsPending === 0 ? 'green' : 'orange';
-
-    document.getElementById('statGrid').innerHTML = `
-        <div class="sc blue">
-            <div class="sc-label">Total Students</div>
-            <div class="sc-value">${count}</div>
-            <div class="sc-sub">enrolled this class</div>
+    document.getElementById('statStrip').innerHTML = `
+        <div class="stat-cell c-sky">
+            <div class="stat-lbl">Students</div>
+            <div class="stat-val">${count}</div>
+            <div class="stat-sub">enrolled</div>
         </div>
-        <div class="sc yellow">
-            <div class="sc-label">Class Average</div>
-            <div class="sc-value">${classAvg}</div>
-            <div class="sc-sub">out of 100</div>
+        <div class="stat-cell c-gold">
+            <div class="stat-lbl">Class Avg</div>
+            <div class="stat-val">${classAvg}</div>
+            <div class="stat-sub">out of 100</div>
         </div>
-        <div class="sc ${passColor}">
-            <div class="sc-label">Pass Rate</div>
-            <div class="sc-value">${passRate}%</div>
-            <div class="sc-sub">${passing} pass · ${failing} fail</div>
+        <div class="stat-cell ${pCol}">
+            <div class="stat-lbl">Pass Rate</div>
+            <div class="stat-val">${passRate}%</div>
+            <div class="stat-sub">${passing} pass · ${failing} fail</div>
         </div>
-        <div class="sc ${riskColor}">
-            <div class="sc-label">At-Risk (< 40)</div>
-            <div class="sc-value">${atRisk}</div>
-            <div class="sc-sub">need urgent support</div>
+        <div class="stat-cell ${rCol}">
+            <div class="stat-lbl">At-Risk</div>
+            <div class="stat-val">${atRisk}</div>
+            <div class="stat-sub">below 40 avg</div>
         </div>
-        <div class="sc ${cmtColor}">
-            <div class="sc-label">Comments Pending</div>
-            <div class="sc-value">${commentsPending}</div>
-            <div class="sc-sub">${commentsDone} of ${count} done</div>
+        <div class="stat-cell ${cCol}">
+            <div class="stat-lbl">Pending</div>
+            <div class="stat-val">${pending}</div>
+            <div class="stat-sub">${commentsDone}/${count} comments</div>
         </div>
-        <div class="sc green">
-            <div class="sc-label">Top Student</div>
-            <div class="sc-value sm">${topStudent.name}</div>
-            <div class="sc-sub">Avg: ${topStudent.avg}</div>
+        <div class="stat-cell c-em">
+            <div class="stat-lbl">Top Student</div>
+            <div class="stat-val sm">${top.name}</div>
+            <div class="stat-sub">avg ${top.avg}</div>
         </div>
-        <div class="sc red">
-            <div class="sc-label">Needs Support</div>
-            <div class="sc-value sm">${bottomStudent.name}</div>
-            <div class="sc-sub">Avg: ${bottomStudent.avg}</div>
+        <div class="stat-cell c-ruby">
+            <div class="stat-lbl">Needs Support</div>
+            <div class="stat-val sm">${bot.name}</div>
+            <div class="stat-sub">avg ${bot.avg}</div>
         </div>
-        <div class="sc purple">
-            <div class="sc-label">Score Range</div>
-            <div class="sc-value">${scoreRange}</div>
-            <div class="sc-sub">pts gap top to bottom</div>
+        <div class="stat-cell c-violet">
+            <div class="stat-lbl">Score Range</div>
+            <div class="stat-val">${range}</div>
+            <div class="stat-sub">pts spread</div>
         </div>
     `;
 
-    // ── Grade distribution bars ───────────────────────────────────────────
-    const gradeOrder  = ['A', 'B', 'C', 'D', 'E', 'F'];
-    const gradeColors = { A:'#68d391', B:'#63b3ed', C:'#f6c90e', D:'#f6ad55', E:'#fc8181', F:'#fc8181' };
-    const maxG = Math.max(...Object.values(gradeCounts), 1);
-
-    let gHTML = '';
-    gradeOrder.forEach(g => {
-        const n   = gradeCounts[g] || 0;
-        const pct = Math.round((n / maxG) * 100);
-        gHTML += `<div class="g-row">
+    // ── Grade bars ───────────────────────────────────────────────────────
+    const GO=['A','B','C','D','E','F'];
+    const GC={A:'#34d399',B:'#60a5fa',C:'#e8b84b',D:'#fb923c',E:'#f87171',F:'#f87171'};
+    const maxG=Math.max(...Object.values(gradeCounts),1);
+    document.getElementById('gradeBars').innerHTML = GO.map(g=>{
+        const n=gradeCounts[g]||0;
+        const pct=Math.round((n/maxG)*100);
+        return `<div class="g-row">
             <div class="g-lbl">${g}</div>
-            <div class="g-bg"><div class="g-fill" style="width:${pct}%;background:${gradeColors[g]||'#a0aec0'}"></div></div>
+            <div class="g-bg"><div class="g-fill" style="width:${pct}%;background:${GC[g]}"></div></div>
             <div class="g-n">${n}</div>
         </div>`;
-    });
-    document.getElementById('gradeBars').innerHTML = gHTML;
+    }).join('');
 
-    // ── Subject average bars ──────────────────────────────────────────────
-    const maxS = subjectAvgs.length ? Math.max(...subjectAvgs.map(s => parseFloat(s.avg)), 1) : 1;
-    let sHTML = '';
-    subjectAvgs.forEach(s => {
-        const pct = Math.round((parseFloat(s.avg) / 100) * 100);
-        const col = parseFloat(s.avg) >= 70 ? '#68d391' : parseFloat(s.avg) >= 50 ? '#f6c90e' : '#fc8181';
-        sHTML += `<div class="s-row">
-            <div class="s-name" title="${s.name}">${s.name}</div>
-            <div class="s-bg"><div class="s-fill" style="width:${pct}%;background:${col}"></div></div>
-            <div class="s-val" style="color:${col}">${s.avg}</div>
-        </div>`;
-    });
-    document.getElementById('subjectBars').innerHTML = sHTML || '<div style="color:#7c8db5;font-size:12px;">No subject data</div>';
+    // ── Subject bars ─────────────────────────────────────────────────────
+    document.getElementById('subjectBars').innerHTML = subAvgs.length
+        ? subAvgs.map(s=>{
+            const v=parseFloat(s.avg);
+            const col=v>=70?'#34d399':v>=50?'#e8b84b':'#f87171';
+            return `<div class="s-row">
+                <div class="s-name" title="${s.nm}">${s.nm}</div>
+                <div class="s-bg"><div class="s-fill" style="width:${v}%;background:${col}"></div></div>
+                <div class="s-val" style="color:${col}">${s.avg}</div>
+            </div>`;
+          }).join('')
+        : '<div style="color:var(--muted);font-size:12px;font-family:var(--sans)">No subject data</div>';
 
-    // ── Insights ──────────────────────────────────────────────────────────
-    const ins = [];
-
-    // Pass rate
-    if (passRate >= 80)
-        ins.push({cls:'green-ins', msg:`<strong>Strong overall performance</strong> — ${passRate}% pass rate. Class is on track.`});
-    else if (passRate >= 50)
-        ins.push({cls:'', msg:`<strong>Moderate performance</strong> — ${passRate}% passing. Schedule revision sessions for the ${failing} failing student${failing!==1?'s':''}.`});
+    // ── Insights ─────────────────────────────────────────────────────────
+    const ins=[];
+    if (passRate>=80)
+        ins.push({t:'green',msg:`<strong>Strong performance</strong> — ${passRate}% pass rate. Class is well on track.`});
+    else if (passRate>=50)
+        ins.push({t:'gold',msg:`<strong>Moderate performance</strong> — ${passRate}% passing. Schedule revision for ${failing} student${failing!==1?'s':''}.`});
     else
-        ins.push({cls:'red-ins', msg:`<strong>⚠️ Critical — only ${passRate}% passing.</strong> Whole-class intervention is urgently needed.`});
+        ins.push({t:'red',msg:`<strong>Critical — ${passRate}% passing.</strong> Whole-class intervention required immediately.`});
 
-    // At-risk
-    if (atRisk > 0)
-        ins.push({cls:'red-ins', msg:`<strong>${atRisk} student${atRisk!==1?'s':''} below 40</strong> — escalate to class teacher and notify parents immediately.`});
+    if (atRisk>0)
+        ins.push({t:'red',msg:`<strong>${atRisk} student${atRisk!==1?'s':''} below 40</strong> — notify class teacher and parents.`});
 
-    // Score gap
-    if (parseFloat(scoreRange) > 40)
-        ins.push({cls:'', msg:`<strong>Large ability spread</strong> — ${scoreRange} pts gap. Consider differentiated learning groups.`});
+    if (parseFloat(range)>40)
+        ins.push({t:'gold',msg:`<strong>Large ability spread</strong> — ${range} pts gap. Consider differentiated groups.`});
 
-    // Weakest subject
-    if (weakestSubject && parseFloat(weakestSubject.avg) < 50)
-        ins.push({cls:'red-ins', msg:`<strong>Weakest subject: ${weakestSubject.name}</strong> (avg ${weakestSubject.avg}) — review teaching resources and assess for curriculum gaps.`});
+    if (weakSubj && parseFloat(weakSubj.avg)<50)
+        ins.push({t:'red',msg:`<strong>Weakest: ${weakSubj.nm}</strong> (avg ${weakSubj.avg}) — review curriculum delivery.`});
 
-    // Best subject
-    if (bestSubject && parseFloat(bestSubject.avg) >= 70)
-        ins.push({cls:'green-ins', msg:`<strong>Best subject: ${bestSubject.name}</strong> (avg ${bestSubject.avg}) — a model for other departments.`});
+    if (bestSubj && parseFloat(bestSubj.avg)>=70)
+        ins.push({t:'green',msg:`<strong>Best: ${bestSubj.nm}</strong> (avg ${bestSubj.avg}) — model for other departments.`});
 
-    // Comments pending
-    if (commentsPending > 0)
-        ins.push({cls:'', msg:`<strong>${commentsPending} comment${commentsPending!==1?'s':''} still pending</strong> — complete before report cards are printed.`});
+    if (pending>0)
+        ins.push({t:'gold',msg:`<strong>${pending} comment${pending!==1?'s':''} pending</strong> — complete before report cards.`});
     else
-        ins.push({cls:'green-ins', msg:`<strong>All comments saved</strong> — report cards are ready for this class.`});
+        ins.push({t:'green',msg:`<strong>All comments saved</strong> — report cards ready.`});
 
-    // F grades
-    const fCount = gradeCounts['F'] || 0;
-    if (fCount > 0)
-        ins.push({cls:'red-ins', msg:`<strong>${fCount} student${fCount!==1?'s':''} scored F</strong> — consider supplementary exams or academic counselling.`});
+    const fC=gradeCounts['F']||0;
+    if (fC>0) ins.push({t:'red',msg:`<strong>${fC} student${fC!==1?'s':''} scored F</strong> — consider supplementary exams.`});
 
-    // A grades
-    const aCount = gradeCounts['A'] || 0;
-    if (aCount > 0)
-        ins.push({cls:'green-ins', msg:`<strong>${aCount} student${aCount!==1?'s':''} achieved Grade A</strong> — recommend for academic recognition or enrichment program.`});
+    const aC=gradeCounts['A']||0;
+    if (aC>0) ins.push({t:'green',msg:`<strong>${aC} student${aC!==1?'s':''} got Grade A</strong> — recommend for recognition.`});
 
-    document.getElementById('insights').innerHTML = ins
-        .map(i => `<div class="insight ${i.cls}">${i.msg}</div>`)
-        .join('');
+    const typeMap={gold:'ins-gold',red:'ins-red',green:'ins-green',sky:'ins-sky'};
+    document.getElementById('insights').innerHTML = ins.map(i=>
+        `<div class="insight-card ${typeMap[i.t]||'ins-gold'}">
+            <div class="insight-dot"></div>
+            <div style="font-family:var(--sans)">${i.msg}</div>
+        </div>`
+    ).join('');
 });
 
-// ══════════════════════════════════════════════════════════════════════════
-//  Comment generation (unchanged)
-// ══════════════════════════════════════════════════════════════════════════
-function cleanComment(text) {
-    return text.replace(/["""'']/g, '').trim();
+// ── Comment helpers ──────────────────────────────────────────────────────
+function cleanComment(t){ return t.replace(/["""'']/g,'').trim(); }
+
+function generateComment(sid) {
+    const target=document.getElementById("comment-"+sid);
+    const btn=document.getElementById("btn-"+sid);
+    btn.disabled=true;
+    btn.innerHTML=`<span class="spinner-border spinner-border-sm"></span> Generating…`;
+    target.value="Generating…";
+    fetch(`/portal/generate-principal-comment/${sid}/?session={{ selected_session.id }}&term={{ selected_term.id }}&class={{ selected_class.id }}`)
+        .then(r=>r.json())
+        .then(d=>{ target.value=cleanComment(d.comment||"No comment generated."); btn.disabled=false; btn.innerHTML="🤖 Generate"; })
+        .catch(()=>{ target.value="Error generating comment."; btn.disabled=false; btn.innerHTML="🤖 Generate"; });
 }
 
-function generateComment(studentId) {
-    const target = document.getElementById("comment-" + studentId);
-    const btn    = document.getElementById("btn-" + studentId);
-    btn.disabled  = true;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status"></span> Generating...`;
-    target.value  = "Generating...";
-
-    fetch(`/portal/generate-principal-comment/${studentId}/?session={{ selected_session.id }}&term={{ selected_term.id }}&class={{ selected_class.id }}`)
-        .then(r => r.json())
-        .then(data => {
-            target.value  = cleanComment(data.comment || "No comment generated.");
-            btn.disabled  = false;
-            btn.innerHTML = "🤖 Generate";
-        })
-        .catch(() => {
-            target.value  = "Error generating comment.";
-            btn.disabled  = false;
-            btn.innerHTML = "🤖 Generate";
-        });
-}
-
-async function generateAllComments() {
-    if (!confirm("Generate AI comments for ALL students?")) return;
-    const boxes = document.querySelectorAll("textarea[id^='comment-']");
-    const total = boxes.length;
-    if (!total) { alert("No students found."); return; }
-
-    showProgressBar(0, `Starting... 0 / ${total}`);
-    let done = 0;
-
-    for (const box of boxes) {
-        const studentId = box.id.replace('comment-', '');
-        box.value = "Generating...";
-        try {
-            const r    = await fetch(`/portal/generate-principal-comment/${studentId}/?session={{ selected_session.id }}&term={{ selected_term.id }}&class={{ selected_class.id }}`);
-            const data = await r.json();
-            box.value  = cleanComment(data.comment || "No comment generated.");
-        } catch { box.value = "Error generating comment."; }
-
+async function generateAllComments(){
+    if(!confirm("Generate AI comments for ALL students?")) return;
+    const boxes=document.querySelectorAll("textarea[id^='comment-']");
+    const total=boxes.length;
+    if(!total){ alert("No students found."); return; }
+    showProg(0,`Starting… 0/${total}`);
+    let done=0;
+    for(const box of boxes){
+        const sid=box.id.replace('comment-','');
+        box.value="Generating…";
+        try{
+            const r=await fetch(`/portal/generate-principal-comment/${sid}/?session={{ selected_session.id }}&term={{ selected_term.id }}&class={{ selected_class.id }}`);
+            const d=await r.json();
+            box.value=cleanComment(d.comment||"No comment generated.");
+        }catch{ box.value="Error."; }
         done++;
-        showProgressBar(Math.round((done / total) * 100), `Processing ${done} of ${total} students...`);
-        await new Promise(r => setTimeout(r, 300));
+        showProg(Math.round((done/total)*100),`Processing ${done} of ${total}…`);
+        await new Promise(r=>setTimeout(r,300));
     }
-
-    showProgressBar(100, `✅ All ${total} comments generated! Click Save to keep them.`);
-    setTimeout(hideProgressBar, 4000);
+    showProg(100,`✅ All ${total} comments done — click Save.`);
+    setTimeout(hideProg,4000);
 }
 
-function showProgressBar(pct, label) {
-    document.getElementById('progress-wrapper').style.display = 'block';
-    const bar = document.getElementById('progress-bar');
-    bar.style.width = pct + '%';
-    bar.setAttribute('aria-valuenow', pct);
-    bar.textContent = pct + '%';
-    document.getElementById('progress-label').textContent = label;
+function showProg(pct,label){
+    document.getElementById('progress-wrapper').style.display='block';
+    document.getElementById('progress-bar').style.width=pct+'%';
+    document.getElementById('progress-label').textContent=label;
 }
-function hideProgressBar() {
-    document.getElementById('progress-wrapper').style.display = 'none';
-}
+function hideProg(){ document.getElementById('progress-wrapper').style.display='none'; }
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}
