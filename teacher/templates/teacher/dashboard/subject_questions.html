@@ -227,6 +227,16 @@
     </div>
 
     <div class="card-body">
+  <!-- Search -->
+  <div class="mb-3 d-flex align-items-center gap-3">
+  <input type="text" id="questionSearch" placeholder="Search questions, course, options..."
+         style="width:100%; padding:8px; border:1px solid #ccc; border-radius:5px; font-size:14px;">
+  <span id="searchCount" style="white-space:nowrap; font-size:13px; color:#555;"></span>
+</div>
+
+  <div class="table-responsive">
+
+    <div class="card-body">
       <div class="table-responsive">
         <table class="table table-bordered" id="dataTable" cellspacing="0">
           <thead>
@@ -290,6 +300,7 @@
   const selectAll = document.getElementById('select-all');
   const deleteBtn = document.getElementById('deleteBtn');
   const selectedCount = document.getElementById('selectedCount');
+  const questionSearch = document.getElementById('questionSearch');
 
   function updateCount() {
     const checked = document.querySelectorAll('input[name="selected_questions"]:checked');
@@ -311,6 +322,39 @@
   document.querySelectorAll('input[name="selected_questions"]').forEach(cb => {
     cb.addEventListener('change', updateCount);
   });
+
+  // Auto search
+  questionSearch.addEventListener('keyup', function () {
+  const filter = this.value.toLowerCase();
+  const rows = document.querySelectorAll('#dataTable tbody tr');
+  let matchCount = 0;
+
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    const match = text.includes(filter);
+    row.style.display = match ? '' : 'none';
+
+    if (match) {
+      matchCount++;
+    } else {
+      const cb = row.querySelector('input[type="checkbox"]');
+      if (cb) cb.checked = false;
+    }
+  });
+
+  updateCount();
+
+  // Show match count
+  const total = rows.length;
+  const searchCount = document.getElementById('searchCount');
+  if (filter) {
+    searchCount.textContent = `${matchCount} of ${total} matched`;
+    searchCount.style.color = matchCount === 0 ? '#dc3545' : '#28a745';
+  } else {
+    searchCount.textContent = `${total} total`;
+    searchCount.style.color = '#555';
+  }
+});
 </script>
 
 <hr>

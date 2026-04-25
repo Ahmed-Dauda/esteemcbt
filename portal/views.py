@@ -3458,6 +3458,7 @@ from django.db.models import Prefetch
 from django.http import JsonResponse
 
 
+
 @login_required
 def principal_dashboard(request):
     if not getattr(request.user, "is_principal", False):
