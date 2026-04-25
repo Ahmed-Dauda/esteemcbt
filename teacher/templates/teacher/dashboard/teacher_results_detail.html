@@ -4,6 +4,149 @@
 
 {% block content %}
 
+<style>
+  /* ── AI Chat Panel ── */
+  #ai-fab {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 1050;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6f42c1, #0d6efd);
+    color: #fff;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+  }
+  #ai-fab:hover { transform: scale(1.1); }
+
+  #ai-panel {
+    position: fixed;
+    bottom: 90px;
+    right: 28px;
+    z-index: 1049;
+    width: 380px;
+    max-height: 580px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #e0e0e0;
+  }
+  #ai-panel.open { display: flex; }
+
+  #ai-panel-header {
+    background: linear-gradient(135deg, #6f42c1, #0d6efd);
+    color: #fff;
+    padding: 12px 16px;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  #ai-panel-header button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+
+  #ai-suggestions {
+    padding: 10px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0;
+    background: #fafafa;
+  }
+  .ai-suggestion-btn {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid #6f42c1;
+    background: #fff;
+    color: #6f42c1;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .ai-suggestion-btn:hover { background: #6f42c1; color: #fff; }
+
+  #ai-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 180px;
+  }
+  .ai-msg {
+    max-width: 90%;
+    padding: 9px 13px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .ai-msg.user      { align-self: flex-end; background: #0d6efd; color: #fff; border-bottom-right-radius: 3px; }
+  .ai-msg.assistant { align-self: flex-start; background: #f1f3f5; color: #212529; border-bottom-left-radius: 3px; }
+  .ai-msg.thinking  { color: #888; font-style: italic; background: #f8f9fa; align-self: flex-start; }
+
+  #ai-input-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid #f0f0f0;
+    flex-shrink: 0;
+    background: #fff;
+  }
+  #ai-input {
+    flex: 1;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-size: 13px;
+    outline: none;
+    resize: none;
+    max-height: 80px;
+    overflow-y: auto;
+  }
+  #ai-input:focus { border-color: #6f42c1; }
+  #ai-send-btn {
+    background: linear-gradient(135deg, #6f42c1, #0d6efd);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+  }
+  #ai-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+
 <div class="container-fluid mt-4">
 
 <form method="POST" action="" class="mb-3">
@@ -14,39 +157,15 @@
   <!-- ACTION BUTTONS -->
   <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
 
-    <!-- ORIGINAL DELETE BUTTON (unchanged) -->
     <button type="submit" class="btn btn-danger me-2" id="delete-btn">
       <i class="fas fa-trash"></i> Delete Selected
     </button>
 
-    <!-- ORIGINAL EXPORT CSV BUTTON (unchanged) -->
-    <!-- <a href="{% url 'teacher:export_results_csv' %}" class="btn btn-primary">
-      <i class="fas fa-file-csv"></i> Export to CSV
-    </a> -->
-
-    <!-- NEW EXPORT CSV BUTTON -->
     <button type="button" id="export-btn"
-      style="
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 9px 22px;
-        background: #1a7a4a;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 600;
-        letter-spacing: 0.4px;
-        cursor: pointer;
-        box-shadow: 0 2px 8px rgba(26,122,74,0.3);
-        transition: background 0.2s, transform 0.15s;
-      "
+      style="display:inline-flex;align-items:center;gap:8px;padding:9px 22px;background:#1a7a4a;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;letter-spacing:0.4px;cursor:pointer;box-shadow:0 2px 8px rgba(26,122,74,0.3);transition:background 0.2s,transform 0.15s;"
       onmouseover="this.style.background='#145e38';this.style.transform='translateY(-1px)';"
       onmouseout="this.style.background='#1a7a4a';this.style.transform='translateY(0)';">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-           fill="none" stroke="currentColor" stroke-width="2.5"
-           stroke-linecap="round" stroke-linejoin="round">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
         <polyline points="7 10 12 15 17 10"/>
         <line x1="12" y1="15" x2="12" y2="3"/>
@@ -54,29 +173,11 @@
       Export CSV
     </button>
 
-    <!-- NEW EXPORT PDF BUTTON -->
     <button type="button" id="export-btn-pdf"
-      style="
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 9px 22px;
-        background: #c0392b;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 600;
-        letter-spacing: 0.4px;
-        cursor: pointer;
-        box-shadow: 0 2px 8px rgba(192,57,43,0.3);
-        transition: background 0.2s, transform 0.15s;
-      "
+      style="display:inline-flex;align-items:center;gap:8px;padding:9px 22px;background:#c0392b;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;letter-spacing:0.4px;cursor:pointer;box-shadow:0 2px 8px rgba(192,57,43,0.3);transition:background 0.2s,transform 0.15s;"
       onmouseover="this.style.background='#a93226';this.style.transform='translateY(-1px)';"
       onmouseout="this.style.background='#c0392b';this.style.transform='translateY(0)';">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-           fill="none" stroke="currentColor" stroke-width="2.5"
-           stroke-linecap="round" stroke-linejoin="round">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
         <polyline points="14 2 14 8 20 8"/>
         <line x1="12" y1="18" x2="12" y2="12"/>
@@ -85,12 +186,10 @@
       Export PDF
     </button>
 
-    <!-- LIVE COUNT -->
     <span id="export-count"
       style="font-size:12px;color:#6c757d;background:#f0f0f0;padding:4px 10px;border-radius:20px;">
       Loading...
     </span>
-
   </div>
 
   <!-- FILTER ROW -->
@@ -147,9 +246,7 @@
       <tbody>
         {% for result in results %}
         <tr>
-          <td>
-            <input type="checkbox" name="selected_results" value="{{ result.id }}" class="check-item">
-          </td>
+          <td><input type="checkbox" name="selected_results" value="{{ result.id }}" class="check-item"></td>
           <td>{{ result.student.first_name }} {{ result.student.last_name }}</td>
           <td>{{ result.marks }}</td>
           <td>{{ result.result_class }}</td>
@@ -158,10 +255,8 @@
           <td>{{ result.exam_type.name }}</td>
           <td>{{ result.created|date:"Y-m-d H:i" }}</td>
           <td>
-            <a href="{% url 'teacher:edit_teacher_results' course.id result.id %}"
-               class="btn btn-sm btn-warning mb-1">Edit</a>
-            <a href="{% url 'teacher:delete_teacher_result' course.id result.id %}"
-               class="btn btn-sm btn-danger"
+            <a href="{% url 'teacher:edit_teacher_results' course.id result.id %}" class="btn btn-sm btn-warning mb-1">Edit</a>
+            <a href="{% url 'teacher:delete_teacher_result' course.id result.id %}" class="btn btn-sm btn-danger"
                onclick="return confirm('Are you sure you want to delete this result?');">Delete</a>
           </td>
         </tr>
@@ -176,11 +271,170 @@
 
 </div>
 
+<!-- ── AI Floating Button ── -->
+<button id="ai-fab" title="AI Assistant">🤖</button>
+
+<!-- ── AI Chat Panel ── -->
+<div id="ai-panel">
+  <div id="ai-panel-header">
+    <span>🤖 AI Results Assistant</span>
+    <button onclick="toggleAiPanel()">✕</button>
+  </div>
+
+  <div id="ai-suggestions">
+    <button class="ai-suggestion-btn" onclick="sendSuggestion('Summarise the overall performance of students in this subject')">📊 Class Summary</button>
+    <button class="ai-suggestion-btn" onclick="sendSuggestion('Which students scored the lowest marks and need attention?')">⚠️ Struggling Students</button>
+    <button class="ai-suggestion-btn" onclick="sendSuggestion('Who are the top performing students by marks?')">🏆 Top Performers</button>
+    <button class="ai-suggestion-btn" onclick="sendSuggestion('Which students should be considered for a re-sit based on their marks?')">🔁 Re-sit Candidates</button>
+    <button class="ai-suggestion-btn" onclick="sendSuggestion('What is the average mark and grade distribution across all students?')">📈 Grade Distribution</button>
+    <button class="ai-suggestion-btn" onclick="sendSuggestion('Write a professional subject performance report I can present to the school')">📝 Subject Report</button>
+    <button class="ai-suggestion-btn" onclick="sendSuggestion('Compare student performance across different terms if available')">📅 Term Comparison</button>
+    <button class="ai-suggestion-btn" onclick="sendSuggestion('Draft a parent communication letter about the results for this subject')">✉️ Parent Letter</button>
+  </div>
+
+  <div id="ai-messages"></div>
+
+  <div id="ai-input-row">
+    <textarea id="ai-input" placeholder="Ask anything about these results…" rows="1"></textarea>
+    <button id="ai-send-btn" onclick="sendAiMessage()">➤</button>
+  </div>
+</div>
+
+<!-- ── Build results context from Django template ── -->
+<script>
+// Embed all result data once at page render — no extra DB call per message
+const RESULTS_CONTEXT = {
+    course:         "{{ course.course_name }}",
+    total_students: {{ results|length }},
+    students: [
+        {% for result in results %}
+        {
+            name:       "{{ result.student.first_name }} {{ result.student.last_name }}",
+            marks:      "{{ result.marks }}",
+            result_class: "{{ result.result_class }}",
+            session:    "{{ result.session.name }}",
+            term:       "{{ result.term.name }}",
+            exam_type:  "{{ result.exam_type.name }}",
+        },
+        {% endfor %}
+    ]
+};
+
+const CSRF_TOKEN   = "{{ csrf_token }}";
+const AI_CHAT_URL  = "{% url 'teacher:teacher_results_ai_chat' %}";
+
+// ── Panel toggle ──
+function toggleAiPanel() {
+    document.getElementById('ai-panel').classList.toggle('open');
+}
+document.getElementById('ai-fab').addEventListener('click', toggleAiPanel);
+
+// ── Auto-resize textarea ──
+const aiInput = document.getElementById('ai-input');
+aiInput.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 80) + 'px';
+});
+aiInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendAiMessage();
+    }
+});
+
+// ── Suggestion click ──
+function sendSuggestion(prompt) {
+    document.getElementById('ai-input').value = prompt;
+    sendAiMessage();
+}
+
+function appendMessage(role, text) {
+    const box = document.getElementById('ai-messages');
+    const el  = document.createElement('div');
+    el.className    = `ai-msg ${role}`;
+    el.textContent  = text;
+    box.appendChild(el);
+    box.scrollTop   = box.scrollHeight;
+    return el;
+}
+
+// ── Concurrency guard — one request at a time per tab ──
+let aiIsBusy = false;
+
+async function sendAiMessage() {
+    if (aiIsBusy) return;
+
+    const sendBtn = document.getElementById('ai-send-btn');
+    const message = aiInput.value.trim();
+    if (!message) return;
+
+    aiIsBusy         = true;
+    sendBtn.disabled = true;
+    aiInput.value    = '';
+    aiInput.style.height = 'auto';
+
+    appendMessage('user', message);
+    const thinkingEl = appendMessage('thinking', '⏳ Thinking...');
+
+    try {
+        const response = await fetch(AI_CHAT_URL, {
+            method:  'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken':  CSRF_TOKEN,
+            },
+            body: JSON.stringify({
+                message: message,
+                context: RESULTS_CONTEXT
+            })
+        });
+
+        if (!response.ok) throw new Error(`Server error ${response.status}`);
+
+        // Switch thinking bubble to streaming assistant bubble
+        thinkingEl.className   = 'ai-msg assistant';
+        thinkingEl.textContent = '';
+
+        const reader  = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer    = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop(); // hold incomplete line
+
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const payload = line.slice(6).trim();
+                if (payload === '[DONE]') break;
+                try {
+                    const parsed = JSON.parse(payload);
+                    if (parsed.text) {
+                        thinkingEl.textContent += parsed.text;
+                        document.getElementById('ai-messages').scrollTop =
+                            document.getElementById('ai-messages').scrollHeight;
+                    }
+                } catch {}
+            }
+        }
+
+    } catch (err) {
+        thinkingEl.className   = 'ai-msg assistant';
+        thinkingEl.textContent = '❌ ' + err.message;
+    } finally {
+        aiIsBusy         = false;
+        sendBtn.disabled = false;
+    }
+}
+</script>
 
 <script>
 $(document).ready(function () {
 
-    // Remove duplicate dropdown options
     ['#termFilter', '#sessionFilter', '#examTypeFilter'].forEach(function(sel) {
         let seen = {};
         $(sel + ' option').each(function() {
@@ -193,15 +447,10 @@ $(document).ready(function () {
     let table = $('#resultsTable').DataTable({
         "order": [[1, "asc"]],
         "pageLength": 10,
-        "columnDefs": [
-            { "orderable": false, "targets": [0, 8] }
-        ],
-        "language": {
-            "emptyTable": "No results available for this course."
-        }
+        "columnDefs": [{ "orderable": false, "targets": [0, 8] }],
+        "language": { "emptyTable": "No results available for this course." }
     });
 
-    // Live count update
     function updateCount() {
         let count = table.rows({ search: 'applied' }).count();
         $('#export-count').text(count + ' record(s) ready to export');
@@ -209,22 +458,14 @@ $(document).ready(function () {
     updateCount();
     table.on('draw', updateCount);
 
-    // COLUMN FILTERS
-    $('#termFilter').on('change', function () {
-        table.column(5).search($(this).val()).draw();
-    });
-    $('#sessionFilter').on('change', function () {
-        table.column(4).search($(this).val()).draw();
-    });
-    $('#examTypeFilter').on('change', function () {
-        table.column(6).search($(this).val()).draw();
-    });
+    $('#termFilter').on('change', function () { table.column(5).search($(this).val()).draw(); });
+    $('#sessionFilter').on('change', function () { table.column(4).search($(this).val()).draw(); });
+    $('#examTypeFilter').on('change', function () { table.column(6).search($(this).val()).draw(); });
     $('#clear-filters').on('click', function () {
         $('#termFilter, #sessionFilter, #examTypeFilter').val('');
         table.columns([4, 5, 6]).search('').draw();
     });
 
-    // SELECT ALL (filtered rows only)
     $('#select-all').on('click', function () {
         let checked = this.checked;
         table.rows({ search: 'applied' }).every(function () {
@@ -232,11 +473,10 @@ $(document).ready(function () {
         });
     });
 
-    // BULK DELETE
     $('#delete-btn').on('click', function(e) {
         e.preventDefault();
         let selected = $('input.check-item:checked');
-        let count = selected.length;
+        let count    = selected.length;
         if (count === 0) { alert("No results selected to delete."); return; }
         if (!confirm(`Are you sure you want to delete ${count} selected result(s)?`)) return;
 
@@ -249,9 +489,7 @@ $(document).ready(function () {
             data: { 'selected_results[]': ids, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
             success: function(response) {
                 if (response.status === 'success') {
-                    selected.each(function() {
-                        table.row($(this).closest('tr')).remove().draw();
-                    });
+                    selected.each(function() { table.row($(this).closest('tr')).remove().draw(); });
                     alert(`${response.deleted_count} result(s) deleted successfully.`);
                     if (table.rows().count() === 0) location.reload();
                 } else {
@@ -262,35 +500,26 @@ $(document).ready(function () {
         });
     });
 
-    // SHARED EXPORT FUNCTION
     function doExport(fmt) {
-    let ids = [];
-    table.rows({ search: 'applied' }).every(function () {
-        let checkbox = $(this.node()).find('input.check-item');
-        if (checkbox.length) ids.push(checkbox.val());
-    });
+        let ids = [];
+        table.rows({ search: 'applied' }).every(function () {
+            let checkbox = $(this.node()).find('input.check-item');
+            if (checkbox.length) ids.push(checkbox.val());
+        });
+        if (ids.length === 0) { alert("No results to export."); return; }
 
-    if (ids.length === 0) { alert("No results to export."); return; }
+        let form = $('<form method="POST" action="{% url 'teacher:export_filtered_results_csv' %}" style="display:none;">');
+        form.append('<input name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
+        form.append('<input name="course_id" value="{{ course.id }}">');
+        form.append('<input name="format" value="' + fmt + '">');
+        ids.forEach(function(id) { form.append('<input name="ids" value="' + id + '">'); });
+        $('body').append(form);
+        form.submit();
+        form.remove();
+    }
 
-    // Build a hidden form and POST it — handles unlimited IDs safely
-    let form = $('<form method="POST" action="{% url 'teacher:export_filtered_results_csv' %}" style="display:none;">');
-    form.append('<input name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
-    form.append('<input name="course_id" value="{{ course.id }}">');
-    form.append('<input name="format" value="' + fmt + '">');
-    ids.forEach(function(id) {
-        form.append('<input name="ids" value="' + id + '">');
-    });
-    $('body').append(form);
-    form.submit();
-    form.remove();
-}
-
-    // GREEN EXPORT BUTTON — CSV
     $('#export-btn').on('click', function () { doExport('csv'); });
-
-    // RED EXPORT BUTTON — PDF
     $('#export-btn-pdf').on('click', function () { doExport('pdf'); });
-
 });
 </script>
 

@@ -2687,6 +2687,71 @@ def teacher_course_results_view(request, course_id):
     })
 
 
+import json
+from openai import OpenAI
+from django.http import StreamingHttpResponse, JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+
+
+@login_required(login_url='teacher:teacher_login')
+@require_POST
+def teacher_results_ai_chat(request):
+    try:
+        data           = json.loads(request.body)
+        message        = data.get("message", "").strip()
+        context_data   = data.get("context", {})
+
+        if not message:
+            return JsonResponse({"error": "No message provided"}, status=400)
+
+        students_summary = ""
+        for s in context_data.get("students", []):
+            students_summary += (
+                f"\n- {s['name']}: Marks={s.get('marks','N/A')}, "
+                f"Grade={s.get('result_class','N/A')}, "
+                f"Term={s.get('term','N/A')}, "
+                f"Session={s.get('session','N/A')}, "
+                f"Exam Type={s.get('exam_type','N/A')}"
+            )
+
+        system_prompt = f"""You are an expert school AI assistant helping a teacher analyse subject results.
+
+Subject: {context_data.get('course', 'N/A')}
+Total Students: {context_data.get('total_students', 0)}
+
+Student Results:
+{students_summary}
+
+Be concise, specific, and professional. Use student names in your responses.
+Format summaries and reports clearly."""
+
+        def stream_response():
+            client = OpenAI()
+            stream = client.chat.completions.create(
+                model="gpt-4o",
+                max_tokens=1000,
+                stream=True,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user",   "content": message},
+                ]
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta
+                if delta and delta.content:
+                    yield f"data: {json.dumps({'text': delta.content})}\n\n"
+            yield "data: [DONE]\n\n"
+
+        response = StreamingHttpResponse(stream_response(), content_type="text/event-stream")
+        response["Cache-Control"]     = "no-cache"
+        response["X-Accel-Buffering"] = "no"
+        return response
+
+    except Exception as e:
+        logger.error(f"AI chat error: {e}", exc_info=True)
+        return JsonResponse({"error": str(e)}, status=500)
+
 
 # @login_required(login_url='teacher:teacher_login')
 # def export_results_csv(request):

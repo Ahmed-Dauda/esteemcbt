@@ -4,6 +4,7 @@ from . import views
 app_name = 'portal'
 
 urlpatterns = [
+    
     # ── Reports ───────────────────────────────────────────────────────────
     path('reports/generate-class/', views.download_class_report, name='download_class_report'),
     path('reports/generate-class/<str:result_class>/<int:session_id>/<int:term_id>/',
