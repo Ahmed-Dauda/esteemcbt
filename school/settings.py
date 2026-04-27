@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'import_export',
     'django_mathjax',
     'portal',
+    'research',
 
 
     'allauth.socialaccount.providers.google',
@@ -78,6 +79,8 @@ AUTHENTICATION_BACKENDS = [
     'users.backends.UsernameOnlyBackend',                       # custom passwordless backend
     'allauth.account.auth_backends.AuthenticationBackend',       # allauth backend
 ]
+
+CHAPTER_GEN_SCRIPT = BASE_DIR / 'research' / 'scripts' / 'generate_chapter.js'
 
 # AUTHENTICATION_BACKENDS = (
 #     'django.contrib.auth.backends.ModelBackend', # existing backend

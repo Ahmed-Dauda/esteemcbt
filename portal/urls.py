@@ -4,6 +4,16 @@ from . import views
 app_name = 'portal'
 
 urlpatterns = [
+    path(
+    'student/<int:student_id>/ai-analysis/<int:session_id>/<int:term_id>/',
+    views.student_ai_analysis_ajax,
+    name='student_ai_analysis_ajax'
+    ),
+    path(
+        'student/<int:student_id>/ai-summary/<int:session_id>/<int:term_id>/',
+        views.student_ai_summary,
+        name='student_ai_summary'
+    ),
     
     # ── Reports ───────────────────────────────────────────────────────────
     path('reports/generate-class/', views.download_class_report, name='download_class_report'),

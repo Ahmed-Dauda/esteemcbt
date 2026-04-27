@@ -10,9 +10,8 @@
             <p class="mb-1"><strong>Class:</strong> {{ result_class }}</p>
             <p class="mb-0"><strong>Session:</strong> {{ session.name }} | <strong>Term:</strong> {{ term.name }}</p>
         </div>
-
         <div class="mt-2 mt-md-0">
-            <a href="{% url 'portal:download_term_report_pdf' student.id session.id term.id %}" 
+            <a href="{% url 'portal:download_term_report_pdf' student.id session.id term.id %}"
                class="btn btn-success mb-2">
                 <i class="bi bi-download me-1"></i> Download Full Term Report
             </a>
@@ -44,7 +43,7 @@
                             <td>{{ result.exam_score }}</td>
                             <td class="fw-bold">{{ result.total_score }}</td>
                             <td>
-                                <span class="badge 
+                                <span class="badge
                                     {% if result.grade_letter == 'A' %}bg-success
                                     {% elif result.grade_letter == 'B' %}bg-primary
                                     {% elif result.grade_letter == 'C' %}bg-info
@@ -82,12 +81,112 @@
         </div>
     </div>
 
+    <!-- ── AI Academic Intelligence Panel ─────────────────────────────── -->
+    <div style="
+        background: linear-gradient(135deg, #0f1729 0%, #1e2a50 100%);
+        border-radius: 14px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+    ">
+        <!-- Decorative glow -->
+        <div style="
+            position:absolute; top:-40px; right:-40px;
+            width:200px; height:200px;
+            background: radial-gradient(circle, rgba(201,147,58,0.12) 0%, transparent 65%);
+            pointer-events:none;
+        "></div>
+
+        <!-- Title row -->
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap;">
+            <div>
+                <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#c9933a; margin-bottom:3px;">
+                    🧠 AI Academic Intelligence
+                </div>
+                <div style="font-size:15px; font-weight:600; color:#fff;">
+                    Deep insights for {{ student.first_name }} {{ student.last_name }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick-access buttons -->
+        <div style="display:flex; flex-wrap:wrap; gap:10px;">
+
+            <!-- Performance Summary -->
+            <a href="{% url 'portal:student_ai_summary' student.id session.id term.id %}#performance-summary"
+               style="
+                text-decoration:none;
+                display:inline-flex; align-items:center; gap:8px;
+                background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35);
+                color:#93c5fd; border-radius:8px;
+                padding:10px 16px; font-size:13px; font-weight:600;
+                transition:background 0.2s, transform 0.15s;
+               "
+               onmouseover="this.style.background='rgba(59,130,246,0.25)';this.style.transform='translateY(-1px)'"
+               onmouseout="this.style.background='rgba(59,130,246,0.15)';this.style.transform='translateY(0)'"
+            >
+                📊 Performance Summary
+            </a>
+
+            <!-- Weak Areas -->
+            <a href="{% url 'portal:student_ai_summary' student.id session.id term.id %}#weak-areas"
+               style="
+                text-decoration:none;
+                display:inline-flex; align-items:center; gap:8px;
+                background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3);
+                color:#fca5a5; border-radius:8px;
+                padding:10px 16px; font-size:13px; font-weight:600;
+                transition:background 0.2s, transform 0.15s;
+               "
+               onmouseover="this.style.background='rgba(239,68,68,0.22)';this.style.transform='translateY(-1px)'"
+               onmouseout="this.style.background='rgba(239,68,68,0.12)';this.style.transform='translateY(0)'"
+            >
+                ⚠ Weak Areas
+            </a>
+
+            <!-- Parent Feedback -->
+            <a href="{% url 'portal:student_ai_summary' student.id session.id term.id %}#parent-feedback"
+               style="
+                text-decoration:none;
+                display:inline-flex; align-items:center; gap:8px;
+                background:rgba(201,147,58,0.12); border:1px solid rgba(201,147,58,0.3);
+                color:#fcd34d; border-radius:8px;
+                padding:10px 16px; font-size:13px; font-weight:600;
+                transition:background 0.2s, transform 0.15s;
+               "
+               onmouseover="this.style.background='rgba(201,147,58,0.22)';this.style.transform='translateY(-1px)'"
+               onmouseout="this.style.background='rgba(201,147,58,0.12)';this.style.transform='translateY(0)'"
+            >
+                ✉ Parent Feedback
+            </a>
+
+            <!-- Ask AI (full page) -->
+            <a href="{% url 'portal:student_ai_summary' student.id session.id term.id %}"
+               style="
+                text-decoration:none;
+                display:inline-flex; align-items:center; gap:8px;
+                background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15);
+                color:#e2e8f0; border-radius:8px;
+                padding:10px 16px; font-size:13px; font-weight:600;
+                transition:background 0.2s, transform 0.15s;
+               "
+               onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.transform='translateY(-1px)'"
+               onmouseout="this.style.background='rgba(255,255,255,0.07)';this.style.transform='translateY(0)'"
+            >
+                🤖 Ask AI About This Student
+            </a>
+
+        </div>
+    </div>
+    <!-- ── End AI Panel ─────────────────────────────────────────────────── -->
+
     <!-- Back / Download Buttons -->
     <div class="d-flex justify-content-start gap-2 mb-4">
         <a href="{% url 'portal:report_card_list' %}" class="btn btn-secondary">
             ← Back to Report List
         </a>
-        <a href="{% url 'portal:download_term_report_pdf' student.id session.id term.id %}" 
+        <a href="{% url 'portal:download_term_report_pdf' student.id session.id term.id %}"
            class="btn btn-success">
             <i class="bi bi-download me-1"></i> Download PDF
         </a>

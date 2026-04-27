@@ -40,6 +40,7 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
    
     path('academics/', include('academics.urls')),
+    path("research/", include("research.urls")),
     
     # path('verify', include('student.urls')),
  

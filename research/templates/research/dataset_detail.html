@@ -1,0 +1,281 @@
+
+{% load static %}
+
+{% block title %}{{ dataset.name }} – Dataset Analysis{% endblock %}
+
+
+<style>
+    .stat-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e8eaf0;
+  padding: 16px;
+  text-align: center;
+}
+.stat-card div:first-child { font-size: 28px; }
+.stat-card div:nth-child(2) { font-size: 13px; color: #6b7280; margin-top: 8px; }
+.stat-card div:last-child { font-size: 20px; font-weight: 700; }
+/* ... keep your existing styles plus these additions ... */
+.inline-rename {
+    cursor: pointer;
+    border-bottom: 1px dashed #2563eb;
+}
+.inline-rename:hover {
+    background: #e6f0ff;
+}
+.chart-card {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    padding: 12px;
+    z-index: 1000;
+    border: 1px solid #e8eaf0;
+}
+.chart-card canvas {
+    max-height: 200px;
+}
+.modal-content {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+</style>
+
+<div style="max-width: 1200px; margin: 0 auto; padding: 24px;">
+  <!-- Header with buttons -->
+  <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 12px; margin-bottom: 24px;">
+    <div>
+      <a href="{% url 'project_detail' project.pk %}" style="text-decoration: none; color: #2563eb;">← Back to Project</a>
+      <h1 style="margin: 8px 0 4px;">📊 {{ dataset.name }}</h1>
+      <p style="color: #6b7280;">Uploaded: {{ dataset.uploaded_at|date:"F j, Y, g:i a" }}</p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button class="hbtn" onclick="openAIAnalyseModal()" style="background:#7c3aed; color:white;">🤖 AI Analyse</button>
+      <button class="hbtn" onclick="openCleanModal()" style="background:#0891b2; color:white;">🔧 Fix Data</button>
+      <a href="{{ dataset.file.url }}" download class="hbtn" style="background:#16a34a; color:white;">⬇ Download</a>
+    </div>
+  </div>
+
+  <!-- Stats cards -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 16px; margin-bottom: 32px;">
+    <div class="stat-card"><div>📐</div><div>Dimensions</div><div id="dimensions">—</div></div>
+    <div class="stat-card"><div>📌</div><div>Missing Values</div><div id="missing">—</div></div>
+    <div class="stat-card"><div>🔢</div><div>Format</div><div>{{ dataset.file.name|slice:"-3:"|upper }}</div></div>
+  </div>
+
+  <!-- Preview table (with inline rename) -->
+  <div style="background: white; border-radius: 12px; border: 1px solid #e8eaf0; margin-bottom: 32px; overflow-x: auto;">
+    <div style="padding: 12px 20px; background:#fafbff; border-bottom:1px solid #e8eaf0; font-weight:600;">Data Preview (first 10 rows)</div>
+    <div id="previewContainer">
+      {{ preview|safe }}
+    </div>
+  </div>
+
+  <!-- Descriptive statistics -->
+  <div style="background: white; border-radius: 12px; border: 1px solid #e8eaf0; overflow-x: auto;">
+    <div style="padding: 12px 20px; background:#fafbff; border-bottom:1px solid #e8eaf0; font-weight:600;">Descriptive Statistics</div>
+    <div id="statsContainer">
+      {{ stats|safe }}
+    </div>
+  </div>
+
+  <!-- Chart card (toggleable) -->
+  <div id="ageChartCard" class="chart-card" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <strong>Age Distribution</strong>
+      <button onclick="document.getElementById('ageChartCard').style.display='none'" style="background:none; border:none; font-size:18px;">✕</button>
+    </div>
+    <canvas id="ageChart" width="300" height="200"></canvas>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div id="aiModal" class="modal-overlay">
+  <div class="modal modal-content">
+    <h3>🤖 AI Data Analysis</h3>
+    <p style="margin-bottom:12px;">Select which section to insert the analysis into:</p>
+    <select id="aiSectionSelect" style="width:100%; padding:8px; margin-bottom:20px;">
+      {% for chapter in project.chapters.all %}
+        <optgroup label="Chapter {{ chapter.number }}: {{ chapter.title }}">
+          {% for section in chapter.sections.all %}
+            <option value="{{ section.id }}">{{ section.number }} {{ section.title }}</option>
+          {% endfor %}
+        </optgroup>
+      {% endfor %}
+    </select>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('aiModal')">Cancel</button>
+      <button class="modal-confirm" onclick="runAIAnalysis()">Generate & Insert</button>
+    </div>
+  </div>
+</div>
+
+<div id="cleanModal" class="modal-overlay">
+  <div class="modal">
+    <h3>🔧 Fix Missing Data</h3>
+    <p>Choose how to handle missing values:</p>
+    <div style="display:flex; gap:12px; margin:16px 0;">
+      <button class="modal-confirm" onclick="cleanData('drop_rows')" style="background:#dc2626;">🗑 Drop rows with NaN</button>
+      <button class="modal-confirm" onclick="cleanData('fill_median')" style="background:#16a34a;">📊 Fill numeric columns with median</button>
+    </div>
+    <p style="font-size:12px; color:gray;">After cleaning, a new cleaned dataset will be created. You will be redirected.</p>
+    <div class="modal-btns"><button class="modal-cancel" onclick="closeModal('cleanModal')">Cancel</button></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const CSRF = "{{ csrf_token }}";
+const DATASET_ID = {{ dataset.id }};
+const PROJECT_ID = {{ project.id }};
+
+// ----------------------------------------------------------------------
+// 1. AI Analyse
+// ----------------------------------------------------------------------
+function openAIAnalyseModal() { openModal('aiModal'); }
+
+async function runAIAnalysis() {
+  const sectionId = document.getElementById('aiSectionSelect').value;
+  closeModal('aiModal');
+  showToast('🤖 AI is analysing the dataset...');
+  try {
+    const response = await fetch(`/research/projects/${PROJECT_ID}/datasets/${DATASET_ID}/analyze/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ section_id: sectionId })
+    });
+    const data = await response.json();
+    if (data.success) {
+      showToast('✅ Analysis inserted into section!');
+      // Optionally redirect to that section
+      window.location.href = `/research/section/${sectionId}/`;
+    } else {
+      showToast('Error: ' + data.error);
+    }
+  } catch(e) { showToast('Network error'); }
+}
+
+// ----------------------------------------------------------------------
+// 2. Clean data
+// ----------------------------------------------------------------------
+function openCleanModal() { openModal('cleanModal'); }
+
+async function cleanData(method) {
+  closeModal('cleanModal');
+  showToast('Cleaning data...');
+  try {
+    const response = await fetch(`/research/datasets/${DATASET_ID}/clean/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ method: method })
+    });
+    const data = await response.json();
+    if (data.success) {
+      showToast(`Cleaned: ${data.rows_dropped} rows removed. Remaining: ${data.rows_remaining}`);
+      // Update preview and stats on page
+      document.getElementById('previewContainer').innerHTML = data.preview;
+      document.getElementById('statsContainer').innerHTML = data.stats;
+      // Provide a link to download the cleaned file
+      if (data.cleaned_file_url) {
+        const downloadLink = document.createElement('a');
+        downloadLink.href = data.cleaned_file_url;
+        downloadLink.download = 'cleaned_data.csv';
+        downloadLink.textContent = 'Download cleaned CSV';
+        downloadLink.style.display = 'block';
+        downloadLink.style.marginTop = '12px';
+        document.getElementById('previewContainer').after(downloadLink);
+      }
+      // Re-run dimension estimation
+      updateDimensionsFromTable();
+    } else {
+      showToast('Error: ' + data.error);
+    }
+  } catch(e) { showToast('Network error'); }
+}
+
+// ----------------------------------------------------------------------
+// 3. Inline column rename
+// ----------------------------------------------------------------------
+function makeColumnsEditable() {
+  const ths = document.querySelectorAll('#previewContainer table th');
+  ths.forEach(th => {
+    const originalName = th.innerText.trim();
+    th.classList.add('inline-rename');
+    th.setAttribute('title', 'Double-click to rename');
+    th.ondblclick = () => {
+      const newName = prompt('New column name:', originalName);
+      if (newName && newName !== originalName) {
+        renameColumn(originalName, newName);
+      }
+    };
+  });
+}
+
+async function renameColumn(oldName, newName) {
+  try {
+    const response = await fetch(`/research/datasets/${DATASET_ID}/rename-column/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ old_name: oldName, new_name: newName })
+    });
+    const data = await response.json();
+    if (data.success) {
+      showToast(`Column renamed to "${newName}"`);
+      // Reload page to see new dataset (or update dynamically)
+      window.location.href = `/research/projects/${PROJECT_ID}/datasets/${data.new_dataset_id}/`;
+    } else {
+      showToast('Error: ' + data.error);
+    }
+  } catch(e) { showToast('Network error'); }
+}
+
+// ----------------------------------------------------------------------
+// 4. Age distribution chart
+// ----------------------------------------------------------------------
+async function loadAgeChart() {
+  try {
+    const resp = await fetch(`/research/datasets/${DATASET_ID}/age-distribution/`);
+    const data = await resp.json();
+    if (data.success && data.labels && data.frequencies) {
+      const ctx = document.getElementById('ageChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: { labels: data.labels, datasets: [{ label: 'Frequency', data: data.frequencies, backgroundColor: '#7c3aed' }] },
+        options: { responsive: true, maintainAspectRatio: true }
+      });
+      document.getElementById('ageChartCard').style.display = 'block';
+    } else {
+      console.warn('No age column or numeric data');
+    }
+  } catch(e) { console.error(e); }
+}
+
+// Helper: update dimensions from table after cleaning
+function updateDimensionsFromTable() {
+  const table = document.querySelector('#previewContainer table');
+  if (table) {
+    const rows = table.querySelectorAll('tr').length - 1;
+    const cols = table.querySelector('tr')?.querySelectorAll('th, td').length || 0;
+    document.getElementById('dimensions').innerText = rows + ' rows × ' + cols + ' cols';
+  }
+}
+
+// Initialise
+document.addEventListener('DOMContentLoaded', () => {
+  makeColumnsEditable();
+  updateDimensionsFromTable();
+  loadAgeChart(); // optional: show automatically if age column exists
+});
+
+// Utility functions (reuse from your existing code)
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function showToast(msg) { 
+  let toast = document.getElementById('toast') || (()=>{let t=document.createElement('div');t.id='toast';t.className='toast';document.body.appendChild(t);return t;})();
+  toast.textContent = msg; toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'),3000);
+}
+</script>

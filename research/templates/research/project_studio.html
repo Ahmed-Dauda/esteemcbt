@@ -1,0 +1,1174 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ project.title }} – AI Project Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #2563eb;
+      --purple: #7c3aed;
+      --green: #16a34a;
+      --red: #dc2626;
+      --grad: linear-gradient(135deg, #2563eb, #7c3aed);
+      --border: #e8eaf0;
+      --text: #111827;
+      --muted: #6b7280;
+      --light: #f5f6fa;
+      --white: #fff;
+      --sidebar-w: 272px;
+      --header-h: 60px;
+      --footer-h: 44px;
+      --chat-w: 300px;
+    }
+
+    body { font-family: 'Sora', sans-serif; background: var(--light); height: 100vh; display: flex; flex-direction: column; overflow: hidden; color: var(--text); }
+
+    /* ── HEADER ── */
+    header {
+      height: var(--header-h);
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; flex-shrink: 0; z-index: 100;
+      box-shadow: 0 1px 4px rgba(0,0,0,.05);
+      gap: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+    .brand-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--grad); display: flex; align-items: center; justify-content: center; font-size: 17px; }
+    .brand-name { font-size: 14px; font-weight: 700; color: var(--text); }
+    .brand-tagline { font-size: 10px; color: var(--muted); }
+
+    .header-actions { display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; }
+    .hbtn { display: flex; align-items: center; gap: 5px; padding: 7px 13px; border-radius: 8px; font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; border: none; text-decoration: none; transition: opacity .15s, transform .15s; white-space: nowrap; }
+    .hbtn:hover { opacity: .88; transform: translateY(-1px); }
+    .hbtn-build { background: var(--grad); color: #fff; }
+    .hbtn-word  { background: #16a34a; color: #fff; }
+    .hbtn-pdf   { background: #dc2626; color: #fff; }
+    .hbtn-ppt   { background: #9333ea; color: #fff; }
+    .hbtn-def   { background: #f59e0b; color: #fff; }
+
+    /* Header stats */
+    .header-stats { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+    .hstat { display: flex; align-items: center; gap: 6px; }
+    .hstat-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .hstat-value { font-size: 15px; font-weight: 700; color: var(--text); }
+    .hstat-icon { font-size: 16px; }
+    .hstat-divider { width: 1px; height: 28px; background: var(--border); }
+
+    /* Progress ring */
+    .progress-ring { position: relative; width: 36px; height: 36px; }
+    .progress-ring svg { transform: rotate(-90deg); }
+    .progress-ring-bg { fill: none; stroke: #e8eaf0; stroke-width: 3; }
+    .progress-ring-fill { fill: none; stroke: #16a34a; stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset .5s ease; }
+    .progress-ring-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: var(--text); }
+
+    .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .icon-btn { width: 34px; height: 34px; border-radius: 50%; border: none; background: var(--light); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; transition: background .15s; }
+    .icon-btn:hover { background: var(--border); }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--grad); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+    /* ── LAYOUT ── */
+    .studio { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width: var(--sidebar-w); background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden; }
+    .sidebar-header { padding: 12px 16px 10px; font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .sidebar-body { flex: 1; overflow-y: auto; padding-bottom: 8px; }
+    .sidebar-body::-webkit-scrollbar { width: 3px; }
+    .sidebar-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .chapter-item { border-bottom: 1px solid var(--border); }
+    .chapter-toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; transition: background .12s; }
+    .chapter-toggle:hover { background: var(--light); }
+    .chapter-toggle.active { background: #eff6ff; }
+    .chapter-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .chapter-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+    .ch-color-1 { background: #dbeafe; }
+    .ch-color-2 { background: #fee2e2; }
+    .ch-color-3 { background: #dcfce7; }
+    .ch-color-4 { background: #ede9fe; }
+    .ch-color-5 { background: #fef3c7; }
+    .chapter-info { flex: 1; min-width: 0; }
+    .chapter-label { font-size: 12px; font-weight: 700; color: var(--text); }
+    .chapter-meta { font-size: 10.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin-top: 1px; }
+    .chapter-pages { font-size: 10.5px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+    .chapter-caret { font-size: 11px; color: var(--muted); transition: transform .2s; flex-shrink: 0; }
+    .chapter-caret.open { transform: rotate(90deg); }
+
+    .section-list { display: none; padding: 2px 0 4px; }
+    .section-list.open { display: block; }
+    .section-link { display: flex; align-items: center; justify-content: space-between; padding: 6px 14px 6px 22px; font-size: 12px; color: var(--muted); text-decoration: none; cursor: pointer; transition: background .12s, color .12s; border-left: 3px solid transparent; }
+    .section-link:hover { background: var(--light); color: var(--text); }
+    .section-link.active { background: #eff6ff; color: var(--blue); font-weight: 600; border-left-color: var(--blue); }
+    .section-link-left { display: flex; align-items: center; gap: 7px; }
+    .section-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+    .section-link.active .section-dot { background: var(--blue); }
+    .section-pages { font-size: 10px; color: var(--muted); }
+
+    /* Sidebar footer with stats */
+    .sidebar-stats {
+      border-top: 1px solid var(--border);
+      padding: 12px 14px;
+      flex-shrink: 0;
+      background: #fafbff;
+    }
+    .sidebar-stats-title { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .07em; text-transform: uppercase; margin-bottom: 10px; }
+    .stat-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .stat-row:last-child { margin-bottom: 0; }
+    .stat-label { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+    .stat-icon { font-size: 14px; }
+    .stat-val { font-size: 12px; font-weight: 700; color: var(--text); }
+    .progress-bar-wrap { margin-top: 8px; }
+    .progress-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+    .progress-bar-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #16a34a, #22c55e); border-radius: 3px; transition: width .5s ease; }
+
+    .sidebar-footer { border-top: 1px solid var(--border); padding: 10px 14px; flex-shrink: 0; }
+    .add-section-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 14px; border-radius: 8px; border: 1.5px dashed var(--border); background: none; font-family: 'Sora', sans-serif; font-size: 12px; color: var(--muted); cursor: pointer; transition: border-color .15s, color .15s; }
+    .add-section-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* ── EDITOR ── */
+    .editor-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .editor-topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 50px; background: var(--white); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .chapter-heading { font-size: 15px; font-weight: 700; }
+    .chapter-heading span { color: var(--blue); }
+    .topbar-right { display: flex; align-items: center; gap: 8px; }
+    .export-ch-btn { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 7px; border: 1.5px solid var(--border); background: var(--white); font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; transition: border-color .15s, color .15s; text-decoration: none; }
+    .export-ch-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+    .sections-scroll { flex: 1; overflow-y: auto; padding: 16px 20px 20px; }
+    .sections-scroll::-webkit-scrollbar { width: 5px; }
+    .sections-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* Section cards */
+    .section-card { background: var(--white); border: 1.5px solid var(--border); border-radius: 12px; margin-bottom: 12px; transition: box-shadow .15s, border-color .15s; overflow: visible; }
+    .section-card:hover { border-color: #bfdbfe; box-shadow: 0 2px 12px rgba(37,99,235,.07); }
+    .section-card.active-card { border-color: var(--blue); box-shadow: 0 2px 16px rgba(37,99,235,.1); }
+    .section-card-header { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; cursor: pointer; border-radius: 10px 10px 0 0; }
+    .section-card-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .drag-handle { color: #d1d5db; font-size: 14px; cursor: grab; flex-shrink: 0; }
+    .section-num-title { display: flex; align-items: center; gap: 7px; min-width: 0; }
+    .section-num { font-size: 13px; font-weight: 700; color: var(--blue); flex-shrink: 0; }
+    .section-title-text { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .edit-title-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 13px; padding: 2px 4px; transition: color .12s; flex-shrink: 0; }
+    .edit-title-btn:hover { color: var(--blue); }
+    .section-card-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .section-pages-badge { font-size: 11px; color: var(--muted); background: var(--light); padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+    .ask-ai-btn { display: flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 7px; border: 1.5px solid #bfdbfe; background: #eff6ff; font-family: 'Sora', sans-serif; font-size: 11.5px; font-weight: 600; color: var(--blue); cursor: pointer; transition: background .12s, border-color .12s; }
+    .ask-ai-btn:hover { background: #dbeafe; border-color: var(--blue); }
+    .section-menu-btn { width: 26px; height: 26px; border-radius: 6px; border: 1.5px solid var(--border); background: var(--white); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: var(--muted); position: relative; }
+    .section-menu-btn:hover { border-color: var(--muted); }
+    .section-body { display: none; border-top: 1px solid var(--border); border-radius: 0 0 10px 10px; overflow: hidden; }
+    .section-body.open { display: block; }
+
+    /* ── IMPROVED TOOLBAR ── */
+    .editor-toolbar {
+      display: flex; align-items: center; gap: 2px;
+      padding: 6px 12px; border-bottom: 1px solid var(--border);
+      background: #fafbff; flex-wrap: nowrap; overflow-x: auto;
+    }
+    .editor-toolbar::-webkit-scrollbar { height: 0; }
+    .toolbar-select { font-family: 'Sora', sans-serif; font-size: 11.5px; border: 1px solid var(--border); border-radius: 5px; padding: 4px 8px; background: var(--white); color: var(--text); cursor: pointer; margin-right: 2px; height: 28px; }
+    .toolbar-divider { width: 1px; height: 18px; background: var(--border); margin: 0 3px; flex-shrink: 0; }
+    .tbtn { min-width: 28px; height: 28px; border-radius: 5px; border: none; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; color: var(--muted); transition: background .12s, color .12s; padding: 0 5px; flex-shrink: 0; font-family: 'Sora', sans-serif; }
+    .tbtn:hover { background: var(--border); color: var(--text); }
+    .tbtn.active { background: #dbeafe; color: var(--blue); }
+    .tbtn-label { font-size: 11px; font-weight: 600; }
+
+    /* Font size picker */
+    .font-size-select { font-family: 'Sora', sans-serif; font-size: 11.5px; border: 1px solid var(--border); border-radius: 5px; padding: 4px 6px; background: var(--white); color: var(--text); cursor: pointer; height: 28px; width: 52px; }
+
+    /* Color picker trigger */
+    .color-trigger { width: 28px; height: 28px; border-radius: 5px; border: 1px solid var(--border); background: var(--white); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; position: relative; }
+    .color-trigger:hover { border-color: var(--muted); }
+    .color-dot { width: 14px; height: 14px; border-radius: 3px; background: #111827; }
+
+    .section-editor { min-height: 140px; padding: 14px 16px; font-size: 13.5px; line-height: 1.8; color: var(--text); outline: none; font-family: 'Sora', sans-serif; }
+    .section-editor:empty::before { content: attr(data-placeholder); color: #d1d5db; }
+    .save-bar { display: none; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; background: #f8faff; border-top: 1px solid var(--border); }
+    .save-bar.visible { display: flex; }
+    .save-bar-left { font-size: 11.5px; color: var(--muted); }
+    .save-cancel { padding: 5px 12px; border-radius: 6px; border: 1.5px solid var(--border); background: var(--white); font-family: 'Sora', sans-serif; font-size: 12px; color: var(--muted); cursor: pointer; }
+    .save-confirm { padding: 5px 14px; border-radius: 6px; background: var(--grad); border: none; font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 700; color: #fff; cursor: pointer; }
+
+    /* ── CHAT PANEL ── */
+    .chat-panel { width: var(--chat-w); background: var(--white); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden; }
+    .chat-header { padding: 12px 14px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .chat-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .chat-title { font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 6px; }
+    .chat-about { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+    .chat-section-badge { display: inline-flex; align-items: center; background: #eff6ff; color: var(--blue); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+
+    .quick-actions { padding: 10px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .qa-btn { display: block; width: 100%; padding: 7px 11px; border-radius: 7px; border: 1.5px solid var(--border); background: var(--white); font-family: 'Sora', sans-serif; font-size: 11.5px; color: var(--muted); text-align: left; cursor: pointer; margin-bottom: 5px; transition: border-color .12s, color .12s, background .12s; }
+    .qa-btn:last-child { margin-bottom: 0; }
+    .qa-btn:hover { border-color: var(--blue); color: var(--blue); background: #f0f7ff; }
+
+    /* Project stats in chat panel */
+    .project-stats { padding: 10px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .stats-title { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .07em; text-transform: uppercase; margin-bottom: 8px; }
+    .stats-grid { display: flex; flex-direction: column; gap: 6px; }
+    .stats-row { display: flex; align-items: center; justify-content: space-between; }
+    .stats-label { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--muted); }
+    .stats-icon { font-size: 14px; }
+    .stats-val { font-size: 11.5px; font-weight: 700; color: var(--text); }
+    .stats-progress { margin-top: 4px; }
+    .stats-progress-label { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); margin-bottom: 3px; }
+    .stats-progress-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .stats-progress-fill { height: 100%; background: linear-gradient(90deg, #16a34a, #22c55e); border-radius: 3px; }
+
+    /* Tools grid */
+    .other-tools { padding: 10px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .tools-label { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .07em; text-transform: uppercase; margin-bottom: 8px; }
+    .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .tool-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 9px 6px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--white); font-family: 'Sora', sans-serif; font-size: 10.5px; font-weight: 600; color: var(--muted); cursor: pointer; transition: border-color .12s, color .12s; }
+    .tool-card:hover { border-color: var(--blue); color: var(--blue); }
+    .tool-icon { font-size: 16px; }
+    .tool-card-chat { grid-column: span 2; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 9px; border-radius: 8px; border: 1.5px solid var(--purple); background: #faf5ff; font-family: 'Sora', sans-serif; font-size: 11.5px; font-weight: 700; color: var(--purple); cursor: pointer; transition: background .12s; }
+    .tool-card-chat:hover { background: #ede9fe; }
+
+    /* Chat messages */
+    .chat-messages { flex: 1; overflow-y: auto; padding: 12px; }
+    .chat-messages::-webkit-scrollbar { width: 3px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .msg { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-start; }
+    .msg-avatar { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+    .msg-avatar.ai { background: #eff6ff; }
+    .msg-avatar.user { background: var(--grad); color: #fff; font-size: 10px; font-weight: 700; }
+    .msg-bubble { background: var(--light); border-radius: 10px; padding: 8px 11px; font-size: 12px; line-height: 1.6; color: var(--text); max-width: 190px; }
+    .msg.user-msg { flex-direction: row-reverse; }
+    .msg.user-msg .msg-bubble { background: #eff6ff; color: var(--blue); }
+
+    /* Chat input at bottom */
+    .chat-input-area { padding: 10px 12px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 7px; flex-shrink: 0; background: var(--white); }
+    #chatInput { flex: 1; padding: 8px 11px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Sora', sans-serif; font-size: 12px; color: var(--text); background: var(--light); outline: none; resize: none; height: 36px; transition: border-color .15s; }
+    #chatInput:focus { border-color: var(--blue); background: var(--white); }
+    #chatSendBtn { width: 34px; height: 34px; border-radius: 8px; background: var(--grad); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-size: 14px; flex-shrink: 0; transition: opacity .15s; }
+    #chatSendBtn:hover { opacity: .85; }
+
+    /* ── FLOATING CHAT ── */
+    #floatChatFab { position: fixed; bottom: 68px; right: calc(var(--chat-w) + 16px); width: 46px; height: 46px; border-radius: 50%; background: var(--grad); border: none; color: #fff; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 6px 20px rgba(37,99,235,.35); z-index: 400; transition: transform .2s, box-shadow .2s; }
+    #floatChatFab:hover { transform: scale(1.1); box-shadow: 0 10px 28px rgba(37,99,235,.45); }
+    .fab-badge { position: absolute; top: -2px; right: -2px; width: 16px; height: 16px; border-radius: 50%; background: #ef4444; font-size: 10px; font-weight: 700; display: none; align-items: center; justify-content: center; border: 2px solid #fff; }
+    .fab-badge.show { display: flex; }
+    #floatChatWindow { position: fixed; bottom: 124px; right: calc(var(--chat-w) + 16px); width: 340px; height: 480px; background: var(--white); border: 1.5px solid var(--border); border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.18); z-index: 399; display: none; flex-direction: column; overflow: hidden; animation: floatIn .2s ease; }
+    #floatChatWindow.open { display: flex; }
+    @keyframes floatIn { from { opacity:0; transform:translateY(16px) scale(.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+    .float-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--grad); flex-shrink: 0; }
+    .float-header-left { display: flex; align-items: center; gap: 9px; }
+    .float-header-avatar { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .float-header-title { color: #fff; font-size: 13px; font-weight: 700; }
+    .float-header-sub { color: rgba(255,255,255,.75); font-size: 10px; margin-top: 1px; }
+    .float-header-actions { display: flex; align-items: center; gap: 5px; }
+    .float-hbtn { width: 26px; height: 26px; border-radius: 6px; background: rgba(255,255,255,.18); border: none; color: #fff; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .12s; }
+    .float-hbtn:hover { background: rgba(255,255,255,.32); }
+    .float-context { display: flex; align-items: center; gap: 6px; padding: 7px 12px; border-bottom: 1px solid var(--border); background: #f8faff; flex-shrink: 0; font-size: 10.5px; color: var(--muted); }
+    .float-context-badge { background: #eff6ff; color: var(--blue); font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+    .float-suggestions { display: flex; flex-wrap: wrap; gap: 4px; padding: 7px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .float-suggest-btn { padding: 3px 9px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--white); font-family: 'Sora', sans-serif; font-size: 10px; color: var(--muted); cursor: pointer; white-space: nowrap; transition: border-color .12s, color .12s, background .12s; }
+    .float-suggest-btn:hover { border-color: var(--blue); color: var(--blue); background: #f0f7ff; }
+    .float-messages { flex: 1; overflow-y: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+    .float-messages::-webkit-scrollbar { width: 3px; }
+    .float-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .float-input-bar { display: flex; align-items: center; gap: 6px; padding: 9px 11px; border-top: 1px solid var(--border); background: var(--white); flex-shrink: 0; }
+    #floatChatInput { flex: 1; padding: 8px 11px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Sora', sans-serif; font-size: 12px; color: var(--text); background: var(--light); outline: none; resize: none; height: 36px; transition: border-color .15s; }
+    #floatChatInput:focus { border-color: var(--blue); background: var(--white); }
+    #floatSendBtn { width: 32px; height: 32px; border-radius: 8px; background: var(--grad); border: none; color: #fff; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity .15s; }
+    #floatSendBtn:hover { opacity: .85; }
+
+    /* ── FOOTER ── */
+    footer { height: var(--footer-h); background: var(--white); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; font-size: 11.5px; color: var(--muted); }
+    .footer-left { display: flex; align-items: center; gap: 6px; }
+    .footer-title { font-weight: 700; color: var(--text); }
+    .footer-save { display: flex; align-items: center; gap: 6px; }
+    .save-dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; }
+    .footer-words { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text); }
+
+    /* ── MISC ── */
+    .dropdown-menu { position: absolute; right: 0; top: 32px; background: var(--white); border: 1.5px solid var(--border); border-radius: 9px; box-shadow: 0 8px 24px rgba(0,0,0,.1); z-index: 200; min-width: 160px; display: none; overflow: hidden; }
+    .dropdown-menu.open { display: block; }
+    .dropdown-item { display: flex; align-items: center; gap: 8px; padding: 8px 13px; font-size: 12px; color: var(--text); cursor: pointer; transition: background .1s; }
+    .dropdown-item:hover { background: var(--light); }
+    .dropdown-item.danger { color: #dc2626; }
+    .dropdown-item.danger:hover { background: #fef2f2; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; align-items: center; justify-content: center; z-index: 500; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--white); border-radius: 14px; padding: 26px; width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,.15); }
+    .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+    .modal input { width: 100%; padding: 9px 13px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Sora', sans-serif; font-size: 13.5px; outline: none; margin-bottom: 16px; }
+    .modal input:focus { border-color: var(--blue); }
+    .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .modal-cancel { padding: 8px 16px; border-radius: 7px; border: 1.5px solid var(--border); background: var(--white); font-family: 'Sora', sans-serif; font-size: 13px; cursor: pointer; }
+    .modal-confirm { padding: 8px 18px; border-radius: 7px; background: var(--grad); border: none; font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700; color: #fff; cursor: pointer; }
+    .ai-loading { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #eff6ff; border-radius: 8px; font-size: 12px; color: var(--blue); margin: 8px 14px 0; }
+    .spinner { width: 13px; height: 13px; border: 2px solid #bfdbfe; border-top-color: var(--blue); border-radius: 50%; animation: spin .6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast { position: fixed; bottom: 58px; left: 50%; transform: translateX(-50%); background: #111827; color: #fff; border-radius: 8px; padding: 9px 18px; font-size: 12px; z-index: 999; opacity: 0; transition: opacity .2s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a href="{% url 'home' %}" class="brand">
+    <div class="brand-icon">🎓</div>
+    <div class="brand-text">
+      <div class="brand-name">AI Project Studio</div>
+      <div class="brand-tagline">Your Academic Partner</div>
+    </div>
+  </a>
+
+  <div class="header-actions">
+    <button class="hbtn hbtn-build" id="buildBtn">✦ Build Full Project</button>
+    <a href="{% url 'export_word' project.pk %}" class="hbtn hbtn-word">📄 Export Word</a>
+    <a href="{% url 'export_pdf'  project.pk %}" class="hbtn hbtn-pdf">📕 Export PDF</a>
+    <a href="{% url 'export_ppt'  project.pk %}" class="hbtn hbtn-ppt">📊 Export PPT</a>
+    <a href="{% url 'defense_prep' project.pk %}" class="hbtn hbtn-def">🛡 Defense Prep</a>
+   <!-- Replace: upload csv -->
+<button class="hbtn" onclick="openModal('csvUploadModal')"
+  style="background:#0891b2;color:#fff;">📊 Upload CSV</button>
+  </div>
+
+  <!-- Live stats in header -->
+  <!-- <div class="header-stats">
+    <div class="hstat">
+      <span class="hstat-icon">📄</span>
+      <div>
+        <div class="hstat-label">Total Pages</div>
+        <div class="hstat-value" id="headerPages">{{ project.page_count|default:"—" }}</div>
+      </div>
+    </div>
+    <div class="hstat-divider"></div>
+    <div class="hstat">
+      <span class="hstat-icon">T</span>
+      <div>
+        <div class="hstat-label">Total Words</div>
+        <div class="hstat-value" id="headerWords">{{ project.word_count }}</div>
+      </div>
+    </div>
+    <div class="hstat-divider"></div>
+    <div class="hstat">
+      <div class="progress-ring">
+        <svg width="36" height="36" viewBox="0 0 36 36">
+          <circle class="progress-ring-bg" cx="18" cy="18" r="15"/>
+          <circle class="progress-ring-fill" cx="18" cy="18" r="15"
+            stroke-dasharray="94.25"
+            stroke-dashoffset="{{ completion_offset|default:'94.25' }}"
+            id="progressRingFill"/>
+        </svg>
+        <div class="progress-ring-text" id="progressRingText">{{ project.completion_pct|default:'0' }}%</div>
+      </div>
+      <div>
+        <div class="hstat-label">Progress</div>
+        <div class="hstat-value" style="font-size:12px;" id="headerProgress">{{ project.completion_pct|default:'0' }}%</div>
+      </div>
+    </div>
+    <div class="hstat-divider"></div>
+    <div class="header-right">
+      <button class="icon-btn" title="Notifications">🔔</button>
+      <div class="avatar">{{ request.user.username|first|upper }}</div>
+    </div>
+  </div> -->
+</header>
+
+<div class="studio">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">Chapters</div>
+    <div class="sidebar-body">
+      {% for chapter in chapters %}
+      <div class="chapter-item">
+        <div class="chapter-toggle {% if chapter.pk == active_chapter.pk %}active{% endif %}" data-chapter="{{ chapter.pk }}">
+          <div class="chapter-left">
+            <div class="chapter-icon ch-color-{{ chapter.number }}">{{ chapter.icon }}</div>
+            <div class="chapter-info">
+              <div class="chapter-label">Chapter {{ chapter.number }}: {{ chapter.title }}</div>
+              <div class="chapter-meta">{{ chapter.sections.count }} sections</div>
+            </div>
+          </div>
+          <span class="chapter-pages">{{ chapter.page_count|default:"—" }} pg</span>
+          <span class="chapter-caret {% if chapter.pk == active_chapter.pk %}open{% endif %}" style="margin-left:6px;">›</span>
+        </div>
+        <div class="section-list {% if chapter.pk == active_chapter.pk %}open{% endif %}">
+          {% for sec in chapter.sections.all %}
+          <a href="{% url 'section_detail' sec.pk %}" class="section-link {% if sec.pk == active_section.pk %}active{% endif %}">
+            <div class="section-link-left">
+              <span class="section-dot"></span>
+              {{ sec.number }} {{ sec.title }}
+            </div>
+            <span class="section-pages">{{ sec.page_count|default:"—" }} pg</span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Project Stats in sidebar -->
+    <div class="sidebar-stats">
+      <div class="sidebar-stats-title">Total Project</div>
+      <div class="stats-grid">
+        <div class="stat-row">
+          <div class="stat-label"><span class="stat-icon">📄</span>Total Pages</div>
+          <div class="stat-val" id="sidebarPages">{{ project.page_count|default:"—" }}</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label"><span class="stat-icon">T</span>Total Words</div>
+          <div class="stat-val" id="sidebarWords">{{ project.word_count }}</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label"><span class="stat-icon">📚</span>References</div>
+          <div class="stat-val">{{ project.reference_count|default:"0" }}</div>
+        </div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-label">
+          <span>Completion</span>
+          <span id="sidebarProgress">{{ project.completion_pct|default:'0' }}%</span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="sidebarProgressBar" style="width:{{ project.completion_pct|default:'0' }}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="add-section-btn" id="addSectionBtn">＋ Add Custom Section</button>
+    </div>
+  </aside>
+
+  <!-- EDITOR -->
+  <div class="editor-area">
+    <div class="editor-topbar">
+      <h2 class="chapter-heading">
+        <span>Chapter {{ active_chapter.number }}:</span>&nbsp;{{ active_chapter.title }}
+      </h2>
+      <div class="topbar-right">
+        <a href="{% url 'export_chapter_word' active_chapter.pk %}" class="export-ch-btn">⬇ Export Chapter</a>
+      </div>
+    </div>
+
+    <div class="sections-scroll" id="sectionsContainer">
+      {% for sec in active_chapter.sections.all %}
+      <div class="section-card {% if sec.pk == active_section.pk %}active-card{% endif %}" id="card-{{ sec.pk }}" data-section="{{ sec.pk }}">
+        <div class="section-card-header" onclick="toggleCard({{ sec.pk }})">
+          <div class="section-card-left">
+            <span class="drag-handle">⠿</span>
+            <div class="section-num-title">
+              <span class="section-num">{{ sec.number }}</span>
+              <span class="section-title-text" id="title-{{ sec.pk }}">{{ sec.title }}</span>
+              <button class="edit-title-btn" title="Rename" onclick="openRename(event,{{ sec.pk }},'{{ sec.title|escapejs }}')">✎</button>
+            </div>
+          </div>
+          <div class="section-card-right">
+            <span class="section-pages-badge">{{ sec.page_count|default:"—" }} page{{ sec.page_count|pluralize }}</span>
+            <button class="ask-ai-btn" onclick="openAskAI(event,{{ sec.pk }})">✦ Ask AI</button>
+            <div style="position:relative;">
+              <button class="section-menu-btn" onclick="toggleMenu(event,{{ sec.pk }})">⋮</button>
+              <div class="dropdown-menu" id="menu-{{ sec.pk }}">
+                <div class="dropdown-item" onclick="runAction('improve',{{ sec.pk }})">🪄 Improve</div>
+                <div class="dropdown-item" onclick="runAction('detailed',{{ sec.pk }})">📖 Make Detailed</div>
+                <div class="dropdown-item" onclick="runAction('simplify',{{ sec.pk }})">✂ Simplify</div>
+                <div class="dropdown-item" onclick="runAction('context',{{ sec.pk }})">🇳🇬 Nigerian Context</div>
+                <div class="dropdown-item" onclick="runAction('citations',{{ sec.pk }})">📚 Add Citations</div>
+                <div class="dropdown-item danger" onclick="confirmDelete({{ sec.pk }})">🗑 Delete</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-body {% if sec.pk == active_section.pk %}open{% endif %}" id="body-{{ sec.pk }}">
+
+          <!-- IMPROVED TOOLBAR -->
+          <div class="editor-toolbar">
+            <select class="toolbar-select" onchange="execFmt('formatBlock',this.value)" title="Style">
+              <option value="p">Paragraph</option>
+              <option value="h1">Heading 1</option>
+              <option value="h2">Heading 2</option>
+              <option value="h3">Heading 3</option>
+              <option value="h4">Heading 4</option>
+              <option value="blockquote">Quote</option>
+            </select>
+            <select class="font-size-select" onchange="setFontSize(this.value)" title="Font size">
+              <option value="12">12</option>
+              <option value="13" selected>13</option>
+              <option value="14">14</option>
+              <option value="16">16</option>
+              <option value="18">18</option>
+              <option value="20">20</option>
+            </select>
+            <div class="toolbar-divider"></div>
+            <button class="tbtn" title="Bold" onclick="execFmt('bold')"><b>B</b></button>
+            <button class="tbtn" title="Italic" onclick="execFmt('italic')"><i>I</i></button>
+            <button class="tbtn" title="Underline" onclick="execFmt('underline')"><u>U</u></button>
+            <button class="tbtn" title="Strikethrough" onclick="execFmt('strikeThrough')"><s style="font-size:11px;">S</s></button>
+            <div class="toolbar-divider"></div>
+            <button class="tbtn" title="Align left"   onclick="execFmt('justifyLeft')">⬛</button>
+            <button class="tbtn" title="Align center" onclick="execFmt('justifyCenter')">☰</button>
+            <button class="tbtn" title="Align right"  onclick="execFmt('justifyRight')">⬛</button>
+            <button class="tbtn" title="Justify"      onclick="execFmt('justifyFull')">≡</button>
+            <div class="toolbar-divider"></div>
+            <button class="tbtn" title="Bullet list"   onclick="execFmt('insertUnorderedList')">•≡</button>
+            <button class="tbtn" title="Numbered list" onclick="execFmt('insertOrderedList')">①</button>
+            <button class="tbtn" title="Indent"       onclick="execFmt('indent')">→</button>
+            <button class="tbtn" title="Outdent"      onclick="execFmt('outdent')">←</button>
+            <div class="toolbar-divider"></div>
+            <button class="tbtn" title="Insert link" onclick="insertLink()">🔗</button>
+            <button class="tbtn" title="Remove format" onclick="execFmt('removeFormat')">⊘</button>
+            <div class="toolbar-divider"></div>
+            <button class="tbtn" title="Undo" onclick="execFmt('undo')">↩</button>
+            <button class="tbtn" title="Redo" onclick="execFmt('redo')">↪</button>
+          </div>
+
+          <div class="ai-loading" id="ailoading-{{ sec.pk }}" style="display:none;">
+            <div class="spinner"></div> AI is writing…
+          </div>
+
+          <div class="section-editor"
+               id="editor-{{ sec.pk }}"
+               contenteditable="true"
+               data-section="{{ sec.pk }}"
+               data-placeholder="Start writing here, or click ✦ Ask AI to generate content…"
+               oninput="onEditorInput({{ sec.pk }})">{{ sec.content|linebreaks }}</div>
+
+          <div class="save-bar" id="savebar-{{ sec.pk }}">
+            <span class="save-bar-left" id="wordcount-{{ sec.pk }}"></span>
+            <div style="display:flex;gap:8px;">
+              <button class="save-cancel" onclick="cancelEdit({{ sec.pk }})">Cancel</button>
+              <button class="save-confirm" onclick="saveSection({{ sec.pk }})">Save Changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- RIGHT CHAT PANEL -->
+  <aside class="chat-panel" id="chatPanel">
+    <div class="chat-header">
+      <div class="chat-header-row">
+        <div class="chat-title">✦ AI Chat &amp; Tools</div>
+        <button onclick="toggleChatPanel()" title="Collapse"
+          style="width:26px;height:26px;border-radius:6px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;" id="chatToggleBtn">◀</button>
+      </div>
+      <div class="chat-about">You are chatting about:</div>
+      <div class="chat-section-badge">{{ active_section.number }} {{ active_section.title }}</div>
+    </div>
+
+    <div id="chatBody" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0;">
+
+      <div class="quick-actions">
+        <button class="qa-btn" onclick="runAction('improve',{{ active_section.pk }})">Improve this section</button>
+        <button class="qa-btn" onclick="runAction('detailed',{{ active_section.pk }})">Make it more detailed</button>
+        <button class="qa-btn" onclick="runAction('simplify',{{ active_section.pk }})">Simplify the language</button>
+        <button class="qa-btn" onclick="runAction('context',{{ active_section.pk }})">Add Nigerian context</button>
+        <button class="qa-btn" onclick="runAction('citations',{{ active_section.pk }})">Add references/citations</button>
+      </div>
+
+      <!-- PROJECT STATS -->
+      <!-- <div class="project-stats">
+        <div class="stats-title">Project Stats1</div>
+        <div class="stats-grid">
+          <div class="stats-row">
+            <div class="stats-label"><span class="stats-icon">📄</span>Total Pages</div>
+            <div class="stats-val" id="statPages">{{ project.page_count|default:"—" }}</div>
+          </div>
+          <div class="stats-row">
+            <div class="stats-label"><span class="stats-icon">T</span>Total Words</div>
+            <div class="stats-val" id="statWords">{{ project.word_count }}</div>
+          </div>
+          <div class="stats-row">
+            <div class="stats-label"><span class="stats-icon">📚</span>References</div>
+            <div class="stats-val">{{ project.reference_count|default:"0" }}</div>
+          </div>
+        </div>
+        <div class="stats-progress">
+          <div class="stats-progress-label">
+            <span>Completion</span><span id="statCompletion">{{ project.completion_pct|default:'0' }}%</span>
+          </div>
+          <div class="stats-progress-bar">
+            <div class="stats-progress-fill" style="width:{{ project.completion_pct|default:'0' }}%"></div>
+          </div>
+        </div>
+      </div> -->
+
+      <div class="other-tools">
+        <div class="tools-label">Other Tools</div>
+        <div class="tools-grid">
+          <button class="tool-card" onclick="runTool('improve-writing')">
+            <span class="tool-icon">✏️</span>Improve Writing
+          </button>
+          <button class="tool-card" onclick="runTool('humanize')">
+            <span class="tool-icon">🧑</span>Humanize Text
+          </button>
+          <button class="tool-card" onclick="runAction('citations',{{ active_section.pk }})">
+            <span class="tool-icon">📎</span>Add Citations
+          </button>
+          <button class="tool-card" onclick="runTool('grammar')">
+            <span class="tool-icon">✅</span>Check Grammar
+          </button>
+          <button class="tool-card-chat" onclick="openFloatChat()">
+            💬 Open AI Chat
+          </button>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        {% for msg in chat_history %}
+        <div class="msg {% if msg.role == 'user' %}user-msg{% endif %}">
+          <div class="msg-avatar {% if msg.role == 'assistant' %}ai{% else %}user{% endif %}">
+            {% if msg.role == 'assistant' %}🤖{% else %}{{ request.user.username|first|upper }}{% endif %}
+          </div>
+          <div class="msg-bubble">{{ msg.content }}</div>
+        </div>
+        {% empty %}
+        <div class="msg">
+          <div class="msg-avatar ai">🤖</div>
+          <div class="msg-bubble">How can I help you improve this section?</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="chat-input-area">
+        <textarea id="chatInput" placeholder="Ask anything about this section…" rows="1" onkeydown="handleChatKey(event)"></textarea>
+        <button id="chatSendBtn">➤</button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <div class="footer-left">Project: <span class="footer-title">{{ project.title }}</span></div>
+  <div class="footer-save"><div class="save-dot"></div><span id="saveStatus">All changes saved</span></div>
+  <div class="footer-words">📄 Words: <span id="wordCount">{{ project.word_count }}</span></div>
+</footer>
+
+<!-- FLOATING CHAT -->
+<button id="floatChatFab" onclick="toggleFloatChat()" title="AI Chat" style="display:none;">
+  💬<span class="fab-badge" id="fabBadge"></span>
+</button>
+<div id="floatChatWindow">
+  <div class="float-header">
+    <div class="float-header-left">
+      <div class="float-header-avatar">🤖</div>
+      <div>
+        <div class="float-header-title">AI Research Assistant</div>
+        <div class="float-header-sub">{{ active_section.number }} {{ active_section.title }}</div>
+      </div>
+    </div>
+    <div class="float-header-actions">
+      <button class="float-hbtn" onclick="clearFloatChat()" title="Clear">🗑</button>
+      <button class="float-hbtn" onclick="closeFloatChat()" title="Close">✕</button>
+    </div>
+  </div>
+  <div class="float-context">Chatting about: <span class="float-context-badge">{{ active_section.number }} {{ active_section.title }}</span></div>
+  <div class="float-suggestions">
+    <button class="float-suggest-btn" onclick="floatSuggest('Summarise this section')">Summarise</button>
+    <button class="float-suggest-btn" onclick="floatSuggest('Improve the writing')">Improve</button>
+    <button class="float-suggest-btn" onclick="floatSuggest('Add Nigerian context')">Nigerian</button>
+    <button class="float-suggest-btn" onclick="floatSuggest('Add APA citations')">Citations</button>
+    <button class="float-suggest-btn" onclick="floatSuggest('Simplify language')">Simplify</button>
+  </div>
+  <div class="float-messages" id="floatMessages">
+    <div style="display:flex;gap:8px;align-items:flex-start;">
+      <div style="width:28px;height:28px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🤖</div>
+      <div style="background:#f5f6fa;border-radius:10px;padding:9px 12px;font-size:12px;line-height:1.6;color:#111827;max-width:230px;">Hi! Ask me anything about <strong>{{ active_section.number }} {{ active_section.title }}</strong>.</div>
+    </div>
+  </div>
+  <div class="float-input-bar">
+    <textarea id="floatChatInput" placeholder="Ask anything…" rows="1" onkeydown="handleFloatKey(event)"></textarea>
+    <button id="floatSendBtn" onclick="sendFloatChat()">➤</button>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="renameModal">
+  <div class="modal">
+    <h3>Rename Section</h3>
+    <input type="text" id="renameInput" placeholder="Section title…"/>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('renameModal')">Cancel</button>
+      <button class="modal-confirm" onclick="confirmRename()">Save</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="addSectionModal">
+  <div class="modal">
+    <h3>Add Custom Section</h3>
+    <input type="text" id="addSectionInput" placeholder="Section title…"/>
+    <div style="margin-bottom:14px;font-size:12px;color:var(--muted)">Added to Chapter {{ active_chapter.number }}: {{ active_chapter.title }}</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('addSectionModal')">Cancel</button>
+      <button class="modal-confirm" onclick="confirmAddSection()">Add Section</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+
+<!-- CSV UPLOAD MODAL -->
+<div class="modal-overlay" id="csvUploadModal">
+  <div class="modal" style="width:480px;">
+    <h3>📊 Upload Dataset (Chapter 4)</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">
+      Upload a CSV or Excel file for data analysis. Max 10MB.
+    </p>
+    <div id="csvDropZone" style="
+      border:2px dashed var(--border);border-radius:10px;padding:28px 20px;
+      text-align:center;cursor:pointer;transition:border-color .2s,background .2s;
+      margin-bottom:14px;background:var(--light);"
+      onclick="document.getElementById('csvFileInput').click()"
+      ondragover="csvDragOver(event)" ondragleave="csvDragLeave(event)" ondrop="csvDrop(event)">
+      <div style="font-size:28px;margin-bottom:8px;">📂</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">
+        Drop your file here or <span style="color:var(--blue);">browse</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);">Supports CSV, XLSX, XLS</div>
+      <div id="csvFileName" style="margin-top:10px;font-size:12px;color:var(--blue);font-weight:600;display:none;"></div>
+    </div>
+    <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" style="display:none;"
+      onchange="csvFileSelected(this)"/>
+    <div id="csvUploadProgress" style="display:none;margin-bottom:12px;">
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:5px;">Uploading…</div>
+      <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+        <div id="csvProgressBar" style="height:100%;background:linear-gradient(90deg,#2563eb,#7c3aed);border-radius:3px;width:0%;transition:width .3s;"></div>
+      </div>
+    </div>
+    <div id="csvUploadError" style="display:none;padding:8px 12px;background:#fef2f2;border-radius:7px;font-size:12px;color:#dc2626;margin-bottom:12px;"></div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('csvUploadModal')">Cancel</button>
+      <button class="modal-confirm" id="csvUploadBtn" onclick="submitCsvUpload()" disabled
+        style="opacity:.5;cursor:not-allowed;">Upload Dataset</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  const CSRF              = "{{ csrf_token }}";
+  const ACTIVE_SECTION_ID = {{ active_section.pk }};
+  const ACTIVE_CHAPTER_ID = {{ active_chapter.pk }};
+  const PROJECT_ID        = {{ project.pk }};
+  const USER_INITIAL      = "{{ request.user.username|first|upper }}";
+
+  /* ── Sidebar accordion ── */
+  document.querySelectorAll('.chapter-toggle').forEach(el => {
+    el.addEventListener('click', () => {
+      const list = el.nextElementSibling;
+      const caret = el.querySelector('.chapter-caret');
+      const isOpen = list.classList.contains('open');
+      document.querySelectorAll('.section-list').forEach(l => l.classList.remove('open'));
+      document.querySelectorAll('.chapter-caret').forEach(c => c.classList.remove('open'));
+      document.querySelectorAll('.chapter-toggle').forEach(t => t.classList.remove('active'));
+      if (!isOpen) { list.classList.add('open'); caret.classList.add('open'); el.classList.add('active'); }
+    });
+  });
+
+  function toggleCard(id) { document.getElementById('body-'+id).classList.toggle('open'); }
+
+  function execFmt(cmd, value) { document.execCommand(cmd, false, value||null); }
+
+  function setFontSize(size) {
+    document.execCommand('fontSize', false, '7');
+    document.querySelectorAll('[size="7"]').forEach(el => {
+      el.removeAttribute('size');
+      el.style.fontSize = size + 'px';
+    });
+  }
+
+  function insertLink() {
+    const url = prompt('Enter URL:');
+    if (url) document.execCommand('createLink', false, url);
+  }
+
+  const originalContent = {};
+
+  function onEditorInput(id) {
+    document.getElementById('savebar-'+id).classList.add('visible');
+    document.getElementById('saveStatus').textContent = 'Unsaved changes…';
+    // live word count in save bar
+    const editor = document.getElementById('editor-'+id);
+    const words = (editor.innerText.trim().match(/\S+/g)||[]).length;
+    const el = document.getElementById('wordcount-'+id);
+    if (el) el.textContent = words + ' words';
+    updateLiveStats();
+  }
+
+  function cancelEdit(id) {
+    document.getElementById('savebar-'+id).classList.remove('visible');
+    if (originalContent[id] !== undefined) document.getElementById('editor-'+id).innerHTML = originalContent[id];
+    document.getElementById('saveStatus').textContent = 'All changes saved';
+  }
+
+  async function saveSection(id) {
+    const editor = document.getElementById('editor-'+id);
+    const content = editor.innerText.trim();
+    const res = await fetch('/research/section/'+id+'/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': CSRF },
+      body: 'content='+encodeURIComponent(content),
+    });
+    if (res.ok || res.redirected) {
+      document.getElementById('savebar-'+id).classList.remove('visible');
+      document.getElementById('saveStatus').textContent = 'All changes saved';
+      showToast('Saved ✓');
+    } else { showToast('Save failed — try again'); }
+  }
+
+  /* ── Live stats ── */
+function updateLiveStats() {
+  let totalWords = 0;
+  document.querySelectorAll('.section-editor').forEach(e => {
+    totalWords += (e.innerText.trim().match(/\S+/g)||[]).length;
+  });
+  const ids = ['wordCount','sidebarWords','headerWords','statWords'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = totalWords.toLocaleString();
+  });
+}
+  /* ── AI actions ── */
+  async function runAction(action, sectionId) {
+    closeAllMenus();
+    const loading = document.getElementById('ailoading-'+sectionId);
+    const editor  = document.getElementById('editor-'+sectionId);
+    if (editor) originalContent[sectionId] = editor.innerHTML;
+    if (loading) loading.style.display = 'flex';
+    document.getElementById('body-'+sectionId).classList.add('open');
+    try {
+      const res = await fetch('/research/api/ai-action/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({ action, section_id: sectionId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.result) {
+        if (editor) { editor.innerText = data.result; document.getElementById('savebar-'+sectionId).classList.add('visible'); document.getElementById('saveStatus').textContent = 'Unsaved changes…'; }
+        showToast('AI update applied ✓');
+        updateLiveStats();
+      } else { showToast(data.error || 'AI error'); }
+    } catch { showToast('Network error'); }
+    finally { if (loading) loading.style.display = 'none'; }
+  }
+
+  async function runTool(tool) {
+    const sId = ACTIVE_SECTION_ID;
+    const editor = document.getElementById('editor-'+sId);
+    const text = editor ? editor.innerText.trim() : '';
+    const loading = document.getElementById('ailoading-'+sId);
+    if (!text) { showToast('Write some content first!'); return; }
+    if (editor) originalContent[sId] = editor.innerHTML;
+    if (loading) loading.style.display = 'flex';
+    document.getElementById('body-'+sId).classList.add('open');
+    try {
+      const res = await fetch('/research/api/tools/'+tool+'/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({ section_id: sId, text }),
+      });
+      const data = await res.json();
+      if (res.ok && data.result) {
+        if (editor) { editor.innerText = data.result; document.getElementById('savebar-'+sId).classList.add('visible'); document.getElementById('saveStatus').textContent = 'Unsaved changes…'; }
+        showToast('Done ✓');
+        updateLiveStats();
+      } else { showToast(data.error || 'Tool error'); }
+    } catch { showToast('Network error'); }
+    finally { if (loading) loading.style.display = 'none'; }
+  }
+
+  function applyToEditor(text) {
+    const editor = document.getElementById('editor-'+ACTIVE_SECTION_ID);
+    if (!editor) return;
+    originalContent[ACTIVE_SECTION_ID] = editor.innerHTML;
+    editor.innerText = text;
+    document.getElementById('body-'+ACTIVE_SECTION_ID).classList.add('open');
+    document.getElementById('savebar-'+ACTIVE_SECTION_ID).classList.add('visible');
+    document.getElementById('saveStatus').textContent = 'Unsaved changes…';
+    updateLiveStats();
+    showToast('Applied to editor ✓ — click Save to keep it');
+  }
+
+  function escMarkdown(text) {
+    return String(text)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/### (.*?)(\n|$)/g,'<h4 style="margin:6px 0 3px;font-size:13px;">$1</h4>')
+      .replace(/## (.*?)(\n|$)/g,'<h3 style="margin:6px 0 3px;font-size:14px;">$1</h3>')
+      .replace(/\n/g,'<br>');
+  }
+
+  /* ── Right-panel chat ── */
+  function handleChatKey(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();} }
+
+  async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim(); if (!msg) return;
+    input.value = '';
+    addBubble('user', msg, false);
+    const loadId = addBubble('assistant', '⏳ Thinking...', false);
+    try {
+      const res = await fetch('/research/api/chat/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({ message: msg, section_id: ACTIVE_SECTION_ID }),
+      });
+      document.getElementById(loadId)?.remove();
+      const data = await res.json();
+      addBubble('assistant', data.reply||data.error||'No response', true);
+    } catch { document.getElementById(loadId)?.remove(); addBubble('assistant','⚠️ Network error',false); }
+  }
+
+  function addBubble(role, text, showApply) {
+    const box = document.getElementById('chatMessages');
+    const id = 'msg-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+    const row = document.createElement('div');
+    row.id = id;
+    row.style.cssText = 'display:flex;gap:8px;margin-bottom:12px;align-items:flex-start;'+(role==='user'?'flex-direction:row-reverse;':'');
+    const avatar = document.createElement('div');
+    avatar.style.cssText = 'width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;'+(role==='assistant'?'background:#eff6ff;':'background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;font-size:10px;font-weight:700;');
+    avatar.textContent = role==='assistant'?'🤖':USER_INITIAL;
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;flex-direction:column;gap:5px;max-width:190px;';
+    const bubble = document.createElement('div');
+    bubble.style.cssText = 'border-radius:10px;padding:8px 11px;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;'+(role==='user'?'background:#eff6ff;color:#2563eb;':'background:#f5f6fa;color:#111827;');
+    bubble.innerHTML = escMarkdown(text);
+    wrapper.appendChild(bubble);
+    if (role==='assistant'&&showApply) {
+      const btn = document.createElement('button');
+      btn.textContent = '✦ Apply to Editor';
+      btn.style.cssText = 'align-self:flex-start;padding:4px 10px;border-radius:6px;border:1.5px solid #bfdbfe;background:#eff6ff;color:#2563eb;font-family:Sora,sans-serif;font-size:10.5px;font-weight:700;cursor:pointer;';
+      btn.onclick = () => applyToEditor(text);
+      wrapper.appendChild(btn);
+    }
+    row.appendChild(avatar); row.appendChild(wrapper);
+    box.appendChild(row); box.scrollTop = box.scrollHeight;
+    return id;
+  }
+
+  function openAskAI(e, sectionId) { e.stopPropagation(); openFloatChat(); setTimeout(()=>document.getElementById('floatChatInput').focus(),200); }
+
+  /* ── Rename ── */
+  let renameTargetId = null;
+  function openRename(e,id,title) { e.stopPropagation(); renameTargetId=id; document.getElementById('renameInput').value=title; openModal('renameModal'); }
+  async function confirmRename() {
+    const title = document.getElementById('renameInput').value.trim(); if (!title) return;
+    const res = await fetch('/research/section/'+renameTargetId+'/rename/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({title})});
+    if (res.ok) { document.getElementById('title-'+renameTargetId).textContent=title; closeModal('renameModal'); showToast('Renamed ✓'); }
+  }
+
+  /* ── Add section ── */
+  document.getElementById('addSectionBtn').addEventListener('click',()=>openModal('addSectionModal'));
+  async function confirmAddSection() {
+    const title = document.getElementById('addSectionInput').value.trim(); if (!title) return;
+    const res = await fetch('/research/section/add/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({chapter_id:ACTIVE_CHAPTER_ID,title})});
+    if (res.ok) { const d=await res.json(); closeModal('addSectionModal'); showToast('Section added — opening…'); setTimeout(()=>window.location.href='/research/section/'+d.id+'/',600); }
+  }
+
+  /* ── Delete ── */
+  async function confirmDelete(id) {
+    if (!confirm('Delete this section?')) return;
+    document.getElementById('card-'+id)?.remove();
+    showToast('Section deleted ✓');
+    fetch('/research/section/'+id+'/delete/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:'{}'}).catch(()=>{});
+  }
+
+  /* ── Build ── */
+  document.getElementById('buildBtn').addEventListener('click', async () => {
+    if (!confirm('Build AI content for all empty sections?')) return;
+    const btn = document.getElementById('buildBtn');
+    btn.textContent='⏳ Building…'; btn.disabled=true;
+    try {
+      const res = await fetch('/research/project/'+PROJECT_ID+'/build/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:'{}'});
+      if (res.ok) { showToast('Build complete — reloading ✓'); setTimeout(()=>location.reload(),1000); }
+      else { showToast('Build failed'); btn.textContent='✦ Build Full Project'; btn.disabled=false; }
+    } catch { showToast('Network error'); btn.textContent='✦ Build Full Project'; btn.disabled=false; }
+  });
+
+  /* ── Menus / Modals / Toast ── */
+  function toggleMenu(e,id){e.stopPropagation();closeAllMenus();document.getElementById('menu-'+id).classList.toggle('open');}
+  function closeAllMenus(){document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('open'));}
+  document.addEventListener('click',closeAllMenus);
+  function openModal(id){document.getElementById(id).classList.add('open');}
+  function closeModal(id){document.getElementById(id).classList.remove('open');}
+  document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+  function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+  /* ── Collapse panel ── */
+  let chatCollapsed=false;
+  function toggleChatPanel(){
+    const body=document.getElementById('chatBody'),panel=document.getElementById('chatPanel'),btn=document.getElementById('chatToggleBtn');
+    chatCollapsed=!chatCollapsed;
+    if(chatCollapsed){body.style.display='none';panel.style.width='44px';panel.style.minWidth='44px';btn.textContent='▶';document.getElementById('floatChatFab').style.display='flex';}
+    else{body.style.display='flex';panel.style.width='var(--chat-w)';panel.style.minWidth='';btn.textContent='◀';document.getElementById('chatMessages').scrollTop=99999;}
+  }
+
+  /* ── Float chat ── */
+  let floatOpen=false, floatUnread=0;
+  function openFloatChat(){floatOpen=true;floatUnread=0;document.getElementById('floatChatWindow').classList.add('open');document.getElementById('floatChatFab').style.display='flex';document.getElementById('fabBadge').classList.remove('show');setTimeout(()=>{document.getElementById('floatMessages').scrollTop=99999;document.getElementById('floatChatInput').focus();},80);}
+  function closeFloatChat(){floatOpen=false;document.getElementById('floatChatWindow').classList.remove('open');}
+  function toggleFloatChat(){floatOpen?closeFloatChat():openFloatChat();}
+  function clearFloatChat(){document.getElementById('floatMessages').innerHTML='<div style="display:flex;gap:8px;align-items:flex-start;"><div style="width:28px;height:28px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🤖</div><div style="background:#f5f6fa;border-radius:10px;padding:9px 12px;font-size:12px;line-height:1.6;color:#111827;max-width:230px;">Chat cleared. How can I help?</div></div>';}
+  function floatSuggest(text){document.getElementById('floatChatInput').value=text;sendFloatChat();}
+  function handleFloatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendFloatChat();}}
+
+  async function sendFloatChat(){
+    const input=document.getElementById('floatChatInput');
+    const msg=input.value.trim(); if(!msg) return;
+    input.value='';
+    addFloatBubble('user',msg,false);
+    const loadId=addFloatBubble('assistant','⏳ Thinking...',false);
+    try{
+      const res=await fetch('/research/api/chat/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({message:msg,section_id:ACTIVE_SECTION_ID})});
+      document.getElementById(loadId)?.remove();
+      const data=await res.json();
+      const reply=data.reply||data.error||'No response';
+      addFloatBubble('assistant',reply,true);
+      if(!floatOpen){floatUnread++;const b=document.getElementById('fabBadge');b.textContent=floatUnread;b.classList.add('show');}
+    }catch{document.getElementById(loadId)?.remove();addFloatBubble('assistant','⚠️ Network error',false);}
+  }
+
+  function addFloatBubble(role,text,showApply){
+    const box=document.getElementById('floatMessages');
+    const id='fmsg-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+    const row=document.createElement('div'); row.id=id;
+    row.style.cssText='display:flex;gap:8px;align-items:flex-start;'+(role==='user'?'flex-direction:row-reverse;':'');
+    const avatar=document.createElement('div');
+    avatar.style.cssText='width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;'+(role==='assistant'?'background:#eff6ff;':'background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;font-size:11px;font-weight:700;');
+    avatar.textContent=role==='assistant'?'🤖':USER_INITIAL;
+    const wrapper=document.createElement('div'); wrapper.style.cssText='display:flex;flex-direction:column;gap:5px;max-width:230px;';
+    const bubble=document.createElement('div');
+    bubble.style.cssText='border-radius:10px;padding:9px 12px;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;'+(role==='user'?'background:#eff6ff;color:#2563eb;':'background:#f5f6fa;color:#111827;');
+    bubble.innerHTML=escMarkdown(text); wrapper.appendChild(bubble);
+    if(role==='assistant'&&showApply){
+      const btn=document.createElement('button'); btn.textContent='✦ Apply to Editor';
+      btn.style.cssText='align-self:flex-start;padding:4px 10px;border-radius:6px;border:1.5px solid #bfdbfe;background:#eff6ff;color:#2563eb;font-family:Sora,sans-serif;font-size:11px;font-weight:700;cursor:pointer;';
+      btn.onclick=()=>{applyToEditor(text);showToast('Applied ✓');};
+      wrapper.appendChild(btn);
+    }
+    row.appendChild(avatar); row.appendChild(wrapper);
+    box.appendChild(row); box.scrollTop=box.scrollHeight;
+    return id;
+  }
+
+  /* ── Init ── */
+  document.getElementById('chatMessages').scrollTop=99999;
+  document.getElementById('chatSendBtn').addEventListener('click',sendChat);
+  document.getElementById('floatSendBtn').addEventListener('click',sendFloatChat);
+  updateLiveStats();
+
+  /* ── CSV Upload ── */
+
+/* ── CSV Upload ── */
+let csvSelectedFile = null;  // ← MUST be first, before csvFileSelected
+
+function csvFileSelected(input) {
+  console.log('csvFileSelected fired:', input.files);
+  const file = input.files[0];
+  if (!file) return;
+  csvSelectedFile = file;
+  const nameEl = document.getElementById('csvFileName');
+  nameEl.textContent = '📄 ' + file.name + ' (' + (file.size/1024).toFixed(1) + ' KB)';
+  nameEl.style.display = 'block';
+  const btn = document.getElementById('csvUploadBtn');
+  btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+  document.getElementById('csvUploadError').style.display = 'none';
+}
+
+function csvDragOver(e) {
+  e.preventDefault();
+  const zone = document.getElementById('csvDropZone');
+  zone.style.borderColor = 'var(--blue)'; zone.style.background = '#eff6ff';
+}
+
+function csvDragLeave(e) {
+  const zone = document.getElementById('csvDropZone');
+  zone.style.borderColor = 'var(--border)'; zone.style.background = 'var(--light)';
+}
+
+function csvDrop(e) {
+  e.preventDefault();
+  csvDragLeave(e);
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const input = document.getElementById('csvFileInput');
+  const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files;
+  csvFileSelected(input);
+}
+
+async function submitCsvUpload() {
+  console.log('submitCsvUpload fired, file:', csvSelectedFile);
+  if (!csvSelectedFile) {
+    showCsvError('No file selected — please choose a file first.');
+    return;
+  }
+  const ext = csvSelectedFile.name.split('.').pop().toLowerCase();
+  if (!['csv','xlsx','xls'].includes(ext)) {
+    showCsvError('Only CSV and Excel files are allowed.'); return;
+  }
+  if (csvSelectedFile.size > 10 * 1024 * 1024) {
+    showCsvError('File must be under 10MB.'); return;
+  }
+
+  const btn = document.getElementById('csvUploadBtn');
+  btn.disabled = true; btn.textContent = 'Uploading…';
+  document.getElementById('csvUploadProgress').style.display = 'block';
+  document.getElementById('csvUploadError').style.display = 'none';
+
+  let prog = 0;
+  const progInterval = setInterval(() => {
+    prog = Math.min(prog + 10, 85);
+    document.getElementById('csvProgressBar').style.width = prog + '%';
+  }, 150);
+
+  const formData = new FormData();
+  formData.append('file', csvSelectedFile);
+  formData.append('csrfmiddlewaretoken', CSRF);
+
+  try {
+    const res = await fetch(`/research/projects/${PROJECT_ID}/upload-dataset/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF },
+      body: formData,
+    });
+
+    clearInterval(progInterval);
+    document.getElementById('csvProgressBar').style.width = '100%';
+
+    if (res.ok) {
+      const data = await res.json();
+      closeModal('csvUploadModal');
+      showToast('Dataset uploaded ✓ — redirecting…');
+      setTimeout(() => {
+        window.location.href = data.redirect_url;
+      }, 800);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showCsvError(data.error || 'Upload failed. Please try again.');
+      btn.disabled = false; btn.textContent = 'Upload Dataset';
+      document.getElementById('csvUploadProgress').style.display = 'none';
+    }
+  } catch(err) {
+    clearInterval(progInterval);
+    console.error('Upload error:', err);
+    showCsvError('Network error — check your connection.');
+    btn.disabled = false; btn.textContent = 'Upload Dataset';
+    document.getElementById('csvUploadProgress').style.display = 'none';
+  }
+}
+
+function showCsvError(msg) {
+  const el = document.getElementById('csvUploadError');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+</script>
+</body>
+</html>

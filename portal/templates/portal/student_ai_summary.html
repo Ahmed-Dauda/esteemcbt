@@ -1,0 +1,677 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% block title %}AI Academic Intelligence — {{ student.first_name }} {{ student.last_name }}{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,600&family=Epilogue:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --bg:      #f7f6f2;
+    --card:    #ffffff;
+    --ink:     #0f0f0f;
+    --ink2:    #1a1a2e;
+    --muted:   #6b7280;
+    --border:  #e5e3dc;
+    --gold:    #c9933a;
+    --gold-bg: #fdf6e3;
+    --red:     #c0392b;
+    --red-bg:  #fdf0ee;
+    --green:   #1a6b3c;
+    --green-bg:#edf7f1;
+    --blue:    #1e40af;
+    --blue-bg: #eff6ff;
+    --amber:   #92400e;
+    --amber-bg:#fffbeb;
+    --mono:    'JetBrains Mono', monospace;
+    --serif:   'Fraunces', Georgia, serif;
+    --sans:    'Epilogue', system-ui, sans-serif;
+    --radius:  14px;
+    --shadow:  0 2px 16px rgba(0,0,0,0.07);
+}
+
+body { background: var(--bg); font-family: var(--sans); }
+
+/* ── Header ── */
+.page-header {
+    background: var(--ink2);
+    border-radius: var(--radius);
+    padding: 32px 36px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+}
+.page-header::after {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 260px; height: 260px;
+    background: radial-gradient(circle, rgba(201,147,58,0.15) 0%, transparent 65%);
+}
+.page-header .eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+}
+.page-header h1 {
+    font-family: var(--serif);
+    font-size: 2rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+}
+.page-header .meta {
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    font-weight: 300;
+}
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.5);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    transition: color 0.2s;
+    margin-bottom: 20px;
+}
+.back-btn:hover { color: var(--gold); }
+
+/* ── Stat row ── */
+.stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px,1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+}
+.stat-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+}
+.stat-box .lbl {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+.stat-box .val {
+    font-family: var(--mono);
+    font-size: 1.7rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--ink);
+}
+.stat-box .val.sm { font-family: var(--sans); font-size: 0.95rem; font-weight: 600; }
+.stat-box .sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+.stat-box.gold-accent  { border-top: 3px solid var(--gold); }
+.stat-box.green-accent { border-top: 3px solid #22c55e; }
+.stat-box.red-accent   { border-top: 3px solid var(--red); }
+.stat-box.blue-accent  { border-top: 3px solid #3b82f6; }
+
+/* ── Section titles ── */
+.sect {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-style: italic;
+    color: var(--ink);
+    margin: 0 0 14px;
+    letter-spacing: -0.01em;
+}
+
+/* ── Card base ── */
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+
+/* ── Subject performance bars ── */
+.subj-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+.subj-row:last-child { border-bottom: none; }
+.subj-name { font-weight: 600; font-size: 13px; width: 160px; flex-shrink: 0; color: var(--ink); }
+.subj-bar-wrap { flex: 1; }
+.subj-bar-bg {
+    background: #f1f0ec;
+    border-radius: 4px;
+    height: 10px;
+    overflow: hidden;
+    margin-bottom: 3px;
+}
+.subj-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(.16,1,.3,1); }
+.subj-scores { font-family: var(--mono); font-size: 10px; color: var(--muted); display: flex; gap: 10px; }
+.subj-grade {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    width: 28px;
+    text-align: center;
+    border-radius: 4px;
+    padding: 2px 0;
+}
+.grade-A { color: var(--green); background: var(--green-bg); }
+.grade-B { color: var(--blue);  background: var(--blue-bg); }
+.grade-C { color: var(--amber); background: var(--amber-bg); }
+.grade-D, .grade-E, .grade-F { color: var(--red); background: var(--red-bg); }
+
+/* ── AI sections ── */
+.ai-block {
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    white-space: pre-line;
+}
+.ai-block.summary    { background: var(--blue-bg);  border-left: 3px solid #3b82f6; color: #1e3a5f; }
+.ai-block.weak       { background: var(--red-bg);   border-left: 3px solid var(--red); color: #5c1a14; }
+.ai-block.strong     { background: var(--green-bg); border-left: 3px solid #22c55e; color: #0f3d22; }
+.ai-block.reco       { background: var(--amber-bg); border-left: 3px solid #f59e0b; color: #451a03; }
+.ai-block.parent     { background: var(--gold-bg);  border-left: 3px solid var(--gold); color: #3d2800; }
+.ai-block.motive     { background: var(--ink2); border-left: 3px solid var(--gold); color: #fff; font-style: italic; font-size: 14px; }
+
+.ai-block-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: 0.6;
+}
+
+/* ── Flags ── */
+.flag-pill {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: var(--amber-bg);
+    border: 1px solid #fcd34d;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    font-size: 12.5px;
+    color: var(--amber);
+}
+.flag-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; flex-shrink: 0; margin-top: 5px; }
+
+/* ── Chatbot ── */
+.chat-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--ink2);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 22px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    margin-bottom: 16px;
+}
+.chat-toggle-btn:hover { background: #2d3561; transform: translateY(-1px); }
+.chat-toggle-btn .icon { font-size: 18px; }
+
+.chat-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    display: none;
+    margin-bottom: 28px;
+    animation: slideIn 0.25s ease;
+}
+@keyframes slideIn { from { opacity:0; transform: translateY(-8px); } to { opacity:1; transform: translateY(0); } }
+
+.chat-header {
+    background: var(--ink2);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.chat-header .chat-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.chat-header .chat-sub { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+.chat-messages {
+    height: 360px;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #fafaf8;
+}
+
+.msg {
+    max-width: 78%;
+    padding: 11px 15px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    animation: msgIn 0.2s ease;
+}
+@keyframes msgIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; } }
+
+.msg.user {
+    background: var(--ink2);
+    color: #fff;
+    align-self: flex-end;
+    border-bottom-right-radius: 3px;
+}
+.msg.ai {
+    background: var(--card);
+    color: var(--ink);
+    align-self: flex-start;
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 3px;
+}
+.msg.ai.typing { color: var(--muted); font-style: italic; }
+
+.chat-input-row {
+    display: flex;
+    gap: 10px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--card);
+}
+.chat-input {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: var(--sans);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.chat-input:focus { border-color: #3b82f6; }
+.chat-send-btn {
+    background: var(--ink2);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+.chat-send-btn:hover { background: #2d3561; }
+.chat-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Two-col layout ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+@media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } .subj-name { width: 110px; } }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<div class="container py-4">
+
+    <!-- Back -->
+    <a href="javascript:history.back()" class="back-btn">← Back to Report</a>
+
+    <!-- Header -->
+    <div class="page-header mb-4">
+        <div class="eyebrow">🧠 AI Academic Intelligence Report</div>
+        <h1>{{ student.first_name }} {{ student.last_name }}</h1>
+        <div class="meta">{{ result_class }} &nbsp;·&nbsp; {{ session }} &nbsp;·&nbsp; {{ term }}</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-row">
+        <div class="stat-box gold-accent">
+            <div class="lbl">Average</div>
+            <div class="val">{{ student_average }}</div>
+            <div class="sub">out of {{ max_total }}</div>
+        </div>
+        <div class="stat-box blue-accent">
+            <div class="lbl">Position</div>
+            <div class="val">{{ position }}<span style="font-size:1rem;font-weight:400">th</span></div>
+            <div class="sub">of {{ total_students }} students</div>
+        </div>
+        <div class="stat-box {% if student_average >= class_average %}green-accent{% else %}red-accent{% endif %}">
+            <div class="lbl">vs Class Avg</div>
+            <div class="val">{{ class_average }}</div>
+            <div class="sub">{% if student_average >= class_average %}Above average ✓{% else %}Below average{% endif %}</div>
+        </div>
+        <div class="stat-box">
+            <div class="lbl">Subjects</div>
+            <div class="val">{{ subject_data|length }}</div>
+            <div class="sub">{{ strong_subjects|length }} strong · {{ weak_subjects|length }} weak</div>
+        </div>
+        <div class="stat-box {% if weak_subjects %}red-accent{% else %}green-accent{% endif %}">
+            <div class="lbl">At Risk</div>
+            <div class="val">{{ weak_subjects|length }}</div>
+            <div class="sub">subject{% if weak_subjects|length != 1 %}s{% endif %} below 50%</div>
+        </div>
+    </div>
+
+    <!-- Subject Performance -->
+    <div class="card">
+        <div class="sect">Subject Performance Breakdown</div>
+        {% for s in subject_data %}
+        <div class="subj-row">
+            <div class="subj-name">{{ s.subject }}</div>
+            <div class="subj-bar-wrap">
+                <div class="subj-bar-bg">
+                    <div class="subj-bar-fill"
+                         style="width:{{ s.total_pct }}%;
+                                background:{% if s.total_pct >= 75 %}#22c55e{% elif s.total_pct >= 50 %}#f59e0b{% else %}#ef4444{% endif %}">
+                    </div>
+                </div>
+                <div class="subj-scores">
+                    <span>CA: {{ s.ca }}/{{ max_ca }}</span>
+                    <span>Mid: {{ s.mid }}/{{ max_mid }}</span>
+                    <span>Exam: {{ s.exam }}/{{ max_exam }}</span>
+                    <span style="font-weight:600;color:var(--ink);">Total: {{ s.total }}/{{ max_total }}</span>
+                </div>
+            </div>
+            <div class="subj-grade grade-{{ s.grade }}">{{ s.grade }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Weak / Strong zones + Flags -->
+    <div class="two-col">
+        <!-- Weak Areas -->
+        <div class="card">
+            <div class="sect" style="color:var(--red);">⚠ Weak Areas</div>
+            {% if weak_subjects %}
+                {% for s in weak_subjects %}
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-weight:600;font-size:13px;">{{ s.subject }}</span>
+                    <span style="font-family:var(--mono);font-size:12px;color:var(--red);font-weight:600;">{{ s.total_pct }}%</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color:var(--green);font-size:13px;">✓ No weak subjects — all above 50%</p>
+            {% endif %}
+        </div>
+
+        <!-- Strong Areas -->
+        <div class="card">
+            <div class="sect" style="color:var(--green);">★ Strong Areas</div>
+            {% if strong_subjects %}
+                {% for s in strong_subjects %}
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-weight:600;font-size:13px;">{{ s.subject }}</span>
+                    <span style="font-family:var(--mono);font-size:12px;color:var(--green);font-weight:600;">{{ s.total_pct }}%</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color:var(--muted);font-size:13px;">No subjects above 75% threshold yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Component Flags -->
+    {% if component_flags %}
+    <div class="card" style="margin-bottom:20px;">
+        <div class="sect">🔍 Component-Level Observations</div>
+        {% for f in component_flags %}
+        <div class="flag-pill">
+            <div class="dot"></div>
+            <div><strong>{{ f.subject }}:</strong> {{ f.flag }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- AI Analysis -->
+    <!-- AI Analysis -->
+<div class="card" id="ai-analysis-card">
+    <div class="sect">🤖 AI Analysis</div>
+    <div id="ai-loading" style="text-align:center; padding:40px 0;">
+        <div style="display:inline-block; width:36px; height:36px;
+                    border:3px solid #e5e3dc; border-top:3px solid #1a1a2e;
+                    border-radius:50%; animation:spin 0.8s linear infinite;">
+        </div>
+        <p style="margin-top:14px; color:var(--muted); font-size:13px;">
+            Generating AI analysis…
+        </p>
+    </div>
+    <div id="ai-content" style="display:none;">
+        <div class="ai-block summary" id="ai-summary">
+            <div class="ai-block-label">Performance Summary</div>
+            <div class="ai-text"></div>
+        </div>
+        <div class="two-col" style="margin-bottom:0;">
+            <div class="ai-block weak" id="ai-weak" style="margin-bottom:0;">
+                <div class="ai-block-label">Weak Areas</div>
+                <div class="ai-text"></div>
+            </div>
+            <div class="ai-block strong" id="ai-strong" style="margin-bottom:0;">
+                <div class="ai-block-label">Strong Areas</div>
+                <div class="ai-text"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recommendations -->
+<div class="card" id="ai-reco-card" style="display:none;">
+    <div class="sect">📋 Recommendations</div>
+    <div class="ai-block reco" style="margin:0;">
+        <div class="ai-block-label">Action Plan</div>
+        <div id="ai-reco-text"></div>
+    </div>
+</div>
+
+<!-- Parent Feedback -->
+<div class="card" id="parent-feedback" style="display:none;">
+    <div class="sect">✉ Parent Feedback</div>
+    <div class="ai-block parent" style="margin:0;">
+        <div class="ai-block-label">Message to Parents</div>
+        <div id="ai-parent-text"></div>
+    </div>
+    <button onclick="copyParentFeedback()" style="margin-top:12px;font-family:var(--mono);font-size:11px;padding:8px 16px;background:var(--gold-bg);border:1px solid var(--gold);color:var(--gold);border-radius:6px;cursor:pointer;font-weight:600;">
+        📋 Copy to Clipboard
+    </button>
+</div>
+
+<!-- Motivational -->
+<div id="ai-motive-block" style="display:none;">
+    <div class="ai-block motive">
+        <div class="ai-block-label" style="color:var(--gold);opacity:1;">For {{ student.first_name }}</div>
+        <div id="ai-motive-text"></div>
+    </div>
+</div>
+
+    <!-- Ask AI Chatbot -->
+    <button class="chat-toggle-btn" onclick="toggleChat()">
+        <span class="icon">🤖</span>
+        Ask AI About This Student
+    </button>
+
+    <div class="chat-panel" id="chatPanel">
+        <div class="chat-header">
+            <div>
+                <div class="chat-title">AI Academic Assistant</div>
+                <div class="chat-sub">Ask anything about {{ student.first_name }}'s performance</div>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="msg ai">
+                👋 Hi! I have full access to {{ student.first_name }}'s academic records for {{ term }}, {{ session }}.
+                Ask me anything — about specific subjects, study strategies, parent communication, or anything else.
+            </div>
+        </div>
+
+        <div class="chat-input-row">
+            <input type="text" class="chat-input" id="chatInput"
+                   placeholder="e.g. Why is {{ student.first_name }} failing Math? What should parents do?"
+                   onkeydown="if(event.key==='Enter') sendChat()">
+            <button class="chat-send-btn" id="chatSendBtn" onclick="sendChat()">Send →</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Fetch AI analysis after page loads
+document.addEventListener('DOMContentLoaded', function () {
+    fetch("{% url 'portal:student_ai_analysis_ajax' student.id session.id term.id %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            document.getElementById('ai-loading').innerHTML =
+                `<p style="color:var(--red);font-size:13px;">AI analysis failed: ${data.error}</p>`;
+            return;
+        }
+
+        // Fill content
+        document.querySelector('#ai-summary .ai-text').textContent       = data.summary;
+        document.querySelector('#ai-weak .ai-text').textContent          = data.weak_areas;
+        document.querySelector('#ai-strong .ai-text').textContent        = data.strong_areas;
+        document.getElementById('ai-reco-text').textContent              = data.recommendations;
+        document.getElementById('ai-parent-text').textContent            = data.parent_feedback;
+        document.getElementById('ai-motive-text').textContent            = data.motivational;
+
+        // Show everything, hide spinner
+        document.getElementById('ai-loading').style.display  = 'none';
+        document.getElementById('ai-content').style.display  = 'block';
+        document.getElementById('ai-reco-card').style.display    = 'block';
+        document.getElementById('parent-feedback').style.display = 'block';
+        document.getElementById('ai-motive-block').style.display = 'block';
+
+        // Store for clipboard
+        window._parentFeedbackText = data.parent_feedback;
+    })
+    .catch(err => {
+        document.getElementById('ai-loading').innerHTML =
+            `<p style="color:var(--red);font-size:13px;">Network error. Please refresh.</p>`;
+    });
+});
+
+// Update copy function to use fetched text
+function copyParentFeedback() {
+    navigator.clipboard.writeText(window._parentFeedbackText || '').then(() => {
+        const btn = event.target;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = '📋 Copy to Clipboard', 2000);
+    });
+}
+// ── Subject data for JS if needed ────────────────────────────────────────
+const SUBJECT_DATA = {{ subject_data_json|safe }};
+
+// ── Copy parent feedback ─────────────────────────────────────────────────
+function copyParentFeedback() {
+    const text = `{{ ai_sections.parent_feedback|escapejs }}`;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = '📋 Copy to Clipboard', 2000);
+    });
+}
+
+// ── Chatbot ──────────────────────────────────────────────────────────────
+let chatHistory = [];
+let chatVisible = false;
+
+function toggleChat() {
+    chatVisible = !chatVisible;
+    const panel = document.getElementById('chatPanel');
+    panel.style.display = chatVisible ? 'block' : 'none';
+    if (chatVisible) {
+        document.getElementById('chatInput').focus();
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+function appendMsg(role, text, isTyping = false) {
+    const box  = document.getElementById('chatMessages');
+    const div  = document.createElement('div');
+    div.className = `msg ${role}${isTyping ? ' typing' : ''}`;
+    div.textContent = text;
+    div.id = isTyping ? 'typing-indicator' : '';
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    return div;
+}
+
+async function sendChat() {
+    const input   = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('chatSendBtn');
+    const message = input.value.trim();
+    if (!message) return;
+
+    input.value   = '';
+    sendBtn.disabled = true;
+    appendMsg('user', message);
+    chatHistory.push({ role: 'user', content: message });
+
+    const typingEl = appendMsg('ai', '…thinking', true);
+
+    try {
+        const resp = await fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken':  '{{ csrf_token }}',
+                'X-Chat-Request': '1',
+            },
+            body: JSON.stringify({ message, history: chatHistory }),
+        });
+
+        const data = await resp.json();
+        typingEl.remove();
+
+        const reply = data.reply || data.error || 'Sorry, something went wrong.';
+        appendMsg('ai', reply);
+        chatHistory.push({ role: 'assistant', content: reply });
+
+    } catch (e) {
+        typingEl.remove();
+        appendMsg('ai', 'Network error. Please try again.');
+    }
+
+    sendBtn.disabled = false;
+    input.focus();
+}
+</script>
+{% endblock %}

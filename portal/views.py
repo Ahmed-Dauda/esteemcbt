@@ -328,6 +328,362 @@ def report_card_detail(request, student_id, session_id, term_id):
     return render(request, 'portal/report_card_detail.html', context)
 
 
+# ═══════════════════════════════════════════════════════════════
+#  views.py  — add this view to your portal/views.py
+# ═══════════════════════════════════════════════════════════════
+
+import json
+from django.http import JsonResponse, HttpResponse
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404
+from django.views.decorators.http import require_POST
+
+# Adjust imports to match your project structure
+from .models import Result_Portal, StudentBehaviorRecord
+from quiz.models import CourseGrade
+# from openai import OpenAI  # already imported in your project
+# client = OpenAI(...)       # already configured in your project
+
+
+@login_required
+def student_ai_summary(request, student_id, session_id, term_id):
+    """
+    AI Academic Intelligence summary for a single student.
+    Includes: weak area detection, recommendations, parent feedback,
+    performance stats, and a live AI chatbot.
+    """
+
+    # ── Fetch results ──────────────────────────────────────────────────────
+    results = Result_Portal.objects.filter(
+        student_id=student_id,
+        session_id=session_id,
+        term_id=term_id,
+    ).select_related('student', 'subject', 'schools', 'session', 'term').order_by('subject__title')
+
+    if not results.exists():
+        return HttpResponse("No results found for this student.", status=404)
+
+    student      = results.first().student
+    session      = results.first().session
+    term         = results.first().term
+    result_class = getattr(results.first(), 'result_class', '')
+    school       = results.first().schools
+
+    # Filter to only currently assigned subjects
+    active_subject_ids = list(
+        CourseGrade.objects.filter(
+            students__id=student_id,
+            schools=school,
+        ).values_list('subjects__course_name_id', flat=True)
+    )
+    if active_subject_ids:
+        results = results.filter(subject_id__in=active_subject_ids)
+
+    results = list(results)
+
+    # ── Score computations ─────────────────────────────────────────────────
+    # Cast all max values to float to avoid Decimal division errors
+    max_ca    = float(school.max_ca_score      if school else 10)
+    max_mid   = float(school.max_midterm_score if school else 30)
+    max_exam  = float(school.max_exam_score    if school else 60)
+    max_total = max_ca + max_mid + max_exam
+
+    subject_data = []
+    for r in results:
+        ca    = float(r.ca_score      or 0)
+        mid   = float(r.midterm_score or 0)
+        exam  = float(r.exam_score    or 0)
+        total = float(r.total_score   or 0)
+        subject_data.append({
+            'subject':   r.subject.title,
+            'ca':        ca,
+            'mid':       mid,
+            'exam':      exam,
+            'total':     total,
+            'grade':     r.grade_letter or '—',
+            'remark':    r.remark or '—',
+            'ca_pct':    round((ca    / max_ca)    * 100, 1) if max_ca    else 0,
+            'mid_pct':   round((mid   / max_mid)   * 100, 1) if max_mid   else 0,
+            'exam_pct':  round((exam  / max_exam)  * 100, 1) if max_exam  else 0,
+            'total_pct': round((total / max_total) * 100, 1) if max_total else 0,
+        })
+
+    student_total   = sum(s['total'] for s in subject_data)
+    student_average = round(student_total / len(subject_data), 2) if subject_data else 0
+
+    # ── Class position ─────────────────────────────────────────────────────
+    all_results = Result_Portal.objects.filter(
+        result_class=result_class,
+        session_id=session_id,
+        term_id=term_id,
+    ).select_related('student')
+
+    class_totals = {}
+    for res in all_results:
+        sid = res.student_id
+        class_totals[sid] = class_totals.get(sid, 0) + float(res.total_score or 0)
+
+    class_average   = round(sum(class_totals.values()) / len(class_totals), 2) if class_totals else 0
+    sorted_totals   = sorted(class_totals.items(), key=lambda x: x[1], reverse=True)
+    position        = next((i + 1 for i, (sid, _) in enumerate(sorted_totals) if sid == student_id), None)
+    total_students  = len(class_totals)
+
+    # ── Weak area detection ────────────────────────────────────────────────
+    weak_threshold   = 50   # below 50% total is weak
+    strong_threshold = 75   # above 75% total is strong
+
+    weak_subjects    = [s for s in subject_data if s['total_pct'] < weak_threshold]
+    strong_subjects  = [s for s in subject_data if s['total_pct'] >= strong_threshold]
+    average_subjects = [s for s in subject_data if weak_threshold <= s['total_pct'] < strong_threshold]
+
+    # Detect component-level weaknesses (e.g. strong in CA but fails exam)
+    component_flags = []
+    for s in subject_data:
+        if s['ca_pct'] >= 60 and s['exam_pct'] < 40:
+            component_flags.append({
+                'subject': s['subject'],
+                'flag': 'Good CA but poor exam performance — may struggle under exam pressure'
+            })
+        if s['ca_pct'] < 40 and s['exam_pct'] >= 60:
+            component_flags.append({
+                'subject': s['subject'],
+                'flag': 'Weak CA but strong exam — inconsistent effort during the term'
+            })
+        if s['mid_pct'] < 35:
+            component_flags.append({
+                'subject': s['subject'],
+                'flag': 'Very low mid-term score — may have missed content or needs catch-up'
+            })
+
+    # ── Pre-generate AI analysis (server-side, fast) ───────────────────────
+    # ── Prepare AI context — actual call happens via AJAX ─────────────────
+    subject_summary_for_ai = "\n".join([
+        f"- {s['subject']}: Total={s['total']}/{max_total} ({s['total_pct']}%), Grade={s['grade']}, "
+        f"CA={s['ca']}/{max_ca}, MidTerm={s['mid']}/{max_mid}, Exam={s['exam']}/{max_exam}"
+        for s in subject_data
+    ])
+    ai_sections = {}  # filled client-side via AJAX
+
+    # ── Chatbot endpoint (POST to same URL with action=chat) ───────────────
+    if request.method == 'POST' and request.headers.get('X-Chat-Request') == '1':
+        try:
+            body        = json.loads(request.body)
+            user_message = body.get('message', '').strip()
+            history      = body.get('history', [])
+
+            if not user_message:
+                return JsonResponse({'error': 'Empty message'}, status=400)
+
+            system_prompt = f"""
+You are an AI academic assistant with full knowledge of this student's performance.
+
+Student: {student.first_name} {student.last_name}
+Class: {result_class} | Session: {session} | Term: {term}
+Overall Average: {student_average} | Position: {position}/{total_students}
+Class Average: {class_average}
+
+Subject Performance:
+{subject_summary_for_ai}
+
+Answer questions about this student's academic performance, provide advice, 
+explain results, suggest study strategies, or help draft parent communications.
+Be professional, specific, and constructive. Keep answers concise (2-4 sentences unless more is needed).
+"""
+            messages = [{"role": "system", "content": system_prompt}]
+            # Include last 6 exchanges for context
+            for h in history[-6:]:
+                messages.append({"role": h['role'], "content": h['content']})
+            messages.append({"role": "user", "content": user_message})
+
+            chat_resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=messages,
+                max_tokens=400,
+                temperature=0.7,
+            )
+            reply = chat_resp.choices[0].message.content
+            return JsonResponse({'reply': reply})
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    # ── Context ────────────────────────────────────────────────────────────
+    context = {
+        'student':           student,
+        'session':           session,
+        'term':              term,
+        'result_class':      result_class,
+        'school':            school,
+        'subject_data':      subject_data,
+        'subject_data_json': json.dumps(subject_data),
+        'student_total':     student_total,
+        'student_average':   student_average,
+        'class_average':     class_average,
+        'position':          position,
+        'total_students':    total_students,
+        'max_ca':            max_ca,
+        'max_mid':           max_mid,
+        'max_exam':          max_exam,
+        'max_total':         max_total,
+        'weak_subjects':     weak_subjects,
+        'strong_subjects':   strong_subjects,
+        'average_subjects':  average_subjects,
+        'component_flags':   component_flags,
+        'ai_sections':       ai_sections,
+    }
+
+    return render(request, 'portal/student_ai_summary.html', context)
+
+
+@login_required
+@require_POST
+def student_ai_analysis_ajax(request, student_id, session_id, term_id):
+    """Called by AJAX after page load — returns AI sections as JSON."""
+    try:
+        results = Result_Portal.objects.filter(
+            student_id=student_id,
+            session_id=session_id,
+            term_id=term_id,
+        ).select_related('student', 'subject', 'schools', 'session', 'term')
+
+        if not results.exists():
+            return JsonResponse({'error': 'No results'}, status=404)
+
+        student      = results.first().student
+        session      = results.first().session
+        term         = results.first().term
+        result_class = getattr(results.first(), 'result_class', '')
+        school       = results.first().schools
+
+        max_ca    = float(school.max_ca_score      if school else 10)
+        max_mid   = float(school.max_midterm_score if school else 30)
+        max_exam  = float(school.max_exam_score    if school else 60)
+        max_total = max_ca + max_mid + max_exam
+
+        subject_summary = "\n".join([
+            f"- {r.subject.title}: Total={float(r.total_score or 0)}/{max_total}, "
+            f"Grade={r.grade_letter}, CA={float(r.ca_score or 0)}/{max_ca}, "
+            f"MidTerm={float(r.midterm_score or 0)}/{max_mid}, "
+            f"Exam={float(r.exam_score or 0)}/{max_exam}"
+            for r in results
+        ])
+
+        class_totals = {}
+        for res in Result_Portal.objects.filter(
+            result_class=result_class, session_id=session_id, term_id=term_id
+        ):
+            sid = res.student_id
+            class_totals[sid] = class_totals.get(sid, 0) + float(res.total_score or 0)
+
+        student_total   = sum(float(r.total_score or 0) for r in results)
+        student_average = round(student_total / results.count(), 2) if results.count() else 0
+        class_average   = round(sum(class_totals.values()) / len(class_totals), 2) if class_totals else 0
+        sorted_totals   = sorted(class_totals.items(), key=lambda x: x[1], reverse=True)
+        position        = next((i + 1 for i, (sid, _) in enumerate(sorted_totals) if sid == student_id), None)
+        total_students  = len(class_totals)
+
+        ai_prompt = f"""
+You are an experienced academic counselor reviewing a student's school report.
+
+Student: {student.first_name} {student.last_name}
+Class: {result_class}
+Session: {session} | Term: {term}
+Overall Average: {student_average} | Position: {position} out of {total_students}
+Class Average: {class_average}
+
+Subject Performance:
+{subject_summary}
+
+Provide a structured academic intelligence report with these EXACT sections:
+
+1. PERFORMANCE SUMMARY
+A 2-3 sentence overall assessment of the student's academic standing.
+
+2. WEAK AREAS
+List subjects or skills needing urgent attention with specific reasons why.
+
+3. STRONG AREAS
+List subjects where the student excels and what this suggests about their learning style.
+
+4. RECOMMENDATIONS
+5 specific, actionable recommendations for the student to improve.
+
+5. PARENT FEEDBACK
+Write a professional, warm 3-4 sentence message a teacher/principal would send to parents.
+
+6. MOTIVATIONAL NOTE
+One short encouraging sentence directed at the student.
+
+Be specific and reference actual subject names and scores.
+"""
+
+        ai_resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a professional school academic counselor."},
+                {"role": "user", "content": ai_prompt},
+            ],
+            max_tokens=1200,
+            temperature=0.6,
+        )
+        raw = ai_resp.choices[0].message.content
+
+        import re
+
+        print("=" * 80)
+        print("RAW AI RESPONSE:")
+        print(raw)
+        print("=" * 80)
+
+        def extract(text, *patterns):
+            """Try multiple heading patterns — returns first match found."""
+            for pattern in patterns:
+                match = re.search(
+                    rf'{pattern}\s*[:\-]?\s*\n(.*?)(?=\n\s*\d+[\.\)]\s+[A-Z]|\Z)',
+                    text, re.DOTALL | re.IGNORECASE
+                )
+                if match:
+                    return match.group(1).strip()
+            return ''
+
+        return JsonResponse({
+            'summary': extract(raw,
+                r'1[\.\)]\s*PERFORMANCE SUMMARY',
+                r'PERFORMANCE SUMMARY',
+                r'1[\.\)]\s*Summary',
+            ),
+            'weak_areas': extract(raw,
+                r'2[\.\)]\s*WEAK AREAS',
+                r'WEAK AREAS',
+                r'2[\.\)]\s*Weak',
+            ),
+            'strong_areas': extract(raw,
+                r'3[\.\)]\s*STRONG AREAS',
+                r'STRONG AREAS',
+                r'3[\.\)]\s*Strong',
+            ),
+            'recommendations': extract(raw,
+                r'4[\.\)]\s*RECOMMENDATIONS',
+                r'RECOMMENDATIONS',
+                r'4[\.\)]\s*Recommend',
+            ),
+            'parent_feedback': extract(raw,
+                r'5[\.\)]\s*PARENT FEEDBACK',
+                r'PARENT FEEDBACK',
+                r'5[\.\)]\s*Parent',
+            ),
+            'motivational': extract(raw,
+                r'6[\.\)]\s*MOTIVATIONAL NOTE',
+                r'MOTIVATIONAL NOTE',
+                r'6[\.\)]\s*Motivat',
+            ),
+            'raw': raw,  # temporary — remove after confirming it works
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+
 from django.http import HttpResponse
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4

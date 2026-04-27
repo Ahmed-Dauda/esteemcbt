@@ -2686,6 +2686,11 @@ def teacher_course_results_view(request, course_id):
         'results': results,
     })
 
+import csv
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+
+
 
 import json
 from openai import OpenAI
@@ -3330,32 +3335,65 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib.units import inch
 
+import csv
+from io import BytesIO
+
+from django.db.models.functions import Lower
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+
 @login_required(login_url='teacher:teacher_login')
 @require_cbt_subscription
 def export_filtered_results_csv(request):
+    # Determine request method
     if request.method == 'POST':
         course_id = request.POST.get('course_id')
         ids = request.POST.getlist('ids')
         fmt = request.POST.get('format', 'csv')
+        term = request.POST.get('term')
+        session = request.POST.get('session')
+        exam_type = request.POST.get('exam_type')
     else:
         course_id = request.GET.get('course_id')
         ids = request.GET.getlist('ids')
         fmt = request.GET.get('format', 'csv')
+        term = request.GET.get('term')
+        session = request.GET.get('session')
+        exam_type = request.GET.get('exam_type')
 
+    # Validation
     if not ids or not course_id:
         return HttpResponse("No results selected for export.", status=400)
 
+    # Base queryset
     results = (
         Result.objects
         .select_related('student', 'exam', 'term', 'session', 'exam_type')
         .filter(id__in=ids, exam__id=course_id)
-        .order_by(
-            Lower('student__first_name').asc(nulls_last=True),
-            Lower('student__last_name').asc(nulls_last=True)
-        )
     )
 
-    # ── CSV ──────────────────────────────────────────────
+    # Optional filters
+    if term:
+        results = results.filter(term__name=term)
+    if session:
+        results = results.filter(session__name=session)
+    if exam_type:
+        results = results.filter(exam_type__name=exam_type)
+
+    # Order by student name (case‑insensitive)
+    results = results.order_by(
+        Lower('student__first_name').asc(nulls_last=True),
+        Lower('student__last_name').asc(nulls_last=True)
+    )
+
+    # ─────────────────────────────────────────────────────────
+    # CSV EXPORT
+    # ─────────────────────────────────────────────────────────
     if fmt == 'csv':
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="filtered_results.csv"'
@@ -3373,25 +3411,29 @@ def export_filtered_results_csv(request):
             ])
         return response
 
-    # ── PDF ──────────────────────────────────────────────
+    # ─────────────────────────────────────────────────────────
+    # PDF EXPORT
+    # ─────────────────────────────────────────────────────────
     elif fmt == 'pdf':
         course = get_object_or_404(Course, id=course_id)
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="filtered_results.pdf"'
 
         buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter,
-                                leftMargin=0.75*inch, rightMargin=0.75*inch,
-                                topMargin=0.75*inch, bottomMargin=0.75*inch)
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=letter,
+            leftMargin=0.75 * inch,
+            rightMargin=0.75 * inch,
+            topMargin=0.75 * inch,
+            bottomMargin=0.75 * inch
+        )
         elements = []
-
-        from reportlab.platypus import Paragraph, Spacer, PageBreak
-        from reportlab.lib.styles import getSampleStyleSheet
         styles = getSampleStyleSheet()
         elements.append(Paragraph(f"Results — {course.course_name}", styles['Title']))
         elements.append(Spacer(1, 12))
 
-        # Build data rows
+        # Build table data
         data = [['#', 'Student', 'Marks', 'Result Class', 'Session', 'Term', 'Exam Type']]
         for i, r in enumerate(results, 1):
             data.append([
@@ -3405,13 +3447,13 @@ def export_filtered_results_csv(request):
             ])
 
         style = TableStyle([
-            ('BACKGROUND',    (0, 0), (-1, 0),  colors.HexColor('#1a7a4a')),
-            ('TEXTCOLOR',     (0, 0), (-1, 0),  colors.white),
-            ('FONTNAME',      (0, 0), (-1, 0),  'Helvetica-Bold'),
-            ('FONTSIZE',      (0, 0), (-1, 0),  10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0),  8),
-            ('TOPPADDING',    (0, 0), (-1, 0),  8),
-            ('ROWBACKGROUNDS',(0, 1), (-1, -1), [colors.white, colors.HexColor('#f2f9f5')]),
+            ('BACKGROUND',    (0, 0), (-1, 0), colors.HexColor('#1a7a4a')),
+            ('TEXTCOLOR',     (0, 0), (-1, 0), colors.white),
+            ('FONTNAME',      (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE',      (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING',    (0, 0), (-1, 0), 8),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f2f9f5')]),
             ('FONTNAME',      (0, 1), (-1, -1), 'Helvetica'),
             ('FONTSIZE',      (0, 1), (-1, -1), 9),
             ('TOPPADDING',    (0, 1), (-1, -1), 6),
@@ -3420,14 +3462,15 @@ def export_filtered_results_csv(request):
             ('ALIGN',         (0, 0), (-1, -1), 'LEFT'),
         ])
 
-        # Split into pages of 50 rows each
+        # Split into pages of max 50 data rows (excluding header)
         ROWS_PER_PAGE = 50
-        chunks = [data[1:][i:i+ROWS_PER_PAGE] for i in range(0, len(data[1:]), ROWS_PER_PAGE)]
-
-        for chunk in chunks:
-            t = Table([data[0]] + chunk, repeatRows=1, hAlign='LEFT')
-            t.setStyle(style)
-            elements.append(t)
+        header = [data[0]]
+        data_rows = data[1:]
+        for i in range(0, len(data_rows), ROWS_PER_PAGE):
+            chunk = header + data_rows[i:i + ROWS_PER_PAGE]
+            table = Table(chunk, repeatRows=1, hAlign='LEFT')
+            table.setStyle(style)
+            elements.append(table)
             elements.append(PageBreak())
 
         doc.build(elements)
@@ -3437,7 +3480,6 @@ def export_filtered_results_csv(request):
         return response
 
     return HttpResponse("Invalid format.", status=400)
-
 
 
 

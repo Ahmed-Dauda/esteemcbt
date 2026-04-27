@@ -5,6 +5,7 @@
 {% block content %}
 
 <style>
+  /* Your existing CSS styles (unchanged) */
   #ai-fab {
     position: fixed;
     bottom: 28px;
@@ -199,7 +200,7 @@
       <i class="fas fa-trash"></i> Delete Selected
     </button>
 
-    <button type="button" id="export-btn"
+    <button type="button" id="export-btn" onclick="exportResults('csv')"
       style="display:inline-flex;align-items:center;gap:8px;padding:9px 22px;background:#1a7a4a;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;letter-spacing:0.4px;cursor:pointer;box-shadow:0 2px 8px rgba(26,122,74,0.3);transition:background 0.2s,transform 0.15s;"
       onmouseover="this.style.background='#145e38';this.style.transform='translateY(-1px)';"
       onmouseout="this.style.background='#1a7a4a';this.style.transform='translateY(0)';">
@@ -211,7 +212,7 @@
       Export CSV
     </button>
 
-    <button type="button" id="export-btn-pdf"
+   <button type="button" id="export-btn-pdf" onclick="exportResults('pdf')"
       style="display:inline-flex;align-items:center;gap:8px;padding:9px 22px;background:#c0392b;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;letter-spacing:0.4px;cursor:pointer;box-shadow:0 2px 8px rgba(192,57,43,0.3);transition:background 0.2s,transform 0.15s;"
       onmouseover="this.style.background='#a93226';this.style.transform='translateY(-1px)';"
       onmouseout="this.style.background='#c0392b';this.style.transform='translateY(0)';">
@@ -226,7 +227,7 @@
 
     <span id="export-count"
       style="font-size:12px;color:#6c757d;background:#f0f0f0;padding:4px 10px;border-radius:20px;">
-      Loading...
+      0 selected
     </span>
   </div>
 
@@ -295,7 +296,7 @@
             <a href="{% url 'teacher:edit_teacher_results' course.id result.id %}" class="btn btn-sm btn-warning mb-1">Edit</a>
             <a href="{% url 'teacher:delete_teacher_result' course.id result.id %}" class="btn btn-sm btn-danger"
                onclick="return confirm('Are you sure you want to delete this result?');">Delete</a>
-          </td>
+           </td>
         </tr>
         {% endfor %}
       </tbody>
@@ -353,6 +354,8 @@
     <button id="ai-send-btn" onclick="sendAiMessage()">➤</button>
   </div>
 </div>
+
+
 <script>
 const RESULTS_CONTEXT = {
     course:         "{{ course.course_name }}",
@@ -628,6 +631,116 @@ async function renderChart(chartType, customParams, silent) {
         }
     }
 }
+
+// ---------------------------------------------------------------------
+// EXPORT FUNCTION (modified to export all if none selected)
+// ---------------------------------------------------------------------
+function exportResults(format) {
+    let selected = document.querySelectorAll(".check-item:checked");
+    const courseId = "{{ course.id }}";
+
+    const term = document.getElementById("termFilter").value;
+    const session = document.getElementById("sessionFilter").value;
+    const examType = document.getElementById("examTypeFilter").value;
+
+    // If nothing selected, take ALL checkboxes (i.e. all results)
+    if (selected.length === 0) {
+        selected = document.querySelectorAll(".check-item");
+        if (selected.length === 0) {
+            alert("No results available to export.");
+            return;
+        }
+    }
+
+    let form = document.createElement("form");
+    form.method = "POST";
+    form.action = "{% url 'teacher:export_filtered_results_csv' %}";
+
+    // CSRF token
+    let csrf = document.createElement("input");
+    csrf.type = "hidden";
+    csrf.name = "csrfmiddlewaretoken";
+    csrf.value = "{{ csrf_token }}";
+    form.appendChild(csrf);
+
+    // course_id
+    let courseInput = document.createElement("input");
+    courseInput.type = "hidden";
+    courseInput.name = "course_id";
+    courseInput.value = courseId;
+    form.appendChild(courseInput);
+
+    // format
+    let formatInput = document.createElement("input");
+    formatInput.type = "hidden";
+    formatInput.name = "format";
+    formatInput.value = format;
+    form.appendChild(formatInput);
+
+    // term, session, exam_type filters
+    let termInput = document.createElement("input");
+    termInput.type = "hidden";
+    termInput.name = "term";
+    termInput.value = term;
+    form.appendChild(termInput);
+
+    let sessionInput = document.createElement("input");
+    sessionInput.type = "hidden";
+    sessionInput.name = "session";
+    sessionInput.value = session;
+    form.appendChild(sessionInput);
+
+    let examTypeInput = document.createElement("input");
+    examTypeInput.type = "hidden";
+    examTypeInput.name = "exam_type";
+    examTypeInput.value = examType;
+    form.appendChild(examTypeInput);
+
+    // selected ids (all if none were checked)
+    selected.forEach(function (checkbox) {
+        let input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "ids";
+        input.value = checkbox.value;
+        form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// ---------------------------------------------------------------------
+// Update export count display when checkboxes change
+// ---------------------------------------------------------------------
+function updateExportCount() {
+    const selected = document.querySelectorAll(".check-item:checked");
+    const total = document.querySelectorAll(".check-item").length;
+    const countSpan = document.getElementById("export-count");
+    if (selected.length === 0) {
+        countSpan.textContent = `All (${total}) results`;
+    } else {
+        countSpan.textContent = `${selected.length} selected`;
+    }
+}
+
+// Select All / Deselect All
+document.getElementById("select-all").addEventListener("change", function(e) {
+    const isChecked = e.target.checked;
+    document.querySelectorAll(".check-item").forEach(cb => cb.checked = isChecked);
+    updateExportCount();
+});
+
+// Listen for individual checkbox changes
+document.querySelectorAll(".check-item").forEach(cb => {
+    cb.addEventListener("change", updateExportCount);
+});
+
+// Initial update
+updateExportCount();
+
+// Also update when filters change? Not needed for count, but if we implement client-side filter,
+// we might need to re-run updateExportCount. For now leave as is.
+
 </script>
 
 {% endblock %}

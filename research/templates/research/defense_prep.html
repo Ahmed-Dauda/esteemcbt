@@ -1,0 +1,388 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Defense Prep – {{ project.title }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #2563eb;
+      --purple: #7c3aed;
+      --grad: linear-gradient(135deg, #2563eb, #7c3aed);
+      --border: #e8eaf0;
+      --text: #111827;
+      --muted: #6b7280;
+      --light: #f5f6fa;
+      --white: #fff;
+    }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--light);
+      min-height: 100vh;
+      color: var(--text);
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 4px rgba(0,0,0,.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .brand-icon {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: var(--grad);
+      display: flex; align-items: center; justify-content: center; font-size: 17px;
+    }
+    .brand-name { font-size: 14px; font-weight: 700; color: var(--text); }
+    .brand-tagline { font-size: 10px; color: var(--muted); }
+
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .back-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 16px; border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: var(--white);
+      font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 600;
+      color: var(--muted); text-decoration: none;
+      transition: border-color .15s, color .15s;
+    }
+    .back-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .print-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 16px; border-radius: 8px;
+      background: var(--grad); border: none;
+      font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700;
+      color: #fff; cursor: pointer;
+      transition: opacity .15s;
+    }
+    .print-btn:hover { opacity: .88; }
+
+    /* ── HERO BANNER ── */
+    .hero {
+      background: var(--grad);
+      padding: 48px 32px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 20px; padding: 5px 14px;
+      font-size: 12px; font-weight: 600; color: #fff;
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-size: 28px; font-weight: 700; color: #fff;
+      margin-bottom: 8px; position: relative;
+    }
+    .hero p {
+      font-size: 14px; color: rgba(255,255,255,.8);
+      max-width: 520px; margin: 0 auto; position: relative;
+    }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 32px; padding: 20px 32px;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat { text-align: center; }
+    .stat-num { font-size: 22px; font-weight: 700; color: var(--blue); }
+    .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .stat-divider { width: 1px; height: 36px; background: var(--border); }
+
+    /* ── MAIN CONTENT ── */
+    .main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 36px 24px 60px;
+    }
+
+    .section-label {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      letter-spacing: .08em; text-transform: uppercase;
+      margin-bottom: 18px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-label::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── Q&A CARDS ── */
+    .qa-list { display: flex; flex-direction: column; gap: 16px; }
+
+    .qa-card {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: box-shadow .15s, border-color .15s;
+    }
+    .qa-card:hover {
+      border-color: #bfdbfe;
+      box-shadow: 0 4px 20px rgba(37,99,235,.08);
+    }
+
+    .qa-header {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 18px 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .qa-num {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--grad);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: #fff;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .qa-question {
+      flex: 1;
+      font-size: 14px; font-weight: 600; color: var(--text);
+      line-height: 1.55;
+    }
+    .qa-chevron {
+      font-size: 16px; color: var(--muted);
+      transition: transform .25s;
+      flex-shrink: 0; margin-top: 6px;
+    }
+    .qa-card.open .qa-chevron { transform: rotate(180deg); }
+
+    .qa-answer {
+      display: none;
+      padding: 0 20px 20px 66px;
+      font-size: 13.5px; line-height: 1.75;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+    .qa-card.open .qa-answer { display: block; }
+
+    /* ── TIPS SECTION ── */
+    .tips-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+      margin-top: 8px;
+    }
+    .tip-card {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 16px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .tip-icon { font-size: 22px; }
+    .tip-title { font-size: 13px; font-weight: 700; color: var(--text); }
+    .tip-body  { font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+
+    /* ── RAW TEXT FALLBACK ── */
+    .raw-block {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      font-size: 13.5px;
+      line-height: 1.85;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      header, .stats-row, .tips-section, .print-btn { display: none !important; }
+      .qa-answer { display: block !important; }
+      .hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a href="{% url 'home' %}" class="brand">
+    <div class="brand-icon">🎓</div>
+    <div>
+      <div class="brand-name">AI Project Studio</div>
+      <div class="brand-tagline">Your Academic Partner</div>
+    </div>
+  </a>
+  <div class="header-right">
+    <a href="{% url 'project_detail' project.pk %}" class="back-btn">← Back to Project</a>
+    <button class="print-btn" onclick="window.print()">🖨 Print / Save PDF</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">🛡 Defense Preparation</div>
+  <h1>{{ project.title }}</h1>
+  <p>AI-generated defense questions and suggested answers to help you prepare for your viva.</p>
+</div>
+
+<!-- STATS -->
+<div class="stats-row" id="statsRow">
+  <div class="stat">
+    <div class="stat-num" id="qCount">–</div>
+    <div class="stat-label">Questions</div>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat">
+    <div class="stat-num">{{ project.word_count }}</div>
+    <div class="stat-label">Project Words</div>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat">
+    <div class="stat-num">{{ project.chapters.count }}</div>
+    <div class="stat-label">Chapters</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- Q&A Section -->
+  <div class="section-label">Likely Defense Questions &amp; Suggested Answers</div>
+
+  <div class="qa-list" id="qaList">
+    {% if qa %}
+      <!-- parsed by JS below -->
+      <div id="rawQA" style="display:none;">{{ qa }}</div>
+    {% else %}
+      <div class="raw-block">No defense questions were generated. Please check that your project has content.</div>
+    {% endif %}
+  </div>
+
+  <!-- Defense Tips -->
+  <div class="tips-section" style="margin-top: 48px;">
+    <div class="section-label">Defense Day Tips</div>
+    <div class="tips-grid">
+      <div class="tip-card">
+        <div class="tip-icon">🎯</div>
+        <div class="tip-title">Know Your Problem Statement</div>
+        <div class="tip-body">Be able to explain why this research was necessary in 2–3 clear sentences.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">📊</div>
+        <div class="tip-title">Own Your Methodology</div>
+        <div class="tip-body">Justify every research design choice — why this approach, why this sample size.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">🤔</div>
+        <div class="tip-title">Acknowledge Limitations</div>
+        <div class="tip-body">Panels respect honesty. Know your study's weaknesses before they ask.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">📚</div>
+        <div class="tip-title">Cite Confidently</div>
+        <div class="tip-body">Know your key references — author, year, and what they contribute to your work.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">💬</div>
+        <div class="tip-title">"I Don't Know" Is Okay</div>
+        <div class="tip-body">Say: "That's beyond this study's scope, but a future researcher could explore..."</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">⏱</div>
+        <div class="tip-title">Practice Out Loud</div>
+        <div class="tip-body">Read each answer aloud 3× before the day. Hearing yourself builds confidence.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+  // ── Parse the raw Q&A text into structured cards ──────────────────────────
+  const rawEl = document.getElementById('rawQA');
+  const list  = document.getElementById('qaList');
+
+  if (rawEl) {
+    const raw = rawEl.textContent.trim();
+
+    // Match patterns like "Q1: ..." / "A1: ..." or "Q1." / "A1."
+    const qPattern = /Q\d+[:.]\s*/gi;
+    const aPattern = /A\d+[:.]\s*/gi;
+
+    // Split into Q/A pairs
+    // Strategy: split on Q\d then find matching A\d
+    const pairs = [];
+    const blocks = raw.split(/(?=Q\d+[:.])/i).filter(b => b.trim());
+
+    blocks.forEach((block, idx) => {
+      const qMatch = block.match(/^Q\d+[:.]\s*([\s\S]*?)(?=A\d+[:.]\s*)/i);
+      const aMatch = block.match(/A\d+[:.]\s*([\s\S]*?)$/i);
+
+      if (qMatch && aMatch) {
+        pairs.push({
+          q: qMatch[1].trim(),
+          a: aMatch[1].trim(),
+          num: idx + 1,
+        });
+      }
+    });
+
+    // Update stat
+    document.getElementById('qCount').textContent = pairs.length || '–';
+
+    if (pairs.length > 0) {
+      // Clear list and render cards
+      list.innerHTML = '';
+      pairs.forEach((pair, i) => {
+        const card = document.createElement('div');
+        card.className = 'qa-card';
+        // Open first card by default
+        if (i === 0) card.classList.add('open');
+
+        card.innerHTML = `
+          <div class="qa-header" onclick="toggleQA(this)">
+            <div class="qa-num">${pair.num}</div>
+            <div class="qa-question">${escHTML(pair.q)}</div>
+            <div class="qa-chevron">▾</div>
+          </div>
+          <div class="qa-answer">${escHTML(pair.a).replace(/\n/g, '<br>')}</div>`;
+        list.appendChild(card);
+      });
+    } else {
+      // Fallback: show raw text nicely
+      list.innerHTML = `<div class="raw-block">${escHTML(raw)}</div>`;
+      document.getElementById('qCount').textContent = '~10';
+    }
+  }
+
+  function toggleQA(header) {
+    const card = header.closest('.qa-card');
+    card.classList.toggle('open');
+  }
+
+  function escHTML(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+</script>
+</body>
+</html>
