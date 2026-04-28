@@ -1,82 +1,94 @@
-{% load crispy_forms_tags %}
 {% extends 'sms/dashboard/teacherbase.html' %}
+{% load crispy_forms_tags %}
+
 {% block title %}Manage Course Questions{% endblock %}
+
 {% block content %}
+<style>
+    .form-label { font-weight: 600; }
+    .submit-btn { padding: 12px 40px; font-size: 16px; font-weight: 600; }
+    .select2-container--default .select2-selection--multiple { border: 1px solid #ced4da; border-radius: .375rem; padding: .4rem; min-height: 42px; }
+    .select2-dropdown { z-index: 2000; }
+    /* Custom Checkmark for Select2 */
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        font-size: 0; display: inline-flex; align-items: center; justify-content: center;
+        width: 17px; height: 17px; margin-right: 6px; border: 2px solid white;
+        border-radius: 3px; background-color: white; cursor: pointer;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove::after {
+        content: '✔'; font-size: 11px; color: #0d6efd;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+        background-color: #dc3545;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover::after {
+        color: white;
+    }
+    .alert.hide { opacity: 0; transition: opacity 0.3s ease-out; }
+</style>
 
-.form-label { font-weight: 600; }
-.submit-btn { padding: 12px 40px; font-size: 16px; font-weight: 600; }
-.select2-container--default .select2-selection--multiple { border: 1px solid #ced4da; border-radius: .375rem; padding: .4rem; min-height: 42px; }
-.select2-dropdown { z-index: 2000; }
-/* Custom Checkmark for Select2 */
-.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
-font-size: 0; display: inline-flex; align-items: center; justify-content: center;
-width: 17px; height: 17px; margin-right: 6px; border: 2px solid white;
-border-radius: 3px; background-color: white; cursor: pointer;
-}
-.select2-container--default .select2-selection--multiple .select2-selection__choice__remove::after {
-content: '✔'; font-size: 11px; color: #0d6efd;
-}
-.select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
-background-color: #dc3545;
-}
-.select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover::after {
-color: white;
-}
-.alert.hide { opacity: 0; transition: opacity 0.3s ease-out; }
+<div class="container mt-3">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
 
+    <div class="card">
+        <div class="card-header">
+            <h2>Edit Class Assignment: {{ course_grade.name }}</h2>
+        </div>
+        <div class="card-body">
+            <a href="{% url 'your_subjects_list_url' %}" class="btn btn-secondary mb-3">Back to Subjects</a>
 
-{% if messages %}
-{% for message in messages %}
+            <form method="post" action="">
+                {% csrf_token %}
 
-{{ message }}
+                <div class="mb-3">
+                    <label class="form-label">{{ form.subjects.label }}</label>
+                    {{ form.subjects }}
+                    {% if form.subjects.errors %}
+                        <div class="text-danger">{{ form.subjects.errors }}</div>
+                    {% endif %}
+                </div>
 
+                <div class="mb-3">
+                    <label class="form-label">{{ form.students.label }}</label>
+                    {{ form.students }}
+                    {% if form.students.errors %}
+                        <div class="text-danger">{{ form.students.errors }}</div>
+                    {% endif %}
+                </div>
 
-{% endfor %}
-{% endif %}
+                <button type="submit" class="btn btn-primary submit-btn">Update Assignment Record</button>
+            </form>
+        </div>
+    </div>
+</div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-Edit Class Assignment: {{ course_grade.name }}
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 on multiple select fields
+        $('select[multiple]').select2({
+            placeholder: "Search and select...",
+            closeOnSelect: false,
+            allowClear: true,
+            width: '100%'
+        });
 
-
-Back to Subjects
-
-
-
-{% csrf_token %}
-
-
-
-{{ form.subjects.label }}
-{{ form.subjects }}
-{% if form.subjects.errors %}{{ form.subjects.errors }}{% endif %}
-
-
-{{ form.students.label }}
-{{ form.students }}
-{% if form.students.errors %}{{ form.students.errors }}{% endif %}
-
-
-
-Update Assignment Record
-
-
-
-
-
-
-
-
-(document).ready(function() { // Initialize Select2 on form fields ('select[multiple]').select2({
-placeholder: "Search and select...",
-closeOnSelect: false,
-allowClear: true,
-width: '100%'
-});
-// Auto-dismiss alerts
-setTimeout(function() {
-('.alert').fadeOut(500, function() { (this).remove();
-});
-}, 5000);
-});
-
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut(500, function() {
+                $(this).remove();
+            });
+        }, 5000);
+    });
+</script>
 {% endblock %}
