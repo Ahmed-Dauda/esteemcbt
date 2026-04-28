@@ -5,7 +5,6 @@
 {% block content %}
 
 <style>
-  /* Your existing CSS styles (unchanged) */
   #ai-fab {
     position: fixed;
     bottom: 28px;
@@ -186,6 +185,13 @@
     transition: opacity 0.2s;
   }
   #ai-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Search highlight */
+  .search-highlight {
+    background-color: #fff3cd;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
 </style>
 
 <div class="container-fluid mt-4">
@@ -212,7 +218,7 @@
       Export CSV
     </button>
 
-   <button type="button" id="export-btn-pdf" onclick="exportResults('pdf')"
+    <button type="button" id="export-btn-pdf" onclick="exportResults('pdf')"
       style="display:inline-flex;align-items:center;gap:8px;padding:9px 22px;background:#c0392b;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;letter-spacing:0.4px;cursor:pointer;box-shadow:0 2px 8px rgba(192,57,43,0.3);transition:background 0.2s,transform 0.15s;"
       onmouseover="this.style.background='#a93226';this.style.transform='translateY(-1px)';"
       onmouseout="this.style.background='#c0392b';this.style.transform='translateY(0)';">
@@ -231,7 +237,18 @@
     </span>
   </div>
 
+  <!-- Filters Row -->
   <div class="row mb-3 g-2 align-items-end">
+    <div class="col-auto">
+      <label class="form-label mb-1 fw-semibold" style="font-size:13px;">Search</label>
+      <div style="position:relative;">
+        <input type="text" id="globalSearch" class="form-control form-control-sm"
+               placeholder="Search student, marks, grade..."
+               style="min-width:220px;padding-right:30px;">
+        <span id="clearSearch" title="Clear search"
+              style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:#999;font-size:14px;display:none;">✕</span>
+      </div>
+    </div>
     <div class="col-auto">
       <label class="form-label mb-1 fw-semibold" style="font-size:13px;">Term</label>
       <select id="termFilter" class="form-select form-select-sm">
@@ -260,9 +277,27 @@
       </select>
     </div>
     <div class="col-auto">
+      <label class="form-label mb-1 fw-semibold" style="font-size:13px;">Min Marks</label>
+      <input type="number" id="minMarks" class="form-control form-control-sm"
+             placeholder="0" style="width:80px;">
+    </div>
+    <div class="col-auto">
+      <label class="form-label mb-1 fw-semibold" style="font-size:13px;">Max Marks</label>
+      <input type="number" id="maxMarks" class="form-control form-control-sm"
+             placeholder="100" style="width:80px;">
+    </div>
+    <div class="col-auto align-self-end">
       <button type="button" id="clear-filters" class="btn btn-sm btn-outline-secondary">
-        <i class="fas fa-times me-1"></i>Clear Filters
+        <i class="fas fa-times me-1"></i>Clear All
       </button>
+    </div>
+
+    <!-- Live stats -->
+    <div class="col-auto align-self-end ms-auto">
+      <span id="filter-stats"
+            style="font-size:12px;color:#6c757d;background:#f8f9fa;padding:5px 12px;border-radius:20px;border:1px solid #dee2e6;">
+        Showing <strong id="visible-count">{{ results|length }}</strong> of {{ results|length }} results
+      </span>
     </div>
   </div>
 
@@ -271,13 +306,13 @@
       <thead class="table-dark">
         <tr>
           <th><input type="checkbox" id="select-all"></th>
-          <th>Student</th>
-          <th>Marks/{{ course.total_marks }}</th>
-          <th>Result Class</th>
+          <th style="cursor:pointer;" onclick="sortTable(1)">Student <span id="sort-1"></span></th>
+          <th style="cursor:pointer;" onclick="sortTable(2)">Marks/{{ course.total_marks }} <span id="sort-2"></span></th>
+          <th style="cursor:pointer;" onclick="sortTable(3)">Result Class <span id="sort-3"></span></th>
           <th>Session</th>
           <th>Term</th>
           <th>Exam Type</th>
-          <th>Created</th>
+          <th style="cursor:pointer;" onclick="sortTable(7)">Created <span id="sort-7"></span></th>
           <th>Action</th>
         </tr>
       </thead>
@@ -294,12 +329,12 @@
           <td>{{ result.created|date:"Y-m-d H:i" }}</td>
           <td>
             <a href="{% url 'teacher:edit_teacher_results' course.id result.id %}" class="btn btn-sm btn-warning mb-1">Edit</a>
-            <a href="{% url 'teacher:delete_teacher_result' course.id result.id %}" 
+            <a href="{% url 'teacher:delete_teacher_result' course.id result.id %}"
               class="btn btn-sm btn-danger"
               onclick="return confirm('Are you sure you want to delete the result for {{ result.student.first_name }} {{ result.student.last_name }}? This action cannot be undone.');">
               Delete
             </a>
-           </td>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
@@ -322,7 +357,6 @@
     <button onclick="toggleAiPanel()">✕</button>
   </div>
 
-  <!-- Chart mode indicator bar -->
   <div id="chart-mode-bar">
     📊 <strong>Chart mode</strong> — type to modify the chart above
     <button id="exit-chart-mode" onclick="exitChartMode()">✕ Exit</button>
@@ -385,6 +419,7 @@ const CHART_AI_URL = "{% url 'teacher:teacher_chart_ai' %}";
 let aiIsBusy  = false;
 let lastChart = null;
 
+// ── AI Panel ──────────────────────────────────────────────────
 function toggleAiPanel() {
     document.getElementById('ai-panel').classList.toggle('open');
 }
@@ -430,15 +465,15 @@ function sendSuggestion(prompt) {
 
 function isChartEditRequest(msg) {
     const keywords = [
-        'color', 'colour', 'green', 'red', 'blue', 'purple', 'orange', 'yellow', 'pink',
-        'black', 'white', 'dark', 'light', 'bright', 'bold',
-        'title', 'label', 'xlabel', 'ylabel', 'grid', 'font', 'size',
-        'bigger', 'smaller', 'wider', 'taller', 'larger',
-        'remove', 'hide', 'show', 'rotate', 'horizontal', 'vertical',
-        'palette', 'theme', 'style', 'background',
-        'change', 'make it', 'make the', 'update', 'rename', 'set the',
-        'no grid', 'add grid', 'turn off', 'turn on',
-        'bars', 'pie', 'histogram', 'heatmap', 'boxplot',
+        'color','colour','green','red','blue','purple','orange','yellow','pink',
+        'black','white','dark','light','bright','bold',
+        'title','label','xlabel','ylabel','grid','font','size',
+        'bigger','smaller','wider','taller','larger',
+        'remove','hide','show','rotate','horizontal','vertical',
+        'palette','theme','style','background',
+        'change','make it','make the','update','rename','set the',
+        'no grid','add grid','turn off','turn on',
+        'bars','pie','histogram','heatmap','boxplot',
     ];
     const lower = msg.toLowerCase();
     return keywords.some(function(k) { return lower.includes(k); });
@@ -446,7 +481,6 @@ function isChartEditRequest(msg) {
 
 async function sendAiMessage() {
     if (aiIsBusy) return;
-
     const sendBtn = document.getElementById('ai-send-btn');
     const message = aiInput.value.trim();
     if (!message) return;
@@ -457,7 +491,6 @@ async function sendAiMessage() {
     }
 
     exitChartMode();
-
     aiIsBusy         = true;
     sendBtn.disabled = true;
     aiInput.value    = '';
@@ -472,7 +505,6 @@ async function sendAiMessage() {
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
             body: JSON.stringify({ message: message, context: RESULTS_CONTEXT })
         });
-
         if (!response.ok) throw new Error('Server error ' + response.status);
 
         thinkingEl.className   = 'ai-msg assistant';
@@ -503,7 +535,6 @@ async function sendAiMessage() {
                 } catch(e) {}
             }
         }
-
     } catch(err) {
         thinkingEl.className   = 'ai-msg assistant';
         thinkingEl.textContent = '❌ ' + err.message;
@@ -533,17 +564,14 @@ async function modifyChart(message) {
                 current_params: lastChart.customParams,
             }),
         });
-
         const paramData = await paramRes.json();
         if (paramData.error) {
             thinkingEl.className   = 'ai-msg assistant';
             thinkingEl.textContent = '❌ ' + paramData.error;
             return;
         }
-
         thinkingEl.remove();
         await renderChart(lastChart.chartType, paramData.custom_params, true);
-
     } catch(err) {
         thinkingEl.className   = 'ai-msg assistant';
         thinkingEl.textContent = '❌ ' + err.message;
@@ -573,9 +601,7 @@ async function renderChart(chartType, customParams, silent) {
         aiIsBusy         = true;
         sendBtn.disabled = true;
     }
-
     const thinkingEl = appendMessage('thinking', '⏳ Generating chart...');
-
     try {
         const response = await fetch(CHART_URL, {
             method:  'POST',
@@ -586,15 +612,12 @@ async function renderChart(chartType, customParams, silent) {
                 custom_params: customParams,
             }),
         });
-
         const data = await response.json();
-
         if (data.error) {
             thinkingEl.className   = 'ai-msg assistant';
             thinkingEl.textContent = '❌ ' + data.error;
             return;
         }
-
         thinkingEl.className   = 'ai-msg assistant';
         thinkingEl.textContent = '';
 
@@ -615,15 +638,10 @@ async function renderChart(chartType, customParams, silent) {
             thinkingEl.appendChild(hint);
         }
 
-        lastChart = {
-            chartType:    chartType,
-            customParams: data.custom_params || customParams,
-        };
+        lastChart = { chartType: chartType, customParams: data.custom_params || customParams };
         enterChartMode();
-
         document.getElementById('ai-messages').scrollTop =
             document.getElementById('ai-messages').scrollHeight;
-
     } catch(err) {
         thinkingEl.className   = 'ai-msg assistant';
         thinkingEl.textContent = '❌ ' + err.message;
@@ -635,20 +653,165 @@ async function renderChart(chartType, customParams, silent) {
     }
 }
 
-// ---------------------------------------------------------------------
-// EXPORT FUNCTION (modified to export all if none selected)
-// ---------------------------------------------------------------------
+// ── Auto Search & Filter ──────────────────────────────────────
+const totalRows = {{ results|length }};
+let sortCol = -1;
+let sortAsc = true;
+
+function filterTable() {
+    const searchVal  = document.getElementById('globalSearch').value.toLowerCase().trim();
+    const termVal    = document.getElementById('termFilter').value.toLowerCase().trim();
+    const sessionVal = document.getElementById('sessionFilter').value.toLowerCase().trim();
+    const examVal    = document.getElementById('examTypeFilter').value.toLowerCase().trim();
+    const minMarks   = parseFloat(document.getElementById('minMarks').value) || null;
+    const maxMarks   = parseFloat(document.getElementById('maxMarks').value) || null;
+
+    // Show/hide clear X button on search input
+    document.getElementById('clearSearch').style.display = searchVal ? 'block' : 'none';
+
+    const rows = document.querySelectorAll('#resultsTable tbody tr:not(#no-results-row)');
+    let visibleCount = 0;
+
+    rows.forEach(function(row) {
+        const cells = row.querySelectorAll('td');
+        if (!cells.length) return;
+
+        const student  = cells[1].textContent.toLowerCase();
+        const marks    = parseFloat(cells[2].textContent) || 0;
+        const grade    = cells[3].textContent.toLowerCase();
+        const session  = cells[4].textContent.toLowerCase();
+        const term     = cells[5].textContent.toLowerCase();
+        const examType = cells[6].textContent.toLowerCase();
+        const created  = cells[7].textContent.toLowerCase();
+        const rowText  = student + ' ' + marks + ' ' + grade + ' ' + session + ' ' + term + ' ' + examType + ' ' + created;
+
+        const matchSearch  = !searchVal  || rowText.includes(searchVal);
+        const matchTerm    = !termVal    || term.includes(termVal);
+        const matchSession = !sessionVal || session.includes(sessionVal);
+        const matchExam    = !examVal    || examType.includes(examVal);
+        const matchMin     = minMarks === null || marks >= minMarks;
+        const matchMax     = maxMarks === null || marks <= maxMarks;
+
+        if (matchSearch && matchTerm && matchSession && matchExam && matchMin && matchMax) {
+            row.style.display = '';
+            visibleCount++;
+
+            // Highlight matching search term in student name cell
+            if (searchVal) {
+                const original = cells[1].getAttribute('data-original') || cells[1].textContent;
+                cells[1].setAttribute('data-original', original);
+                const regex = new RegExp('(' + searchVal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+                cells[1].innerHTML = original.replace(regex, '<span class="search-highlight">$1</span>');
+            } else {
+                const original = cells[1].getAttribute('data-original');
+                if (original) cells[1].textContent = original;
+            }
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    // Update visible count display
+    document.getElementById('visible-count').textContent = visibleCount;
+
+    // No results row
+    let noResultsRow = document.getElementById('no-results-row');
+    if (visibleCount === 0) {
+        if (!noResultsRow) {
+            noResultsRow = document.createElement('tr');
+            noResultsRow.id = 'no-results-row';
+            noResultsRow.innerHTML = '<td colspan="9" class="text-center text-muted py-4">⚠️ No results match your search.</td>';
+            document.querySelector('#resultsTable tbody').appendChild(noResultsRow);
+        }
+        noResultsRow.style.display = '';
+    } else {
+        if (noResultsRow) noResultsRow.style.display = 'none';
+    }
+
+    updateExportCount();
+}
+
+// ── Column Sort ───────────────────────────────────────────────
+function sortTable(colIndex) {
+    const tbody = document.querySelector('#resultsTable tbody');
+    const rows  = Array.from(tbody.querySelectorAll('tr:not(#no-results-row)'));
+
+    if (sortCol === colIndex) {
+        sortAsc = !sortAsc;
+    } else {
+        sortCol = colIndex;
+        sortAsc = true;
+    }
+
+    // Update sort indicators
+    document.querySelectorAll('[id^="sort-"]').forEach(el => el.textContent = '');
+    const indicator = document.getElementById('sort-' + colIndex);
+    if (indicator) indicator.textContent = sortAsc ? ' ▲' : ' ▼';
+
+    rows.sort(function(a, b) {
+        const aCells = a.querySelectorAll('td');
+        const bCells = b.querySelectorAll('td');
+        if (!aCells[colIndex] || !bCells[colIndex]) return 0;
+
+        let aVal = aCells[colIndex].textContent.trim();
+        let bVal = bCells[colIndex].textContent.trim();
+
+        // Numeric sort for marks column
+        if (colIndex === 2) {
+            return sortAsc ? parseFloat(aVal) - parseFloat(bVal)
+                           : parseFloat(bVal) - parseFloat(aVal);
+        }
+
+        return sortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+
+    // Re-append no-results row at the end if it exists
+    const noResultsRow = document.getElementById('no-results-row');
+    if (noResultsRow) tbody.appendChild(noResultsRow);
+}
+
+// ── Event Listeners ───────────────────────────────────────────
+document.getElementById('globalSearch').addEventListener('input', filterTable);
+document.getElementById('termFilter').addEventListener('change', filterTable);
+document.getElementById('sessionFilter').addEventListener('change', filterTable);
+document.getElementById('examTypeFilter').addEventListener('change', filterTable);
+document.getElementById('minMarks').addEventListener('input', filterTable);
+document.getElementById('maxMarks').addEventListener('input', filterTable);
+
+// Clear X button inside search input
+document.getElementById('clearSearch').addEventListener('click', function() {
+    document.getElementById('globalSearch').value = '';
+    filterTable();
+    document.getElementById('globalSearch').focus();
+});
+
+// Clear all filters
+document.getElementById('clear-filters').addEventListener('click', function() {
+    document.getElementById('globalSearch').value  = '';
+    document.getElementById('termFilter').value    = '';
+    document.getElementById('sessionFilter').value = '';
+    document.getElementById('examTypeFilter').value = '';
+    document.getElementById('minMarks').value      = '';
+    document.getElementById('maxMarks').value      = '';
+    filterTable();
+});
+
+// ── Export ────────────────────────────────────────────────────
 function exportResults(format) {
     let selected = document.querySelectorAll(".check-item:checked");
     const courseId = "{{ course.id }}";
 
-    const term = document.getElementById("termFilter").value;
-    const session = document.getElementById("sessionFilter").value;
+    const term     = document.getElementById("termFilter").value;
+    const session  = document.getElementById("sessionFilter").value;
     const examType = document.getElementById("examTypeFilter").value;
 
-    // If nothing selected, take ALL checkboxes (i.e. all results)
     if (selected.length === 0) {
-        selected = document.querySelectorAll(".check-item");
+        // Export only visible rows
+        selected = Array.from(document.querySelectorAll(".check-item")).filter(function(cb) {
+            return cb.closest('tr').style.display !== 'none';
+        });
         if (selected.length === 0) {
             alert("No results available to export.");
             return;
@@ -659,91 +822,64 @@ function exportResults(format) {
     form.method = "POST";
     form.action = "{% url 'teacher:export_filtered_results_csv' %}";
 
-    // CSRF token
-    let csrf = document.createElement("input");
-    csrf.type = "hidden";
-    csrf.name = "csrfmiddlewaretoken";
-    csrf.value = "{{ csrf_token }}";
-    form.appendChild(csrf);
+    [
+        { name: "csrfmiddlewaretoken", value: "{{ csrf_token }}" },
+        { name: "course_id",           value: courseId },
+        { name: "format",              value: format },
+        { name: "term",                value: term },
+        { name: "session",             value: session },
+        { name: "exam_type",           value: examType },
+    ].forEach(function(f) {
+        const inp = document.createElement("input");
+        inp.type  = "hidden";
+        inp.name  = f.name;
+        inp.value = f.value;
+        form.appendChild(inp);
+    });
 
-    // course_id
-    let courseInput = document.createElement("input");
-    courseInput.type = "hidden";
-    courseInput.name = "course_id";
-    courseInput.value = courseId;
-    form.appendChild(courseInput);
-
-    // format
-    let formatInput = document.createElement("input");
-    formatInput.type = "hidden";
-    formatInput.name = "format";
-    formatInput.value = format;
-    form.appendChild(formatInput);
-
-    // term, session, exam_type filters
-    let termInput = document.createElement("input");
-    termInput.type = "hidden";
-    termInput.name = "term";
-    termInput.value = term;
-    form.appendChild(termInput);
-
-    let sessionInput = document.createElement("input");
-    sessionInput.type = "hidden";
-    sessionInput.name = "session";
-    sessionInput.value = session;
-    form.appendChild(sessionInput);
-
-    let examTypeInput = document.createElement("input");
-    examTypeInput.type = "hidden";
-    examTypeInput.name = "exam_type";
-    examTypeInput.value = examType;
-    form.appendChild(examTypeInput);
-
-    // selected ids (all if none were checked)
-    selected.forEach(function (checkbox) {
-        let input = document.createElement("input");
-        input.type = "hidden";
-        input.name = "ids";
-        input.value = checkbox.value;
-        form.appendChild(input);
+    selected.forEach(function(checkbox) {
+        const inp = document.createElement("input");
+        inp.type  = "hidden";
+        inp.name  = "ids";
+        inp.value = checkbox.value;
+        form.appendChild(inp);
     });
 
     document.body.appendChild(form);
     form.submit();
 }
 
-// ---------------------------------------------------------------------
-// Update export count display when checkboxes change
-// ---------------------------------------------------------------------
+// ── Checkbox helpers ──────────────────────────────────────────
 function updateExportCount() {
     const selected = document.querySelectorAll(".check-item:checked");
-    const total = document.querySelectorAll(".check-item").length;
+    const visible  = Array.from(document.querySelectorAll(".check-item")).filter(function(cb) {
+        return cb.closest('tr').style.display !== 'none';
+    });
     const countSpan = document.getElementById("export-count");
     if (selected.length === 0) {
-        countSpan.textContent = `All (${total}) results`;
+        countSpan.textContent = `All (${visible.length}) visible`;
     } else {
         countSpan.textContent = `${selected.length} selected`;
     }
 }
 
-// Select All / Deselect All
 document.getElementById("select-all").addEventListener("change", function(e) {
-    const isChecked = e.target.checked;
-    document.querySelectorAll(".check-item").forEach(cb => cb.checked = isChecked);
+    // Only select visible rows
+    document.querySelectorAll(".check-item").forEach(function(cb) {
+        if (cb.closest('tr').style.display !== 'none') {
+            cb.checked = e.target.checked;
+        }
+    });
     updateExportCount();
 });
 
-// Listen for individual checkbox changes
-document.querySelectorAll(".check-item").forEach(cb => {
+document.querySelectorAll(".check-item").forEach(function(cb) {
     cb.addEventListener("change", updateExportCount);
 });
 
-// Initial update
+// ── Init ──────────────────────────────────────────────────────
 updateExportCount();
-
-// Also update when filters change? Not needed for count, but if we implement client-side filter,
-// we might need to re-run updateExportCount. For now leave as is.
-
+filterTable();
 </script>
 
 {% endblock %}

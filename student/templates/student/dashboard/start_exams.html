@@ -16,6 +16,10 @@
 <script src="https://cdn.datatables.net/1.10.5/js/jquery.dataTables.min.js"></script>
 
 <style>
+  @media print {
+    body { display: none; }
+}
+
 div.quiz p { text-align: left; }
 .quiz p { text-align: left; }
 .quiz {
@@ -725,6 +729,22 @@ document.addEventListener('keyup', function(e) {
 $(document).ready(function() {
   updateScreenshotDisplay();
 });
+
+window.addEventListener('blur', () => {
+    document.body.style.display = 'none'; // Hide exam
+});
+window.addEventListener('focus', () => {
+    document.body.style.display = 'block'; // Show exam
+});
+
+
+window.addEventListener('keydown', function(e) {
+    if (e.key === 'S' && e.shiftKey && e.metaKey) { // MetaKey often acts as Win
+        e.preventDefault();
+        alert('Screenshotting is disabled!');
+    }
+});
+
 </script>
 
 {% endblock %}
