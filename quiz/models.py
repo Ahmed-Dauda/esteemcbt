@@ -59,7 +59,9 @@ class Course(models.Model):
             session = self.session or "No Session"
             term = self.term or "No Term"
             exam_type = self.exam_type or "No Exam Type"
-            return f'{school} - {course_name} - {session} - {term} - {exam_type}'
+            # return f'{school} - {course_name} - {session} - {term} - {exam_type}'
+            return f'{course_name} - {session} - {term} - {exam_type}'
+        
         except Exception:
             return f'Course ID {self.id}'
 
