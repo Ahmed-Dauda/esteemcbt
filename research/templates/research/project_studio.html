@@ -333,6 +333,9 @@
    <!-- Replace: upload csv -->
 <button class="hbtn" onclick="openModal('csvUploadModal')"
   style="background:#0891b2;color:#fff;">📊 Upload CSV</button>
+
+  <a href="{% url 'data_analysis' project.pk %}" class="hbtn"
+   style="background:#0891b2;color:#fff;">📊 Data Analysis</a>
   </div>
 
   <!-- Live stats in header -->
@@ -572,33 +575,6 @@
         <button class="qa-btn" onclick="runAction('context',{{ active_section.pk }})">Add Nigerian context</button>
         <button class="qa-btn" onclick="runAction('citations',{{ active_section.pk }})">Add references/citations</button>
       </div>
-
-      <!-- PROJECT STATS -->
-      <!-- <div class="project-stats">
-        <div class="stats-title">Project Stats1</div>
-        <div class="stats-grid">
-          <div class="stats-row">
-            <div class="stats-label"><span class="stats-icon">📄</span>Total Pages</div>
-            <div class="stats-val" id="statPages">{{ project.page_count|default:"—" }}</div>
-          </div>
-          <div class="stats-row">
-            <div class="stats-label"><span class="stats-icon">T</span>Total Words</div>
-            <div class="stats-val" id="statWords">{{ project.word_count }}</div>
-          </div>
-          <div class="stats-row">
-            <div class="stats-label"><span class="stats-icon">📚</span>References</div>
-            <div class="stats-val">{{ project.reference_count|default:"0" }}</div>
-          </div>
-        </div>
-        <div class="stats-progress">
-          <div class="stats-progress-label">
-            <span>Completion</span><span id="statCompletion">{{ project.completion_pct|default:'0' }}%</span>
-          </div>
-          <div class="stats-progress-bar">
-            <div class="stats-progress-fill" style="width:{{ project.completion_pct|default:'0' }}%"></div>
-          </div>
-        </div>
-      </div> -->
 
       <div class="other-tools">
         <div class="tools-label">Other Tools</div>
@@ -1168,6 +1144,10 @@ function showCsvError(msg) {
   const el = document.getElementById('csvUploadError');
   el.textContent = msg; el.style.display = 'block';
 }
+
+
+// data analysis 
+
 
 </script>
 </body>

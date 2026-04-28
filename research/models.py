@@ -225,12 +225,9 @@ class ChatMessage(models.Model):
 from cloudinary.models import CloudinaryField
 
 class Dataset(models.Model):
-    project = models.ForeignKey(
-        Project,
-        on_delete=models.CASCADE,
-        related_name="datasets"
-    )
-    # CloudinaryField for file uploads (supports all file types)
+    project     = models.ForeignKey(
+                    Project, on_delete=models.CASCADE, related_name="datasets"
+                  )
     file = CloudinaryField(
         'dataset_file',
         folder='datasets/',           # optional: subfolder in Cloudinary
@@ -240,11 +237,46 @@ class Dataset(models.Model):
         blank=True,
         null=True
     )
-    name = models.CharField(max_length=255, blank=True)
+    name        = models.CharField(max_length=255, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    row_count = models.IntegerField(null=True, blank=True)
-    column_count = models.IntegerField(null=True, blank=True)
-
+ 
     def __str__(self):
-        return self.name or (self.file.public_id if self.file else 'Unnamed')
+        return self.name or self.file.name
+ 
+    @property
+    def file_size_kb(self):
+        try:
+            # Cloudinary stores metadata — use the resource size if available
+            import cloudinary
+            resource = cloudinary.api.resource(self.file.public_id, resource_type="raw")
+            return round(resource.get("bytes", 0) / 1024, 1)
+        except Exception:
+            return "—"
+        
+
+
+
+# class Dataset(models.Model):
+#     project = models.ForeignKey(
+#         Project,
+#         on_delete=models.CASCADE,
+#         related_name="datasets"
+#     )
+#     # CloudinaryField for file uploads (supports all file types)
+#     file = CloudinaryField(
+#         'dataset_file',
+#         folder='datasets/',           # optional: subfolder in Cloudinary
+#         resource_type='auto',         # auto-detect file type (csv, xlsx, etc.)
+#         overwrite=True,               # overwrite existing with same public_id
+#         format=None,                  # keep original format
+#         blank=True,
+#         null=True
+#     )
+#     name = models.CharField(max_length=255, blank=True)
+#     uploaded_at = models.DateTimeField(auto_now_add=True)
+#     row_count = models.IntegerField(null=True, blank=True)
+#     column_count = models.IntegerField(null=True, blank=True)
+
+#     def __str__(self):
+#         return self.name or (self.file.public_id if self.file else 'Unnamed')
     

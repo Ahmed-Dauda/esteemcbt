@@ -1,0 +1,616 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Data Analysis – {{ project.title }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* (Your existing CSS – keep as is) */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --blue:#2563eb;--purple:#7c3aed;--green:#16a34a;--red:#dc2626;--cyan:#0891b2;
+      --grad:linear-gradient(135deg,#2563eb,#7c3aed);
+      --border:#e8eaf0;--text:#111827;--muted:#6b7280;--light:#f5f6fa;--white:#fff;
+      --sidebar-w:220px;--chat-w:280px;
+    }
+    body{font-family:'Sora',sans-serif;background:var(--light);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+    .topbar{height:58px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.05);z-index:100;}
+    .brand{display:flex;align-items:center;gap:9px;text-decoration:none;}
+    .brand-icon{width:32px;height:32px;border-radius:8px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:16px;}
+    .brand-name{font-size:13.5px;font-weight:700;color:var(--text);}
+    .topbar-sep{width:1px;height:24px;background:var(--border);}
+    .topbar-title{font-size:13px;font-weight:600;color:var(--muted);}
+    .topbar-back{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:7px;border:1.5px solid var(--border);background:var(--white);font-family:'Sora',sans-serif;font-size:12px;font-weight:600;color:var(--muted);text-decoration:none;transition:all .15s;margin-left:auto;}
+    .topbar-back:hover{border-color:var(--blue);color:var(--blue);}
+    .status-badge{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:11.5px;font-weight:700;}
+    .badge-done{background:#dcfce7;color:#16a34a;}
+    .badge-pending{background:#fef3c7;color:#d97706;}
+
+    .layout{display:flex;flex:1;overflow:hidden;}
+
+    .sidebar{width:var(--sidebar-w);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;padding:16px 0;overflow-y:auto;}
+    .sidebar-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;padding:0 16px 8px;}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;font-size:12.5px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .12s;border-left:3px solid transparent;text-decoration:none;}
+    .nav-item:hover{background:var(--light);color:var(--text);}
+    .nav-item.active{background:#eff6ff;color:var(--blue);font-weight:700;border-left-color:var(--blue);}
+    .nav-icon{font-size:15px;flex-shrink:0;}
+    .nav-divider{height:1px;background:var(--border);margin:10px 16px;}
+
+    .main{flex:1;overflow-y:auto;padding:24px;}
+    .main::-webkit-scrollbar{width:5px;}
+    .main::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+    .page-title{font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+    .page-title span{font-size:13px;font-weight:500;color:var(--muted);}
+
+    .step-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+    .step-card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+    .step-card.active-step{border-color:var(--blue);}
+    .step-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--grad);color:#fff;font-size:12px;font-weight:700;margin-bottom:12px;}
+    .step-heading{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+
+    .drop-zone{border:2px dashed var(--border);border-radius:10px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--light);}
+    .drop-zone:hover,.drop-zone.dragover{border-color:var(--blue);background:#eff6ff;}
+    .drop-zone-icon{font-size:32px;margin-bottom:8px;}
+    .drop-zone-text{font-size:13px;font-weight:600;margin-bottom:3px;}
+    .drop-zone-sub{font-size:11px;color:var(--muted);}
+    .file-pill{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#eff6ff;border-radius:8px;margin-top:10px;font-size:12px;font-weight:600;color:var(--blue);}
+    .upload-btn{width:100%;padding:10px;border-radius:9px;background:var(--grad);color:#fff;border:none;font-family:'Sora',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:12px;transition:opacity .15s;}
+    .upload-btn:disabled{opacity:.45;cursor:not-allowed;}
+    .progress-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px;}
+    .progress-fill{height:100%;background:var(--grad);border-radius:3px;transition:width .3s;}
+    .success-pill{display:flex;align-items:center;gap:7px;padding:9px 13px;background:#dcfce7;border-radius:8px;font-size:12.5px;font-weight:600;color:#16a34a;margin-top:10px;}
+    .error-box{background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#dc2626;margin-top:10px;}
+
+    .table-wrap{overflow-x:auto;border-radius:9px;border:1px solid var(--border);}
+    .data-table{width:100%;border-collapse:collapse;font-size:12px;}
+    .data-table th{background:#f8faff;padding:8px 12px;text-align:left;font-weight:700;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap;}
+    .data-table td{padding:7px 12px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;}
+    .data-table tr:last-child td{border-bottom:none;}
+    .table-meta{font-size:11.5px;color:var(--muted);margin-top:8px;}
+
+    .stat-boxes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+    .stat-box{background:var(--light);border-radius:10px;padding:14px;text-align:center;}
+    .stat-box-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+    .stat-box-val{font-size:22px;font-weight:700;color:var(--blue);}
+    .stat-box-sub{font-size:10.5px;color:var(--muted);margin-top:2px;}
+    .stats-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .mini-table{width:100%;border-collapse:collapse;font-size:12px;}
+    .mini-table th{font-size:11px;font-weight:700;color:var(--muted);padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;}
+    .mini-table td{padding:5px 8px;border-bottom:1px solid var(--border);}
+
+    .charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+    .chart-box{background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:14px;}
+    .chart-box-title{font-size:11.5px;font-weight:700;margin-bottom:10px;}
+    .chart-canvas-wrap{height:160px;position:relative;}
+
+    .ai-writing-area{background:var(--light);border-radius:10px;padding:14px;min-height:200px;font-size:13px;line-height:1.8;white-space:pre-wrap;}
+    .ai-writing-placeholder{color:var(--muted);font-style:italic;}
+    .ai-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+    .ai-action-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;border:1.5px solid var(--border);background:var(--white);font-family:'Sora',sans-serif;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;}
+    .ai-action-btn:hover{border-color:var(--blue);color:var(--blue);}
+    .ai-action-btn.primary{background:var(--grad);color:#fff;border:none;}
+    .ai-action-btn.primary:hover{opacity:.88;}
+
+    .dataset-list{display:flex;flex-direction:column;gap:7px;}
+    .dataset-item{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--light);border-radius:8px;font-size:12px;}
+    .dataset-item-left{display:flex;align-items:center;gap:8px;}
+    .dataset-item-name{font-weight:600;}
+    .dataset-load-btn{padding:4px 10px;border-radius:6px;background:var(--blue);color:#fff;border:none;font-size:11px;font-weight:700;cursor:pointer;}
+
+    .chat-panel{width:var(--chat-w);background:var(--white);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
+    .chat-panel-head{padding:11px 13px;border-bottom:1px solid var(--border);}
+    .chat-panel-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+    .chat-step-badge{background:#eff6ff;color:var(--blue);font-size:10.5px;font-weight:600;padding:2px 9px;border-radius:20px;}
+    .chat-suggestions{padding:8px 10px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:4px;}
+    .sug-btn{padding:3px 9px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);font-size:10.5px;cursor:pointer;}
+    .sug-btn:hover{border-color:var(--blue);color:var(--blue);background:#eff6ff;}
+    .chat-messages{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;}
+    .chat-bubble-row{display:flex;gap:7px;align-items:flex-start;}
+    .chat-bubble-row.user{flex-direction:row-reverse;}
+    .chat-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;}
+    .chat-avatar.ai{background:#eff6ff;}
+    .chat-avatar.user{background:var(--grad);color:#fff;}
+    .chat-bubble{padding:7px 10px;border-radius:9px;font-size:11.5px;line-height:1.6;max-width:185px;}
+    .chat-bubble.ai{background:var(--light);}
+    .chat-bubble.user{background:#eff6ff;color:var(--blue);}
+    .chat-apply-btn{align-self:flex-start;padding:3px 9px;border-radius:5px;border:1.5px solid #bfdbfe;background:#eff6ff;color:var(--blue);font-size:10.5px;cursor:pointer;margin-top:3px;}
+    .chat-input-bar{padding:8px 10px;border-top:1px solid var(--border);display:flex;gap:6px;background:var(--white);}
+    .chat-textarea{flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:'Sora';font-size:12px;background:var(--light);outline:none;resize:none;height:34px;}
+    .chat-textarea:focus{border-color:var(--blue);background:var(--white);}
+    .chat-send-btn{width:32px;height:34px;border-radius:7px;background:var(--grad);border:none;color:#fff;font-size:13px;cursor:pointer;}
+
+    .bottom-bar{background:var(--white);border-top:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;}
+    .bottom-bar-left{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);}
+    .bottom-bar-left .dot{width:8px;height:8px;border-radius:50%;background:#16a34a;}
+    .bottom-actions{display:flex;gap:8px;}
+    .bbtn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;border:none;}
+    .bbtn-outline{background:var(--white);border:1.5px solid var(--border);color:var(--muted);}
+    .bbtn-outline:hover{border-color:var(--blue);color:var(--blue);}
+    .bbtn-green{background:#16a34a;color:#fff;}
+    .bbtn-blue{background:var(--blue);color:#fff;}
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;border-radius:8px;padding:9px 18px;font-size:12px;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;}
+    .toast.show{opacity:1;}
+    .empty-state{text-align:center;padding:48px 20px;color:var(--muted);}
+    .empty-state-icon{font-size:48px;margin-bottom:12px;}
+    .spinner-inline{width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="{% url 'home' %}" class="brand"><div class="brand-icon">🎓</div><div class="brand-name">AI Project Studio</div></a>
+  <div class="topbar-sep"></div>
+  <div class="topbar-title">Data Analysis Engine — {{ project.title }}</div>
+  <div id="analysisBadge" class="status-badge badge-pending">⏳ Pending</div>
+  <a href="{% url 'section_detail' chapter4_first_section_pk %}" class="topbar-back">← Back to Editor</a>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-label">Workflow</div>
+    <a class="nav-item active" onclick="showStep(1)" href="#"><span class="nav-icon">📂</span> Upload CSV</a>
+    <a class="nav-item" onclick="showStep(2)" href="#"><span class="nav-icon">📋</span> Preview Data</a>
+    <a class="nav-item" onclick="showStep(3)" href="#"><span class="nav-icon">📊</span> Statistics</a>
+    <a class="nav-item" onclick="showStep(4)" href="#"><span class="nav-icon">📈</span> Auto Charts</a>
+    <a class="nav-item" onclick="showStep(5)" href="#"><span class="nav-icon">🤖</span> AI Writing (Ch.4)</a>
+    <div class="nav-divider"></div>
+    <a class="nav-item" onclick="showStep(6)" href="#"><span class="nav-icon">🗂</span> My Datasets</a>
+    {% if datasets %}
+    <div style="padding:8px 16px;">
+      <div class="sidebar-label" style="padding:0 0 6px;">Recent</div>
+      {% for ds in datasets %}
+      <div style="font-size:11.5px;color:var(--muted);padding:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📄 {{ ds.name|truncatechars:22 }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </aside>
+
+  <main class="main" id="mainContent">
+    <!-- STEP 1: UPLOAD -->
+    <div id="step1" class="step-panel">
+      <div class="page-title">Auto Data Analysis Engine <span>— Complete Workflow</span></div>
+      <div class="step-grid">
+        <div class="step-card active-step">
+          <div class="step-num">1</div>
+          <div class="step-heading">📂 Upload Dataset</div>
+          <div class="drop-zone" id="dropZone"
+            onclick="document.getElementById('fileInput').click()"
+            ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+            <div class="drop-zone-icon">📂</div>
+            <div class="drop-zone-text">Drop your file here or <span style="color:var(--blue)">browse</span></div>
+            <div class="drop-zone-sub">Supports CSV, XLSX, XLS · Max 10MB</div>
+            <div id="filePill" style="display:none" class="file-pill"><span>📄</span><span id="fileName">—</span><span style="color:#16a34a;margin-left:auto;">✓</span></div>
+          </div>
+          <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display:none" onchange="fileSelected(this)"/>
+          <div id="uploadProgress" style="display:none"><div style="font-size:11.5px;color:var(--muted);margin:8px 0 4px;">Uploading…</div><div class="progress-track"><div class="progress-fill" id="progressBar" style="width:0%"></div></div></div>
+          <div id="uploadSuccess" style="display:none" class="success-pill">✅ File uploaded successfully!</div>
+          <div id="uploadError" class="error-box" style="display:none"></div>
+          <button class="upload-btn" id="uploadBtn" onclick="doUpload()" disabled>Preview Data</button>
+        </div>
+        <div class="step-card">
+          <div class="step-num" style="background:#0891b2;">📁</div>
+          <div class="step-heading">My Datasets</div>
+          {% if datasets %}
+          <div class="dataset-list">
+            {% for ds in datasets %}
+            <div class="dataset-item"><div class="dataset-item-left"><span>📄</span><div><div class="dataset-item-name">{{ ds.name }}</div><div class="dataset-item-meta">{{ ds.uploaded_at|date:"M d, Y" }}</div></div></div><button class="dataset-load-btn" onclick="loadDataset({{ ds.pk }})">Load</button></div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="empty-state" style="padding:24px 0"><div class="empty-state-icon">📭</div><div class="empty-state-text">No datasets yet</div><div class="empty-state-sub">Upload a CSV to get started</div></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: PREVIEW -->
+    <div id="step2" class="step-panel" style="display:none">
+      <div class="page-title">Preview Table <span id="previewSubtitle">— First 10 Rows</span></div>
+      <div class="step-card">
+        <!-- Interactive buttons -->
+        <div style="margin:0 0 12px 0; display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="ai-action-btn" onclick="renameColumn()">✏️ Rename Column</button>
+          <button class="ai-action-btn" onclick="cleanMissingData()">🧹 Clean Missing Data</button>
+          <button class="ai-action-btn" onclick="filterRows()">🔍 Filter Rows</button>
+          <button class="ai-action-btn" onclick="addComputedColumn()">➕ Add Column</button>
+          <button class="ai-action-btn" onclick="aiAssistTransform()">🤖 AI Transform</button>
+        </div>
+        <div class="table-wrap" id="previewTableWrap"><div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Upload a dataset first</div></div></div>
+        <div class="table-meta" id="tableMeta"></div>
+        <div style="margin-top:12px;display:flex;gap:8px;"><button class="ai-action-btn primary" onclick="showStep(3)">→ Generate Statistics</button></div>
+      </div>
+    </div>
+
+    <!-- STEP 3: STATS -->
+    <div id="step3" class="step-panel" style="display:none">
+      <div class="page-title">Statistical Summary</div>
+      <div class="step-card">
+        <div class="stat-boxes" id="statBoxes"><div class="empty-state" style="grid-column:span 4;padding:24px"><div class="empty-state-text">No data yet</div></div></div>
+        <div class="stats-cols" id="statsCols"></div>
+        <div style="margin-top:14px;"><button class="ai-action-btn primary" onclick="showStep(4)">→ Generate Charts</button></div>
+      </div>
+    </div>
+
+    <!-- STEP 4: CHARTS -->
+    <div id="step4" class="step-panel" style="display:none">
+      <div class="page-title">Auto Charts</div>
+      <div class="step-card">
+        <div class="charts-grid" id="chartsGrid"><div class="empty-state" style="grid-column:span 2;padding:24px"><div class="empty-state-text">No data yet</div></div></div>
+        <div style="margin-top:14px;"><button class="ai-action-btn primary" onclick="showStep(5);generateAIWriting()">→ Feed Chapter 4 AI Writing</button></div>
+      </div>
+    </div>
+
+    <!-- STEP 5: AI WRITING -->
+    <div id="step5" class="step-panel" style="display:none">
+      <div class="page-title">Feed Chapter 4 AI Writing</div>
+      <div class="step-card">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600;">Prompt</div>
+        <div style="background:var(--light);border-radius:8px;padding:10px 13px;font-size:12.5px;margin-bottom:14px;">Write Chapter 4: Data Presentation, Analysis and Interpretation based on this dataset.</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600;">AI Generated Chapter 4</div>
+        <div class="ai-writing-area" id="aiWritingArea"><span class="ai-writing-placeholder">Click "Generate Chapter 4" to auto-write your data analysis chapter…</span></div>
+        <div class="ai-actions">
+          <button class="ai-action-btn primary" id="generateBtn" onclick="generateAIWriting()">✦ Generate Chapter 4</button>
+          <button class="ai-action-btn" id="copyBtn" onclick="copyAIWriting()" disabled>📋 Copy</button>
+          <button class="ai-action-btn" id="applyBtn" onclick="applyToChapter4()" disabled>📝 Apply to Chapter 4</button>
+          <button class="ai-action-btn" id="downloadBtn" onclick="downloadDocx()" disabled>⬇ Download DOCX</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6: MY DATASETS -->
+    <div id="step6" class="step-panel" style="display:none">
+      <div class="page-title">My Datasets</div>
+      <div class="step-card">
+        {% if datasets %}
+        <div class="dataset-list">
+          {% for ds in datasets %}
+          <div class="dataset-item">
+            <div class="dataset-item-left"><span style="font-size:20px;">📄</span><div><div class="dataset-item-name">{{ ds.name }}</div><div class="dataset-item-meta">Uploaded {{ ds.uploaded_at|date:"M d, Y H:i" }}</div></div></div>
+            <div style="display:flex;gap:6px;"><button class="dataset-load-btn" onclick="loadDataset({{ ds.pk }})">Analyse</button><button style="padding:4px 10px;border-radius:6px;background:#fef2f2;color:#dc2626;border:none;font-size:11px;font-weight:700;cursor:pointer;" onclick="deleteDataset({{ ds.pk }})">Delete</button></div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">No datasets uploaded yet</div><div class="empty-state-sub">Upload a CSV or Excel file to start analysing</div></div>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+
+  <!-- AI CHAT PANEL -->
+  <aside class="chat-panel">
+    <div class="chat-panel-head">
+      <div class="chat-panel-title">✦ AI Chat <span class="chat-step-badge" id="chatStepBadge">Upload</span></div>
+      <div style="font-size:11px;color:var(--muted);">Improve this step limitlessly</div>
+    </div>
+    <div class="chat-suggestions" id="chatSuggestions"></div>
+    <div class="chat-messages" id="aiChatMessages"></div>
+    <div class="chat-input-bar">
+      <textarea class="chat-textarea" id="aiChatInput" rows="1" placeholder="Ask anything about this step…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIChat();}"></textarea>
+      <button class="chat-send-btn" onclick="sendAIChat()">➤</button>
+    </div>
+  </aside>
+</div>
+
+<div class="bottom-bar" id="bottomBar" style="display:none">
+  <div class="bottom-bar-left"><div class="dot"></div> Analysis Complete! Your data has been analyzed successfully.</div>
+  <div class="bottom-actions">
+    <button class="bbtn bbtn-outline" onclick="exportPDF()">📄 Export PDF</button>
+    <button class="bbtn bbtn-green" onclick="exportCSV()">📊 Export CSV</button>
+    <button class="bbtn bbtn-blue" onclick="saveAnalysis()">💾 Save Analysis</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  const CSRF = "{{ csrf_token }}";
+  const PROJECT_ID = {{ project.pk }};
+  const USER_INITIAL = "{{ request.user.username|first|upper }}";
+  const UPLOAD_URL = "{% url 'upload_dataset' project.pk %}";
+
+  let analysisData = null;
+  let currentDatasetId = null;
+  let selectedFile = null;
+  let chartInstances = [];
+
+  function showStep(n) {
+    document.querySelectorAll('.step-panel').forEach(p => p.style.display = 'none');
+    document.getElementById('step'+n).style.display = 'block';
+    document.querySelectorAll('.nav-item').forEach((el,i) => el.classList.toggle('active', i===n-1));
+    updateChatContext(n);
+    if (n===5 && analysisData && !document.getElementById('aiWritingArea').innerText.includes('Chapter')) generateAIWriting();
+  }
+
+  function fileSelected(input) {
+    const file = input.files[0]; if (!file) return;
+    selectedFile = file;
+    document.getElementById('fileName').textContent = file.name + ' (' + (file.size/1024).toFixed(1) + ' KB)';
+    document.getElementById('filePill').style.display = 'flex';
+    document.getElementById('uploadBtn').disabled = false;
+    document.getElementById('uploadError').style.display = 'none';
+    document.getElementById('uploadSuccess').style.display = 'none';
+  }
+
+  function dragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); }
+  function dragLeave() { document.getElementById('dropZone').classList.remove('dragover'); }
+  function dropFile(e) {
+    e.preventDefault(); dragLeave();
+    const file = e.dataTransfer.files[0]; if (!file) return;
+    const dt = new DataTransfer(); dt.items.add(file);
+    document.getElementById('fileInput').files = dt.files;
+    fileSelected(document.getElementById('fileInput'));
+  }
+
+  async function doUpload() {
+    if (!selectedFile) return;
+    const btn = document.getElementById('uploadBtn');
+    btn.disabled = true; btn.textContent = 'Uploading…';
+    document.getElementById('uploadProgress').style.display = 'block';
+    let prog = 0;
+    const iv = setInterval(() => { prog = Math.min(prog+12,85); document.getElementById('progressBar').style.width = prog+'%'; }, 120);
+    const fd = new FormData(); fd.append('file', selectedFile); fd.append('csrfmiddlewaretoken', CSRF);
+    try {
+      const res = await fetch(UPLOAD_URL, { method: 'POST', headers: { 'X-CSRFToken': CSRF }, body: fd });
+      clearInterval(iv); document.getElementById('progressBar').style.width = '100%';
+      if (res.ok) {
+        const data = await res.json();
+        currentDatasetId = data.dataset_id;
+        analysisData = data.analysis;
+        document.getElementById('uploadSuccess').style.display = 'flex';
+        document.getElementById('uploadProgress').style.display = 'none';
+        btn.textContent = '✓ Uploaded — View Preview'; btn.disabled = false;
+        btn.onclick = () => { renderPreview(); renderStats(); renderCharts(); showStep(2); };
+        document.getElementById('analysisBadge').className = 'status-badge badge-done';
+        document.getElementById('analysisBadge').textContent = '✓ Analysis Ready';
+        document.getElementById('bottomBar').style.display = 'flex';
+        showToast('Dataset uploaded and analysed ✓');
+        addAIChatBubble('assistant', `✅ Dataset uploaded! ${analysisData.total_rows||0} rows × ${analysisData.total_cols||0} columns detected.`);
+      } else { const err = await res.json().catch(()=>({})); showUploadError(err.error||'Upload failed'); btn.disabled=false; btn.textContent='Preview Data'; document.getElementById('uploadProgress').style.display='none'; }
+    } catch(e) { clearInterval(iv); showUploadError('Network error'); btn.disabled=false; btn.textContent='Preview Data'; document.getElementById('uploadProgress').style.display='none'; }
+  }
+  function showUploadError(msg) { const el=document.getElementById('uploadError'); el.textContent='⚠ '+msg; el.style.display='block'; }
+
+  async function loadDataset(id) {
+    showToast('Loading dataset...');
+    try {
+      const res = await fetch(`/research/api/load-dataset/${id}/`);
+      const data = await res.json();
+      if (data.analysis) {
+        currentDatasetId = data.dataset_id;
+        refreshUI(data.analysis);
+        document.getElementById('analysisBadge').className = 'status-badge badge-done';
+        document.getElementById('analysisBadge').textContent = '✓ Data Ready';
+        document.getElementById('bottomBar').style.display = 'flex';
+        showStep(2);
+      } else showToast('Failed to load dataset');
+    } catch(e) { showToast('Network error'); }
+  }
+
+  async function deleteDataset(id) {
+    if (!confirm('Delete this dataset?')) return;
+    await fetch('/research/api/delete-dataset/'+id+'/', { method: 'POST', headers: { 'X-CSRFToken': CSRF } });
+    showToast('Deleted'); location.reload();
+  }
+
+  function refreshUI(analysis) {
+    analysisData = analysis;
+    renderPreview(); renderStats(); renderCharts();
+    showToast('Dataset updated successfully');
+  }
+
+  async function renameColumn() {
+    const oldName = prompt('Column name to rename:'); if (!oldName) return;
+    const newName = prompt('New column name:'); if (!newName) return;
+    const res = await fetch(`/research/api/rename-column/${currentDatasetId}/`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ old_name: oldName, new_name: newName })
+    });
+    const data = await res.json();
+    if (data.success) refreshUI(data.analysis); else showToast(data.error || 'Rename failed');
+  }
+
+  async function cleanMissingData() {
+    const method = confirm('Drop rows with any missing values? (Cancel = fill numeric medians)') ? 'drop_rows' : 'fill_median';
+    const res = await fetch(`/research/api/clean-dataset/${currentDatasetId}/`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ method })
+    });
+    const data = await res.json();
+    if (data.success) { showToast(`Removed ${data.rows_removed} rows with missing data`); refreshUI(data.analysis); }
+    else showToast(data.error || 'Clean failed');
+  }
+
+  async function filterRows() {
+    const col = prompt('Column to filter:'); if (!col) return;
+    const op = prompt('Operator (>, <, >=, <=, ==)');
+    const val = prompt('Value (numeric)'); if (!val) return;
+    const res = await fetch(`/research/api/transform-dataset/${currentDatasetId}/`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ operation: 'filter', column: col, operator: op, value: parseFloat(val) })
+    });
+    const data = await res.json();
+    if (data.success) refreshUI(data.analysis); else showToast(data.error || 'Filter failed');
+  }
+
+  async function addComputedColumn() {
+    const newCol = prompt('New column name:'); if (!newCol) return;
+    const expr = prompt('Expression (e.g., "math + english" or "score * 0.1")'); if (!expr) return;
+    const res = await fetch(`/research/api/transform-dataset/${currentDatasetId}/`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ operation: 'add_column', new_column: newCol, expression: expr })
+    });
+    const data = await res.json();
+    if (data.success) refreshUI(data.analysis); else showToast(data.error || 'Add column failed');
+  }
+
+  async function aiAssistTransform() {
+    const instruction = prompt('What transformation would you like? (e.g., "remove rows where score < 50 and create a column called grade")');
+    if (!instruction) return;
+    showToast('🤖 AI is generating transformation code...');
+    const res = await fetch(`/research/api/ai-assist-dataset/${currentDatasetId}/`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ instruction })
+    });
+    const data = await res.json();
+    if (data.success) { showToast(`✅ AI applied: ${data.code.substring(0,100)}...`); refreshUI(data.analysis); }
+    else showToast(data.error || 'AI transformation failed');
+  }
+
+  function renderPreview() {
+    const d = analysisData; if (!d || !d.preview) return;
+    const cols = d.columns, rows = d.preview;
+    let html = '<table class="data-table"><thead><tr>';
+    cols.forEach(c => html += `<th>${c}</th>`);
+    html += '</tr></thead><tbody>';
+    rows.forEach(row => { html += '<tr>'; cols.forEach(c => html += `<td>${row[c] ?? '—'}</td>`); html += '</tr>'; });
+    html += '</tbody></table>';
+    document.getElementById('previewTableWrap').innerHTML = html;
+    document.getElementById('tableMeta').textContent = `Total Rows: ${d.total_rows} | Total Columns: ${d.total_cols}`;
+    document.getElementById('previewSubtitle').textContent = `— First ${Math.min(10, rows.length)} Rows`;
+  }
+
+  function renderStats() {
+    const d = analysisData; if (!d || !d.stats) return;
+    const s = d.stats;
+    document.getElementById('statBoxes').innerHTML = `
+      <div class="stat-box"><div class="stat-box-label">Total ${d.count_label||'Records'}</div><div class="stat-box-val">${d.total_rows}</div><div class="stat-box-sub">Count</div></div>
+      <div class="stat-box"><div class="stat-box-label">Average ${s.mean_label||''}</div><div class="stat-box-val" style="color:var(--purple)">${s.mean!=null?Number(s.mean).toFixed(2):'—'}</div><div class="stat-box-sub">Mean</div></div>
+      <div class="stat-box"><div class="stat-box-label">Highest</div><div class="stat-box-val" style="color:var(--green)">${s.max??'—'}</div><div class="stat-box-sub">Max</div></div>
+      <div class="stat-box"><div class="stat-box-label">Lowest</div><div class="stat-box-val" style="color:var(--red)">${s.min??'—'}</div><div class="stat-box-sub">Min</div></div>
+    `;
+    let colsHtml = '';
+    if (s.distribution) {
+      colsHtml += `<div><div class="mini-title">Distribution</div><table class="mini-table"><thead><tr><th>Category</th><th>Count</th><th>%</th></tr></thead><tbody>`;
+      Object.entries(s.distribution).forEach(([k,v]) => colsHtml += `<tr><td>${k}</td><td>${v}</td><td>${((v/d.total_rows)*100).toFixed(1)}%</td></tr>`);
+      colsHtml += `</tbody></table></div>`;
+    }
+    if (s.extra) {
+      colsHtml += `<div><div class="mini-title">Additional Stats</div><table class="mini-table"><tbody>`;
+      Object.entries(s.extra).forEach(([k,v]) => colsHtml += `<tr><td>${k}</td><td style="font-weight:700">${v}</td></tr>`);
+      colsHtml += `</tbody></table></div>`;
+    }
+    document.getElementById('statsCols').innerHTML = colsHtml;
+  }
+
+  function renderCharts() {
+    const d = analysisData; if (!d || !d.charts) return;
+    chartInstances.forEach(c => c.destroy()); chartInstances = [];
+    const grid = document.getElementById('chartsGrid'); grid.innerHTML = '';
+    d.charts.forEach((chart,i) => {
+      const box = document.createElement('div'); box.className = 'chart-box';
+      box.innerHTML = `<div class="chart-box-title">${chart.title}</div><div class="chart-canvas-wrap"><canvas id="chart${i}"></canvas></div>`;
+      grid.appendChild(box);
+      requestAnimationFrame(() => {
+        const ctx = document.getElementById(`chart${i}`).getContext('2d');
+        const colors = ['#2563eb','#7c3aed','#16a34a','#dc2626','#f59e0b','#0891b2'];
+        const bgColors = chart.labels.map((_,j) => colors[j%colors.length]);
+        const isPie = chart.type === 'pie' || chart.type === 'doughnut';
+        const instance = new Chart(ctx, {
+          type: chart.type || 'bar',
+          data: { labels: chart.labels, datasets: [{ label: chart.dataset_label||'', data: chart.data, backgroundColor: isPie ? bgColors : colors[i%colors.length]+'99', borderColor: isPie ? bgColors : colors[i%colors.length], borderWidth:1.5, borderRadius: chart.type==='bar'?4:0 }] },
+          options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:isPie, position:'bottom', labels:{ font:{family:'Sora',size:9}, boxWidth:10, padding:6 } } }, scales: isPie ? {} : { x:{ ticks:{font:{family:'Sora',size:9},maxRotation:30}, grid:{display:false} }, y:{ ticks:{font:{family:'Sora',size:9}}, grid:{color:'#f0f0f0'} } } }
+        });
+        chartInstances.push(instance);
+      });
+    });
+  }
+
+  async function generateAIWriting() {
+    if (!analysisData) { showToast('Upload a dataset first!'); return; }
+    const btn = document.getElementById('generateBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span> Generating…';
+    document.getElementById('aiWritingArea').innerHTML = '<span class="ai-writing-placeholder">AI is writing your Chapter 4…</span>';
+    try {
+      const res = await fetch('/research/api/generate-chapter4/', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({ project_id: PROJECT_ID, dataset_id: currentDatasetId, analysis: analysisData })
+      });
+      const data = await res.json();
+      if (res.ok && data.content) {
+        document.getElementById('aiWritingArea').textContent = data.content;
+        ['copyBtn','applyBtn','downloadBtn'].forEach(id => { const el=document.getElementById(id); if(el) el.disabled=false; });
+        showToast('Chapter 4 generated ✓');
+        addAIChatBubble('assistant', 'Chapter 4 has been generated! Use the chat to refine it.');
+      } else { showToast(data.error || 'Generation failed'); }
+    } catch { showToast('Network error'); }
+    btn.disabled = false; btn.innerHTML = '✦ Regenerate';
+  }
+
+  async function applyToChapter4() {
+    const content = document.getElementById('aiWritingArea').textContent;
+    if (!content || content.includes('Generate')) { showToast('Generate content first!'); return; }
+    try {
+      const res = await fetch('/research/api/apply-chapter4/', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({ project_id: PROJECT_ID, content })
+      });
+      const data = await res.json();
+      if (res.ok) { showToast('Applied to Chapter 4 ✓'); setTimeout(() => window.location.href = data.redirect_url, 1200); }
+      else showToast(data.error || 'Failed');
+    } catch { showToast('Network error'); }
+  }
+
+  function copyAIWriting() { navigator.clipboard.writeText(document.getElementById('aiWritingArea').textContent).then(()=>showToast('Copied ✓')); }
+  function downloadDocx() { showToast('DOCX download coming soon!'); }
+  function exportPDF() { showToast('PDF export coming soon!'); }
+  function exportCSV() { if (currentDatasetId) window.location.href = '/research/api/export-dataset/' + currentDatasetId + '/'; }
+  function saveAnalysis() { showToast('Analysis saved ✓'); }
+  function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+
+  const STEP_CONTEXT = { 1:{name:'Upload',suggestions:['Check file quality','What columns do I need?','Spot any issues']}, 2:{name:'Preview',suggestions:['Data quality issues?','Key columns?','Suggest cleaning steps']}, 3:{name:'Statistics',suggestions:['Interpret the mean','Any outliers?','Summarise stats']}, 4:{name:'Charts',suggestions:['Describe chart 1','What trends?','Improve chart labels']}, 5:{name:'AI Writing',suggestions:['Improve the writing','Add APA citations','Make it more formal','Add Nigerian context']}, 6:{name:'Datasets',suggestions:['Which dataset is best?','Data cleaning tips']} };
+  function updateChatContext(step) { const ctx=STEP_CONTEXT[step]||STEP_CONTEXT[1]; document.getElementById('chatStepBadge').textContent=ctx.name; document.getElementById('chatSuggestions').innerHTML=ctx.suggestions.map(s=>`<button class="sug-btn" onclick="sendAIChatMsg('${s}')">${s}</button>`).join(''); }
+
+  function addAIChatBubble(role, text) {
+    const box = document.getElementById('aiChatMessages');
+    const isAI = role === 'assistant';
+    const row = document.createElement('div'); row.className = 'chat-bubble-row' + (isAI ? '' : ' user');
+    const avatar = document.createElement('div'); avatar.className = 'chat-avatar ' + (isAI ? 'ai' : 'user'); avatar.textContent = isAI ? '🤖' : USER_INITIAL;
+    const wrapper = document.createElement('div'); wrapper.style.cssText = 'display:flex;flex-direction:column;gap:3px;';
+    const bubble = document.createElement('div'); bubble.className = 'chat-bubble ' + (isAI ? 'ai' : 'user'); bubble.textContent = text;
+    wrapper.appendChild(bubble);
+    if (isAI && text !== '⏳ Thinking…') {
+      const applyBtn = document.createElement('button'); applyBtn.className = 'chat-apply-btn'; applyBtn.textContent = '✦ Apply to AI Writing';
+      applyBtn.onclick = () => { const area=document.getElementById('aiWritingArea'); if(area) area.textContent=text; showToast('Applied to AI Writing ✓'); };
+      wrapper.appendChild(applyBtn);
+    }
+    row.appendChild(avatar); row.appendChild(wrapper); box.appendChild(row); box.scrollTop = box.scrollHeight;
+  }
+
+  async function sendAIChatMsg(msg) { document.getElementById('aiChatInput').value = msg; await sendAIChat(); }
+  async function sendAIChat() {
+    const input = document.getElementById('aiChatInput'); const msg = input.value.trim(); if (!msg) return;
+    input.value = '';
+    addAIChatBubble('user', msg);
+    const loadId = addAIChatBubble('assistant', '⏳ Thinking…');
+    const context = analysisData ? `Dataset: ${analysisData.total_rows} rows, columns: ${(analysisData.columns||[]).join(', ')}.` : 'No dataset loaded.';
+    const currentStep = document.querySelector('.nav-item.active')?.textContent?.trim() || 'Upload';
+    try {
+      const res = await fetch('/research/api/data-analysis-chat/', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({ project_id: PROJECT_ID, message: msg, context, step: currentStep })
+      });
+      const data = await res.json();
+      document.getElementById(loadId)?.closest('.chat-bubble-row')?.remove();
+      addAIChatBubble('assistant', data.reply || data.error || 'No response');
+    } catch { document.getElementById(loadId)?.closest('.chat-bubble-row')?.remove(); addAIChatBubble('assistant', '⚠️ Network error'); }
+  }
+
+  updateChatContext(1);
+  addAIChatBubble('assistant', "Hi! Upload your dataset and I'll help you analyse and improve every step — limitlessly.");
+  {% if initial_analysis %}
+  analysisData = {{ initial_analysis|safe }};
+  currentDatasetId = {{ initial_dataset_id|default:'null' }};
+  renderPreview(); renderStats(); renderCharts();
+  document.getElementById('analysisBadge').className = 'status-badge badge-done';
+  document.getElementById('analysisBadge').textContent = '✓ Analysis Ready';
+  document.getElementById('bottomBar').style.display = 'flex';
+  {% endif %}
+</script>
+</body>
+</html>
