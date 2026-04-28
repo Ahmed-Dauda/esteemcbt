@@ -124,8 +124,11 @@ button:hover { background: #0b5ed7; }
           </div>
           <!-- Timer -->
           <div class="col-12 col-md-4" style="padding: 10px;">
+
             <p style="color: red; text-align: center;">
+              <span id="screenshotCount">0</span> / {{ course.num_attemps }} screenshot attempts detected. <br>
               <span id="tabCount">0</span> / {{ course.num_attemps }} attempts to leave the exam page detected.
+              <!-- Add this right below the tabCount line in your sticky header -->
             </p>
             <div id="timer" style="font-size: 24px; font-weight: bold; color: #333; text-align: center; margin: 10px 0;">00:00</div>
           </div>
@@ -463,17 +466,23 @@ function doSubmit(reason) {
     data: JSON.stringify(storedAnswers),
     success: function (response) {
       console.log("Submit response:", response);
+      
+      localStorage.removeItem('screenshotCount_{{ course.id }}');
       localStorage.removeItem('quizAnswers');
       localStorage.removeItem('lastVisitedPage');
       localStorage.removeItem('tabSwitchCount');
       localStorage.removeItem(courseTimerKey);
       localStorage.removeItem('quizStartedForCourse_{{ course.id }}');
       localStorage.removeItem('examFullscreen');
-
-      const msg = reason === 'timeout'    ? "Time's up! Your exam has been submitted."
-                : reason === 'tabswitch'  ? "Exam submitted due to tab switching limit."
-                : reason === 'fullscreen' ? "Exam submitted due to fullscreen violations."
-                :                          "Quiz submitted successfully!";
+      // In your existing doSubmit() function, update the msg block:
+    const msg = reason === 'timeout'     ? "Time's up! Your exam has been submitted."
+              : reason === 'tabswitch'   ? "Exam submitted due to tab switching limit."
+              : reason === 'fullscreen'  ? "Exam submitted due to fullscreen violations."
+              : reason === 'screenshot'  ? "Exam submitted due to repeated screenshot attempts."
+              : reason === 'screenshot' ? "Exam submitted due to repeated screenshot attempts."
+              : reason === 'screenshot' ? "Exam submitted due to repeated screenshot attempts."
+              :                           "Quiz submitted successfully!";
+              
       alert(msg);
       window.location.href = "{% url 'student:view_result' %}";
     },
@@ -666,6 +675,56 @@ function dragElement(elmnt) {
     };
   };
 }
+
+
+// ── Screenshot Detection ─────────────────────────────────────
+// ── Screenshot Detection (PrintScreen) ───────────────────────
+let screenshotCount = parseInt(localStorage.getItem('screenshotCount_{{ course.id }}')) || 0;
+const screenshotLimit = {{ course.num_attemps }};
+
+function updateScreenshotDisplay() {
+  const el = document.getElementById('screenshotCount');
+  if (el) el.textContent = screenshotCount;
+}
+
+document.addEventListener('keyup', function(e) {
+  if (e.key !== 'PrintScreen') return;
+  if (examAlreadySubmitted) return;
+
+  // Clear clipboard immediately
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText('').catch(() => {});
+  }
+
+  screenshotCount++;
+  localStorage.setItem('screenshotCount_{{ course.id }}', screenshotCount);
+  updateScreenshotDisplay();
+
+  // Voice warning
+  if ('speechSynthesis' in window) {
+    const msg = new SpeechSynthesisUtterance(
+      `Screenshot attempt ${screenshotCount} of ${screenshotLimit} detected. ${studentName}`
+    );
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(msg);
+  }
+
+  // Submit if limit reached
+  if (screenshotCount >= screenshotLimit) {
+    localStorage.removeItem('screenshotCount_{{ course.id }}');
+    alert(`❌ ${screenshotCount}/${screenshotLimit} screenshot attempts detected. Your exam is being submitted.`);
+    doSubmit('screenshot');
+    return;
+  }
+
+  const remaining = screenshotLimit - screenshotCount;
+  alert(`⚠️ Screenshot attempt ${screenshotCount}/${screenshotLimit} detected.\n${remaining} attempt(s) remaining before your exam is auto-submitted.`);
+});
+
+// Init display on page load
+$(document).ready(function() {
+  updateScreenshotDisplay();
+});
 </script>
 
 {% endblock %}

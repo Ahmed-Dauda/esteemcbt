@@ -295,10 +295,10 @@
           <td>
             <a href="{% url 'teacher:edit_teacher_results' course.id result.id %}" class="btn btn-sm btn-warning mb-1">Edit</a>
             <a href="{% url 'teacher:delete_teacher_result' course.id result.id %}" 
-   class="btn btn-sm btn-danger"
-   onclick="return confirm('Are you sure you want to delete the result for {{ result.student.first_name }} {{ result.student.last_name }}? This action cannot be undone.');">
-   Delete
-</a>
+              class="btn btn-sm btn-danger"
+              onclick="return confirm('Are you sure you want to delete the result for {{ result.student.first_name }} {{ result.student.last_name }}? This action cannot be undone.');">
+              Delete
+            </a>
            </td>
         </tr>
         {% endfor %}

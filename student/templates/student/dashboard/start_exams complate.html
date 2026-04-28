@@ -14,8 +14,6 @@
 <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.5/js/jquery.dataTables.min.js"></script>
-<!-- Add to your <head> -->
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 <style>
 div.quiz p { text-align: left; }
@@ -144,7 +142,7 @@ button:hover { background: #0b5ed7; }
 
   <table id="example" class="display question-table" style="width:98%;">
     <thead><tr></tr></thead>
-    <tbody onclick="openFullscreen()" style="user-select: noe;">
+    <tbody onclick="openFullscreen()" style="user-select: none;">
       {% for q in page_obj %}
       <tr>
         <td colspan="4">
@@ -668,6 +666,9 @@ function dragElement(elmnt) {
     };
   };
 }
+
+
+
 </script>
 
 {% endblock %}

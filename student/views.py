@@ -4323,16 +4323,6 @@ def check_result_exists(profile, course):
         exam_type=course.exam_type,
     ).exists()
 
-# @sync_to_async
-# def check_result_exists(profile, course):
-#     """
-#     .exists() does NOT need select_related / only
-#     """
-#     return Result.objects.filter(
-#         student=profile,
-#         exam=course
-#     ).exists()
-
 
 async def get_course_question_ids(course):
     question_ids_qs = Question.objects.filter(course=course).values_list('id', flat=True)
