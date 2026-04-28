@@ -1,178 +1,82 @@
 {% load crispy_forms_tags %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Edit Class Assignment</title>
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% block title %}Manage Course Questions{% endblock %}
+{% block content %}
 
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <!-- Select2 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
-  <style>
-    .form-label { font-weight: 600; }
-    .row.flex-form { display: flex; flex-wrap: wrap; gap: 20px; }
-    .row.flex-form > .col-md-6 { flex: 1 1 45%; min-width: 300px; }
-    .submit-btn { padding: 12px 40px; font-size: 16px; font-weight: 600; }
-    .select2-container--default .select2-selection--multiple {
-      border: 1px solid #ced4da;
-      border-radius: .375rem;
-      padding: .4rem;
-      min-height: 42px;
-    }
-    .select2-dropdown { z-index: 2000; } /* Prevent overlap issues */
-    @media (max-width: 768px) { .row.flex-form > .col-md-6 { flex: 1 1 100%; } }
-
-    /* Replace × with a visible checkbox checkmark */
+.form-label { font-weight: 600; }
+.submit-btn { padding: 12px 40px; font-size: 16px; font-weight: 600; }
+.select2-container--default .select2-selection--multiple { border: 1px solid #ced4da; border-radius: .375rem; padding: .4rem; min-height: 42px; }
+.select2-dropdown { z-index: 2000; }
+/* Custom Checkmark for Select2 */
 .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
-  font-size: 0;               /* hides the × character */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 17px;
-  height: 17px;
-  min-width: 17px;
-  margin-right: 6px;
-  border: 2px solid white;
-  border-radius: 3px;
-  background-color: white;
-  cursor: pointer;
-  vertical-align: middle;
+font-size: 0; display: inline-flex; align-items: center; justify-content: center;
+width: 17px; height: 17px; margin-right: 6px; border: 2px solid white;
+border-radius: 3px; background-color: white; cursor: pointer;
 }
-
-/* The visible checkmark */
 .select2-container--default .select2-selection--multiple .select2-selection__choice__remove::after {
-  content: '✔';
-  font-size: 11px;
-  color: #0d6efd;
-  line-height: 1;
+content: '✔'; font-size: 11px; color: #0d6efd;
 }
-
-/* Hover — turns red to signal removal */
 .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
-  background-color: #dc3545;
-  border-color: white;
+background-color: #dc3545;
 }
 .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover::after {
-  color: white;
+color: white;
 }
-  </style>
-</head>
-<body>
+.alert.hide { opacity: 0; transition: opacity 0.3s ease-out; }
+
 
 {% if messages %}
-<div class="container mt-3">
-  {% for message in messages %}
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  {% endfor %}
-</div>
+{% for message in messages %}
 
-<script>
-  // Wait for DOM to load
-  document.addEventListener('DOMContentLoaded', function () {
-    // Auto-dismiss alerts after 5 seconds
-    setTimeout(function() {
-      const alerts = document.querySelectorAll('.alert');
-      alerts.forEach(function(alert) {
-        // Add fade out class
-        alert.classList.remove('show');
-        alert.classList.add('hide'); // optional if you want CSS fade
+{{ message }}
 
-        // Actually remove the element after transition (300ms)
-        setTimeout(function() {
-          alert.remove();
-        }, 300);
-      });
-    }, 5000); // 5000 ms = 5 seconds
-  });
-</script>
 
-<style>
-  .alert.hide {
-    opacity: 0;
-    transition: opacity 0.3s ease-out;
-  }
-</style>
+{% endfor %}
 {% endif %}
 
 
-<div class="container mt-5">
-  <div class="card shadow-lg border-0 rounded-4">
+Edit Class Assignment: {{ course_grade.name }}
 
-    <div class="card-header bg-primary text-white text-center rounded-top-4">
-      <h4 class="mb-0">
-        Edit Class Assignment: <strong>{{ course_grade.name }}</strong>
-      </h4>
-      
-    </div>
-    <button class="btn btn-success btn-lg submit-btn">
-<a class="btn  text-white" href="{% url 'teacher:examiner_dashboard' %}">Back  manage subjects</a>      
-    </button>
-<div class="card-body px-4 py-5">
-  <form method="post">
-    {% csrf_token %}
 
-   <div class="form-group mb-3">
-
-    <div class="form-group mb-3">
-  <label>{{ form.subjects.label }}</label>
-  {{ form.subjects }}
-</div>
- <div class="text-center mt-4">
-      <button type="submit" class="btn btn-success btn-lg submit-btn">Save Changes</button>
-  </div>
-<div class="form-group mb-3">
-  <label>{{ form.students.label }}</label>
-  {{ form.students }}
-</div>
-
-   <div class="text-center mt-4">
-      <button type="submit" class="btn btn-success btn-lg submit-btn">Update students record</button>
-    </div> 
-  </form>
-</div>
-
-  </div>
-</div>
+Back to Subjects
 
 
 
-<!-- jQuery (required for Select2) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{% csrf_token %}
 
-<!-- Select2 JS -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-<script>
-  $(document).ready(function() {
-    $('.select2').select2({
-      placeholder: "Search and select...",
-      closeOnSelect: false,
-      allowClear: true,
-      width: '100%',
-      hideSelected: false,
-    });
 
-    // Keep already-selected items visible and checked when dropdown opens
-    $('.select2').on('select2:open', function() {
-      // Small delay to let the dropdown render
-      setTimeout(function() {
-        $('.select2-results__option').each(function() {
-          const val = $(this).data('data') && $(this).data('data').id;
-          if (!val) return;
-          const isSelected = $('option[value="' + val + '"]', $(this).closest('.select2-container').prev('select')).is(':selected');
-          if (isSelected) {
-            $(this).attr('aria-selected', 'true');
-          }
-        });
-      }, 50);
-    });
-  });
-</script>
-</body>
-</html>
+{{ form.subjects.label }}
+{{ form.subjects }}
+{% if form.subjects.errors %}{{ form.subjects.errors }}{% endif %}
+
+
+{{ form.students.label }}
+{{ form.students }}
+{% if form.students.errors %}{{ form.students.errors }}{% endif %}
+
+
+
+Update Assignment Record
+
+
+
+
+
+
+
+
+(document).ready(function() { // Initialize Select2 on form fields ('select[multiple]').select2({
+placeholder: "Search and select...",
+closeOnSelect: false,
+allowClear: true,
+width: '100%'
+});
+// Auto-dismiss alerts
+setTimeout(function() {
+('.alert').fadeOut(500, function() { (this).remove();
+});
+}, 5000);
+});
+
+{% endblock %}
