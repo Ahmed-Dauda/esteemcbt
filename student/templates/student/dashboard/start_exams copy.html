@@ -16,6 +16,10 @@
 <script src="https://cdn.datatables.net/1.10.5/js/jquery.dataTables.min.js"></script>
 
 <style>
+  @media print {
+    body { display: none; }
+}
+
 div.quiz p { text-align: left; }
 .quiz p { text-align: left; }
 .quiz {
@@ -124,11 +128,11 @@ button:hover { background: #0b5ed7; }
           </div>
           <!-- Timer -->
           <div class="col-12 col-md-4" style="padding: 10px;">
-            <p style="margin:0; font-size:12px;">
-              📸 Screenshots: <span id="screenshotCountDisplay">0</span> / {{ course.num_attemps }}
-            </p>
+
             <p style="color: red; text-align: center;">
+              <span id="screenshotCount">0</span> / {{ course.num_attemps }} screenshot attempts detected. <br>
               <span id="tabCount">0</span> / {{ course.num_attemps }} attempts to leave the exam page detected.
+              <!-- Add this right below the tabCount line in your sticky header -->
             </p>
             <div id="timer" style="font-size: 24px; font-weight: bold; color: #333; text-align: center; margin: 10px 0;">00:00</div>
           </div>
@@ -319,25 +323,9 @@ button:hover { background: #0b5ed7; }
 <!--  ALL JAVASCRIPT                                              -->
 <!-- ============================================================ -->
 <script>
-
-// ── Helper for CSRF token ─────────────────────────────────
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-// ── DataTable ────────────────────────────────────────────
+// ── DataTable ────────────────────────────────────────────────
 $.fn.dataTable.ext.errMode = 'none';
+
 var table = $('#example').DataTable({
   pageLength: 1,
   lengthChange: false,
@@ -347,10 +335,11 @@ var table = $('#example').DataTable({
   pagingType: "simple",
   columnDefs: [{ orderable: false, targets: [1, 2, 3] }]
 });
+
 const lastPage = parseInt(localStorage.getItem('lastVisitedPage') || 0);
 table.page(lastPage).draw(false);
 
-// ── Pagination ───────────────────────────────────────────
+// ── Pagination ───────────────────────────────────────────────
 function renderCustomPagination(tableInstance) {
   const pageInfo    = tableInstance.page.info();
   const totalPages  = pageInfo.pages;
@@ -429,7 +418,8 @@ $(document).on('keydown', function (e) {
   }
 });
 
-// ── Timer ────────────────────────────────────────────────
+
+// ── Timer ────────────────────────────────────────────────────
 $(document).ready(function () {
   const timerElement   = document.getElementById('timer');
   const courseTimerKey = 'remainingTime_{{ course.id }}';
@@ -456,7 +446,8 @@ $(document).ready(function () {
   }, 1000);
 });
 
-// ── Core submit function (with CSRF token) ───────────────
+
+// ── Core submit function (single source of truth) ────────────
 let isManuallySubmitting = false;
 let examAlreadySubmitted = false;
 
@@ -476,39 +467,44 @@ function doSubmit(reason) {
     type: "POST",
     url: "/student/calculate_marks",
     contentType: "application/json",
-    headers: { 'X-CSRFToken': getCookie('csrftoken') },  // ✅ CSRF fix
     data: JSON.stringify(storedAnswers),
     success: function (response) {
       console.log("Submit response:", response);
-      localStorage.removeItem('quizAnswers');
+      
       localStorage.removeItem('screenshotCount_{{ course.id }}');
-      localStorage.removeItem('blurCount');
+      localStorage.removeItem('quizAnswers');
       localStorage.removeItem('lastVisitedPage');
       localStorage.removeItem('tabSwitchCount');
       localStorage.removeItem(courseTimerKey);
       localStorage.removeItem('quizStartedForCourse_{{ course.id }}');
       localStorage.removeItem('examFullscreen');
-
-      const msg = reason === 'timeout'    ? "Time's up! Your exam has been submitted."
-                : reason === 'tabswitch'  ? "Exam submitted due to tab switching limit."
-                : reason === 'fullscreen' ? "Exam submitted due to fullscreen violations."
-                :                          "Quiz submitted successfully!";
+      // In your existing doSubmit() function, update the msg block:
+    const msg = reason === 'timeout'     ? "Time's up! Your exam has been submitted."
+              : reason === 'tabswitch'   ? "Exam submitted due to tab switching limit."
+              : reason === 'fullscreen'  ? "Exam submitted due to fullscreen violations."
+              : reason === 'screenshot'  ? "Exam submitted due to repeated screenshot attempts."
+              : reason === 'screenshot' ? "Exam submitted due to repeated screenshot attempts."
+              : reason === 'screenshot' ? "Exam submitted due to repeated screenshot attempts."
+              :                           "Quiz submitted successfully!";
+              
       alert(msg);
       window.location.href = "{% url 'student:view_result' %}";
     },
     error: function (xhr, status, error) {
       examAlreadySubmitted = false; // allow retry on error
       console.error("Submission error:", xhr.responseText);
-      alert("Submission failed: " + (xhr.responseJSON?.error || "Please try again."));
+      alert("Submission failed. Please try again.");
     }
   });
 }
 
+// Convenience aliases
 function manualSubmitQuiz()   { doSubmit('manual'); }
 function submitQuiz()         { doSubmit('timeout'); }
 function inactivesubmitQuiz() { doSubmit('tabswitch'); }
 
-// ── Single submit button ─────────────────────────────────
+
+// ── Single submit button listener ───────────────────────────
 document.getElementById('submit').addEventListener('click', function () {
   if (!confirm("Are you sure you want to submit the quiz?")) return;
   isManuallySubmitting = true;
@@ -516,7 +512,8 @@ document.getElementById('submit').addEventListener('click', function () {
   doSubmit('manual');
 });
 
-// ── Tab switch detection (fixed) ─────────────────────────
+
+// ── Tab switch detection ─────────────────────────────────────
 let tabSwitchCount    = parseInt(localStorage.getItem('tabSwitchCount')) || 0;
 const tabLimit        = {{ tab_limit }};
 const tabCountDisplay = document.getElementById('tabCount');
@@ -544,7 +541,7 @@ document.addEventListener("visibilitychange", function () {
   }
 
   if (tabSwitchCount >= tabLimit) {
-    // ✅ FIXED: Do NOT set examAlreadySubmitted here
+    examAlreadySubmitted = true;
     setTimeout(function () {
       alert('Exam will be submitted due to tab switching limit reached.');
       doSubmit('tabswitch');
@@ -553,76 +550,7 @@ document.addEventListener("visibilitychange", function () {
 });
 
 
-// ── Screenshot Detection (PrintScreen) ───────────────────────
-let screenshotCount = parseInt(localStorage.getItem('screenshotCount_{{ course.id }}')) || 0;
-const screenshotLimit = {{ course.num_attemps }};
-
-function updateScreenshotDisplay() {
-  const el = document.getElementById('screenshotCountDisplay');
-  if (el) el.textContent = screenshotCount;
-}
-
-document.addEventListener('keyup', function(e) {
-  // PrintScreen key detection (key 'PrintScreen' or code 'PrintScreen')
-  if (e.key !== 'PrintScreen' && e.code !== 'PrintScreen') return;
-  if (examAlreadySubmitted || isManuallySubmitting) return;
-
-  // Clear clipboard immediately (prevents saving screenshot)
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText('').catch(() => {});
-  }
-
-  screenshotCount++;
-  localStorage.setItem('screenshotCount_{{ course.id }}', screenshotCount);
-  updateScreenshotDisplay();
-
-  // Voice warning
-  if ('speechSynthesis' in window) {
-    const msg = new SpeechSynthesisUtterance(
-      `Screenshot attempt ${screenshotCount} of ${screenshotLimit} detected. ${studentName}`
-    );
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(msg);
-  }
-
-  // Auto‑submit when limit reached
-  if (screenshotCount >= screenshotLimit) {
-    // Clean up local storage for this counter (doSubmit will clean others)
-    localStorage.removeItem('screenshotCount_{{ course.id }}');
-    alert(`❌ ${screenshotCount}/${screenshotLimit} screenshot attempts detected. Your exam is being submitted.`);
-    doSubmit('screenshot');
-    return;
-  }
-
-  const remaining = screenshotLimit - screenshotCount;
-  alert(`⚠️ Screenshot attempt ${screenshotCount}/${screenshotLimit} detected.\n${remaining} attempt(s) remaining before your exam is auto-submitted.`);
-});
-
-// Initialize display on page load
-$(document).ready(function() {
-  updateScreenshotDisplay();
-});
-
-// ── Blur detection (separate counter) ────────────────────
-// ── Blur detection (fixed) ─────────────────────────────────
-let blurCount = parseInt(localStorage.getItem('blurCount')) || 0;
-const blurLimit = {{ course.num_attemps }};
-
-window.addEventListener('blur', () => {
-  if (examAlreadySubmitted || isManuallySubmitting) return;
-
-  blurCount++;
-  localStorage.setItem('blurCount', blurCount);
-
-  if (blurCount >= blurLimit) {   // ✅ changed from > to >=
-    setTimeout(() => {
-      alert(`Exam submitted due to window blur (${blurCount}/${blurLimit})`);
-      doSubmit('tabswitch');
-    }, 300);
-  }
-});
-
-// ── Fullscreen (fixed – no auto request) ─────────────────
+// ── Fullscreen ───────────────────────────────────────────────
 const elem = document.documentElement;
 let fullscreenExitCount     = 0;
 let fullscreencounter       = Number({{ course.fullscreencounter|default:"3" }});
@@ -685,12 +613,14 @@ document.addEventListener("fullscreenchange", () => {
   }
 });
 
-// ✅ REMOVED auto fullscreen on load – only user gestures trigger it
-// Radio buttons already call openFullscreen()
-document.querySelectorAll(".radio-button").forEach(r => r.addEventListener("click", openFullscreen));
-updateFullscreenCounter();
+window.addEventListener("load", () => {
+  if (localStorage.getItem("examFullscreen") === "true") setTimeout(openFullscreen, 500);
+  document.querySelectorAll(".radio-button").forEach(r => r.addEventListener("click", openFullscreen));
+  updateFullscreenCounter();
+});
 
-// ── Network status ───────────────────────────────────────
+
+// ── Network status ───────────────────────────────────────────
 const networkStatusEl = document.getElementById('network-status');
 function updateNetworkStatus() {
   if (navigator.onLine) {
@@ -706,7 +636,8 @@ updateNetworkStatus();
 window.addEventListener('online',  updateNetworkStatus);
 window.addEventListener('offline', updateNetworkStatus);
 
-// ── Calculator (unchanged) ───────────────────────────────
+
+// ── Calculator ───────────────────────────────────────────────
 function toggleCalculator() {
   const c = document.getElementById('calculator');
   c.style.display = (c.style.display === 'none' || !c.style.display) ? 'block' : 'none';
@@ -750,13 +681,92 @@ function dragElement(elmnt) {
 }
 
 
-document.addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('keydown', e => {
-  if ((e.ctrlKey && (e.key === 'p' || e.key === 's' || e.key === 'PrintScreen'))) {
-    e.preventDefault();
+// ── Screenshot Detection ─────────────────────────────────────
+
+
+// ── Screenshot Detection (PrintScreen) ───────────────────────
+let screenshotCount = parseInt(localStorage.getItem('screenshotCount_{{ course.id }}')) || 0;
+const screenshotLimit = {{ course.num_attemps }};
+
+function updateScreenshotDisplay() {
+  const el = document.getElementById('screenshotCount');
+  if (el) el.textContent = screenshotCount;
+}
+
+document.addEventListener('keyup', function(e) {
+  if (e.key !== 'PrintScreen') return;
+  if (examAlreadySubmitted) return;
+
+  // Clear clipboard immediately
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText('').catch(() => {});
   }
+
+  screenshotCount++;
+  localStorage.setItem('screenshotCount_{{ course.id }}', screenshotCount);
+  updateScreenshotDisplay();
+
+  // Voice warning
+  if ('speechSynthesis' in window) {
+    const msg = new SpeechSynthesisUtterance(
+      `Screenshot attempt ${screenshotCount} of ${screenshotLimit} detected. ${studentName}`
+    );
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(msg);
+  }
+
+  // Submit if limit reached
+  if (screenshotCount >= screenshotLimit) {
+    localStorage.removeItem('screenshotCount_{{ course.id }}');
+    alert(`❌ ${screenshotCount}/${screenshotLimit} screenshot attempts detected. Your exam is being submitted.`);
+    doSubmit('screenshot');
+    return;
+  }
+
+  const remaining = screenshotLimit - screenshotCount;
+  alert(`⚠️ Screenshot attempt ${screenshotCount}/${screenshotLimit} detected.\n${remaining} attempt(s) remaining before your exam is auto-submitted.`);
 });
 
+// Init display on page load
+$(document).ready(function() {
+  updateScreenshotDisplay();
+});
+
+window.addEventListener('blur', () => {
+    document.body.style.display = 'none'; // Hide exam
+});
+window.addEventListener('focus', () => {
+    document.body.style.display = 'block'; // Show exam
+});
+
+
+window.addEventListener('keydown', function(e) {
+    if (e.key === 'S' && e.shiftKey && e.metaKey) { // MetaKey often acts as Win
+        e.preventDefault();
+        alert('Screenshotting is disabled!');
+    }
+});
+
+setInterval(() => {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText('').catch(e => console.log);
+  }
+}, 500);
+
+
+
+let blurCount = 0;
+
+window.addEventListener('blur', () => {
+  blurCount++;
+
+  if (blurCount > {{ course.num_attemps }}) {
+    localStorage.setItem('tabSwitchCount', '0');
+    doSubmit('tabswitch');
+    return;
+  }
+
+});
 
 </script>
 
