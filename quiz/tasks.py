@@ -1,4 +1,5 @@
 # quiz/tasks.py
+from aiohttp import request
 from celery import shared_task, current_task
 from openai import OpenAI
 from django.conf import settings
@@ -9,6 +10,7 @@ import math
 import time
 from django.core.cache import cache
 from django.db import transaction, IntegrityError
+from student.models import ExamAttempt
 from users.models import Profile
 from datetime import timedelta, timezone
 
@@ -1101,9 +1103,117 @@ Do NOT generate only numeric variations of the same problem.
 #         raise
 
 
-import json
+# import json
+# import logging
+# logger = logging.getLogger(__name__)
+
+# @shared_task(bind=True, autoretry_for=(Exception,), max_retries=3, countdown=5)
+# def grade_exam_task(self, course_id, user_id, answers_dict):
+#     cache_key = f"graded:{course_id}:{user_id}"
+
+#     if cache.get(cache_key):
+#         return f"Exam for user {user_id} already graded."
+
+#     try:
+#         course = Course.objects.select_related(
+#             'schools', 'session', 'term', 'exam_type'
+#         ).get(id=course_id)
+#         student = Profile.objects.select_related('user').get(user_id=user_id)
+#     except Course.DoesNotExist:
+#         return f"Course {course_id} not found."
+#     except Profile.DoesNotExist:
+#         return f"Student {user_id} profile not found."
+
+#     # ✅ Log for debugging
+#     logger.info(
+#         f"Grading: user={user_id}, course={course_id}, "
+#         f"school={course.schools}, student_class={student.student_class}"
+#     )
+
+#     # ✅ Reliable duplicate check — no result_class (NULL != NULL in PostgreSQL)
+#     if Result.objects.filter(
+#         student=student,
+#         exam=course,
+#         session=course.session,
+#         term=course.term,
+#         exam_type=course.exam_type,
+#     ).exists():
+#         cache.set(cache_key, True, timeout=3600)
+#         return f"Result for student {user_id} already exists."
+
+#     # Fetch all questions in one query
+#     questions = list(
+#         Question.objects.filter(course=course).only('id', 'answer', 'marks')
+#     )
+
+#     total_marks = 0
+#     for question in questions:
+#         selected = answers_dict.get(str(question.id))
+#         if selected and selected == question.answer:
+#             total_marks += question.marks or 0
+
+#     # ✅ Never save None as result_class
+#     school_name = course.schools.school_name if course.schools else 'Unknown'
+#     result_class = student.student_class or f"Unassigned-{school_name}"
+
+#     try:
+#         with transaction.atomic():
+#             Result.objects.create(
+#                 schools=course.schools,
+#                 marks=total_marks,
+#                 exam=course,
+#                 session=course.session,
+#                 term=course.term,
+#                 exam_type=course.exam_type,
+#                 student=student,
+#                 result_class=result_class,
+#             )
+
+#         cache.set(cache_key, True, timeout=3600)
+#         cache.delete(f"user_exam_data:{user_id}")
+#         cache.delete(f"user_results:{user_id}")
+
+#         return f"Graded exam for student {user_id}, total marks: {total_marks}"
+
+#     except IntegrityError as e:
+#         logger.error(f"IntegrityError for user {user_id}: {e}")
+#         cache.set(cache_key, True, timeout=3600)
+#         return f"Duplicate result detected for student {user_id}."
+#     except Exception as e:
+#         logger.error(f"Exception grading user {user_id}: {e}")
+#         raise self.retry(exc=e, countdown=5, max_retries=3)
 import logging
+from celery import shared_task
+from django.db import transaction
+from django.utils import timezone
+from django.core.cache import cache
+from django.db import IntegrityError
+from .models import (
+    Course, Profile, Result, Question
+)
+from student.models import ExamAttempt, ExamEventLog
+from django.utils import timezone
+from student.models import ExamAttempt
+
 logger = logging.getLogger(__name__)
+
+
+def _mark_attempt_submitted(course_id, user_id):
+    """
+    Helper: close the active ExamAttempt for the given user and course.
+    """
+    
+
+    ExamAttempt.objects.filter(
+        student_id=user_id,      # ✅ user_id param, not request.user.id
+        course_id=course_id,
+        is_submitted=False,
+    ).update(
+        end_time=timezone.now(),
+        is_submitted=True,
+        remaining_seconds=0,  # ✅ reset to zero on submit
+    )
+
 
 @shared_task(bind=True, autoretry_for=(Exception,), max_retries=3, countdown=5)
 def grade_exam_task(self, course_id, user_id, answers_dict):
@@ -1122,13 +1232,11 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
     except Profile.DoesNotExist:
         return f"Student {user_id} profile not found."
 
-    # ✅ Log for debugging
     logger.info(
         f"Grading: user={user_id}, course={course_id}, "
         f"school={course.schools}, student_class={student.student_class}"
     )
 
-    # ✅ Reliable duplicate check — no result_class (NULL != NULL in PostgreSQL)
     if Result.objects.filter(
         student=student,
         exam=course,
@@ -1136,10 +1244,10 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
         term=course.term,
         exam_type=course.exam_type,
     ).exists():
+        _mark_attempt_submitted(course_id, user_id)
         cache.set(cache_key, True, timeout=3600)
         return f"Result for student {user_id} already exists."
 
-    # Fetch all questions in one query
     questions = list(
         Question.objects.filter(course=course).only('id', 'answer', 'marks')
     )
@@ -1150,8 +1258,7 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
         if selected and selected == question.answer:
             total_marks += question.marks or 0
 
-    # ✅ Never save None as result_class
-    school_name = course.schools.school_name if course.schools else 'Unknown'
+    school_name  = course.schools.school_name if course.schools else 'Unknown'
     result_class = student.student_class or f"Unassigned-{school_name}"
 
     try:
@@ -1167,6 +1274,15 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
                 result_class=result_class,
             )
 
+            _mark_attempt_submitted(course_id, user_id)  # ✅ uses user_id param
+
+            ExamEventLog.objects.create(
+                student_id=user_id,   # ✅ user_id param, not request.user.id
+                course=course,
+                event_type='exam_submitted',
+                details={'submission_reason': answers_dict.get('submissionReason', 'manual')}
+            )
+
         cache.set(cache_key, True, timeout=3600)
         cache.delete(f"user_exam_data:{user_id}")
         cache.delete(f"user_results:{user_id}")
@@ -1175,10 +1291,10 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
 
     except IntegrityError as e:
         logger.error(f"IntegrityError for user {user_id}: {e}")
+        _mark_attempt_submitted(course_id, user_id)
         cache.set(cache_key, True, timeout=3600)
         return f"Duplicate result detected for student {user_id}."
     except Exception as e:
         logger.error(f"Exception grading user {user_id}: {e}")
         raise self.retry(exc=e, countdown=5, max_retries=3)
-
-
+    

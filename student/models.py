@@ -19,6 +19,80 @@ from sms.paystack import Paystack  # Assuming the Paystack class is imported cor
 from django.utils import timezone
 from sms.models import Courses
 from cloudinary.models import CloudinaryField
+from quiz.models import Course
+
+# In your models.py
+
+# Add at the top if not already present
+import uuid
+from django.db import models
+from django.conf import settings
+from django.utils import timezone
+
+
+class ExamAttempt(models.Model):
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    course = models.ForeignKey('quiz.Course', on_delete=models.CASCADE)
+
+    start_time = models.DateTimeField(default=timezone.now)
+    end_time = models.DateTimeField(null=True, blank=True)
+
+    remaining_seconds = models.IntegerField(default=0)
+
+    # THIS IS THE IMPORTANT PART
+    saved_answers = models.JSONField(default=dict, blank=True, null=True)
+    tab_switch_count = models.PositiveIntegerField(default=0)
+    is_submitted = models.BooleanField(default=False)
+    resume_code = models.CharField(max_length=8, unique=True, blank=True, null=True)
+    # In your models.py (where ExamAttempt is defined)
+
+    blur_count = models.PositiveIntegerField(default=0)
+    screenshot_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        
+        indexes = [
+            # Fast lookup of active attempts by student (most frequent)
+            models.Index(fields=['student', 'is_submitted'], name='idx_attempt_student_active'),
+            # Fast lookup by resume_code (when resuming after power loss)
+            models.Index(fields=['resume_code'], name='idx_attempt_resume_code'),
+            # For dashboard/reporting: filter by course and submission status
+            models.Index(fields=['course', 'is_submitted'], name='idx_attempt_course_active'),
+            # For time‑based queries (e.g., cleanup old attempts)
+            models.Index(fields=['start_time'], name='idx_attempt_start_time'),
+            # Composite index for the unique_together fields (PostgreSQL uses it automatically, but explicit helps)
+            models.Index(fields=['student', 'course', 'is_submitted'], name='idx_attempt_unique_key'),
+        ]
+
+
+class ExamEventLog(models.Model):
+    """
+    Audit trail for power outages, resumes, auto‑saves, submissions.
+    """
+    EVENT_TYPES = [
+        ('exam_started', 'Exam Started'),
+        ('auto_save', 'Auto Save'),
+        ('power_outage', 'Power Outage'),
+        ('exam_resumed', 'Exam Resumed'),
+        ('exam_submitted', 'Exam Submitted'),
+        ('heartbeat', 'Heartbeat'),
+    ]
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    course = models.ForeignKey('quiz.Course', on_delete=models.CASCADE)
+    event_type = models.CharField(max_length=50, choices=EVENT_TYPES)
+    details = models.JSONField(blank=True, null=True)
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['student', 'timestamp']),
+            models.Index(fields=['course', 'event_type']),
+            models.Index(fields=['timestamp']),
+        ]
+
+    def __str__(self):
+        return f"{self.student} - {self.event_type} at {self.timestamp}"
+    
 
 
 # class Question(models.Model):

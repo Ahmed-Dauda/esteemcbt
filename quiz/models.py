@@ -297,8 +297,18 @@ class Result(models.Model):
     is_locked = models.BooleanField(default=False)
 
     class Meta:
+
         unique_together = ('student', 'exam', 'session', 'term', 'result_class', 'exam_type')
-        # ordering = ['student__first_name','student__last_name', 'exam__course_name']  
+        indexes = [
+            # For student report cards (by student, session, term)
+            models.Index(fields=['student', 'session', 'term'], name='res_stu_ses_term'),
+            # For leaderboard (by exam, marks descending)
+            models.Index(fields=['exam', '-marks'], name='res_exam_marks'),
+            # For school-wide reports (by school, session, term)
+            models.Index(fields=['schools', 'session', 'term'], name='res_sch_ses_term'),
+            # For the unique_together constraint (explicit index)
+            models.Index(fields=['student', 'exam', 'session', 'term', 'result_class', 'exam_type'], name='res_unique_key'),
+        ]
   
     def __str__(self):
         return f"{self.student}---{self.exam.course_name}---{self.exam_type}---{self.marks}"

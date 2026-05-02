@@ -7,7 +7,19 @@ from django.urls import re_path
 app_name = 'student'
 
 urlpatterns = [
-    
+    # student/urls.py
+    path('record-blur/', views.record_blur, name='record_blur'),
+    path('record-screenshot/', views.record_screenshot, name='record_screenshot'),
+  
+    path('get-violation-counts/<int:attempt_id>/', views.get_violation_counts, name='get_violation_counts'),
+    path('record-tab-switch/', views.record_tab_switch, name='record_tab_switch'),
+    path('update-answer/', views.update_answer, name='update_answer'),
+    path('exam/heartbeat/<int:attempt_id>/', views.exam_heartbeat, name='exam_heartbeat'),
+    path('auto-save/', views.auto_save_exam, name='auto_save_exam'),
+    path('get-saved-answers/<int:attempt_id>/', views.get_saved_answers, name='get_saved_answers'),
+    path('resume/<str:resume_code>/', views.resume_exam, name='resume_exam'),
+    path('calculate-marks/', views.calculate_marks_view, name='calculate_marks'),  
+
     path('student-login/', views.student_login_view, name='student-login'),
     path('exams-conducted-statistics/', views.exams_conducted_statistics_view, name='exams_conducted_statistics'),
     path('download-statistics/', views.download_statistics_view, name='download_statistics'),

@@ -20,6 +20,76 @@ from django.utils.html import format_html
 from .models import AdvertisementImage
 from student.models import BadgeDownloadStats
 
+from django.contrib import admin
+from .models import ExamAttempt, ExamEventLog
+
+@admin.register(ExamAttempt)
+class ExamAttemptAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'student',
+        'course',
+        'start_time',
+        'end_time',
+        'is_submitted',
+        'resume_code',
+        "tab_switch_count"
+    )
+
+    list_filter = (
+        'is_submitted',
+        'start_time',
+        'course',
+        
+    )
+
+    search_fields = (
+        'student__username',
+        'student__email',
+        'course__course_name__title',
+        'resume_code'
+    )
+
+    readonly_fields = (
+        'start_time',
+        'resume_code',
+        'saved_answers',
+    )
+
+    fieldsets = (
+        ('Exam Session', {
+            'fields': (
+                'student',
+                'course',
+                'start_time',
+                'end_time',
+                'remaining_seconds',
+                'saved_answers'
+            )
+        }),
+        ('Status', {
+            'fields': (
+                'is_submitted',
+                'resume_code'
+            )
+        }),
+    )
+
+@admin.register(ExamEventLog)
+class ExamEventLogAdmin(admin.ModelAdmin):
+    list_display = ('id', 'student', 'course', 'event_type', 'timestamp')
+    list_filter = ('event_type', 'timestamp', 'course')
+    search_fields = ('student__username', 'student__email', 'course__course_name__title', 'details')
+    readonly_fields = ('timestamp',)
+    fieldsets = (
+        ('Event Info', {
+            'fields': ('student', 'course', 'event_type', 'details')
+        }),
+        ('Timestamp', {
+            'fields': ('timestamp',)
+        }),
+    )
+
 admin.site.register(PDFDocument)
 admin.site.register(PDFGallery)
 admin.site.register(Directors)

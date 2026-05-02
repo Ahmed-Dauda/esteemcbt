@@ -68,6 +68,25 @@ INSTALLED_APPS = [
     # 'allauth.socialaccount.providers.twitter',
 ]
 
+# Disable allauth's rate limiting signals if not needed
+ACCOUNT_RATE_LIMITS = {
+    "change_password": "5/m",
+    "manage_email": "10/m", 
+    "request_login_by_code": "5/m",
+    "confirm_login_by_code": "5/m",
+    "login_by_code": "5/m",
+    "login_failed": "10/m,5/5m",
+    "login": "30/m",
+    "signup": "20/m",
+    "send_confirmation_email": "5/m",
+    "password_reset": "5/m",
+    "password_reset_by_key": "5/m",
+}
+
+# Stop allauth signals on social account login
+SOCIALACCOUNT_STORE_TOKENS = False  # reduces DB writes and signals
+
+
 MATHJAX_ENABLED=True
 
 BASE_URL = 'https://codethinkers.org'
