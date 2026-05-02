@@ -14,43 +14,48 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <style>
-
-.page-number.answered {
-  background-color: green;
-  color: white;
-  border-color: green;
-}
-.page-number.active {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
-}  
-#paginationBoxes {
-  display: flex;
-  flex-wrap: wrap;          /* allow wrapping to next line */
-  justify-content: center;  /* center the numbers */
-  gap: 5px;                 /* spacing between boxes */
-  margin-top: 15px;
-  padding: 5px;
-  overflow: visible !important;  /* force no clipping */
-  white-space: normal;      /* ensure wrapping */
-  width: 100%;              /* use full width */
-}
-
 .page-number {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 8px;
+  width: 26px;           /* fixed width */
+  height: 26px;          /* fixed height */
+  margin: 0 2px;
   border: 1px solid #ccc;
   background-color: #fff;
   cursor: pointer;
   border-radius: 4px;
   font-size: 12px;
-  min-width: 28px;
-  height: 28px;
+  line-height: 1;        /* prevents extra vertical space */
   flex-shrink: 0;
 }
+
+/* Green for answered questions */
+.page-number.answered {
+  background-color: green;
+  color: white;
+  border-color: green;
+}
+
+/* Blue for current page */
+.page-number.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+/* Keep the container wrapping and centered */
+#paginationBoxes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 15px;
+  padding: 5px;
+  width: 100%;
+}
+
+
   div.quiz p { text-align: left; }
   .quiz p { text-align: left; }
   .quiz { width: 100%; display: flex; border: 1px solid #ccc; }
