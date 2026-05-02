@@ -18,18 +18,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;           /* fixed width */
-  height: 26px;          /* fixed height */
+  width: 28px;
+  height: 28px;
   margin: 0 2px;
   border: 1px solid #ccc;
   background-color: #fff;
   cursor: pointer;
   border-radius: 4px;
   font-size: 12px;
-  line-height: 1;        /* prevents extra vertical space */
+  line-height: 1;            /* removes extra line height */
   flex-shrink: 0;
+  box-sizing: border-box;    /* includes border in width/height */
+  text-align: center;        /* fallback for older browsers */
 }
-
 /* Green for answered questions */
 .page-number.answered {
   background-color: green;
@@ -149,7 +150,7 @@
 
   <!-- Client‑side question container -->
    <br><br><br>
-  <div id="question-container" class="quiz-container" style="margin: 20px;"></div>
+  <div id="question-container" class="quiz-container" style="margin: 20px; padding-left: 20px; padding-right: 20px;"></div>
 
   <!-- Pagination controls -->
   <div class="pagination-controls">
@@ -159,7 +160,7 @@
   </div>
 
   <!-- Numbered pagination bar -->
-  <div class="container" id="paginationBoxes" style="text-align: center; margin-top: 15px;" onclick="openFullscreen()"></div>
+  <div id="paginationBoxes" style="text-align: center; margin-top: 15px;" onclick="openFullscreen()"></div>
 </form>
 
 <div id="fullscreenPopup" style="display:none;justify-content:center;align-items:center;flex-direction:column;position:fixed;inset:0;background:#000;color:#fff;z-index:999999;font-family:Arial,sans-serif;text-align:center;">
