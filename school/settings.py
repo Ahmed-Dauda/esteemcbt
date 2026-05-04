@@ -340,7 +340,8 @@ from pathlib import Path
 
 DATABASES = {
     'default': dj_database_url.config(
-        conn_max_age=0,
+        conn_max_age=300,
+        conn_health_checks=True,
         ssl_require=False,
     )
 }

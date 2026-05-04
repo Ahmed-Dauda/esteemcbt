@@ -3870,7 +3870,7 @@ import concurrent.futures
 
 @login_required
 def take_exams_view(request):
-    user      = request.user
+    user = request.user
     cache_key = f"take_exams_{user.id}"
 
     cached = cache.get(cache_key)
@@ -3895,69 +3895,47 @@ def take_exams_view(request):
     if not user_newuser or not user_newuser.school:
         return render(request, "student/dashboard/take_exams.html", empty_ctx)
 
-    school        = user_newuser.school
-    school_name   = school.school_name
+    school = user_newuser.school
+    school_name = school.school_name
     student_class = user_newuser.student_class
 
-    # ── Concurrent DB queries ──────────────────────────────────
-    def fetch_courses():
-        return list(
-            Course.objects
-            .select_related('schools', 'course_name', 'session', 'term', 'exam_type')
-            .filter(
-                schools=school,
-                course_grade__students=user,
-                course_grade__name=student_class,
-                course_grade__schools=school,
-            )
-            .only(
-                'id', 'course_name', 'session_id', 'term_id',
-                'exam_type_id', 'schools_id',
-            )
-            .distinct()
-            .order_by('-id')[:30]
+    # 1. Fetch courses (one query)
+    courses = list(
+        Course.objects
+        .select_related('schools', 'course_name', 'session', 'term', 'exam_type')
+        .filter(
+            schools=school,
+            course_grade__students=user,
+            course_grade__name=student_class,
+            course_grade__schools=school,
         )
+        .only('id', 'course_name', 'session_id', 'term_id', 'exam_type_id', 'schools_id')
+        .distinct()
+        .order_by('-id')[:30]
+    )
 
-    def fetch_profile():
-        return (
-            Profile.objects
-            .filter(user=user)
-            .only('id', 'user_id')
-            .first()
+    # 2. Fetch profile
+    user_profile = (
+        Profile.objects
+        .filter(user=user)
+        .only('id', 'user_id')
+        .first()
+    )
+
+    # 3. Fetch CourseGrade (subjects)
+    course_grade = (
+        CourseGrade.objects
+        .prefetch_related(
+            Prefetch('subjects', queryset=Course.objects.only('id', 'course_name'))
         )
+        .filter(students=user, schools=school, name=student_class)
+        .only('id', 'name')
+        .first()
+    )
 
-    def fetch_course_grade():
-        return (
-            CourseGrade.objects
-            # subjects M2M → Course (exam model), not Courses
-            .prefetch_related(
-                Prefetch(
-                    'subjects',
-                    queryset=Course.objects.only('id', 'course_name')
-                )
-            )
-            .filter(
-                students=user,
-                schools=school,
-                name=student_class,
-            )
-            .only('id', 'name')
-            .first()
-        )
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        f_courses      = executor.submit(fetch_courses)
-        f_profile      = executor.submit(fetch_profile)
-        f_course_grade = executor.submit(fetch_course_grade)
-
-        courses      = f_courses.result()
-        user_profile = f_profile.result()
-        course_grade = f_course_grade.result()
-
-    # ── Results ───────────────────────────────────────────────
-    user_results      = {}
+    # 4. Fetch results (one query)
+    user_results = {}
     taken_course_keys = set()
-
     if user_profile and courses:
         course_ids = [c.id for c in courses]
         for r in (
@@ -3971,31 +3949,29 @@ def take_exams_view(request):
                 f"{r['exam_id']}_{r['session_id']}_{r['term_id']}_{r['exam_type_id']}"
             )
 
-    # subjects here are Course objects (exam model) linked via CourseGrade.subjects
-    subjects       = list(course_grade.subjects.all()) if course_grade else []
-    sub_grade      = course_grade.name if course_grade else None
+    subjects = list(course_grade.subjects.all()) if course_grade else []
+    sub_grade = course_grade.name if course_grade else None
     taken_exam_ids = set(user_results.keys())
 
     ctx = {
-        "courses":           courses,
-        "subjects":          subjects,
-        "student_class":     student_class,
-        "school_name":       school_name,
-        "sub_grade":         sub_grade,
-        "user_results":      user_results,
-        "taken_exam_ids":    taken_exam_ids,
+        "courses": courses,
+        "subjects": subjects,
+        "student_class": student_class,
+        "school_name": school_name,
+        "sub_grade": sub_grade,
+        "user_results": user_results,
+        "taken_exam_ids": taken_exam_ids,
         "taken_course_keys": taken_course_keys,
     }
 
-    # sets aren't JSON-serialisable — convert for cache
+    # Cache (convert sets to lists for JSON‑compatibility)
     cache.set(cache_key, {
         **ctx,
-        "taken_exam_ids":    list(taken_exam_ids),
+        "taken_exam_ids": list(taken_exam_ids),
         "taken_course_keys": list(taken_course_keys),
     }, timeout=10)
 
     return render(request, "student/dashboard/take_exams.html", ctx)
-
 
 
 #last update
