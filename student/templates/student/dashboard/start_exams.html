@@ -132,12 +132,12 @@
               {% endif %}
             </div>
           </div>
-          <div class="col-12 col-md-4" style="padding: 10px;">
-            <p style="margin:0; font-size:12px;">👁️ Blurs: <span id="blurCountDisplay">0</span> / {{ course.num_attemps }}</p>
-            <p style="margin:0; font-size:12px;">📸 Screenshots: <span id="screenshotCountDisplay">0</span> / {{ course.num_attemps }}</p>
-            <p style="color: red; text-align: center;"><span id="tabCount">0</span> / {{ course.num_attemps }} attempts to leave the exam page detected.</p>
-            <div id="timer" style="font-size: 24px; font-weight: bold; color: #333; text-align: center; margin: 10px 0;">00:00</div>
-          </div>
+          <div class="col-12 col-md-4" style="padding: 10px; text-align: left;">
+  <p style="margin:0; font-size:12px; text-align: left;">Total Violations: <span id="blurCountDisplay">0</span> / {{ course.num_attemps }}</p>
+  <p style="margin:0; font-size:12px; text-align: left;">Screenshots: <span id="screenshotCountDisplay">0</span> / {{ course.num_attemps }}</p>
+  <p style="color: red; text-align: left;"><span id="tabCount">0</span> / {{ course.num_attemps }} attempts to leave the exam page detected.</p>
+  <div id="timer" style="font-size: 24px; font-weight: bold; color: #333; text-align: left; margin: 10px 0;">00:00</div>
+</div>
           <div class="examinfo col-12 col-md-4" style="padding: 10px;">
             <h6 style="font-size: 12px; font-weight: bold;">{{ course.course_name }} -- {{ course.exam_type }}</h6>
             <p style="margin: 5px 0;">Number of Questions: {{ q_count }} -- {{ course.session }} -- {{ course.term }}</p>
