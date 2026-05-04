@@ -4757,20 +4757,25 @@ from django.core.cache import cache
 #             pass
 #     threading.Thread(target=_write, daemon=True).start()
 
+import time
 
+import json
+import random
+from django.shortcuts import render, redirect
+from django.core.cache import cache
+from django.db import transaction
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpRequest, HttpResponse
+from .models import Course, ExamAttempt, ExamEventLog, Result, Question, StudentExamSession
+
+# ──────────────────────────────────────────────────────────────
+# MAIN VIEW (no ThreadPoolExecutor)
+# ──────────────────────────────────────────────────────────────
 @csrf_exempt
 def start_exams_view(request: HttpRequest, pk: int) -> HttpResponse:
     if not request.user.is_authenticated:
         return redirect('account_login')
     return _start_exam_sync(request, pk)
-
-
-# ── Persistent thread pool — created once, reused forever ─────
-import concurrent.futures
-_EXAM_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=4)
-
-
-import time
 
 def _start_exam_sync(request, pk):
     user = request.user
@@ -4778,21 +4783,17 @@ def _start_exam_sync(request, pk):
     if course is None:
         return redirect('student:take_exams')
 
-    f_attempt = _EXAM_EXECUTOR.submit(_get_or_create_attempt, user, course)
-    f_questions = _EXAM_EXECUTOR.submit(_get_shuffled_questions_cached, user, course)
-
-    attempt, created = f_attempt.result()
-    questions = f_questions.result()
+    # Sequential calls – no executor
+    attempt, created = _get_or_create_attempt(user, course)
+    questions = _get_shuffled_questions_cached(user, course)
 
     if created:
-        _EXAM_EXECUTOR.submit(_log_event_async, user, course, 'exam_started', {'resume_code': attempt.resume_code})
+        # Fire-and‑forget log – can be called directly (sync, but lightweight)
+        _log_event(user, course, 'exam_started', {'resume_code': attempt.resume_code})
 
-    # ---------- SERIALIZE QUESTIONS TO JSON ----------
+    # Serialize questions to JSON
     def _clean(val):
-        """Strip None, strip leading/trailing whitespace."""
-        if val is None:
-            return None
-        return str(val).strip()
+        return None if val is None else str(val).strip()
 
     questions_json = json.dumps([
         {
@@ -4810,15 +4811,13 @@ def _start_exam_sync(request, pk):
         for q in questions
     ], ensure_ascii=False)
 
-
     context = {
         'course': course,
         'q_count': len(questions),
         'attempt': attempt,
         'attempt_id': attempt.id,
         'tab_limit': course.num_attemps,
-        'questions_json': questions_json,          # JSON instead of full objects
-        # 'questions' and 'page_obj' removed – no longer passed to template
+        'questions_json': questions_json,
     }
 
     response = render(request, 'student/dashboard/start_exams.html', context)
@@ -4826,10 +4825,11 @@ def _start_exam_sync(request, pk):
     response.set_cookie('attempt_id', str(attempt.id), httponly=True, samesite='Lax')
     return response
 
-
-# ── Helper 1: Course with cache ───────────────────────────────
+# ──────────────────────────────────────────────────────────────
+# HELPER 1: Course cache
+# ──────────────────────────────────────────────────────────────
 def _get_course_cached(pk):
-    key    = f'course:{pk}'
+    key = f'course:{pk}'
     course = cache.get(key)
     if course is None:
         course = (
@@ -4848,47 +4848,28 @@ def _get_course_cached(pk):
             cache.set(key, course, 600)
     return course
 
-
-# ── Helper 2: Attempt — no lock on resume, lock only on create ─
+# ──────────────────────────────────────────────────────────────
+# HELPER 2: Get or create active attempt (atomic, no executor)
+# ──────────────────────────────────────────────────────────────
 def _get_or_create_attempt(user, course):
     # Fast path
-    attempt = (
-        ExamAttempt.objects
-        .filter(student=user, course=course, is_submitted=False)
-        .first()
-    )
+    attempt = ExamAttempt.objects.filter(
+        student=user, course=course, is_submitted=False
+    ).first()
     if attempt:
-        
         return attempt, False
 
-    # Debug — show ALL attempts for this user+course
-    all_attempts = list(
-        ExamAttempt.objects
-        .filter(student=user, course=course)
-        .values('id', 'is_submitted', 'end_time', 'remaining_seconds')
-    )
-   
-
-    from django.db import transaction
     with transaction.atomic():
-        attempt = (
-            ExamAttempt.objects
-            .select_for_update(nowait=True)
-            .filter(student=user, course=course, is_submitted=False)
-            .first()
-        )
+        attempt = ExamAttempt.objects.select_for_update(nowait=True).filter(
+            student=user, course=course, is_submitted=False
+        ).first()
         if attempt:
             return attempt, False
 
-        has_result = Result.objects.filter(
-            student__user=user, exam=course
-        ).exists()
-       
-
-        deleted = ExamAttempt.objects.filter(
-            student=user, course=course, is_submitted=True
-        ).delete()
-        
+        has_result = Result.objects.filter(student__user=user, exam=course).exists()
+        # Clean up orphaned submitted attempts (if no result exists)
+        if not has_result:
+            ExamAttempt.objects.filter(student=user, course=course, is_submitted=True).delete()
 
         attempt = ExamAttempt.objects.create(
             student=user,
@@ -4896,37 +4877,26 @@ def _get_or_create_attempt(user, course):
             is_submitted=False,
             remaining_seconds=course.duration_minutes * 60,
         )
-        
         return attempt, True
 
-# ── Helper 3: Shuffled questions (cached per user+course) ──────
+# ──────────────────────────────────────────────────────────────
+# HELPER 3: Shuffled questions (cached, no executor)
+# ──────────────────────────────────────────────────────────────
 def _get_shuffled_questions_cached(user, course):
     cache_key = f'questions:{course.id}:{user.id}'
     questions = cache.get(cache_key)
     if questions is not None:
-        return questions  # ✅ cache hit — ~0.5ms
+        return questions
 
-    try:
-        profile = user.profile
-    except Exception:
-        return []
-
+    profile = getattr(user, 'profile', None)
     if profile is None:
         return []
 
-    # Fetch question IDs and session in parallel
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
-        f_ids     = ex.submit(
-            lambda: list(Question.objects.filter(course=course).values_list('id', flat=True))
-        )
-        f_session = ex.submit(
-            lambda: StudentExamSession.objects
-            .filter(student=profile, course=course)
-            .order_by('-created')
-            .first()
-        )
-    all_q_ids = f_ids.result()
-    session   = f_session.result()
+    # Sequential queries – no ThreadPoolExecutor
+    all_q_ids = list(Question.objects.filter(course=course).values_list('id', flat=True))
+    session = StudentExamSession.objects.filter(
+        student=profile, course=course
+    ).order_by('-created').first()
 
     if not all_q_ids:
         return []
@@ -4945,27 +4915,25 @@ def _get_shuffled_questions_cached(user, course):
                 question_order=ordered_ids,
             )
 
-    # 1 query + Python sort — faster than Case/When with many questions
+    # Fetch questions and order them by the shuffled order
     questions_qs = list(
         Question.objects
         .filter(id__in=ordered_ids)
-        .only(
-            'id', 'marks', 'question', 'img_quiz',
-            'option1', 'option2', 'option3', 'option4',
-        )
+        .only('id', 'marks', 'question', 'img_quiz', 'option1', 'option2', 'option3', 'option4')
     )
     order_map = {qid: pos for pos, qid in enumerate(ordered_ids)}
     questions_qs.sort(key=lambda q: order_map.get(q.id, 9999))
 
-    limit     = course.show_questions or len(questions_qs)
+    limit = course.show_questions or len(questions_qs)
     questions = questions_qs[:limit]
 
-    cache.set(cache_key, questions, 300)  # 5 min cache
+    cache.set(cache_key, questions, 300)
     return questions
 
-
-# ── Helper 4: Fire-and-forget event log ───────────────────────
-def _log_event_async(user, course, event_type, details):
+# ──────────────────────────────────────────────────────────────
+# HELPER 4: Event log (synchronous, lightweight)
+# ──────────────────────────────────────────────────────────────
+def _log_event(user, course, event_type, details):
     try:
         ExamEventLog.objects.create(
             student=user,
@@ -4976,6 +4944,7 @@ def _log_event_async(user, course, event_type, details):
     except Exception:
         pass
 
+    
 #last working function
 # @csrf_exempt
 # def start_exams_view(request: HttpRequest, pk: int) -> HttpResponse:
