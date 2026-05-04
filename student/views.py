@@ -4851,25 +4851,33 @@ def _get_course_cached(pk):
 # HELPER 2: Get or create active attempt (atomic, no executor)
 # ──────────────────────────────────────────────────────────────
 def _get_or_create_attempt(user, course):
-    # Fast path
-    attempt = ExamAttempt.objects.filter(
-        student=user, course=course, is_submitted=False
-    ).first()
+    from django.db import transaction
+    from django.db.utils import OperationalError
+
+    # First, try to get existing active attempt without lock (fast path)
+    attempt = ExamAttempt.objects.filter(student=user, course=course, is_submitted=False).first()
     if attempt:
         return attempt, False
 
+    # No active attempt – enter atomic block to create one
     with transaction.atomic():
-        attempt = ExamAttempt.objects.select_for_update(nowait=True).filter(
-            student=user, course=course, is_submitted=False
-        ).first()
+        # Retry select_for_update with a short timeout to avoid deadlocks
+        try:
+            attempt = ExamAttempt.objects.select_for_update(nowait=True).filter(
+                student=user, course=course, is_submitted=False
+            ).first()
+        except OperationalError:
+            # If lock cannot be acquired, fall back to a simple get (rare)
+            attempt = ExamAttempt.objects.filter(student=user, course=course, is_submitted=False).first()
         if attempt:
             return attempt, False
 
+        # Clean up any orphaned submitted attempts (no result)
         has_result = Result.objects.filter(student__user=user, exam=course).exists()
-        # Clean up orphaned submitted attempts (if no result exists)
         if not has_result:
             ExamAttempt.objects.filter(student=user, course=course, is_submitted=True).delete()
 
+        # Create the new attempt
         attempt = ExamAttempt.objects.create(
             student=user,
             course=course,
@@ -4877,7 +4885,7 @@ def _get_or_create_attempt(user, course):
             remaining_seconds=course.duration_minutes * 60,
         )
         return attempt, True
-
+    
 # ──────────────────────────────────────────────────────────────
 # HELPER 3: Shuffled questions (cached, no executor)
 # ──────────────────────────────────────────────────────────────
@@ -5228,55 +5236,71 @@ def auto_save_exam(request):
 
 
 
-
 @login_required
 def get_saved_answers(request, attempt_id):
-    attempt = get_object_or_404(
-        ExamAttempt,
-        id=attempt_id,
-        student=request.user
-    )
+    import logging
+    logger = logging.getLogger(__name__)
+    attempt = get_object_or_404(ExamAttempt, id=attempt_id, student=request.user)
+    logger.info(f"get_saved_answers: attempt_id={attempt_id}, saved_answers={attempt.saved_answers}")
+    return JsonResponse({'answers': attempt.saved_answers or {}})
 
-    return JsonResponse({
-        'answers': attempt.saved_answers or {}
-    })
 
+
+import json
+import logging
+from django.db import transaction
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from .models import ExamAttempt
+
+logger = logging.getLogger(__name__)
 
 @csrf_exempt
 @login_required
 def update_answer(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
-    
+
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
-    
+
     attempt_id = data.get('attempt_id')
     question_id = data.get('question_id')
     selected_value = data.get('selected_value')
-    
+
     if not attempt_id or not question_id:
         return JsonResponse({'success': False, 'error': 'Missing attempt_id or question_id'}, status=400)
-    
-    # Optimisation: fetch only the fields we need, and lock the row to prevent lost updates
+
     try:
-        attempt = ExamAttempt.objects.only('saved_answers', 'id', 'is_submitted').select_for_update().get(
-            id=attempt_id,
-            student=request.user,
-            is_submitted=False
-        )
+        with transaction.atomic():
+            # Lock the row to prevent concurrent updates
+            attempt = ExamAttempt.objects.select_for_update().only(
+                'saved_answers', 'id', 'is_submitted'
+            ).get(
+                id=attempt_id,
+                student=request.user,
+                is_submitted=False
+            )
+
+            saved = attempt.saved_answers or {}
+            saved[str(question_id)] = selected_value
+            attempt.saved_answers = saved
+            attempt.save(update_fields=['saved_answers'])
+
+            logger.info(f"Updated attempt {attempt_id}: question {question_id} = {selected_value}")
+
     except ExamAttempt.DoesNotExist:
+        logger.warning(f"Attempt {attempt_id} not found or already submitted for user {request.user.id}")
         return JsonResponse({'success': False, 'error': 'No active attempt found'}, status=404)
-    
-    # Merge the new answer
-    saved = attempt.saved_answers or {}
-    saved[str(question_id)] = selected_value
-    attempt.saved_answers = saved
-    attempt.save(update_fields=['saved_answers'])  # only update the JSON column
-    
+    except Exception as e:
+        logger.exception(f"Unexpected error updating attempt {attempt_id}: {e}")
+        return JsonResponse({'success': False, 'error': 'Internal server error'}, status=500)
+
     return JsonResponse({'success': True})
+
 
 
 @login_required

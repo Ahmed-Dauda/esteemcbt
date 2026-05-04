@@ -377,6 +377,7 @@ function onAnswerChange(e) {
   if (!e.target.classList.contains('radio-button')) return;
   const qid = parseInt(e.target.name.substring(1));
   const val = e.target.value;
+  console.log('Answer changed:', qid, val);   // ← log
 
   answers[qid] = val;
   localStorage.setItem(LS.answers, JSON.stringify(answers));
@@ -384,13 +385,19 @@ function onAnswerChange(e) {
 
   clearTimeout(answerSaveTimer);
   answerSaveTimer = setTimeout(() => {
+    console.log('Sending to server:', { attempt_id: ATTEMPT_ID, question_id: qid, selected_value: val });
     post(URLS.updateAnswer, {
       attempt_id: ATTEMPT_ID,
       question_id: qid,
       selected_value: val,
-    }).catch(err => console.warn('Answer save failed', err));
+    })
+    .then(response => response.json())
+    .then(data => console.log('Server response:', data))
+    .catch(err => console.error('Save failed', err));
   }, 800);
 }
+
+
 
 function attachAnswerListener() {
   const container = document.getElementById('question-container');
@@ -417,26 +424,40 @@ document.getElementById('next-btn')?.addEventListener('click', () => {
 });
 
 // ==================== RESTORE SAVED ANSWERS FROM SERVER ====================
+
 function mergeAndRender() {
-  // Always render immediately from localStorage first
+  // Immediate render from localStorage (fast)
   renderQuestion();
   attachAnswerListener();
 
-  // Then silently merge server answers in background
+  // Then fetch server answers and update
   fetch(URLS.getSavedAnswers)
     .then(r => r.json())
     .then(data => {
       if (data.answers && Object.keys(data.answers).length > 0) {
-        answers = { ...answers, ...data.answers };
-        localStorage.setItem(LS.answers, JSON.stringify(answers));
-        // Re-render to show restored answers
-        renderQuestion();
-        attachAnswerListener();
+        let changed = false;
+        for (const [qid, val] of Object.entries(data.answers)) {
+          if (answers[qid] !== val) {
+            answers[qid] = val;
+            changed = true;
+          }
+        }
+        if (changed) {
+          localStorage.setItem(LS.answers, JSON.stringify(answers));
+          // Re-render current question only if the current question's answer changed
+          const currentQ = QUESTIONS_JSON[currentIndex];
+          if (currentQ && data.answers[currentQ.id]) {
+            renderQuestion();          // re-render current question
+            attachAnswerListener();
+          }
+          renderPaginationNumbers();   // update pagination colors
+        }
       }
     })
     .catch(err => console.warn('Could not restore server answers:', err));
 }
 
+// console.log(document.getElementById('attemptId')?.value);
 // ==================== TIMER ====================
 function initTimer() {
   const timerEl = document.getElementById('timer');
