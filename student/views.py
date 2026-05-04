@@ -4766,7 +4766,6 @@ from django.core.cache import cache
 from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpRequest, HttpResponse
-from .models import Course, ExamAttempt, ExamEventLog, Result, Question, StudentExamSession
 
 # ──────────────────────────────────────────────────────────────
 # MAIN VIEW (no ThreadPoolExecutor)
@@ -4944,7 +4943,7 @@ def _log_event(user, course, event_type, details):
     except Exception:
         pass
 
-    
+
 #last working function
 # @csrf_exempt
 # def start_exams_view(request: HttpRequest, pk: int) -> HttpResponse:
