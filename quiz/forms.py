@@ -31,6 +31,7 @@ class BulkExamUpdateForm(forms.Form):
     )
 
 
+
 class SchoolForm(forms.ModelForm):
     class Meta:
         model = School
@@ -53,6 +54,10 @@ class SchoolForm(forms.ModelForm):
             'max_ca_score',
             'max_midterm_score',
             'max_exam_score',
+            'junior_midterm_score',
+            'junior_exam_score',
+            'senior_midterm_score',
+            'senior_exam_score',
             'A_min', 'A_max',
             'B_min', 'B_max',
             'C_min', 'C_max',

@@ -455,64 +455,7 @@ body { background: var(--bg); font-family: var(--sans); }
     {% endif %}
 
     <!-- AI Analysis -->
-    <!-- AI Analysis -->
-<div class="card" id="ai-analysis-card">
-    <div class="sect">🤖 AI Analysis</div>
-    <div id="ai-loading" style="text-align:center; padding:40px 0;">
-        <div style="display:inline-block; width:36px; height:36px;
-                    border:3px solid #e5e3dc; border-top:3px solid #1a1a2e;
-                    border-radius:50%; animation:spin 0.8s linear infinite;">
-        </div>
-        <p style="margin-top:14px; color:var(--muted); font-size:13px;">
-            Generating AI analysis…
-        </p>
-    </div>
-    <div id="ai-content" style="display:none;">
-        <div class="ai-block summary" id="ai-summary">
-            <div class="ai-block-label">Performance Summary</div>
-            <div class="ai-text"></div>
-        </div>
-        <div class="two-col" style="margin-bottom:0;">
-            <div class="ai-block weak" id="ai-weak" style="margin-bottom:0;">
-                <div class="ai-block-label">Weak Areas</div>
-                <div class="ai-text"></div>
-            </div>
-            <div class="ai-block strong" id="ai-strong" style="margin-bottom:0;">
-                <div class="ai-block-label">Strong Areas</div>
-                <div class="ai-text"></div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Recommendations -->
-<div class="card" id="ai-reco-card" style="display:none;">
-    <div class="sect">📋 Recommendations</div>
-    <div class="ai-block reco" style="margin:0;">
-        <div class="ai-block-label">Action Plan</div>
-        <div id="ai-reco-text"></div>
-    </div>
-</div>
-
-<!-- Parent Feedback -->
-<div class="card" id="parent-feedback" style="display:none;">
-    <div class="sect">✉ Parent Feedback</div>
-    <div class="ai-block parent" style="margin:0;">
-        <div class="ai-block-label">Message to Parents</div>
-        <div id="ai-parent-text"></div>
-    </div>
-    <button onclick="copyParentFeedback()" style="margin-top:12px;font-family:var(--mono);font-size:11px;padding:8px 16px;background:var(--gold-bg);border:1px solid var(--gold);color:var(--gold);border-radius:6px;cursor:pointer;font-weight:600;">
-        📋 Copy to Clipboard
-    </button>
-</div>
-
-<!-- Motivational -->
-<div id="ai-motive-block" style="display:none;">
-    <div class="ai-block motive">
-        <div class="ai-block-label" style="color:var(--gold);opacity:1;">For {{ student.first_name }}</div>
-        <div id="ai-motive-text"></div>
-    </div>
-</div>
 
     <!-- Ask AI Chatbot -->
     <button class="chat-toggle-btn" onclick="toggleChat()">

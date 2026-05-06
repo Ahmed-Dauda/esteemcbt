@@ -41,6 +41,8 @@ urlpatterns = [
    
     path('academics/', include('academics.urls')),
     path("research/", include("research.urls")),
+    path('reminders/', include('reminders.urls')),
+    path('farmer/', include('core.urls'))
     
     # path('verify', include('student.urls')),
  

@@ -1,3 +1,4 @@
+from django import forms
 from django.db import models
 # from student.models import Student
 from users.models import Profile, NewUser
@@ -126,6 +127,17 @@ class School(models.Model):
         max_digits=5, decimal_places=1, default=60.0, help_text="Maximum Exam score"
     )
 
+    # -------------------------------
+    # Class-based score control
+    # -------------------------------
+
+    junior_midterm_score = models.DecimalField(max_digits=5, decimal_places=1, default=30.0)
+    junior_exam_score    = models.DecimalField(max_digits=5, decimal_places=1, default=60.0)
+
+    senior_midterm_score = models.DecimalField(max_digits=5, decimal_places=1, default=20.0)
+    senior_exam_score    = models.DecimalField(max_digits=5, decimal_places=1, default=70.0)
+
+
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     updated = models.DateTimeField(auto_now=True, blank=True, null=True)
 
@@ -177,6 +189,28 @@ class School(models.Model):
             Term.create_defaults_for_school(self)
             ExamType.create_defaults_for_school(self)    
 
+    def clean(self):
+        super().clean()  # This doesn't return anything, just validates individual fields
+
+        # Use self.<field_name> to access the values (they are already set)
+        jm = self.junior_midterm_score or 0
+        je = self.junior_exam_score or 0
+        sm = self.senior_midterm_score or 0
+        se = self.senior_exam_score or 0
+
+        if jm + je != 90:
+            from django.core.exceptions import ValidationError
+            raise ValidationError({
+                'junior_midterm_score': 'Junior scores must total 90 (e.g., 30 midterm + 60 exam)',
+                'junior_exam_score': 'Junior scores must total 90 (e.g., 30 midterm + 60 exam)',
+            })
+
+        if sm + se != 90:
+            from django.core.exceptions import ValidationError
+            raise ValidationError({
+                'senior_midterm_score': 'Senior scores must total 90 (e.g., 20 midterm + 70 exam)',
+                'senior_exam_score': 'Senior scores must total 90 (e.g., 20 midterm + 70 exam)',
+            })
 
 
 

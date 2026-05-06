@@ -14,6 +14,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <style>
+/* ========== ORIGINAL STYLES ========== */
 .page-number {
   display: inline-flex;
   align-items: center;
@@ -26,26 +27,24 @@
   cursor: pointer;
   border-radius: 4px;
   font-size: 12px;
-  line-height: 1;            /* removes extra line height */
+  line-height: 1;
   flex-shrink: 0;
-  box-sizing: border-box;    /* includes border in width/height */
-  text-align: center;        /* fallback for older browsers */
+  box-sizing: border-box;
+  text-align: center;
 }
-/* Green for answered questions */
+
 .page-number.answered {
   background-color: green;
   color: white;
   border-color: green;
 }
 
-/* Blue for current page */
 .page-number.active {
   background-color: #007bff;
   color: white;
   border-color: #007bff;
 }
 
-/* Keep the container wrapping and centered */
 #paginationBoxes {
   display: flex;
   flex-wrap: wrap;
@@ -56,101 +55,430 @@
   width: 100%;
 }
 
+div.quiz p { text-align: left; }
+.quiz p { text-align: left; }
+.quiz { width: 100%; display: flex; border: 1px solid #ccc; }
+.quiz > * { margin: 10px; overflow-x: hidden; }
+.quiz input[type="radio"] { transform: scale(1.5); margin-right: 10px; }
+.custom-container { background-color: green; color: white; display: inline-block; padding: 5px; margin: 5px; }
+.pagination-box { display: inline-block; width: 100px; height: 30px; border: 1px solid #ccc; text-align: center; line-height: 30px; margin-right: 5px; cursor: pointer; }
+.clicked { background-color: rgb(211, 247, 211); }
+.question-table { margin-top: 10px; padding-top: 80px; }
 
-  div.quiz p { text-align: left; }
-  .quiz p { text-align: left; }
-  .quiz { width: 100%; display: flex; border: 1px solid #ccc; }
-  .quiz > * { margin: 10px; overflow-x: hidden; }
-  .quiz input[type="radio"] { transform: scale(1.5); margin-right: 10px; }
-  .custom-container { background-color: green; color: white; display: inline-block; padding: 5px; margin: 5px; }
-  .pagination-box { display: inline-block; width: 100px; height: 30px; border: 1px solid #ccc; text-align: center; line-height: 30px; margin-right: 5px; cursor: pointer; }
-  .clicked { background-color: rgb(211, 247, 211); }
-  .question-table { margin-top: 10px; padding-top: 80px; }
-  @media (max-width: 767px) {
-    .sticky-top { position: static; top: 0; }
-    .alert { flex-direction: column; align-items: center; }
-    .alert div { width: 100%; }
-    .question-table { margin-top: 0px; padding-top: 170px; }
-    .container { display: flex; flex-direction: column; align-items: center; padding: 20px; }
-    .examinfo { color: red; display: none; }
-    .pagination-boxes { margin-bottom: 10px; width: 100%; }
-    .submit-button { width: 100%; margin: 0; }
+.container { display: flex; justify-content: center; align-items: center; padding: 20px; }
+.quiz-container { margin: 20px; padding: 10px; background: white; border-radius: 8px; }
+.pagination-controls { text-align: center; margin: 20px 0; }
+
+#calculator button { width: 48px; height: 36px; margin: 2px; font-size: 14px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background-color: #fff; }
+#calculator button:hover { background-color: #e9ecef; }
+.exam-container { text-align: center; }
+#fullscreenPopup {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.95); color: #fff; display: none;
+  justify-content: center; align-items: center; flex-direction: column; z-index: 9999;
+}
+button:hover { background: #0b5ed7; }
+#network-status {
+  position: fixed; top: 0; left: 0; width: 100%;
+  padding: 10px; color: white; text-align: center;
+  font-weight: bold; z-index: 9999; display: none;
+}
+#network-status.offline { background-color: #d9534f; display: block; }
+#network-status.online  { background-color: #5cb85c; display: block; }
+
+/* ========== PROFESSIONAL EXAM HEADER STYLES ========== */
+.exam-header-wrap {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+}
+
+.exam-topbar {
+  background: #0f172a;
+  color: #94a3b8;
+  padding: 5px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.exam-topbar .brand {
+  font-weight: 600;
+  font-size: 13px;
+  color: #f1f5f9;
+  letter-spacing: 0.5px;
+}
+
+.exam-topbar .session-chips {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.exam-topbar .session-chips span { color: #e2e8f0; font-weight: 500; }
+
+.net-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #4ade80;
+  font-weight: 500;
+}
+
+.net-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+.exam-header-main {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: grid;
+  grid-template-columns: 170px 1fr auto auto;
+  align-items: stretch;
+  min-height: 88px;
+}
+
+.cam-panel {
+  border-right: 1px solid #e2e8f0;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.panel-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  margin-bottom: 3px;
+}
+
+.cam-feed-box {
+  background: #0f172a;
+  border-radius: 6px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #1e293b;
+  position: relative;
+  overflow: hidden;
+}
+
+.cam-live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  position: absolute;
+  top: 6px; right: 6px;
+  animation: pulse-dot 2s infinite;
+}
+
+.cam-feed-box svg { opacity: 0.25; }
+.cam-status-text {
+  font-size: 10px;
+  color: #94a3b8;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.cam-iframe-wrap {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  height: 54px;
+}
+
+.cam-iframe-wrap p {
+  position: absolute;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  font-size: 9px;
+  padding: 1px 5px;
+  top: 0; left: 0;
+  z-index: 1;
+  margin: 0;
+}
+
+.info-panel {
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+}
+
+.student-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+.exam-subtitle {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.exam-meta-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+}
+
+.meta-chip {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  font-weight: 500;
+}
+
+.violations-panel {
+  padding: 10px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  border-left: 1px solid #e2e8f0;
+  min-width: 190px;
+}
+
+.viol-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.viol-label {
+  font-size: 11px;
+  color: #94a3b8;
+  min-width: 80px;
+}
+
+.viol-count {
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 32px;
+  text-align: right;
+}
+
+.viol-count.ok     { color: #22c55e; }
+.viol-count.warn   { color: #f59e0b; }
+.viol-count.danger { color: #ef4444; }
+
+.viol-bar-track {
+  flex: 1;
+  height: 4px;
+  background: #f1f5f9;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.viol-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.viol-bar-fill.ok     { background: #22c55e; }
+.viol-bar-fill.warn   { background: #f59e0b; }
+.viol-bar-fill.danger { background: #ef4444; }
+
+.timer-panel {
+  border-left: 1px solid #e2e8f0;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 130px;
+  background: #fafbfc;
+}
+
+.timer-panel .panel-label { text-align: center; }
+#timer {
+  font-size: 30px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 2px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+#timer.timer-warn   { color: #f59e0b; }
+#timer.timer-danger { color: #ef4444; }
+
+.timer-badge {
+  font-size: 10px;
+  color: #22c55e;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.submit-button {
+  background-color: #28a745;
+  max-height: 50px;
+  border-radius: 10px;
+  border: none;
+  color: white;
+  font-size: 16px;
+  padding: 10px 20px;
+  margin: 0 5px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.submit-button:hover { background-color: #218838; }
+.submit-button:active {
+  background-color: #1e7e34;
+  transform: scale(0.98);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .exam-header-main {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
   }
-  .container { display: flex; justify-content: center; align-items: center; padding: 20px; }
-  .quiz-container { margin: 20px; padding: 10px; background: white; border-radius: 8px; }
-  .pagination-controls { text-align: center; margin: 20px 0; }
-  .page-number {
-    display: inline-block;
-    padding: 6px 12px;
-    margin: 0 3px;
-    border: 1px solid #ccc;
-    background: #fff;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-  .page-number.active {
-    background-color: #007bff;
-    color: white;
-    border-color: #007bff;
-  }
-  .page-number:hover:not(.active) {
-    background-color: #e9ecef;
-  }
-  #calculator button { width: 48px; height: 36px; margin: 2px; font-size: 14px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background-color: #fff; }
-  #calculator button:hover { background-color: #e9ecef; }
-  .exam-container { text-align: center; }
-  #fullscreenPopup {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.95); color: #fff; display: none;
-    justify-content: center; align-items: center; flex-direction: column; z-index: 9999;
-  }
-  button:hover { background: #0b5ed7; }
-  #network-status {
-    position: fixed; top: 0; left: 0; width: 100%;
-    padding: 10px; color: white; text-align: center;
-    font-weight: bold; z-index: 9999; display: none;
-  }
-  #network-status.offline { background-color: #d9534f; display: block; }
-  #network-status.online  { background-color: #5cb85c; display: block; }
+  .cam-panel     { grid-column: 1; grid-row: 1; }
+  .timer-panel   { grid-column: 2; grid-row: 1; border-left: 1px solid #e2e8f0; }
+  .info-panel    { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid #e2e8f0; }
+  .violations-panel { display: none; }
+  .exam-topbar .session-chips { display: none; }
+  
+  .question-table { margin-top: 0px; padding-top: 170px; }
+  .examinfo { color: red; display: none; }
+  .submit-button { width: 100%; margin: 0; }
+}
+
+@media (max-width: 767px) {
+  .sticky-top { position: static; top: 0; }
+  .alert { flex-direction: column; align-items: center; }
+  .alert div { width: 100%; }
+}
 </style>
 
 <input type="hidden" id="attemptId" value="{{ attempt.id }}">
 
-<form novalidate autocomplete="off" class="no-copy" id="quizf" action="/student/calculate_marks" onsubmit="return false;" enctype="multipart/form-data" method="POST">
-  {% csrf_token %}
-
-  <div class="sticky-top" style="position: fixed; top: 0; width: 100%; z-index: 1000; background-color: #dfe8f2; border-bottom: 1px solid #dee2e6;">
-    <div class="row justify-content-left" style="margin: 0;">
-      <div class="col-12">
-        <div class="alert alert-success" role="alert" style="padding: 5px; display: flex; flex-wrap: wrap; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-          <div class="col-12 col-md-4" style="padding: 0px;">
-            <div style="position: relative; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
-              <p style="position: absolute; background-color: black; color: white; padding: 0px; top: -10px; left: 0; z-index: 1;">Focus on Camera</p>
-              {% if course.room_name %}
-              <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;"
-                src="{{ course.room_name }}" width="100%" height="120" style="border: none;"></iframe>
-              {% endif %}
-            </div>
-          </div>
-          <div class="col-12 col-md-4" style="padding: 10px; text-align: left;">
-  <p style="margin:0; font-size:12px; text-align: left;">Total Violations: <span id="blurCountDisplay">0</span> / {{ course.num_attemps }}</p>
-  <p style="margin:0; font-size:12px; text-align: left;">Screenshots: <span id="screenshotCountDisplay">0</span> / {{ course.num_attemps }}</p>
-  <p style="color: red; text-align: left;"><span id="tabCount">0</span> / {{ course.num_attemps }} attempts to leave the exam page detected.</p>
-  <div id="timer" style="font-size: 24px; font-weight: bold; color: #333; text-align: left; margin: 10px 0;">00:00</div>
-</div>
-          <div class="examinfo col-12 col-md-4" style="padding: 10px;">
-            <h6 style="font-size: 12px; font-weight: bold;">{{ course.course_name }} -- {{ course.exam_type }}</h6>
-            <p style="margin: 5px 0;">Number of Questions: {{ q_count }} -- {{ course.session }} -- {{ course.term }}</p>
-            <h4 style="font-weight: bold; color: black;">{{ request.user.first_name|upper }} {{ request.user.last_name|upper }}</h4>
-          </div>
-        </div>
+<!-- ========== PROFESSIONAL EXAM HEADER ========== -->
+<div class="exam-header-wrap">
+  <div class="exam-topbar">
+    <div class="brand">ExamPortal &mdash; CBT System</div>
+    <div class="session-chips">
+      <div>Course: <span>{{ course.course_name }}</span></div>
+      <div>Type: <span>{{ course.exam_type }}</span></div>
+      <div>Session: <span>{{ course.session }}</span></div>
+      <div>Term: <span>{{ course.term }}</span></div>
+      <div class="net-indicator">
+        <div class="net-dot"></div>
+        <span id="net-label">Connected</span>
       </div>
     </div>
   </div>
 
+  <div class="exam-header-main">
+    <!-- Camera / proctoring -->
+    <div class="cam-panel">
+      <div class="panel-label">Proctoring</div>
+      {% if course.room_name %}
+        <div class="cam-iframe-wrap">
+          <p>Focus on Camera</p>
+          <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;"
+            src="{{ course.room_name }}" width="100%" height="54" style="border:none;display:block;"></iframe>
+        </div>
+      {% else %}
+        <div class="cam-feed-box">
+          <div class="cam-live-dot"></div>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="#94a3b8" stroke-width="1.5"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+      {% endif %}
+      <div class="cam-status-text">Camera active</div>
+    </div>
+
+    <!-- Student & exam info -->
+    <div class="info-panel">
+      <div class="student-name">{{ request.user.first_name|upper }} {{ request.user.last_name|upper }}</div>
+      <div class="exam-subtitle">{{ course.course_name }} &mdash; {{ course.exam_type }}</div>
+      <div class="exam-meta-chips">
+        <span class="meta-chip">{{ q_count }} Questions</span>
+        <span class="meta-chip">{{ course.session }}</span>
+        <span class="meta-chip">{{ course.term }} Term</span>
+      </div>
+    </div>
+
+    <!-- Violations -->
+    <div class="violations-panel">
+      <div class="panel-label">Violations</div>
+      <div class="viol-row">
+        <span class="viol-label">Window blur</span>
+        <div class="viol-bar-track">
+          <div class="viol-bar-fill ok" id="blurBar" style="width:0%"></div>
+        </div>
+        <span class="viol-count ok" id="blurCountDisplay">0</span>
+      </div>
+      <div class="viol-row">
+        <span class="viol-label">Tab switches</span>
+        <div class="viol-bar-track">
+          <div class="viol-bar-fill ok" id="tabBar" style="width:0%"></div>
+        </div>
+        <span class="viol-count ok" id="tabCount">0</span>
+      </div>
+      <div class="viol-row">
+        <span class="viol-label">Screenshots</span>
+        <div class="viol-bar-track">
+          <div class="viol-bar-fill ok" id="screenshotBar" style="width:0%"></div>
+        </div>
+        <span class="viol-count ok" id="screenshotCountDisplay">0</span>
+      </div>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer-panel">
+      <div class="panel-label">Time Remaining</div>
+      <div id="timer">00:00</div>
+      <div class="timer-badge">In Progress</div>
+    </div>
+  </div>
+</div>
+
+<!-- Add padding to prevent content from hiding under fixed header -->
+<div style="padding-top: 100px;"></div>
+
+<form novalidate autocomplete="off" class="no-copy" id="quizf" action="/student/calculate_marks" onsubmit="return false;" enctype="multipart/form-data" method="POST">
+  {% csrf_token %}
+
   <!-- Client‑side question container -->
-   <br><br><br>
-  <div id="question-container" class="quiz-container" style="margin: 20px; padding-left: 40px; padding-right: 40px;"></div>
+  <div id="question-container" class="quiz-container" style="margin: 0px; padding-left: 40px; padding-right: 40px;"></div>
 
   <!-- Pagination controls -->
   <div class="pagination-controls">
@@ -171,11 +499,7 @@
 </div>
 
 <div class="container buttonheight" style="display:flex;justify-content:center;align-items:center;padding:20px;">
-  <button class="submit-button" id="submit" type="button"
-    style="background-color:#28a745;max-height:50px;border-radius:10px;border:none;color:white;font-size:16px;padding:10px 20px;margin:0 5px;cursor:pointer;box-shadow:0 4px 8px rgba(0,0,0,0.2);transition:background-color 0.3s ease,transform 0.2s ease;"
-    onmouseover="this.style.backgroundColor='#218838';" onmouseout="this.style.backgroundColor='#28a745';"
-    onmousedown="this.style.backgroundColor='#1e7e34';this.style.transform='scale(0.98)';"
-    onmouseup="this.style.backgroundColor='#218838';this.style.transform='scale(1)';">Submit</button>
+  <button class="submit-button" id="submit" type="button">Submit Exam</button>
 </div>
 
 <div id="network-status"></div>
@@ -202,8 +526,6 @@
   </div>
 </div>
 
-<br><br><br><br><br><br>
-
 <script>
 // ==================== CONSTANTS ====================
 const COURSE_ID          = {{ course.id }};
@@ -213,8 +535,6 @@ const TAB_LIMIT          = {{ tab_limit }};
 const STUDENT_NAME       = "{{ request.user.first_name|upper }} {{ request.user.last_name|upper }}";
 const FULLSCREEN_COUNTER = Number({{ course.fullscreencounter|default:"3" }});
 const QUESTIONS_JSON     = {{ questions_json|safe }};
-
-
 
 const LS = {
   timer:      `remainingTime_${COURSE_ID}`,
@@ -245,7 +565,7 @@ let examAlreadySubmitted = false;
 let currentIndex = 0;
 let answers = JSON.parse(localStorage.getItem(LS.answers)) || {};
 const TOTAL_QS = QUESTIONS_JSON.length;
-console.log(JSON.stringify(QUESTIONS_JSON[0], null, 2))
+
 // ==================== UTILITIES ====================
 function getCookie(name) {
   const match = document.cookie.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]*)'));
@@ -261,17 +581,40 @@ function post(url, body) {
   });
 }
 
-function speak(text) {
-  if (!('speechSynthesis' in window)) return;
-  const msg = new SpeechSynthesisUtterance(text);
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(msg);
-}
-
 function setEl(id, val) {
   const el = document.getElementById(id);
   if (el) el.textContent = val;
 }
+
+// ==================== VIOLATION BAR HELPER ====================
+const LIMIT = {{ course.num_attemps }};
+
+function colorClass(count) {
+  const pct = count / LIMIT;
+  if (pct >= 1)    return 'danger';
+  if (pct >= 0.5)  return 'warn';
+  return 'ok';
+}
+
+function updateBar(barId, countId, count) {
+  const bar   = document.getElementById(barId);
+  const label = document.getElementById(countId);
+  if (!bar || !label) return;
+  const pct   = Math.min((count / LIMIT) * 100, 100);
+  const cls   = colorClass(count);
+  bar.style.width = pct + '%';
+  bar.className   = 'viol-bar-fill ' + cls;
+  label.className = 'viol-count '    + cls;
+}
+
+window.updateViolBars = function () {
+  const blur       = parseInt(document.getElementById('blurCountDisplay')?.textContent) || 0;
+  const tab        = parseInt(document.getElementById('tabCount')?.textContent) || 0;
+  const screenshot = parseInt(document.getElementById('screenshotCountDisplay')?.textContent) || 0;
+  updateBar('blurBar', 'blurCountDisplay', blur);
+  updateBar('tabBar', 'tabCount', tab);
+  updateBar('screenshotBar', 'screenshotCountDisplay', screenshot);
+};
 
 // ==================== RENDER CURRENT QUESTION ====================
 function escapeHtml(str) {
@@ -296,21 +639,20 @@ function renderQuestion() {
     return `<div class="quiz">
               <div class="radio-container">
                 <input class="radio-button" type="radio" name="q${q.id}" value="${optValue}" id="opt${idx+1}_${q.id}" ${checked}>
-               <label for="opt${idx+1}_${q.id}">${opt}</label>
+                <label for="opt${idx+1}_${q.id}">${escapeHtml(opt)}</label>
               </div>
             </div>`;
   }).join('');
 
   const html = `
     ${imgHtml}
-    <label style="font-size: 18px;">${q.text}</label>
+    <label style="font-size: 18px;">${escapeHtml(q.text)}</label>
     <h6 style="text-align: right;">[marks ${q.marks}]</h6>
     ${optionsHtml}
   `;
   const container = document.getElementById('question-container');
   if (container) container.innerHTML = html;
 
-  // Safely update pagination UI
   const pageIndicator = document.getElementById('page-indicator');
   if (pageIndicator) pageIndicator.innerHTML = `Question ${currentIndex+1} of ${TOTAL_QS}`;
   const totalCountSpan = document.getElementById('total-count');
@@ -320,23 +662,9 @@ function renderQuestion() {
   const nextBtn = document.getElementById('next-btn');
   if (nextBtn) nextBtn.disabled = (currentIndex === TOTAL_QS-1);
 
-  renderPaginationNumbers(); // generate numbered page buttons
+  renderPaginationNumbers();
 }
 
-
-
-
-function pageNumberClickHandler(e) {
-  e.stopPropagation();
-  const page = parseInt(e.currentTarget.getAttribute('data-page'), 10);
-  if (!isNaN(page) && page !== currentIndex + 1) {
-    currentIndex = page - 1;
-    renderQuestion();
-    attachAnswerListener();
-  }
-}
-
-// ==================== NUMBERED PAGINATION ====================
 function renderPaginationNumbers() {
   const container = document.getElementById('paginationBoxes');
   if (!container) return;
@@ -350,8 +678,8 @@ function renderPaginationNumbers() {
   for (let i = 1; i <= TOTAL_QS; i++) {
     const questionObj = QUESTIONS_JSON[i - 1];
     const isAnswered  = answers[questionObj.id] !== undefined && answers[questionObj.id] !== null;
-    const activeClass   = (i === currentIndex + 1) ? 'active'    : '';
-    const answeredClass = isAnswered               ? 'answered'  : '';
+    const activeClass   = (i === currentIndex + 1) ? 'active' : '';
+    const answeredClass = isAnswered ? 'answered' : '';
     html += `<span class="page-number ${activeClass} ${answeredClass}" data-page="${i}">${i}</span>`;
   }
   container.innerHTML = html;
@@ -372,12 +700,11 @@ function pageNumberClickHandler(e) {
   }
 }
 
-// ==================== ANSWER SAVE (debounced) ====================
+// ==================== ANSWER SAVE ====================
 function onAnswerChange(e) {
   if (!e.target.classList.contains('radio-button')) return;
   const qid = parseInt(e.target.name.substring(1));
   const val = e.target.value;
-  console.log('Answer changed:', qid, val);   // ← log
 
   answers[qid] = val;
   localStorage.setItem(LS.answers, JSON.stringify(answers));
@@ -385,24 +712,17 @@ function onAnswerChange(e) {
 
   clearTimeout(answerSaveTimer);
   answerSaveTimer = setTimeout(() => {
-    console.log('Sending to server:', { attempt_id: ATTEMPT_ID, question_id: qid, selected_value: val });
     post(URLS.updateAnswer, {
       attempt_id: ATTEMPT_ID,
       question_id: qid,
       selected_value: val,
-    })
-    .then(response => response.json())
-    .then(data => console.log('Server response:', data))
-    .catch(err => console.error('Save failed', err));
+    }).catch(err => console.error('Save failed', err));
   }, 800);
 }
-
-
 
 function attachAnswerListener() {
   const container = document.getElementById('question-container');
   if (!container) return;
-  // Remove old listener before adding new one — prevents stacking
   container.removeEventListener('change', onAnswerChange);
   container.addEventListener('change', onAnswerChange);
 }
@@ -423,41 +743,6 @@ document.getElementById('next-btn')?.addEventListener('click', () => {
   }
 });
 
-// ==================== RESTORE SAVED ANSWERS FROM SERVER ====================
-
-function mergeAndRender() {
-  // Immediate render from localStorage (fast)
-  renderQuestion();
-  attachAnswerListener();
-
-  // Then fetch server answers and update
-  fetch(URLS.getSavedAnswers)
-    .then(r => r.json())
-    .then(data => {
-      if (data.answers && Object.keys(data.answers).length > 0) {
-        let changed = false;
-        for (const [qid, val] of Object.entries(data.answers)) {
-          if (answers[qid] !== val) {
-            answers[qid] = val;
-            changed = true;
-          }
-        }
-        if (changed) {
-          localStorage.setItem(LS.answers, JSON.stringify(answers));
-          // Re-render current question only if the current question's answer changed
-          const currentQ = QUESTIONS_JSON[currentIndex];
-          if (currentQ && data.answers[currentQ.id]) {
-            renderQuestion();          // re-render current question
-            attachAnswerListener();
-          }
-          renderPaginationNumbers();   // update pagination colors
-        }
-      }
-    })
-    .catch(err => console.warn('Could not restore server answers:', err));
-}
-
-// console.log(document.getElementById('attemptId')?.value);
 // ==================== TIMER ====================
 function initTimer() {
   const timerEl = document.getElementById('timer');
@@ -476,7 +761,15 @@ function initTimer() {
     }
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
-    timerEl.innerHTML = `<span>Time Left: ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span>`;
+    timerEl.innerHTML = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    
+    // Timer color warning
+    if (remaining < 300) {
+      timerEl.className = 'timer-danger';
+    } else if (remaining < 600) {
+      timerEl.className = 'timer-warn';
+    }
+    
     remaining--;
     localStorage.setItem(LS.timer, remaining);
   }, 1000);
@@ -491,9 +784,6 @@ function doSubmit(reason) {
   clearInterval(heartbeatInterval);
   clearInterval(autoSaveInterval);
   clearTimeout(answerSaveTimer);
-
-  const timerEl = document.getElementById('timer');
-  if (timerEl) timerEl.innerHTML = '<span>Time Left: 00:00</span>';
 
   const finalAnswers = JSON.parse(localStorage.getItem(LS.answers)) || {};
   finalAnswers['submissionReason'] = reason;
@@ -530,14 +820,14 @@ document.getElementById('submit').addEventListener('click', function () {
   doSubmit('manual');
 });
 
-// ==================== VIOLATION RECORDING ====================
+// ==================== VIOLATION HANDLERS ====================
 document.addEventListener("visibilitychange", function () {
   if (!document.hidden || examAlreadySubmitted || isManuallySubmitting) return;
   post(URLS.recordTabSwitch, { attempt_id: ATTEMPT_ID })
     .then(r => r.json())
     .then(data => {
       setEl('tabCount', data.count);
-      speak(`${data.count} out of ${data.limit} attempts to leave detected. ${STUDENT_NAME}`);
+      updateViolBars();
       if (data.should_submit && !examAlreadySubmitted) {
         setTimeout(() => { alert('Exam submitted: tab switching limit reached.'); doSubmit('tabswitch'); }, 300);
       }
@@ -553,7 +843,7 @@ document.addEventListener('keyup', function (e) {
     .then(r => r.json())
     .then(data => {
       setEl('screenshotCountDisplay', data.count);
-      speak(`Screenshot attempt ${data.count} of ${data.limit} detected. ${STUDENT_NAME}`);
+      updateViolBars();
       if (data.should_submit && !examAlreadySubmitted) {
         alert(`❌ ${data.count}/${data.limit} screenshot attempts. Exam submitted.`);
         doSubmit('screenshot');
@@ -570,6 +860,7 @@ window.addEventListener('blur', () => {
     .then(r => r.json())
     .then(data => {
       setEl('blurCountDisplay', data.count);
+      updateViolBars();
       if (data.should_submit && !examAlreadySubmitted) {
         alert(`Exam submitted: window blur (${data.count}/${data.limit})`);
         doSubmit('tabswitch');
@@ -633,7 +924,6 @@ document.addEventListener("fullscreenchange", () => {
   }
 });
 
-// attach fullscreen to radio buttons after they are created (using event delegation)
 document.addEventListener('click', (e) => {
   if (e.target && e.target.classList && e.target.classList.contains('radio-button')) {
     openFullscreen();
@@ -644,13 +934,20 @@ updateFullscreenCounter();
 // ==================== NETWORK STATUS ====================
 const networkStatusEl = document.getElementById('network-status');
 function updateNetworkStatus() {
+  const netLabel = document.getElementById('net-label');
+  const netDot = document.querySelector('.net-dot');
+  
   if (navigator.onLine) {
     networkStatusEl.textContent = "Back online! Your exam is syncing...";
     networkStatusEl.className = 'online';
+    if (netLabel) netLabel.textContent = 'Connected';
+    if (netDot) netDot.style.background = '#4ade80';
     setTimeout(() => { networkStatusEl.style.display = 'none'; }, 3000);
   } else {
     networkStatusEl.textContent = "You are offline. Wait for internet before submitting.";
     networkStatusEl.className = 'offline';
+    if (netLabel) netLabel.textContent = 'Offline';
+    if (netDot) netDot.style.background = '#f87171';
   }
 }
 updateNetworkStatus();
@@ -685,6 +982,7 @@ function fetchViolationCounts() {
       setEl('tabCount', data.tab_switch_count);
       setEl('blurCountDisplay', data.blur_count);
       setEl('screenshotCountDisplay', data.screenshot_count);
+      updateViolBars();
       if (!examAlreadySubmitted && (
         data.tab_switch_count >= data.limit ||
         data.blur_count >= data.limit ||
@@ -692,6 +990,36 @@ function fetchViolationCounts() {
       )) doSubmit('violation_limit');
     })
     .catch(console.warn);
+}
+
+// ==================== RESTORE SAVED ANSWERS ====================
+function mergeAndRender() {
+  renderQuestion();
+  attachAnswerListener();
+
+  fetch(URLS.getSavedAnswers)
+    .then(r => r.json())
+    .then(data => {
+      if (data.answers && Object.keys(data.answers).length > 0) {
+        let changed = false;
+        for (const [qid, val] of Object.entries(data.answers)) {
+          if (answers[qid] !== val) {
+            answers[qid] = val;
+            changed = true;
+          }
+        }
+        if (changed) {
+          localStorage.setItem(LS.answers, JSON.stringify(answers));
+          const currentQ = QUESTIONS_JSON[currentIndex];
+          if (currentQ && data.answers[currentQ.id]) {
+            renderQuestion();
+            attachAnswerListener();
+          }
+          renderPaginationNumbers();
+        }
+      }
+    })
+    .catch(err => console.warn('Could not restore server answers:', err));
 }
 
 // ==================== CALCULATOR ====================
@@ -709,14 +1037,6 @@ function toggleScientific() {
   const s = document.getElementById('scientific');
   s.style.display = s.style.display === 'none' ? 'block' : 'none';
 }
-document.addEventListener('keydown', function (e) {
-  if (document.getElementById('calculator').style.display !== 'block') return;
-  const d = document.getElementById('calc-display');
-  if ((e.key >= '0' && e.key <= '9') || ['+','-','*','/','.',`(`,`)`].includes(e.key)) d.value += e.key;
-  else if (e.key === 'Enter') { e.preventDefault(); calculate(); }
-  else if (e.key === 'Backspace') d.value = d.value.slice(0, -1);
-  else if (e.key === 'Escape') clearCalc();
-});
 
 dragElement(document.getElementById("calculator"));
 function dragElement(elmnt) {
@@ -736,6 +1056,7 @@ function dragElement(elmnt) {
   };
 }
 
+// ==================== PREVENT CHEATING ====================
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('keydown', e => {
   if (e.ctrlKey && ['p','s','PrintScreen'].includes(e.key)) e.preventDefault();
@@ -754,7 +1075,14 @@ $(document).ready(function () {
   startHeartbeat();
   autoSaveInterval = setInterval(autoSaveToServer, 30000);
   fetchViolationCounts();
-  mergeAndRender();  // this also calls renderQuestion() and attachAnswerListener()
+  mergeAndRender();
+  
+  // Set up violation bar observers
+  ['blurCountDisplay', 'tabCount', 'screenshotCountDisplay'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    new MutationObserver(window.updateViolBars).observe(el, { childList: true, subtree: true, characterData: true });
+  });
 });
 </script>
 

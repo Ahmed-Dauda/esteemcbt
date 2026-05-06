@@ -40,6 +40,7 @@ class SubscriptionForm(forms.ModelForm):
         }
 
 
+
 class ResultRowForm(forms.Form):
     """
     Single-row form for one student with school max validation.

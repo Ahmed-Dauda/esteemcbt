@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FraudShield — AI Fraud Detection for Nigeria</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #00ff88;
+    --accent-dim: rgba(0,255,136,0.12);
+    --danger: #ff3b5c;
+    --danger-dim: rgba(255,59,92,0.12);
+    --warn: #ffb800;
+    --warn-dim: rgba(255,184,0,0.12);
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --card: #13131c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    padding: 32px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid rgba(0,255,136,0.2);
+    padding: 4px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Hero */
+  .hero {
+    padding: 64px 0 48px;
+    text-align: center;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(36px, 6vw, 64px);
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+    position: relative;
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 17px;
+    font-weight: 300;
+    max-width: 520px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+  }
+
+  /* Stats strip */
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 56px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    color: var(--accent);
+    display: block;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  /* Main card */
+  .main-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .main-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.4;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: var(--border);
+    color: var(--text);
+  }
+
+  .tab:hover:not(.active) {
+    color: var(--text);
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 140px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  textarea:focus {
+    border-color: rgba(0,255,136,0.3);
+  }
+
+  textarea::placeholder {
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .examples {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  .example-chip {
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .example-chip:hover {
+    color: var(--accent);
+    border-color: rgba(0,255,136,0.3);
+  }
+
+  .submit-btn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 16px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .submit-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0,255,136,0.25);
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .submit-btn .spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto;
+  }
+
+  .submit-btn.loading .btn-text { display: none; }
+  .submit-btn.loading .spinner { display: block; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Result card */
+  .result-card {
+    display: none;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    animation: slideIn 0.4s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-card.visible { display: block; }
+
+  .verdict-banner {
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .verdict-banner.FRAUD { background: var(--danger-dim); border-bottom: 1px solid rgba(255,59,92,0.2); }
+  .verdict-banner.SUSPICIOUS { background: var(--warn-dim); border-bottom: 1px solid rgba(255,184,0,0.2); }
+  .verdict-banner.SAFE { background: var(--accent-dim); border-bottom: 1px solid rgba(0,255,136,0.2); }
+
+  .verdict-icon {
+    font-size: 36px;
+    line-height: 1;
+  }
+
+  .verdict-text h2 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    letter-spacing: -0.5px;
+  }
+
+  .FRAUD .verdict-text h2 { color: var(--danger); }
+  .SUSPICIOUS .verdict-text h2 { color: var(--warn); }
+  .SAFE .verdict-text h2 { color: var(--accent); }
+
+  .verdict-text p {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .verdict-score {
+    margin-left: auto;
+    text-align: center;
+  }
+
+  .score-ring {
+    width: 64px;
+    height: 64px;
+    position: relative;
+  }
+
+  .score-ring svg {
+    transform: rotate(-90deg);
+  }
+
+  .score-ring .score-num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .result-body {
+    padding: 24px 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 600px) {
+    .result-body { grid-template-columns: 1fr; }
+    .verdict-banner { flex-wrap: wrap; }
+    .verdict-score { margin-left: 0; }
+  }
+
+  .result-section { }
+
+  .result-section h3 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .result-section p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .flags-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .flags-list li {
+    font-size: 13px;
+    color: var(--text);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.5;
+  }
+
+  .flags-list li::before {
+    content: '⚠';
+    color: var(--warn);
+    flex-shrink: 0;
+    font-size: 12px;
+    margin-top: 1px;
+  }
+
+  .advice-box {
+    grid-column: 1 / -1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .advice-box .icon { font-size: 20px; flex-shrink: 0; }
+
+  .advice-box p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .confidence-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 100px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .confidence-fill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width 0.8s ease;
+  }
+
+  .FRAUD .confidence-fill { background: var(--danger); }
+  .SUSPICIOUS .confidence-fill { background: var(--warn); }
+  .SAFE .confidence-fill { background: var(--accent); }
+
+  .scam-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .scam-tag {
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    border-radius: 100px;
+  }
+
+  /* API section */
+  .api-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+  }
+
+  .api-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  .api-card p {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    overflow-x: auto;
+    line-height: 1.6;
+  }
+
+  .error-msg {
+    display: none;
+    background: var(--danger-dim);
+    border: 1px solid rgba(255,59,92,0.2);
+    border-radius: 12px;
+    padding: 16px;
+    color: var(--danger);
+    font-size: 14px;
+    margin-top: 12px;
+  }
+
+  .error-msg.visible { display: block; }
+
+  footer {
+    text-align: center;
+    padding: 32px 0;
+    color: var(--muted);
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+    margin-top: 16px;
+  }
+
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="logo">Fraud<span>Shield</span></div>
+    <div class="badge">BETA · AI-POWERED</div>
+  </header>
+
+  <div class="hero">
+    <h1>Nigeria's <em>Smartest</em><br>Fraud Detector</h1>
+    <p>Paste any suspicious message, transaction detail, or account info. Our AI analyzes it against thousands of known Nigerian fraud patterns — instantly.</p>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-num">₦2.9T</span>
+        <span class="stat-label">Lost to fraud yearly</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">200M</span>
+        <span class="stat-label">Nigerians at risk</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">&lt;3s</span>
+        <span class="stat-label">Analysis time</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main checker -->
+  <div class="main-card">
+    <div class="tabs">
+      <button class="tab active" onclick="setType(this, 'message')">💬 Message</button>
+
+    </div>
+
+    <label>Paste suspicious content</label>
+    <textarea id="inputText" placeholder="e.g. 'Dear customer, your GTBank account has been flagged. Click here to verify your BVN and OTP to avoid suspension...'"></textarea>
+
+    <div class="examples">
+      <span style="font-size:12px;color:var(--muted);margin-right:4px;">Try:</span>
+      <span class="example-chip" onclick="fillExample('otp')">OTP phishing</span>
+      <span class="example-chip" onclick="fillExample('lottery')">Lottery scam</span>
+      <span class="example-chip" onclick="fillExample('investment')">Ponzi scheme</span>
+      <span class="example-chip" onclick="fillExample('job')">Job offer scam</span>
+      <span class="example-chip" onclick="fillExample('legit')">Legit message</span>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <button class="submit-btn" id="submitBtn" onclick="analyze()">
+      <span class="btn-text">🔍 Analyze for Fraud</span>
+      <div class="spinner"></div>
+    </button>
+  </div>
+
+  <!-- Result -->
+  <div class="result-card" id="resultCard">
+    <div class="verdict-banner" id="verdictBanner">
+      <div class="verdict-icon" id="verdictIcon"></div>
+      <div class="verdict-text">
+        <h2 id="verdictTitle"></h2>
+        <p id="fraudType"></p>
+      </div>
+      <div class="verdict-score">
+        <div class="score-ring">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#1e1e2e" stroke-width="5"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke-width="5"
+              id="scoreCircle"
+              stroke-dasharray="163.36"
+              stroke-dashoffset="163.36"
+              stroke-linecap="round"/>
+          </svg>
+          <div class="score-num" id="scoreNum"></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;text-align:center;">Risk Score</div>
+      </div>
+    </div>
+
+    <div class="result-body" id="resultBody">
+      <div class="result-section">
+        <h3>Explanation</h3>
+        <p id="explanation"></p>
+      </div>
+
+      <div class="result-section">
+        <h3>Red Flags Detected</h3>
+        <ul class="flags-list" id="flagsList"></ul>
+      </div>
+
+      <div class="result-section">
+        <h3>AI Confidence</h3>
+        <p id="confidenceText"></p>
+        <div class="confidence-bar">
+          <div class="confidence-fill" id="confidenceFill"></div>
+        </div>
+      </div>
+
+      <div class="result-section">
+        <h3>Similar Known Scams</h3>
+        <div class="scam-tags" id="scamTags"></div>
+      </div>
+
+      <div class="advice-box">
+        <div class="icon">🛡️</div>
+        <p id="advice"></p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Built for Nigeria · Powered by Claude AI · <a href="#">Get API Access</a>
+  </footer>
+</div>
+
+<script>
+  let currentType = 'message';
+
+  const examples = {
+    otp: "Dear GTBank Customer, your account has been temporarily suspended due to suspicious activity. To restore access, please verify your BVN, account number, and OTP sent to your phone. Visit: gtb-verify-account.xyz within 2 hours to avoid permanent closure. Customer Care: 09012345678",
+    lottery: "CONGRATULATIONS! You have been selected as a winner of the MTN/Nigerian Lottery 2024. You have won ₦5,000,000 and a Brand New iPhone 15 Pro. To claim your prize, send your full name, bank account details, and a processing fee of ₦15,000 to account 0123456789 Wema Bank - John Doe. Ref: NL/2024/WIN/4892",
+    investment: "💰 GUARANTEED 50% RETURNS IN 30 DAYS! Join our exclusive Forex/Crypto trading platform. Minimum investment ₦50,000. Our AI trading bot has never failed in 3 years. Over 10,000 Nigerians already earning daily. WhatsApp: 08098765432. Limited slots - don't miss out! Withdraw anytime.",
+    job: "URGENT HIRING: Work from home data entry job. Earn ₦50,000-₦200,000 weekly. No experience needed. Immediate employment. Requirements: Smartphone + internet. Registration fee: ₦2,500 (refundable after first week). DM now. Nigerian graduates preferred. Remote work. Flexible hours.",
+    legit: "Your UBA transaction alert: Debit of ₦15,500.00 on your account ***4521 at SHOPRITE IKEJA on 15-Jan-2025 at 14:32. Available balance: ₦87,240.00. Not you? Call 07002255822 or visit any UBA branch."
+  };
+
+  function setType(btn, type) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    currentType = type;
+  }
+
+  function fillExample(key) {
+    document.getElementById('inputText').value = examples[key];
+  }
+
+  async function analyze() {
+    const text = document.getElementById('inputText').value.trim();
+    if (!text) return;
+
+    const btn = document.getElementById('submitBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    const resultCard = document.getElementById('resultCard');
+
+    btn.classList.add('loading');
+    btn.disabled = true;
+    errorMsg.classList.remove('visible');
+    resultCard.classList.remove('visible');
+
+    try {
+      const res = await fetch('/reminders/analyze/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, type: currentType })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Analysis failed');
+
+      displayResult(data);
+    } catch (err) {
+      errorMsg.textContent = '⚠ ' + err.message;
+      errorMsg.classList.add('visible');
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  function displayResult(data) {
+    const card = document.getElementById('resultCard');
+    const banner = document.getElementById('verdictBanner');
+
+    // Set verdict class
+    banner.className = 'verdict-banner ' + data.verdict;
+    document.querySelectorAll('.confidence-fill').forEach(el => {
+      el.className = 'confidence-fill';
+    });
+    document.getElementById('resultBody').className = 'result-body ' + data.verdict;
+
+    const icons = { FRAUD: '🚨', SUSPICIOUS: '⚠️', SAFE: '✅' };
+    const titles = { FRAUD: 'FRAUD DETECTED', SUSPICIOUS: 'SUSPICIOUS', SAFE: 'APPEARS SAFE' };
+
+    document.getElementById('verdictIcon').textContent = icons[data.verdict];
+    document.getElementById('verdictTitle').textContent = titles[data.verdict];
+    document.getElementById('fraudType').textContent = data.fraud_type !== 'None' ? data.fraud_type : 'No specific fraud pattern identified';
+
+    // Score ring
+    const score = data.risk_score;
+    const circumference = 163.36;
+    const offset = circumference - (score / 100) * circumference;
+    const circle = document.getElementById('scoreCircle');
+    const colors = { FRAUD: '#ff3b5c', SUSPICIOUS: '#ffb800', SAFE: '#00ff88' };
+    circle.style.stroke = colors[data.verdict];
+    setTimeout(() => { circle.style.strokeDashoffset = offset; }, 100);
+    circle.style.transition = 'stroke-dashoffset 0.8s ease';
+    document.getElementById('scoreNum').textContent = score;
+
+    // Content
+    document.getElementById('explanation').textContent = data.explanation;
+    document.getElementById('advice').textContent = data.advice;
+    document.getElementById('confidenceText').textContent = `${data.confidence}% confidence`;
+    
+    const fill = document.getElementById('confidenceFill');
+    fill.className = 'confidence-fill';
+    setTimeout(() => { fill.style.width = data.confidence + '%'; }, 100);
+    fill.style.transition = 'width 0.8s ease';
+    const fillColors = { FRAUD: '#ff3b5c', SUSPICIOUS: '#ffb800', SAFE: '#00ff88' };
+    fill.style.background = fillColors[data.verdict];
+
+    // Red flags
+    const flagsList = document.getElementById('flagsList');
+    flagsList.innerHTML = '';
+    if (data.red_flags && data.red_flags.length) {
+      data.red_flags.forEach(flag => {
+        const li = document.createElement('li');
+        li.textContent = flag;
+        flagsList.appendChild(li);
+      });
+    } else {
+      flagsList.innerHTML = '<li style="color:var(--muted)">No red flags detected</li>';
+    }
+
+    // Scam tags
+    const tagsEl = document.getElementById('scamTags');
+    tagsEl.innerHTML = '';
+    if (data.similar_scams && data.similar_scams.length) {
+      data.similar_scams.forEach(scam => {
+        const tag = document.createElement('span');
+        tag.className = 'scam-tag';
+        tag.textContent = scam;
+        tagsEl.appendChild(tag);
+      });
+    } else {
+      tagsEl.innerHTML = '<span class="scam-tag">None identified</span>';
+    }
+
+    card.classList.add('visible');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Enter key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.ctrlKey) analyze();
+  });
+</script>
+</body>
+</html>

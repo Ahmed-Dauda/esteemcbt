@@ -62,11 +62,15 @@ INSTALLED_APPS = [
     'django_mathjax',
     'portal',
     'research',
+    'reminders',
+    'core',
 
 
     'allauth.socialaccount.providers.google',
     # 'allauth.socialaccount.providers.twitter',
 ]
+
+
 
 # Disable allauth's rate limiting signals if not needed
 ACCOUNT_RATE_LIMITS = {
@@ -702,3 +706,4 @@ INTERNAL_IPS = [
     "127.0.0.1",
     # ...
 ]
+
