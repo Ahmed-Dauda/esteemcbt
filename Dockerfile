@@ -23,6 +23,9 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Fix pkg_resources missing in slim image
+RUN pip install --upgrade setuptools
+
 COPY . .
 
 CMD ["uvicorn", "school.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--timeout-keep-alive", "120"]
