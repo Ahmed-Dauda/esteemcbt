@@ -455,36 +455,22 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 import environ
 import os
+from pathlib import Path
 
-env = environ.Env(DEBUG=(bool, False))
+BASE_DIR = Path(__file__).resolve().parent.parent  # make sure this is before environ
+
+env = environ.Env(
+    DEBUG=(bool, False),
+    SECRET_KEY=(str, 'fallback-secret-key-change-in-production'),
+    ALLOWED_HOSTS=(list, ['*']),
+)
+
+# Load .env file — won't crash if file is missing
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 DEBUG = env("DEBUG")
-if DEBUG:
-    INSTALLED_APPS += ["debug_toolbar"]
-    MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
-
-
 SECRET_KEY = env("SECRET_KEY")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
-
-
-
-#CLOUDINARY SETTINGS
-cloudinary.config(
-    cloud_name = env("CLOUDINARY_CLOUD_NAME"),
-    api_key    = env("CLOUDINARY_API_KEY"),
-    api_secret = env("CLOUDINARY_API_SECRET"),
-    secure     = True
-)
-CLOUDINARY_URL = env('CLOUDINARY_URL')
-DEFAULT_FILE_STORAGE = env('DEFAULT_FILE_STORAGE')
-CLOUDINARY_CLOUD_NAME = env("CLOUDINARY_CLOUD_NAME")
-CLOUDINARY_API_KEY    = env("CLOUDINARY_API_KEY")
-CLOUDINARY_API_SECRET = env("CLOUDINARY_API_SECRET")
-# ASGI application
-ASGI_APPLICATION = 'school.asgi.application'
-
 
 # STATIC_ROOT = BASE_DIR / 'staticfiles'
 
