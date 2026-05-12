@@ -5,6 +5,33 @@ from django.conf.urls.static import static
 from . import views
 
 urlpatterns = [
+    path('api/generate-chapter4-ai/', views.generate_chapter4_ai, name='generate_chapter4_ai'),
+    path('api/regression-analysis/', views.regression_analysis, name='regression_analysis'),
+path('api/reliability-analysis/', views.reliability_analysis, name='reliability_analysis'),
+    # Add to urlpatterns
+    path('api/get-chart-data/', views.get_chart_data, name='get_chart_data'),
+path('api/descriptive-analysis/', views.descriptive_analysis, name='descriptive_analysis'),
+path('api/exploratory-analysis/', views.exploratory_analysis, name='exploratory_analysis'),
+path('api/confirmatory-analysis/', views.confirmatory_analysis, name='confirmatory_analysis'),
+path('api/generate-chapter-intro/', views.generate_chapter_intro, name='generate_chapter_intro'),
+path('api/generate-chapter-summary/', views.generate_chapter_summary, name='generate_chapter_summary'),
+path('api/save-chapter4/', views.save_chapter4, name='save_chapter4'),
+
+
+# EDA and Chart endpoints
+path('api/modify-chart/', views.modify_chart, name='modify_chart'),
+path('api/generate-eda/', views.generate_eda, name='generate_eda'),
+path('api/analyze-missing-values/', views.analyze_missing_values, name='analyze_missing_values'),
+path('api/analyze-outliers/', views.analyze_outliers, name='analyze_outliers'),
+path('api/generate-chart/', views.generate_chart, name='generate_chart'),
+path('api/create-chart-from-prompt/', views.create_chart_from_prompt, name='create_chart_from_prompt'),
+path('api/get-data-insights/', views.get_data_insights, name='get_data_insights'),
+path('api/statistical-test/', views.statistical_test, name='statistical_test'),
+
+
+    # Add these to your urlpatterns
+path('api/ai-statistical-analysis/', views.ai_statistical_analysis, name='ai_statistical_analysis'),
+path('api/statistical-chat/', views.statistical_chat, name='statistical_chat'),
 
     path('api/rename-column/<int:dataset_id>/', views.rename_column, name='rename_column'),
 path('api/clean-dataset/<int:dataset_id>/', views.clean_dataset, name='clean_dataset'),

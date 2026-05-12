@@ -4,9 +4,7 @@
     <title>AI Farmer Assistant - Live Camera & Voice</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         
         body {
             font-family: Arial, sans-serif;
@@ -26,16 +24,9 @@
             box-shadow: 0 6px 18px rgba(0,0,0,0.1);
         }
 
-        h2 { 
-            margin-bottom: 5px;
-            color: #2e7d32;
-        }
-        
-        p { 
-            color: #555;
-            font-size: 14px;
-        }
-        
+        h2 { margin-bottom: 5px; color: #2e7d32; }
+        p { color: #555; font-size: 14px; }
+
         .btn {
             padding: 12px 20px;
             margin: 8px 5px;
@@ -47,30 +38,21 @@
             transition: all 0.3s;
         }
 
-        .primary { 
-            background: #2e7d32; 
-            color: white; 
-        }
-        
+        .primary { background: #2e7d32; color: white; }
         .primary:hover { background: #1b5e20; }
         .primary:disabled { background: #ccc; cursor: not-allowed; }
-        
-        .secondary { 
-            background: #e0e0e0; 
-            color: #333;
-        }
-        
+        .secondary { background: #e0e0e0; color: #333; }
         .secondary:hover { background: #bdbdbd; }
-        
-        .voice-btn { 
-            background: #1565c0; 
+
+        .voice-btn {
+            background: #1565c0;
             color: white;
             font-size: 18px;
             padding: 15px 25px;
         }
-        
-        .voice-btn.listening { 
-            background: #c62828; 
+
+        .voice-btn.listening {
+            background: #c62828;
             animation: pulse 1s infinite;
         }
 
@@ -79,7 +61,46 @@
             50% { opacity: 0.8; transform: scale(1.05); }
         }
 
-        .upload-status, .error-message {
+        /* Language toggle */
+        .lang-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 12px 0;
+            background: #f5f5f5;
+            border-radius: 30px;
+            padding: 6px;
+            width: fit-content;
+            margin: 12px auto;
+        }
+
+        .lang-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: transparent;
+            color: #777;
+        }
+
+        .lang-btn.active {
+            background: #1565c0;
+            color: white;
+            box-shadow: 0 2px 6px rgba(21,101,192,0.3);
+        }
+
+        .lang-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .upload-status {
             margin-top: 10px;
             padding: 10px;
             border-radius: 8px;
@@ -88,29 +109,23 @@
         }
 
         .upload-status.success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid #a5d6a7;
-            display: block;
+            background: #e8f5e9; color: #2e7d32;
+            border: 1px solid #a5d6a7; display: block;
         }
 
-        .upload-status.error, .error-message {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ef9a9a;
-            display: block;
+        .upload-status.error {
+            background: #ffebee; color: #c62828;
+            border: 1px solid #ef9a9a; display: block;
         }
-        
+
         .upload-status.info {
-            background: #e3f2fd;
-            color: #1565c0;
-            border: 1px solid #90caf9;
-            display: block;
+            background: #e3f2fd; color: #1565c0;
+            border: 1px solid #90caf9; display: block;
         }
 
-        .voice-status { 
-            margin-top: 10px; 
-            font-size: 14px; 
+        .voice-status {
+            margin-top: 10px;
+            font-size: 14px;
             color: #555;
             min-height: 40px;
             padding: 8px;
@@ -129,20 +144,11 @@
             overflow-y: auto;
         }
 
-        .loader { 
-            display: none; 
-            margin-top: 15px; 
-            padding: 10px;
-            background: #fff3e0;
-            border-radius: 8px;
-            font-weight: bold; 
-            color: #e65100;
-        }
-        
+        .loader { display: none; margin-top: 15px; padding: 10px; background: #fff3e0; border-radius: 8px; font-weight: bold; color: #e65100; }
         .loader.show { display: block; }
 
         input[type="file"] { display: none; }
-        
+
         .button-group {
             display: flex;
             flex-wrap: wrap;
@@ -150,66 +156,22 @@
             gap: 10px;
             margin: 15px 0;
         }
-        
-        #previewContainer {
-            margin: 15px 0;
-            display: none;
-        }
-        
-        #previewImage {
-            width: 100%;
-            max-height: 250px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 2px solid #2e7d32;
-        }
-        
+
+        #previewContainer { margin: 15px 0; display: none; }
+        #previewImage { width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; border: 2px solid #2e7d32; }
+
         #cameraPreview {
-            width: 100%;
-            max-height: 300px;
-            border-radius: 8px;
-            margin: 10px 0;
-            background: #000;
-            border: 2px solid #1565c0;
-            object-fit: cover;
+            width: 100%; max-height: 300px; border-radius: 8px;
+            margin: 10px 0; background: #000;
+            border: 2px solid #1565c0; object-fit: cover;
         }
-        
-        #captureBtn {
-            margin-top: 5px;
-            margin-bottom: 10px;
-            background: #4caf50;
-            font-size: 18px;
-            padding: 12px 24px;
-        }
-        
-        #captureBtn:hover {
-            background: #388e3c;
-        }
-        
-        audio {
-            width: 100%;
-            margin-top: 10px;
-        }
-        
-        hr {
-            margin: 20px 0;
-            border: none;
-            border-top: 2px solid #e0e0e0;
-        }
-        
-        .debug-info {
-            font-size: 11px;
-            color: #999;
-            margin-top: 10px;
-            padding: 5px;
-            background: #f5f5f5;
-            border-radius: 4px;
-            word-break: break-all;
-            max-height: 150px;
-            overflow-y: auto;
-            text-align: left;
-        }
-        
+
+        #captureBtn { margin-top: 5px; margin-bottom: 10px; background: #4caf50; font-size: 18px; padding: 12px 24px; }
+        #captureBtn:hover { background: #388e3c; }
+
+        audio { width: 100%; margin-top: 10px; }
+        hr { margin: 20px 0; border: none; border-top: 2px solid #e0e0e0; }
+
         .camera-tips {
             background: #fff3e0;
             padding: 10px;
@@ -219,20 +181,19 @@
             text-align: left;
             border-left: 3px solid #ff9800;
         }
-        
-        .camera-tips strong {
-            color: #e65100;
+
+        .camera-tips strong { color: #e65100; }
+
+        .debug-info {
+            font-size: 11px; color: #999; margin-top: 10px;
+            padding: 5px; background: #f5f5f5; border-radius: 4px;
+            word-break: break-all; max-height: 150px;
+            overflow-y: auto; text-align: left;
         }
-        
+
         @media (max-width: 480px) {
-            .btn {
-                padding: 10px 15px;
-                font-size: 14px;
-            }
-            
-            .card {
-                padding: 15px;
-            }
+            .btn { padding: 10px 15px; font-size: 14px; }
+            .card { padding: 15px; }
         }
     </style>
 </head>
@@ -242,26 +203,21 @@
     <h2>🌱 AI Farmer Assistant</h2>
     <p>Helping Nigerian farmers diagnose crops + voice Q&A</p>
 
-    <!-- Camera Tips Box -->
     <div class="camera-tips">
         <strong>📷 Camera Tips:</strong><br>
-        • If camera doesn't work, use "Upload from Gallery" instead<br>
-        • On iPhone: Tap the 🔒 icon → Allow Camera<br>
-        • On Android: Tap "Allow" when prompted<br>
-        • Refresh page if camera gets stuck
+        • If camera doesn't work, use "Upload from Gallery"<br>
+        • On iPhone: Tap 🔒 → Allow Camera<br>
+        • On Android: Tap "Allow" when prompted
     </div>
 
-    <!-- Main AJAX Form -->
     <form id="mainForm" enctype="multipart/form-data">
         {% csrf_token %}
-
         <input type="file" name="image" id="imageInput" accept="image/*" onchange="handleFileSelect(event)">
-        
+
         <div class="button-group">
             <button type="button" class="btn secondary" onclick="document.getElementById('imageInput').click()">
                 📁 Upload from Gallery
             </button>
-
             <button type="button" class="btn secondary" id="cameraBtn">
                 📷 Take Live Photo
             </button>
@@ -282,29 +238,34 @@
 
     <div id="loader" class="loader">
         <div>⏳ Analyzing... Please wait</div>
-        <div style="font-size:12px; margin-top:5px;">This may take 10-15 seconds</div>
+        <div style="font-size:12px; margin-top:5px;">This may take 10–15 seconds</div>
         <div style="font-size:11px; margin-top:5px;" id="debugTimer"></div>
     </div>
 
     {% if error_message %}
-    <div class="error-message">
-        ⚠️ {{ error_message }}
-    </div>
+    <div class="upload-status error">⚠️ {{ error_message }}</div>
     {% endif %}
 
     <hr>
 
     <h3>🎤 Ask by Voice</h3>
+
+    <!-- Language toggle -->
+    <div class="lang-toggle">
+        <button class="lang-btn active" id="langEn" onclick="setLang('en-US', this)">🇬🇧 English</button>
+        <button class="lang-btn"        id="langHa" onclick="setLang('ha',    this)">🇳🇬 Hausa</button>
+    </div>
+    <div class="lang-hint" id="langHint">Speaking in: English</div>
+
     <button class="btn voice-btn" id="voiceBtn" onclick="toggleVoice()">
         🎤 Tap to Speak
     </button>
-    <div class="voice-status" id="voiceStatus">
-        💡 Ready to listen
-    </div>
+    <div class="voice-status" id="voiceStatus">💡 Ready to listen</div>
 
     <form method="post" id="voiceForm">
         {% csrf_token %}
-        <input type="hidden" name="voice_text" id="voiceInput">
+        <input type="hidden" name="voice_text"  id="voiceInput">
+        <input type="hidden" name="voice_lang"  id="voiceLang" value="en-US">
     </form>
 
     <div id="resultContainer">
@@ -321,33 +282,51 @@
         {% endif %}
         {% endif %}
     </div>
-    
+
     <div class="debug-info" id="debugInfo">
         <div>✅ Page loaded. Ready to help farmers!</div>
     </div>
 </div>
 
 <script>
-    let fileSelected = false;
-    let mediaStream = null;
-    
-    // Debug function
-    function debugLog(message) {
-        console.log(message);
-        const debugEl = document.getElementById('debugInfo');
-        if (debugEl) {
-            const time = new Date().toLocaleTimeString();
-            const existingContent = debugEl.innerHTML;
-            debugEl.innerHTML = `<div>${time}: ${message}</div>` + existingContent;
-            // Keep only last 20 messages
-            const messages = debugEl.innerHTML.split('</div>');
-            if (messages.length > 20) {
-                debugEl.innerHTML = messages.slice(0, 20).join('</div>');
-            }
+    let fileSelected  = false;
+    let mediaStream   = null;
+    let currentLang   = 'en-US';
+
+    // ── Language toggle ──────────────────────────────────────────────────────
+    function setLang(lang, btn) {
+        currentLang = lang;
+        document.getElementById('voiceLang').value = lang;
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const names = { 'en-US': 'English', 'ha': 'Hausa' };
+        document.getElementById('langHint').textContent = `Speaking in: ${names[lang] || lang}`;
+        debugLog(`Language set to: ${lang}`);
+
+        // Warn if Hausa selected and browser might not support it
+        const statusEl = document.getElementById('voiceStatus');
+        if (lang === 'ha') {
+            statusEl.innerHTML = '⚠️ Hausa voice works best on Chrome (Android). Tap to test.';
+            statusEl.style.background = '#fff3e0';
+        } else {
+            statusEl.innerHTML = '💡 Ready to listen';
+            statusEl.style.background = '#f5f5f5';
         }
     }
-    
-    // Handle file selection
+
+    // ── Debug logger ─────────────────────────────────────────────────────────
+    function debugLog(message) {
+        console.log(message);
+        const el = document.getElementById('debugInfo');
+        if (el) {
+            const time = new Date().toLocaleTimeString();
+            el.innerHTML = `<div>${time}: ${message}</div>` + el.innerHTML;
+            const msgs = el.innerHTML.split('</div>');
+            if (msgs.length > 20) el.innerHTML = msgs.slice(0, 20).join('</div>');
+        }
+    }
+
+    // ── File select ───────────────────────────────────────────────────────────
     function handleFileSelect(event) {
         const file = event.target.files[0];
         const statusEl = document.getElementById('uploadStatus');
@@ -362,7 +341,7 @@
         }
 
         debugLog(`File selected: ${file.name}, size: ${(file.size / 1024).toFixed(1)} KB`);
-        
+
         if (!file.type.startsWith('image/')) {
             statusEl.className = 'upload-status error';
             statusEl.textContent = '❌ Please select an image file';
@@ -371,389 +350,233 @@
         }
 
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = e => {
             previewImg.src = e.target.result;
             previewContainer.style.display = 'block';
-            debugLog('Image preview loaded');
         };
         reader.readAsDataURL(file);
 
         statusEl.className = 'upload-status success';
         statusEl.textContent = `✅ "${file.name}" selected (${(file.size / 1024).toFixed(1)} KB)`;
         fileSelected = true;
-        
         stopCamera();
     }
-    
-    // AJAX form submission
-    const mainForm = document.getElementById('mainForm');
-    if (mainForm) {
-        mainForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            debugLog('Form submitted');
-            
-            const statusEl = document.getElementById('uploadStatus');
-            
-            if (!fileSelected && !document.getElementById('imageInput').files.length) {
-                statusEl.className = 'upload-status error';
-                statusEl.textContent = '❌ Please select or take a photo first';
-                debugLog('No file selected');
-                return;
-            }
-            
-            const formData = new FormData(this);
-            const analyzeBtn = document.getElementById('analyzeBtn');
-            const loader = document.getElementById('loader');
-            
-            // Show loader with timer
-            analyzeBtn.disabled = true;
-            analyzeBtn.textContent = '⏳ Processing...';
-            loader.classList.add('show');
-            
-            let startTime = Date.now();
-            let timerInterval = setInterval(() => {
-                let elapsed = Math.floor((Date.now() - startTime) / 1000);
-                const timerEl = document.getElementById('debugTimer');
-                if (timerEl) timerEl.innerHTML = `⏱️ Waiting time: ${elapsed} seconds`;
-            }, 1000);
-            
-            debugLog('Sending request to server...');
-            
-            try {
-                const response = await fetch('', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-                
-                debugLog(`Response received: ${response.status}`);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const html = await response.text();
-                debugLog('HTML response received, updating page');
-                
-                // Update the page with new content
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                
-                const newResult = doc.getElementById('resultContainer');
-                if (newResult) {
-                    document.getElementById('resultContainer').innerHTML = newResult.innerHTML;
-                    debugLog('Result updated');
-                    
-                    // Auto-scroll to result
-                    document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                } else {
-                    debugLog('No result container found in response');
-                }
-                
-            } catch (error) {
-                debugLog(`Error: ${error.message}`);
-                statusEl.className = 'upload-status error';
-                statusEl.textContent = `❌ Error: ${error.message}. Please try again.`;
-                
-                document.getElementById('resultContainer').innerHTML = `
-                    <div class="result">
-                        <h3>⚠️ Error</h3>
-                        <p>Sorry, an error occurred: ${error.message}<br><br>Please check your internet connection and try again.</p>
-                    </div>
-                `;
-            } finally {
-                clearInterval(timerInterval);
-                loader.classList.remove('show');
-                analyzeBtn.disabled = false;
-                analyzeBtn.textContent = '🔍 Analyze Plant';
-                debugLog('Request completed');
-            }
-        });
-    }
-    
-    // ========== FIXED LIVE CAMERA FUNCTIONALITY ==========
-    const cameraBtn = document.getElementById('cameraBtn');
-    const videoPreview = document.getElementById('cameraPreview');
-    const captureBtn = document.getElementById('captureBtn');
-    const canvas = document.getElementById('cameraCanvas');
-    
-    if (cameraBtn) {
-        cameraBtn.addEventListener('click', async () => {
-            debugLog('Opening camera...');
-            fileSelected = false;
-            const imageInput = document.getElementById('imageInput');
-            if (imageInput) imageInput.value = '';
-            
-            const statusEl = document.getElementById('uploadStatus');
-            
-            try {
-                // First check if browser supports getUserMedia
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('Your browser does not support camera access. Please use Chrome, Firefox, or Safari.');
-                }
-                
-                // Try back camera first
-                let constraints = {
-                    video: {
-                        facingMode: { exact: "environment" }
-                    }
-                };
-                
-                debugLog('Requesting back camera...');
-                
-                try {
-                    mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-                    debugLog('Back camera accessed successfully');
-                } catch (backCameraError) {
-                    debugLog(`Back camera failed: ${backCameraError.message}, trying any camera...`);
-                    constraints = { video: true };
-                    mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-                    debugLog('Camera accessed successfully');
-                }
-                
-                // Show video preview
-                videoPreview.style.display = 'block';
-                videoPreview.srcObject = mediaStream;
-                
-                // Wait for video to be ready
-                await new Promise((resolve) => {
-                    videoPreview.onloadedmetadata = () => {
-                        debugLog(`Video ready: ${videoPreview.videoWidth}x${videoPreview.videoHeight}`);
-                        resolve();
-                    };
-                });
-                
-                captureBtn.style.display = 'block';
-                cameraBtn.textContent = '📷 Camera Ready';
-                cameraBtn.style.background = '#c62828';
-                
-                statusEl.className = 'upload-status success';
-                statusEl.textContent = '✅ Camera ready! Point at plant and tap "Capture Photo"';
-                
-                // Hide preview container
-                const previewContainer = document.getElementById('previewContainer');
-                if (previewContainer) previewContainer.style.display = 'none';
-                
-            } catch (error) {
-                debugLog(`Camera error: ${error.name} - ${error.message}`);
-                
-                let errorMessage = '';
-                
-                switch(error.name) {
-                    case 'NotAllowedError':
-                    case 'PermissionDeniedError':
-                        errorMessage = 'Camera permission denied. Click the camera icon in address bar to allow access.';
-                        alert('📷 Camera Access Needed\n\nPlease allow camera access when prompted.\n\nIf you blocked it:\n1. Click the camera icon in the address bar\n2. Select "Allow"\n3. Refresh the page');
-                        break;
-                    case 'NotFoundError':
-                    case 'DevicesNotFoundError':
-                        errorMessage = 'No camera found. Please use "Upload from Gallery" instead.';
-                        break;
-                    case 'NotReadableError':
-                    case 'TrackStartError':
-                        errorMessage = 'Camera is busy. Close other camera apps and try again.';
-                        break;
-                    default:
-                        errorMessage = `Cannot access camera: ${error.message}. Use "Upload from Gallery" instead.`;
-                }
-                
-                statusEl.className = 'upload-status error';
-                statusEl.textContent = `❌ ${errorMessage}`;
-            }
-        });
-    }
-    
-    function capturePhoto() {
-        debugLog('Capturing photo...');
-        
-        if (!videoPreview.srcObject || !videoPreview.videoWidth || videoPreview.videoWidth === 0) {
-            const statusEl = document.getElementById('uploadStatus');
+
+    // ── AJAX submit ───────────────────────────────────────────────────────────
+    document.getElementById('mainForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const statusEl  = document.getElementById('uploadStatus');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loader     = document.getElementById('loader');
+
+        if (!fileSelected && !document.getElementById('imageInput').files.length) {
             statusEl.className = 'upload-status error';
-            statusEl.textContent = '❌ Camera not ready. Please wait or reopen camera.';
-            debugLog('Camera not ready for capture');
+            statusEl.textContent = '❌ Please select or take a photo first';
             return;
         }
-        
-        // Set canvas size to match video
-        canvas.width = videoPreview.videoWidth;
-        canvas.height = videoPreview.videoHeight;
-        
-        debugLog(`Capturing at size: ${canvas.width}x${canvas.height}`);
-        
-        // Draw video frame to canvas
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(videoPreview, 0, 0, canvas.width, canvas.height);
-        
-        // Convert to file
-        canvas.toBlob((blob) => {
-            if (!blob) {
-                debugLog('Failed to create blob');
-                return;
-            }
-            
-            const file = new File([blob], `plant_photo_${Date.now()}.jpg`, { type: "image/jpeg" });
-            debugLog(`Photo captured: ${(file.size / 1024).toFixed(1)} KB`);
-            
-            // Create a FileList-like object
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            
-            // Set to file input
-            const imageInput = document.getElementById('imageInput');
-            imageInput.files = dataTransfer.files;
-            
-            // Manually call handleFileSelect
-            handleFileSelect({ target: { files: [file] } });
-            
-            // Stop camera stream
-            stopCamera();
-            
-            const statusEl = document.getElementById('uploadStatus');
-            statusEl.className = 'upload-status success';
-            statusEl.textContent = `✅ Photo captured! Click "Analyze Plant" to process.`;
-            
-            debugLog('Photo capture complete, ready for analysis');
-            
-            // Auto-analyze after short delay
-            setTimeout(() => {
-                if (confirm('✓ Photo captured successfully!\n\nDo you want to analyze this plant now?')) {
-                    const form = document.getElementById('mainForm');
-                    if (form) form.dispatchEvent(new Event('submit'));
-                }
-            }, 500);
-            
-        }, 'image/jpeg', 0.85);
-    }
-    
-    function stopCamera() {
-        debugLog('Stopping camera...');
-        if (mediaStream) {
-            mediaStream.getTracks().forEach(track => {
-                track.stop();
-                debugLog(`Stopped track: ${track.kind}`);
+
+        const formData = new FormData(this);
+        analyzeBtn.disabled = true;
+        analyzeBtn.textContent = '⏳ Processing...';
+        loader.classList.add('show');
+
+        let elapsed = 0;
+        const timer = setInterval(() => {
+            elapsed++;
+            const el = document.getElementById('debugTimer');
+            if (el) el.innerHTML = `⏱️ Waiting: ${elapsed}s`;
+        }, 1000);
+
+        debugLog('Sending request...');
+        try {
+            const response = await fetch('', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
-            mediaStream = null;
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const html = await response.text();
+            const doc  = new DOMParser().parseFromString(html, 'text/html');
+            const newResult = doc.getElementById('resultContainer');
+            if (newResult) {
+                document.getElementById('resultContainer').innerHTML = newResult.innerHTML;
+                document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        } catch (err) {
+            debugLog(`Error: ${err.message}`);
+            statusEl.className = 'upload-status error';
+            statusEl.textContent = `❌ ${err.message}`;
+        } finally {
+            clearInterval(timer);
+            loader.classList.remove('show');
+            analyzeBtn.disabled = false;
+            analyzeBtn.textContent = '🔍 Analyze Plant';
         }
+    });
+
+    // ── Live camera ───────────────────────────────────────────────────────────
+    const cameraBtn   = document.getElementById('cameraBtn');
+    const videoPreview = document.getElementById('cameraPreview');
+    const captureBtn  = document.getElementById('captureBtn');
+    const canvas      = document.getElementById('cameraCanvas');
+
+    cameraBtn.addEventListener('click', async () => {
+        fileSelected = false;
+        document.getElementById('imageInput').value = '';
+        const statusEl = document.getElementById('uploadStatus');
+
+        try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
+                throw Object.assign(new Error('Camera not supported'), { name: 'NotFoundError' });
+
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: 'environment' } } });
+            } catch {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            }
+
+            mediaStream = stream;
+            videoPreview.style.display = 'block';
+            videoPreview.srcObject = stream;
+            await new Promise(res => { videoPreview.onloadedmetadata = res; });
+
+            captureBtn.style.display = 'block';
+            cameraBtn.textContent = '📷 Camera Ready';
+            cameraBtn.style.background = '#c62828';
+            statusEl.className = 'upload-status success';
+            statusEl.textContent = '✅ Camera ready! Point at plant and tap "Capture Photo"';
+            document.getElementById('previewContainer').style.display = 'none';
+
+        } catch (err) {
+            const msgs = {
+                NotAllowedError: 'Camera permission denied. Allow it in your browser settings.',
+                PermissionDeniedError: 'Camera permission denied.',
+                NotFoundError: 'No camera found. Use "Upload from Gallery" instead.',
+                NotReadableError: 'Camera is busy. Close other apps and try again.'
+            };
+            statusEl.className = 'upload-status error';
+            statusEl.textContent = `❌ ${msgs[err.name] || err.message}`;
+        }
+    });
+
+    captureBtn.addEventListener('click', () => {
+        if (!videoPreview.srcObject || !videoPreview.videoWidth) {
+            document.getElementById('uploadStatus').className = 'upload-status error';
+            document.getElementById('uploadStatus').textContent = '❌ Camera not ready.';
+            return;
+        }
+        canvas.width  = videoPreview.videoWidth;
+        canvas.height = videoPreview.videoHeight;
+        canvas.getContext('2d').drawImage(videoPreview, 0, 0);
+
+        canvas.toBlob(blob => {
+            const file = new File([blob], `plant_${Date.now()}.jpg`, { type: 'image/jpeg' });
+            const dt   = new DataTransfer();
+            dt.items.add(file);
+            document.getElementById('imageInput').files = dt.files;
+            handleFileSelect({ target: { files: [file] } });
+            stopCamera();
+            setTimeout(() => {
+                if (confirm('✓ Photo captured!\n\nAnalyze this plant now?'))
+                    document.getElementById('mainForm').dispatchEvent(new Event('submit'));
+            }, 500);
+        }, 'image/jpeg', 0.85);
+    });
+
+    function stopCamera() {
+        if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
         videoPreview.style.display = 'none';
         videoPreview.srcObject = null;
-        if (captureBtn) captureBtn.style.display = 'none';
-        if (cameraBtn) {
-            cameraBtn.textContent = '📷 Take Live Photo';
-            cameraBtn.style.background = '';
-        }
+        captureBtn.style.display = 'none';
+        cameraBtn.textContent = '📷 Take Live Photo';
+        cameraBtn.style.background = '';
     }
-    
-    if (captureBtn) {
-        captureBtn.addEventListener('click', capturePhoto);
-    }
-    
-    // ========== VOICE FUNCTIONALITY ==========
+
+    // ── Voice ─────────────────────────────────────────────────────────────────
     let recognition = null;
     let isListening = false;
-    
-    function toggleVoice() {
-        if (isListening) {
-            stopListening();
-        } else {
-            startListening();
-        }
-    }
-    
+
+    function toggleVoice() { isListening ? stopListening() : startListening(); }
+
     function startListening() {
         const statusEl = document.getElementById('voiceStatus');
-        
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
         if (!SpeechRecognition) {
-            statusEl.innerHTML = '❌ Voice not supported. Try Chrome, Edge, or Safari.';
+            statusEl.innerHTML = '❌ Voice not supported. Try Chrome or Edge.';
             statusEl.style.background = '#ffebee';
             return;
         }
-        
+
         recognition = new SpeechRecognition();
-        recognition.lang = 'en-US';
-        recognition.interimResults = false;
+        recognition.lang            = currentLang;   // ← 'en-US' or 'ha'
+        recognition.interimResults  = false;
         recognition.maxAlternatives = 1;
-        
+
+        debugLog(`Starting voice recognition in: ${currentLang}`);
+
         recognition.onstart = () => {
             isListening = true;
-            const voiceBtn = document.getElementById('voiceBtn');
-            if (voiceBtn) {
-                voiceBtn.textContent = '⏹ Stop Listening';
-                voiceBtn.classList.add('listening');
-            }
-            statusEl.innerHTML = '🎙️ Listening... Speak clearly now';
+            const btn = document.getElementById('voiceBtn');
+            btn.textContent = '⏹ Stop Listening';
+            btn.classList.add('listening');
+            const langName = currentLang === 'ha' ? 'Hausa' : 'English';
+            statusEl.innerHTML = `🎙️ Listening in ${langName}... Speak clearly`;
             statusEl.style.background = '#e8f5e9';
-            debugLog('Voice recognition started');
         };
-        
-        recognition.onresult = (event) => {
+
+        recognition.onresult = event => {
             const text = event.results[0][0].transcript;
-            debugLog(`Voice recognized: "${text}"`);
-            statusEl.innerHTML = `✅ You said: "${text}"<br>⏳ Processing your question...`;
-            const voiceInput = document.getElementById('voiceInput');
-            if (voiceInput) voiceInput.value = text;
-            
+            debugLog(`Heard (${currentLang}): "${text}"`);
+            statusEl.innerHTML = `✅ You said: "${text}"<br>⏳ Processing...`;
+            document.getElementById('voiceInput').value = text;
+            document.getElementById('voiceLang').value  = currentLang;
+
             const loader = document.getElementById('loader');
-            if (loader) {
-                loader.classList.add('show');
-                loader.innerHTML = '<div>⏳ Processing your voice question...</div>';
-            }
-            
-            const voiceForm = document.getElementById('voiceForm');
-            if (voiceForm) voiceForm.submit();
+            if (loader) { loader.classList.add('show'); loader.innerHTML = '<div>⏳ Processing voice question...</div>'; }
+
+            document.getElementById('voiceForm').submit();
         };
-        
-        recognition.onerror = (event) => {
+
+        recognition.onerror = event => {
             debugLog(`Voice error: ${event.error}`);
             const errors = {
-                'no-speech': '⚠️ No speech detected. Tap and speak clearly.',
-                'audio-capture': '❌ No microphone found.',
-                'not-allowed': '❌ Microphone blocked. Allow in browser settings.',
-                'network': '❌ Network error.'
+                'no-speech':      '⚠️ No speech detected. Tap and speak clearly.',
+                'audio-capture':  '❌ No microphone found.',
+                'not-allowed':    '❌ Microphone blocked. Allow in browser settings.',
+                'language-not-supported': `❌ ${currentLang === 'ha' ? 'Hausa' : 'This language'} is not supported on your device. Try Chrome on Android.`,
+                'network':        '❌ Network error.'
             };
             statusEl.innerHTML = errors[event.error] || `❌ Error: ${event.error}`;
             statusEl.style.background = '#ffebee';
             stopListening();
         };
-        
-        recognition.onend = () => {
-            debugLog('Voice recognition ended');
-            stopListening();
-        };
-        
+
+        recognition.onend = () => { debugLog('Voice ended'); stopListening(); };
         recognition.start();
     }
-    
+
     function stopListening() {
         isListening = false;
-        const voiceBtn = document.getElementById('voiceBtn');
-        if (voiceBtn) {
-            voiceBtn.textContent = '🎤 Tap to Speak';
-            voiceBtn.classList.remove('listening');
-        }
-        if (recognition) {
-            try {
-                recognition.stop();
-            } catch(e) {}
-        }
+        const btn = document.getElementById('voiceBtn');
+        btn.textContent = '🎤 Tap to Speak';
+        btn.classList.remove('listening');
+        try { if (recognition) recognition.stop(); } catch(e) {}
         const statusEl = document.getElementById('voiceStatus');
-        if (statusEl && !statusEl.innerHTML.includes('✅')) {
+        if (!statusEl.innerHTML.includes('✅')) {
             statusEl.innerHTML = '💡 Ready to listen';
             statusEl.style.background = '#f5f5f5';
         }
     }
-    
-    // Clean up when leaving page
+
     window.addEventListener('beforeunload', () => {
-        if (mediaStream) {
-            mediaStream.getTracks().forEach(track => track.stop());
-        }
+        if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
     });
-    
-    // Initial debug
-    debugLog('Page loaded and ready');
+
+    debugLog('Page ready');
     debugLog(`Camera support: ${!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)}`);
     debugLog(`Voice support: ${!!(window.SpeechRecognition || window.webkitSpeechRecognition)}`);
 </script>
