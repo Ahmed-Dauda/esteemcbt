@@ -2961,12 +2961,16 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
         return HttpResponse("No results found for this class.", status=404)
 
     # ── Clean display class ───────────────────────────────────────
+    # NEW
     first_result  = all_results.first()
     school_name   = first_result.schools.school_name if first_result.schools else ''
-    if school_name and school_name.lower() in result_class.lower():
-        display_class = result_class.strip().split()[0]
-    else:
-        display_class = result_class.strip()
+
+    # Strip "Class:" prefix if present
+    clean = re.sub(r'(?i)^class\s*:\s*', '', result_class).strip()
+
+    # Take only the first word (e.g. "SS1", "SSS2") — drops school name
+    display_class = clean.split()[0] if clean else result_class.strip()
+
 
     # ── Detect class level (Senior / Junior) from the class name ──
     class_upper = display_class.upper()
