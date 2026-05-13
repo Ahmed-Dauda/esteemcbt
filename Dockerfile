@@ -27,6 +27,9 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Fix embed_video's dependency on pkg_resources (part of setuptools)
+RUN pip install --upgrade setuptools
+
 COPY . .
 
 RUN python manage.py collectstatic --noinput
