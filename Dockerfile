@@ -25,14 +25,13 @@ RUN pip install --upgrade pip setuptools wheel
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Fix embed_video's dependency on pkg_resources (part of setuptools)
-RUN pip install --upgrade setuptools
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --upgrade setuptools && \
+    python -c "import pkg_resources; print('pkg_resources OK')"
 
 COPY . .
 
-RUN python manage.py collectstatic --noinput
+RUN DATABASE_URL=${DATABASE_URL} python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
