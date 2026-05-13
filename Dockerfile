@@ -2,6 +2,10 @@ FROM python:3.11.9-slim
 
 WORKDIR /app
 
+ARG DEBUG
+ARG SECRET_KEY
+ARG DATABASE_URL
+
 RUN apt-get update && apt-get install -y \
     build-essential \
     gcc \
@@ -24,5 +28,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+
+RUN python manage.py collectstatic --noinput
+
+EXPOSE 8000
 
 CMD ["uvicorn", "school.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--timeout-keep-alive", "120"]
