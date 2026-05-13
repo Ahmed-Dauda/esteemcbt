@@ -11,7 +11,6 @@ from openai import OpenAI
 from django.core.cache import cache
 import pickle
 # Add at the top of views.py with other imports
-import scipy.stats as stats
 
 from .models import (
     Chapter, ChatMessage, Project, Section,
