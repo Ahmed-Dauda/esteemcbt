@@ -282,7 +282,7 @@ def report_card_detail(request, student_id, session_id, term_id):
         display_class = result_class.strip()
 
     class_upper = display_class.upper()
-    is_senior = bool(re.match(r'^SS[1-3]', class_upper))
+    is_senior = bool(re.match(r'^SSS[1-3]', class_upper))
     is_junior = bool(re.match(r'^JSS[1-3]', class_upper))
 
     # Filter to only currently assigned subjects
@@ -2323,7 +2323,7 @@ def class_report_detail(request, result_class, session_id, term_id):
         display_class = raw_class
 
     class_upper = display_class.upper()
-    is_senior = bool(re.match(r'^SS[1-3]', class_upper))
+    is_senior = bool(re.match(r'^SSS[1-3]', class_upper))
     is_junior = bool(re.match(r'^JSS[1-3]', class_upper))
 
     # ── Score limits (dynamic based on class) ─────────────────────
@@ -2965,7 +2965,7 @@ def download_class_reports_pdf(request, result_class, session_id, term_id):
 
     # ── Detect class level (Senior / Junior) from the class name ──
     class_upper = display_class.upper()
-    is_senior = bool(re.match(r'^SS[1-3]', class_upper))
+    is_senior = bool(re.match(r'^SSS[1-3]', class_upper))
     is_junior = bool(re.match(r'^JSS[1-3]', class_upper))
 
     # ── Filter to only currently assigned subjects ────────────────
