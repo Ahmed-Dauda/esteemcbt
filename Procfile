@@ -13,6 +13,6 @@
 
 # web: gunicorn school.asgi:application -k uvicorn.workers.UvicornWorker --workers 2 --threads 2 --timeout 60
 # worker: celery -A school worker --loglevel=info --concurrency=1 --pool=solo
-web: gunicorn school.asgi:application -k uvicorn.workers.UvicornWorker --workers 2 --threads 2 --timeout 60
+web: gunicorn school.asgi:application -k uvicorn.workers.UvicornWorker --workers 1 --threads 2 --timeout 60
 worker: celery -A school worker --loglevel=info --concurrency=1 --pool=solo --max-tasks-per-child=5
 clock: python clock.py

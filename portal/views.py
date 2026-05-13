@@ -1362,7 +1362,7 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
 
     # ── Detect class level (Senior / Junior) ──────────────────────
     class_upper = display_class.upper()
-    is_senior = bool(re.match(r'^SS[1-3]', class_upper))
+    is_senior = bool(re.match(r'^SSS?[1-3]', class_upper))  # SS1-3 and SSS1-3
     is_junior = bool(re.match(r'^JSS[1-3]', class_upper))
 
     # ── Filter to only currently assigned subjects ────────────────
