@@ -21,17 +21,14 @@ RUN apt-get update && apt-get install -y \
     fontconfig \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade pip setuptools wheel
+RUN pip install --upgrade pip wheel
 
 COPY requirements.txt .
-
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --upgrade setuptools && \
-    python -c "import pkg_resources; print('pkg_resources OK')"
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN DATABASE_URL=${DATABASE_URL} python manage.py collectstatic --noinput
+RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
