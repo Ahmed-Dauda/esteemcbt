@@ -1329,6 +1329,7 @@ def download_class_report(request):
 
 
 
+
 #individual report card PDF generation
 def download_term_report_pdf(request, student_id, session_id, term_id):
     from collections import defaultdict
@@ -1353,12 +1354,16 @@ def download_term_report_pdf(request, student_id, session_id, term_id):
     is_midterm = getattr(term, 'is_midterm', False)
 
     # ── Clean result_class ────────────────────────────────────────
-    raw_class   = getattr(results.first(), 'result_class', '')
+    # NEW
+    raw_class   = getattr(results.first(), 'result_class', '') or ''
     school_name = school.school_name if school else ''
-    if school_name and school_name.lower() in raw_class.lower():
-        display_class = raw_class.strip().split()[0]
-    else:
-        display_class = raw_class.strip()
+
+    # Strip "Class:" prefix if present
+    clean = re.sub(r'(?i)^class\s*:\s*', '', raw_class).strip()
+
+    # Take only the first word (e.g. "SS1", "SSS2") — drops school name
+    display_class = clean.split()[0] if clean else raw_class.strip()
+
 
     # ── Detect class level (Senior / Junior) ──────────────────────
     class_upper = display_class.upper()
