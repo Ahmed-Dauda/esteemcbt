@@ -1,10 +1,6 @@
-FROM python:3.11.9-slim
+FROM python:3.11-slim
 
 WORKDIR /app
-
-ARG DEBUG
-ARG SECRET_KEY
-ARG DATABASE_URL
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -12,22 +8,23 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     pkg-config \
     libpq-dev \
-    libfreetype6 \
     libfreetype6-dev \
     libjpeg-dev \
-    libjpeg62-turbo-dev \
     zlib1g-dev \
     libpng-dev \
     fontconfig \
+    rustc \
+    cargo \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade pip wheel
+RUN pip install --upgrade pip setuptools wheel
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+RUN pip install -v --no-cache-dir -r requirements.txt
 
 COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "school.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--timeout-keep-alive", "120"]
+CMD ["uvicorn", "school.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
