@@ -3,8 +3,11 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY
 
-from school import celery
-
+# Celery is optional
+try:
+    from school import celery
+except ImportError:
+    celery = None
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -185,11 +188,16 @@ SOCIALACCOUNT_PROVIDERS = {
 
 
 # Configure Cloudinary
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-
-
+# Configure Cloudinary - Optional
+try:
+    import cloudinary
+    import cloudinary.uploader
+    import cloudinary.api
+    CLOUDINARY_AVAILABLE = True
+except ImportError:
+    CLOUDINARY_AVAILABLE = False
+    cloudinary = None
+    print("Cloudinary not installed - running without it")
 # import cloudinary
 
 
@@ -250,8 +258,11 @@ MIDDLEWARE = [
 
 
 import os
-from celery.schedules import crontab
-
+# Celery schedules - optional
+try:
+    from celery.schedules import crontab
+except ImportError:
+    crontab = None
 # # Redis config for Celery
 # CELERY_BROKER_URL = os.environ.get('REDISCLOUD_URL', 'redis://localhost:6379')
 # CELERY_ACCEPT_CONTENT = ['json']
