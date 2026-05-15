@@ -5,6 +5,9 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
     curl \
+    libfreetype6-dev \
+    libjpeg-dev \
+    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -13,8 +16,8 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install Python packages
-RUN pip install --no-cache-dir -r requirements.txt || \
-    (echo "pip install failed" && cat requirements.txt && exit 1)
+RUN pip install --no-cache-dir -r requirements.txt
+
 # Copy the rest of the application
 COPY . .
 
