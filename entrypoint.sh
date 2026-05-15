@@ -1,12 +1,21 @@
-#!/bin/sh
-# entrypoint.sh
-set -e
+version: '3.8'
 
-# Run database migrations
-python manage.py migrate --noinput
+services:
+  web:
+    build: .
+    image: ${IMAGE_NAME}
+    # NO ports section - this fixes your deployment error!
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-school.settings.production}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      - DEBUG=${DEBUG:-False}
+    volumes:
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+    restart: unless-stopped
 
-# Collect static files (using WhiteNoise)
-python manage.py collectstatic --noinput --clear
-
-# Start Gunicorn (or your WSGI server)
-exec gunicorn school.wsgi:application --bind 0.0.0.0:8000 --workers 3
+volumes:
+  media_data:
+  static_data:
