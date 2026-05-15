@@ -1,0 +1,23 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  web:
+    build: .
+    image: ${IMAGE_NAME}
+    ports:
+      - "${PORT}:8000"
+    env_file:
+      - .env
+    volumes:
+      - uploads_volume:/app/media
+    networks:
+      - coolify_network
+    restart: unless-stopped
+
+volumes:
+  uploads_volume:
+
+networks:
+  coolify_network:
+    external: true
