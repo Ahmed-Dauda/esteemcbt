@@ -1,21 +1,22 @@
-version: '3.8'
+#!/bin/bash
+set -e
 
-services:
-  web:
-    build: .
-    image: ${IMAGE_NAME}
-    # NO ports section - this fixes your deployment error!
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
-      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-school.settings.production}
-      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
-      - DEBUG=${DEBUG:-False}
-    volumes:
-      - media_data:/app/media
-      - static_data:/app/staticfiles
-    restart: unless-stopped
+echo "Starting Esteem CBT Application..."
 
-volumes:
-  media_data:
-  static_data:
+# Run database migrations
+echo "Running migrations..."
+python manage.py migrate --noinput
+
+# Collect static files
+echo "Collecting static files..."
+python manage.py collectstatic --noinput --clear
+
+# Create superuser if environment variables are set (optional)
+if [ -n "$DJANGO_SUPERUSER_USERNAME" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ]; then
+    echo "Creating superuser..."
+    python manage.py createsuperuser --noinput --username "$DJANGO_SUPERUSER_USERNAME" --email "$DJANGO_SUPERUSER_EMAIL" 2>/dev/null || true
+fi
+
+# Start Gunicorn (production server)
+echo "Starting Gunicorn server..."
+exec gunicorn school.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120
