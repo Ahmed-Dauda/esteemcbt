@@ -24,6 +24,13 @@ from debug_toolbar.toolbar import debug_toolbar_urls
 
 # django_project/urls.py
 
+from django.http import JsonResponse
+
+def health_check(request):
+    return JsonResponse({"status": "healthy"})
+
+
+    
 
 
 urlpatterns = [  
@@ -31,6 +38,7 @@ urlpatterns = [
 
     path('admin/', admin.site.urls),
     path('', include('sms.urls')),
+    path('health/', health_check, name='health_check'),
     path('student/', include('student.urls')),
     path('quiz/', include('quiz.urls')),
     path('teacher/', include('teacher.urls')),
