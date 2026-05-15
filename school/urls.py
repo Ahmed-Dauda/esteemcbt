@@ -1,41 +1,32 @@
-"""school URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/3.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-
 from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
 from debug_toolbar.toolbar import debug_toolbar_urls
+from django.http import HttpResponse, JsonResponse
 
-# from django.contrib.auth import views as auth_views #import this
-
-# django_project/urls.py
-
-from django.http import JsonResponse
+def home(request):
+    return HttpResponse("""
+        <h1>Welcome to Esteem CBT School System</h1>
+        <p>Your Django app is successfully deployed on Hetzner via Coolify!</p>
+        <h2>Available Portals:</h2>
+        <ul>
+            <li><a href='/admin/'>Admin Panel</a></li>
+            <li><a href='/student/'>Student Portal</a></li>
+            <li><a href='/teacher/'>Teacher Portal</a></li>
+            <li><a href='/quiz/'>Quiz Section</a></li>
+            <li><a href='/portal/'>Main Portal</a></li>
+            <li><a href='/health/'>Health Check</a></li>
+        </ul>
+        <hr>
+        <p><small>Esteem CBT - School Management System</small></p>
+    """)
 
 def health_check(request):
     return JsonResponse({"status": "healthy"})
 
-
-    
-
-
 urlpatterns = [  
-    # path('api/', WSGIMiddleware(fastapi_app)), 
-
+    path('', home, name='home'),  # This handles the root URL
     path('admin/', admin.site.urls),
     path('', include('sms.urls')),
     path('health/', health_check, name='health_check'),
@@ -46,17 +37,11 @@ urlpatterns = [
     path('finance/', include('finance.urls')),  
     path('portal/', include('portal.urls')),
     path('accounts/', include('allauth.urls')),
-   
     path('academics/', include('academics.urls')),
     path("research/", include("research.urls")),
     path('reminders/', include('reminders.urls')),
     path('farmer/', include('core.urls'))
-    
-    # path('verify', include('student.urls')),
- 
 ] + debug_toolbar_urls()
-
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-
