@@ -2,7 +2,6 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# System dependencies needed by your heavy packages
 RUN apt-get update && apt-get install -y \
     build-essential \
     gcc \
@@ -15,7 +14,6 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libxml2-dev \
     libxslt1-dev \
-    wkhtmltopdf \
     poppler-utils \
     curl \
     && rm -rf /var/lib/apt/lists/*
