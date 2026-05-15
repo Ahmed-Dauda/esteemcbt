@@ -4,33 +4,15 @@ services:
   web:
     build: .
     image: ${IMAGE_NAME}
-    # No ports section - let Coolify/Traefik handle it
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
-      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-your_project.settings.production}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
       - DEBUG=${DEBUG:-False}
-      - COOLIFY_URL=${COOLIFY_URL}
-      - COOLIFY_FQDN=${COOLIFY_FQDN}
     volumes:
       - media_data:/app/media
-      - static_data:/app/staticfiles
     restart: unless-stopped
-    networks:
-      - coolify_default
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
 volumes:
   media_data:
-  static_data:
-
-networks:
-  coolify_default:
-    external: true
-    name: coolify_default
