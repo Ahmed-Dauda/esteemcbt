@@ -360,7 +360,7 @@ DATABASES = {
 #         ssl_require=False,
 #     )
 # }
-
+#
 # DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
 # import ssl
