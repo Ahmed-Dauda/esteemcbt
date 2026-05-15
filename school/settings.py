@@ -341,16 +341,27 @@ import os
 # settings.py
 import dj_database_url
 from pathlib import Path
+import dj_database_url
+import os
+
+import dj_database_url
+import os
 
 DATABASES = {
-    'default': dj_database_url.config(
-        conn_max_age=0,
-        conn_health_checks=True,
-        ssl_require=False,
+    "default": dj_database_url.config(
+        default="sqlite:///db.sqlite3"
     )
 }
 
-DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         conn_max_age=0,
+#         conn_health_checks=True,
+#         ssl_require=False,
+#     )
+# }
+
+# DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
 # import ssl
 
