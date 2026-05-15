@@ -462,15 +462,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent  # make sure this is before en
 env = environ.Env(
     DEBUG=(bool, False),
     SECRET_KEY=(str, 'fallback-secret-key-change-in-production'),
-    ALLOWED_HOSTS=(list, ['*']),
+    # ALLOWED_HOSTS=(list, ['*']),
 )
-
+ALLOWED_HOSTS = [
+    "ssuxnxo1elfxh6cs7mpkqxkh.204.168.237.20.sslip.io",
+]
 # Load .env file — won't crash if file is missing
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+# ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
 # STATIC_ROOT = BASE_DIR / 'staticfiles'
 
