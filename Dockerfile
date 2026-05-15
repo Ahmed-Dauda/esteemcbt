@@ -15,6 +15,9 @@ WORKDIR /app
 # Copy requirements first (for better caching)
 COPY requirements.txt .
 
+# Ensure setuptools is available first
+RUN pip install --no-cache-dir setuptools
+
 # Install Python packages
 RUN pip install --no-cache-dir -r requirements.txt
 
