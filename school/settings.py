@@ -486,12 +486,7 @@ env = environ.Env(
     SECRET_KEY=(str, 'fallback-secret-key-change-in-production'),
     # ALLOWED_HOSTS=(list, ['*']),
 )
-ALLOWED_HOSTS = [
-    "ssuxnxo1elfxh6cs7mpkqxkh.204.168.237.20.sslip.io",
-    "localhost",
-    "127.0.0.1",
-    "*"  # For testing only - remove in production
-]
+ALLOWED_HOSTS = ['*']  # temporary for testing
 # Load .env file — won't crash if file is missing
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
