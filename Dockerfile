@@ -13,8 +13,8 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install Python packages
-RUN pip install --no-cache-dir -r requirements.txt
-
+RUN pip install --no-cache-dir -r requirements.txt || \
+    (echo "pip install failed" && cat requirements.txt && exit 1)
 # Copy the rest of the application
 COPY . .
 
