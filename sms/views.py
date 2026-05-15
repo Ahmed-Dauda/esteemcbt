@@ -1,7 +1,7 @@
 from asyncio import constants
 from tokenize import group
 from unittest import result
-from sweetify.views import SweetifySuccessMixin
+
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import forms
 from django.db import models

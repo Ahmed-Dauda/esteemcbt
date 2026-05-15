@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'dal',
     'dal_select2',
     'academics',
-    'sweetify',
+    
     'widget_tweaks',
     'hitcount',
     'crispy_forms',
