@@ -480,6 +480,7 @@ import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent  # make sure this is before environ
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 env = environ.Env(
     DEBUG=(bool, False),

@@ -17,6 +17,6 @@ if [ -n "$DJANGO_SUPERUSER_USERNAME" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ]; t
     python manage.py createsuperuser --noinput --username "$DJANGO_SUPERUSER_USERNAME" --email "$DJANGO_SUPERUSER_EMAIL" 2>/dev/null || true
 fi
 
-# Start Gunicorn (production server)
+# Start Gunicorn
 echo "Starting Gunicorn server..."
 exec gunicorn school.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120
