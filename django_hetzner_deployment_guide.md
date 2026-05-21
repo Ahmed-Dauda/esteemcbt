@@ -1,10 +1,10 @@
 # Django App Deployment on Hetzner — Complete Guide
-### Based on deploying `esteemcbt` → `https://examspower.com`
+### Based on deploying `examspower` → `https://examspower.com`
 
 ---
 
 ## LEGEND
-- 🖥️ **SERVER TERMINAL** — SSH session showing `root@coolify:~#` or `(venv) root@coolify:/var/www/esteemcbt#`
+- 🖥️ **SERVER TERMINAL** — SSH session showing `root@coolify:~#` or `(venv) root@coolify:/var/www/examspower#`
 - 💻 **LOCAL TERMINAL** — VS Code terminal showing `PS C:\Users\HP\...>`
 
 ---
@@ -54,11 +54,11 @@ sudo -u postgres psql
 
 Inside psql:
 ```sql
-CREATE DATABASE mydb;
-CREATE USER myuser WITH PASSWORD 'YourPassword';
-GRANT ALL PRIVILEGES ON DATABASE mydb TO myuser;
-ALTER DATABASE mydb OWNER TO myuser;
-GRANT ALL ON SCHEMA public TO myuser;
+CREATE DATABASE examspowerdb;
+CREATE USER examspoweruser WITH PASSWORD 'examspower12345';
+GRANT ALL PRIVILEGES ON DATABASE examspowerdb TO examspoweruser;
+ALTER DATABASE mydb OWNER TO examspoweruser;
+GRANT ALL ON SCHEMA public TO examspoweruser;
 \q
 ```
 
@@ -80,23 +80,23 @@ apt-get install -y nginx
 
 🖥️ **SERVER TERMINAL — Create project folder:**
 ```bash
-mkdir -p /var/www/esteemcbt
+mkdir -p /var/www/examspower
 ```
 
 💻 **LOCAL TERMINAL — Upload project files:**
 ```powershell
 # Upload entire project
-scp -r "C:\Users\HP\Desktop\DJANGO_PROJECTS\esteemcbt" root@204.168.237.20:/var/www/
+scp -r "C:\Users\HP\Desktop\DESKTOP FOLDERS\DJANGO_PROJECTS\examspower" root@204.168.237.20:/var/www/
 
 # If any folders are missing, upload them individually
-scp -r "C:\Users\HP\Desktop\DJANGO_PROJECTS\esteemcbt\school" root@204.168.237.20:/var/www/esteemcbt/
-scp -r "C:\Users\HP\Desktop\DJANGO_PROJECTS\esteemcbt\static" root@204.168.237.20:/var/www/esteemcbt/
+scp -r "C:\Users\HP\Desktop\DJANGO_PROJECTS\examspower\school" root@204.168.237.20:/var/www/examspower/
+scp -r "C:\Users\HP\Desktop\DJANGO_PROJECTS\examspower\static" root@204.168.237.20:/var/www/examspower/
 ```
 
 🖥️ **SERVER TERMINAL — Verify upload:**
 ```bash
-ls /var/www/esteemcbt
-find /var/www/esteemcbt -name "settings.py"
+ls /var/www/examspower
+find /var/www/examspower -name "settings.py"
 ```
 
 ---
@@ -132,36 +132,61 @@ sed -i 'Ns/.*/django-embed-video==1.4.10/' requirements.txt
 
 ## STEP 7 — Set Up Python Virtual Environment
 
-🖥️ **SERVER TERMINAL:**
+🖥️ **SERVER TERMINAL — Create and activate virtual environment:**
 ```bash
-cd /var/www/esteemcbt
-
-# Create virtual environment
+cd /var/www/myproject
 python3 -m venv venv
-
-# Activate it
 source venv/bin/activate
-
-# Upgrade pip
 pip install --upgrade pip
+```
 
-# Install requirements
+💻 **LOCAL TERMINAL — Generate and upload requirements.txt:**
+```powershell
+cd "C:\Users\HP\Desktop\DESKTOP FOLDERS\DJANGO_PROJECTS\myproject"
+.\env\Scripts\activate
+pip freeze > requirements.txt
+scp "C:\Users\HP\Desktop\DESKTOP FOLDERS\DJANGO_PROJECTS\myproject\requirements.txt" root@YOUR_SERVER_IP:/var/www/myproject/
+```
+
+> ⚠️ If requirements.txt is empty, use backup copy instead:
+> ```powershell
+> copy "requirements copy.txt" requirements.txt
+> scp "C:\Users\HP\Desktop\DESKTOP FOLDERS\DJANGO_PROJECTS\myproject\requirements.txt" root@YOUR_SERVER_IP:/var/www/myproject/
+> ```
+
+🖥️ **SERVER TERMINAL — Fix Windows UTF-16 encoding and install:**
+```bash
+python3 -c "
+content = open('requirements.txt', 'rb').read()
+if content.startswith(b'\xff\xfe'):
+    text = content[2:].decode('utf-16-le', errors='ignore')
+else:
+    text = content.decode('utf-8', errors='ignore')
+lines = []
+for line in text.splitlines():
+    line = line.strip()
+    if not line: continue
+    if 'locust' in line.lower(): continue
+    if line.startswith('requests=='): line = 'requests>=2.32.2'
+    lines.append(line)
+open('requirements.txt', 'w', encoding='utf-8', newline='\n').write('\n'.join(lines))
+print('Done! Lines:', len(lines))
+"
 pip install -r requirements.txt
 ```
 
-> ⚠️ If you get build errors, install missing system libraries:
+> ⚠️ If you get build errors, install missing system libraries first:
 > ```bash
 > apt-get install -y libpq-dev python3-dev libfreetype6-dev
+> pip install -r requirements.txt
 > ```
-> Then re-run `pip install -r requirements.txt`
 
----
 
 ## STEP 8 — Configure settings.py for Production
 
 🖥️ **SERVER TERMINAL:**
 ```bash
-nano /var/www/esteemcbt/school/settings.py
+nano /var/www/examspower/school/settings.py
 ```
 
 Update these settings:
@@ -175,9 +200,9 @@ CSRF_TRUSTED_ORIGINS = ['https://examspower.com', 'https://www.examspower.com']
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mydb',
-        'USER': 'myuser',
-        'PASSWORD': 'YourPassword',
+        'NAME': 'examspowerdb',
+        'USER': 'examspoweruser',
+        'PASSWORD': 'examspower12345',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
@@ -186,7 +211,7 @@ DATABASES = {
 
 Also update your `.env` file:
 ```bash
-nano /var/www/esteemcbt/.env
+nano /var/www/examspower/.env
 ```
 ```
 DEBUG=False
@@ -202,7 +227,7 @@ DATABASE_URL=postgresql://myuser:YourPassword@127.0.0.1:5432/mydb
 
 🖥️ **SERVER TERMINAL:**
 ```bash
-nano /var/www/esteemcbt/student/admin.py
+nano /var/www/examspower/student/admin.py
 # Remove or replace: import imp → import importlib
 ```
 
@@ -225,25 +250,25 @@ sudo -u postgres psql mydb -c "GRANT ALL ON SCHEMA public TO myuser;"
 
 🖥️ **SERVER TERMINAL:**
 ```bash
-cd /var/www/esteemcbt
+cd /var/www/examspower
 source venv/bin/activate
 python manage.py collectstatic --noinput
 ```
 
 > ⚠️ If static files are missing (404 errors in browser), download them from CDN:
 > ```bash
-> mkdir -p /var/www/esteemcbt/staticfiles/sms/dashboard/css
-> mkdir -p /var/www/esteemcbt/staticfiles/sms/dashboard/vendor/fontawesome-free/css
-> curl -o /var/www/esteemcbt/staticfiles/sms/prism.css https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css
-> curl -o /var/www/esteemcbt/staticfiles/sms/prism.js https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js
-> curl -o /var/www/esteemcbt/staticfiles/sms/dashboard/css/sb-admin-2.min.css https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css
-> curl -o /var/www/esteemcbt/staticfiles/sms/dashboard/vendor/fontawesome-free/css/all.min.css https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css
+> mkdir -p /var/www/examspower/staticfiles/sms/dashboard/css
+> mkdir -p /var/www/examspower/staticfiles/sms/dashboard/vendor/fontawesome-free/css
+> curl -o /var/www/examspower/staticfiles/sms/prism.css https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css
+> curl -o /var/www/examspower/staticfiles/sms/prism.js https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js
+> curl -o /var/www/examspower/staticfiles/sms/dashboard/css/sb-admin-2.min.css https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css
+> curl -o /var/www/examspower/staticfiles/sms/dashboard/vendor/fontawesome-free/css/all.min.css https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css
 > ```
 
 Also make sure Nginx serves static files correctly using `alias` not `root`:
 ```nginx
 location /static/ {
-    alias /var/www/esteemcbt/staticfiles/;
+    alias /var/www/examspower/staticfiles/;
 }
 ```
 
@@ -257,20 +282,20 @@ location /static/ {
 ```bash
 pip install uvicorn
 
-nano /etc/systemd/system/esteemcbt.service
+nano /etc/systemd/system/examspower.service
 ```
 
 Paste this:
 ```ini
 [Unit]
-Description=Uvicorn daemon for esteemcbt
+Description=Uvicorn daemon for examspower
 After=network.target
 
 [Service]
 User=root
 Group=www-data
-WorkingDirectory=/var/www/esteemcbt
-ExecStart=/var/www/esteemcbt/venv/bin/uvicorn --workers 3 --uds /var/www/esteemcbt/esteemcbt.sock school.asgi:application
+WorkingDirectory=/var/www/examspower
+ExecStart=/var/www/examspower/venv/bin/uvicorn --workers 3 --uds /var/www/examspower/examspower.sock school.asgi:application
 
 [Install]
 WantedBy=multi-user.target
@@ -278,9 +303,9 @@ WantedBy=multi-user.target
 
 ```bash
 systemctl daemon-reload
-systemctl start esteemcbt
-systemctl enable esteemcbt
-systemctl status esteemcbt
+systemctl start examspower
+systemctl enable examspower
+systemctl status examspower
 ```
 
 ---
@@ -289,7 +314,7 @@ systemctl status esteemcbt
 
 🖥️ **SERVER TERMINAL:**
 ```bash
-nano /etc/nginx/sites-available/esteemcbt
+nano /etc/nginx/sites-available/examspower
 ```
 
 Paste this:
@@ -301,22 +326,22 @@ server {
     location = /favicon.ico { access_log off; log_not_found off; }
 
     location /static/ {
-        alias /var/www/esteemcbt/staticfiles/;
+        alias /var/www/examspower/staticfiles/;
     }
 
     location /media/ {
-        root /var/www/esteemcbt;
+        root /var/www/examspower;
     }
 
     location / {
         include proxy_params;
-        proxy_pass http://unix:/var/www/esteemcbt/esteemcbt.sock;
+        proxy_pass http://unix:/var/www/examspower/examspower.sock;
     }
 }
 ```
 
 ```bash
-ln -s /etc/nginx/sites-available/esteemcbt /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/examspower /etc/nginx/sites-enabled/
 nginx -t
 systemctl restart nginx
 ```
@@ -327,7 +352,7 @@ systemctl restart nginx
 
 🖥️ **SERVER TERMINAL:**
 ```bash
-cd /var/www/esteemcbt
+cd /var/www/examspower
 source venv/bin/activate
 python manage.py shell
 ```
@@ -364,20 +389,20 @@ systemctl status redis
 
 🖥️ **SERVER TERMINAL:**
 ```bash
-nano /etc/systemd/system/esteemcbt-celery.service
+nano /etc/systemd/system/examspower-celery.service
 ```
 
 Paste this:
 ```ini
 [Unit]
-Description=Celery Worker for esteemcbt
+Description=Celery Worker for examspower
 After=network.target redis-server.service
 
 [Service]
 User=root
 Group=www-data
-WorkingDirectory=/var/www/esteemcbt
-ExecStart=/var/www/esteemcbt/venv/bin/celery -A school worker --loglevel=info
+WorkingDirectory=/var/www/examspower
+ExecStart=/var/www/examspower/venv/bin/celery -A school worker --loglevel=info
 Restart=always
 
 [Install]
@@ -386,9 +411,9 @@ WantedBy=multi-user.target
 
 ```bash
 systemctl daemon-reload
-systemctl start esteemcbt-celery
-systemctl enable esteemcbt-celery
-systemctl status esteemcbt-celery
+systemctl start examspower-celery
+systemctl enable examspower-celery
+systemctl status examspower-celery
 ```
 
 ---
@@ -397,20 +422,20 @@ systemctl status esteemcbt-celery
 
 🖥️ **SERVER TERMINAL:**
 ```bash
-nano /etc/systemd/system/esteemcbt-celerybeat.service
+nano /etc/systemd/system/examspower-celerybeat.service
 ```
 
 Paste this:
 ```ini
 [Unit]
-Description=Celery Beat for esteemcbt
+Description=Celery Beat for examspower
 After=network.target redis-server.service
 
 [Service]
 User=root
 Group=www-data
-WorkingDirectory=/var/www/esteemcbt
-ExecStart=/var/www/esteemcbt/venv/bin/celery -A school beat --loglevel=info
+WorkingDirectory=/var/www/examspower
+ExecStart=/var/www/examspower/venv/bin/celery -A school beat --loglevel=info
 Restart=always
 
 [Install]
@@ -419,9 +444,9 @@ WantedBy=multi-user.target
 
 ```bash
 systemctl daemon-reload
-systemctl start esteemcbt-celerybeat
-systemctl enable esteemcbt-celerybeat
-systemctl status esteemcbt-celerybeat
+systemctl start examspower-celerybeat
+systemctl enable examspower-celerybeat
+systemctl status examspower-celerybeat
 ```
 
 ---
@@ -435,7 +460,7 @@ crontab -e
 
 Add this line at the bottom:
 ```bash
-*/30 * * * * /var/www/esteemcbt/venv/bin/python /var/www/esteemcbt/manage.py cleanup_old_sessions >> /var/log/esteemcbt_scheduler.log 2>&1
+*/30 * * * * /var/www/examspower/venv/bin/python /var/www/examspower/manage.py cleanup_old_sessions >> /var/log/examspower_scheduler.log 2>&1
 ```
 
 Verify:
@@ -445,7 +470,7 @@ crontab -l
 
 Test manually:
 ```bash
-cd /var/www/esteemcbt && source venv/bin/activate && python manage.py cleanup_old_sessions
+cd /var/www/examspower && source venv/bin/activate && python manage.py cleanup_old_sessions
 ```
 
 ---
@@ -454,21 +479,21 @@ cd /var/www/esteemcbt && source venv/bin/activate && python manage.py cleanup_ol
 
 🖥️ **SERVER TERMINAL:**
 ```bash
-mkdir -p /var/backups/esteemcbt
+mkdir -p /var/backups/examspower
 
 # Create .pgpass for passwordless auth
 echo "127.0.0.1:5432:mydb:myuser:YourPassword" > /root/.pgpass
 chmod 600 /root/.pgpass
 
 # Create backup script
-nano /usr/local/bin/backup_esteemcbt.sh
+nano /usr/local/bin/backup_examspower.sh
 ```
 
 Paste this:
 ```bash
 #!/bin/bash
 DATE=$(date +%Y-%m-%d_%H-%M-%S)
-BACKUP_DIR=/var/backups/esteemcbt
+BACKUP_DIR=/var/backups/examspower
 DB_NAME=mydb
 DB_USER=myuser
 
@@ -479,11 +504,11 @@ echo "Backup completed: backup_$DATE.sql.gz"
 ```
 
 ```bash
-chmod +x /usr/local/bin/backup_esteemcbt.sh
+chmod +x /usr/local/bin/backup_examspower.sh
 
 # Test it
-/usr/local/bin/backup_esteemcbt.sh
-ls -lh /var/backups/esteemcbt/
+/usr/local/bin/backup_examspower.sh
+ls -lh /var/backups/examspower/
 
 # Schedule daily at 2am
 crontab -e
@@ -491,7 +516,7 @@ crontab -e
 
 Add this line:
 ```bash
-0 2 * * * /usr/local/bin/backup_esteemcbt.sh >> /var/log/esteemcbt_backup.log 2>&1
+0 2 * * * /usr/local/bin/backup_examspower.sh >> /var/log/examspower_backup.log 2>&1
 ```
 
 ---
@@ -521,7 +546,7 @@ Follow prompts — enter email, agree to terms.
 Update `.env` file:
 🖥️ **SERVER TERMINAL:**
 ```bash
-nano /var/www/esteemcbt/.env
+nano /var/www/examspower/.env
 ```
 
 Add/update:
@@ -536,7 +561,7 @@ DEFAULT_FROM_EMAIL=youremail@gmail.com
 
 Test email:
 ```bash
-cd /var/www/esteemcbt && source venv/bin/activate && python manage.py shell
+cd /var/www/examspower && source venv/bin/activate && python manage.py shell
 ```
 
 Inside shell:
@@ -627,15 +652,15 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /var/www/esteemcbt
+            cd /var/www/examspower
             git pull origin main
             source venv/bin/activate
             pip install -r requirements.txt
             python manage.py migrate
             python manage.py collectstatic --noinput
-            systemctl restart esteemcbt
-            systemctl restart esteemcbt-celery
-            systemctl restart esteemcbt-celerybeat
+            systemctl restart examspower
+            systemctl restart examspower-celery
+            systemctl restart examspower-celerybeat
             echo "Deployment successful!"
 ```
 
@@ -645,16 +670,16 @@ Save and close Notepad.
 
 🖥️ **SERVER TERMINAL:**
 ```bash
-cd /var/www/esteemcbt
+cd /var/www/examspower
 git init
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
+git remote add origin https://github.com/Ahmed-Dauda/examspower.git
 git fetch origin main
 git checkout -f main
 ```
 
 > ⚠️ If you get SSH permission errors, switch to HTTPS:
 > ```bash
-> git remote set-url origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
+> git remote set-url origin https://github.com/Ahmed-Dauda/examspower.git
 > git pull origin main
 > ```
 
@@ -667,7 +692,7 @@ git commit -m "Add CI/CD workflow"
 git push origin main
 ```
 
-Then go to `https://github.com/YOUR_USERNAME/YOUR_REPO/actions` and watch it deploy!
+Then go to `https://github.com/Ahmed-Dauda/examspower/actions` and watch it deploy!
 
 - ✅ Green tick = deployed successfully
 - ❌ Red cross = click the failed step to see the error
@@ -686,26 +711,26 @@ Then go to `https://github.com/YOUR_USERNAME/YOUR_REPO/actions` and watch it dep
 ### 🖥️ SERVER TERMINAL — Service Management
 ```bash
 # Restart everything
-systemctl restart esteemcbt
-systemctl restart esteemcbt-celery
-systemctl restart esteemcbt-celerybeat
+systemctl restart examspower
+systemctl restart examspower-celery
+systemctl restart examspower-celerybeat
 systemctl restart nginx
 
 # Check status
-systemctl status esteemcbt
-systemctl status esteemcbt-celery
-systemctl status esteemcbt-celerybeat
+systemctl status examspower
+systemctl status examspower-celery
+systemctl status examspower-celerybeat
 
 # View logs
-journalctl -u esteemcbt -n 50 --no-pager
+journalctl -u examspower -n 50 --no-pager
 tail -20 /var/log/nginx/error.log
-tail -20 /var/log/esteemcbt_scheduler.log
-tail -20 /var/log/esteemcbt_backup.log
+tail -20 /var/log/examspower_scheduler.log
+tail -20 /var/log/examspower_backup.log
 ```
 
 ### 🖥️ SERVER TERMINAL — Django Commands
 ```bash
-cd /var/www/esteemcbt
+cd /var/www/examspower
 source venv/bin/activate
 
 python manage.py check
@@ -720,10 +745,10 @@ python manage.py shell
 sudo -u postgres psql
 
 # Manual backup
-/usr/local/bin/backup_esteemcbt.sh
+/usr/local/bin/backup_examspower.sh
 
 # List backups
-ls -lh /var/backups/esteemcbt/
+ls -lh /var/backups/examspower/
 ```
 
 ---
@@ -739,7 +764,7 @@ ls -lh /var/backups/esteemcbt/
 | SSH | `ssh root@204.168.237.20` |
 | DB Name | mydb |
 | DB User | myuser |
-| Backups | /var/backups/esteemcbt/ |
+| Backups | /var/backups/examspower/ |
 
 ---
 
@@ -757,7 +782,7 @@ Nginx (port 80/443)
     ↓
 Uvicorn (ASGI, Unix socket)
     ↓
-Django App (/var/www/esteemcbt)
+Django App (/var/www/examspower)
     ↓           ↓           ↓
 PostgreSQL    Redis      Cloudinary
 (database)  (broker)    (media files)

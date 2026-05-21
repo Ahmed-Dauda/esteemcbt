@@ -16,13 +16,11 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /var/www/esteemcbt
+            cd /var/www/examspower
             git pull origin main
             source venv/bin/activate
             pip install -r requirements.txt
             python manage.py migrate
             python manage.py collectstatic --noinput
-            systemctl restart esteemcbt
-            systemctl restart esteemcbt-celery
-            systemctl restart esteemcbt-celerybeat
+            systemctl restart examspower
             echo "Deployment successful!"
