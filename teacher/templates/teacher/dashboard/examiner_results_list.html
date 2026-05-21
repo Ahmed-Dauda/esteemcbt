@@ -1,0 +1,56 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %} Manage Students {% endblock %}
+
+{% block content %}
+
+
+<div class="container mt-4">
+  <h4 class="mb-3">All Subjects with Results ({{ school.school_name }})</h4>
+
+  <table class="table table-bordered table-striped" id="courseTable">
+    <thead class="table-dark">
+      <tr>
+        <th>#</th>
+        <th>Subject Name</th>
+        <th>School</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for course in courses %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>
+       <a href="{% url 'teacher:teacher_course_results' course.id %}">
+  {{ course.course_name }}
+</a>
+
+        </td>
+        <td>{{ course.schools }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3" class="text-center">No results available.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  $(document).ready(function () {
+    $('#courseTable').DataTable({
+      pageLength: 10, // Show 10 entries per page
+      ordering: true,
+      searching: true,
+      language: {
+        search: "Search subjects:",
+        lengthMenu: "Show _MENU_ entries",
+        zeroRecords: "No matching subjects found",
+        info: "Showing _START_ to _END_ of _TOTAL_ subjects",
+        infoEmpty: "No subjects available",
+        infoFiltered: "(filtered from _MAX_ total subjects)"
+      }
+    });
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,14 @@
+<h2>Subscription Details</h2>
+
+<p><strong>School:</strong> {{ school.school_name }}</p>
+
+{% if subscription %}
+    <p><strong>Plan:</strong> {{ subscription.plan_name }}</p>
+    <p><strong>Amount:</strong> {{ subscription.amount }}</p>
+    <p><strong>Expires:</strong> {{ subscription.expires_at }}</p>
+{% else %}
+    <p style="color:red;">This school does not have a subscription yet.</p>
+    <a href="{% url 'portal:create_subscription' school.id %}" class="btn btn-primary">
+        Create Subscription
+    </a>
+{% endif %}

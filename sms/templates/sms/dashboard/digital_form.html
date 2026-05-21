@@ -1,0 +1,152 @@
+{% extends 'sms/dashboard/homebase.html' %}
+{% load hitcount_tags %}
+{% load static %}
+
+
+{% block title %} Esteem Digital Form  {% endblock %}
+
+{% block description %}
+On our Sales of Forms page, embark on your journey towards academic excellence by obtaining the necessary application forms. Learn about the seamless process of acquiring forms for admission into our esteemed institution. Find detailed information about deadlines, requirements, and procedures to ensure a smooth and efficient application experience. Take the first step towards unlocking your potential with Esteem schools.
+{% endblock %}
+
+  {% block content %} 
+<style>
+    
+/* ebook section  */
+
+.flex-containers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card-ebooks {
+  width: 300px;
+  margin: 10px;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.image-container img {
+  width: 250px;
+  height: 250px;
+}
+
+.text-container {
+  padding: 10px;
+}
+
+.text-container h6 {
+  margin-bottom: 5px;
+}
+
+.text-container small {
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* Add animation to the image */
+.animated-image {
+  animation-name: zoomIn;
+  animation-duration: 0.5s;
+  animation-timing-function: ease-in-out;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0.2;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+/* Add animation to the image */
+.animated-image {
+  transition: transform 0.3s ease-in-out; /* Add transition for smooth animation */
+}
+
+/* Apply zoom effect on hover */
+.animated-image:hover {
+  transform: scale(1.1); /* Increase scale on hover */
+}
+/* Style the download button */
+.download-button {
+  background-color: #007bff; /* Set background color */
+  color: #fff; /* Set text color */
+  padding: 10px 20px; /* Add padding */
+  border: none; /* Remove border */
+  border-radius: 5px; /* Add border radius */
+  cursor: pointer; /* Add cursor pointer */
+  transition: background-color 0.3s ease; /* Add transition for smooth hover effect */
+}
+
+/* Change button color on hover */
+.download-button:hover {
+  background-color: #0056b3; /* Change background color on hover */
+}
+
+ /* end of ebooks */
+
+</style>
+
+
+  <br> <br> <br> 
+  
+  <!-- digital form section  -->
+  <div id="digital-form-heading" class="text-center">
+    <h3 style="font-family: Arial, sans-serif; color: #333; font-weight: bold;">Obtain Your Digital Forms Here</h3>
+</div>
+
+
+  <br>
+  <div class="flex-containers">
+    {% for alert in object_list %}
+    <div class="card card-ebooks">
+      <div class="card-body child-ebooks">
+        <!-- Add loading="lazy" attribute to enable lazy loading -->
+        <img class="animated-image" src="{{ alert.img_ebook.url }}" width="300px" height="250px" alt="{{ obj.desc }}" >
+        <div class=""> 
+          <p class="pl-3">{% get_hit_count for alert %} <i class="fas fa-eye"></i> </p>
+          <h6 style="color: #000000; padding-right: 3px;" class="card-title">{{ alert.title|safe }}</h6> 
+          <small>Price: &#8358;{{ alert.price }}</small> <hr>
+          <button class="download-button"><a href="{% url 'sms:ebooks' alert.id %}" style="color: white; text-decoration: none;">Download Now</a></button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <!-- Browser Preloading -->
+{% for alert in object_list %}
+<link rel="preload" href="{{ alert.img_ebook.url }}" as="image">
+{% endfor %}
+  <!-- <div class="flex-containers">
+    {% for alert in object_list %}
+    <div class="card card-ebooks">
+      
+      <div class="card-body child-ebooks">
+        <img class="animated-image" src="{{ alert.img_ebook.url }}" width="300px" height="250px" alt="{{ obj.desc }}">
+        <div class=""> 
+          <p class="pl-3">{% get_hit_count for alert %} <i class="fas fa-eye"></i> </p>
+          <h6 style="color: #000000;  padding-right: 3px;" class="card-title">{{ alert.title|safe }}</h6> 
+          <small>Price: &#8358;{{ alert.price }}</small> <hr>
+          <button class="download-button"><a href="{% url 'sms:ebooks' alert.id %}" style="color: white; text-decoration: none;">Download Now</a></button>
+
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div> -->
+  
+  <!-- digital form section endign -->
+
+  
+
+{% endblock %} 
+ 

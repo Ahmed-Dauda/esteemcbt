@@ -1,0 +1,17 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="text-success text-center">✏️ Edit School: {{ school.school_name }}</h3>
+
+  <form method="post" enctype="multipart/form-data" class="mt-4">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <div class="text-center mt-3">
+      <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+      <a href="{% url 'teacher:onboarding_dashboard' %}" class="btn btn-secondary px-4">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %}Course Overall Scores Detail View{% endblock %}
+
+{% block content %}
+<!-- Begin Page Content -->
+<div class="container-fluid">
+
+    <div class="d-flex flex-column flex-md-row justify-content-center mb-3 gap-2">
+        <!-- Export Button -->
+        <form action="{% url 'teacher:export_results_csv' %}" method="get">
+            <button type="submit" class="btn btn-primary w-100 w-md-auto">
+                <i class="fas fa-file-csv"></i> Export to CSV
+            </button>
+        </form>
+
+        <!-- Import Button -->
+        <form action="{% url 'teacher:import-results' %}" method="get">
+            <button type="submit" class="btn btn-success w-100 w-md-auto">
+                <i class="fas fa-file-import"></i> Import CSV
+            </button>
+        </form>
+
+        <!-- Input Result Button -->
+        <form action="{% url 'teacher:class-list' %}" method="get">
+            <button type="submit" class="btn btn-warning w-100 w-md-auto">
+                <i class="fas fa-pen"></i> Input Result
+            </button>
+        </form>
+    </div>
+
+    <!-- Card -->
+    <div class="card shadow">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Overall Exam Scores</h6>
+            <span class="badge badge-info">Updated {{ results|length }} records</span>
+        </div>
+
+        <div class="card-body">
+            <h5 class="mb-3">Teacher Result List</h5>
+
+            <div class="table-responsive">
+                <table id="courseTable" class="table table-bordered table-striped">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>#</th>
+                            <th>Course Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for course in courses %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <a href="{% url 'teacher:teacher_course_results' course.id %}">
+                                    {{ course.course_name }}
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DataTables Scripts -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $('#courseTable').DataTable({
+            pageLength: 10,
+            ordering: true,
+            language: {
+                search: "Search courses:",
+                searchPlaceholder: "Type to filter..."
+            }
+        });
+    });
+</script>
+
+{% endblock %}

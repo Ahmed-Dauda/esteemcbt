@@ -1,0 +1,46 @@
+
+
+{% block content %}
+  <h2>Class Report Card for {{ student_class }} - {{ session.name }} - {{ term.name }}</h2>
+  
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Student Name</th>
+        <th>Total Marks</th>
+        <th>Final Grade</th>
+        <th>Grade Comment</th>
+        <th>Subjects</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for student_data in class_report_data %}
+        <tr>
+          <td>{{ student_data.student.first_name }} {{ student_data.student.last_name }}</td>
+          <td>{{ student_data.total_marks }}</td>
+          <td>{{ student_data.final_grade }}</td>
+          <td>{{ student_data.grade_comment }}</td>
+          <td>
+            <ul>
+              {% for subject_data in student_data.subjects %}
+                <li>{{ subject_data.subject.name }}: {{ subject_data.marks }} ({{ subject_data.grade }} - {{ subject_data.comment }})</li>
+              {% endfor %}
+            </ul>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <hr>
+  <div>
+    <h4>Grading System:</h4>
+    <ul>
+      <li>A: {{ grading_system.A }} - {{ grade_comments.A }}</li>
+      <li>B: {{ grading_system.B }} - {{ grade_comments.B }}</li>
+      <li>C: {{ grading_system.C }} - {{ grade_comments.C }}</li>
+      <li>P: {{ grading_system.P }} - {{ grade_comments.P }}</li>
+      <li>F: {{ grading_system.F }} - {{ grade_comments.F }}</li>
+    </ul>
+  </div>
+{% endblock %}

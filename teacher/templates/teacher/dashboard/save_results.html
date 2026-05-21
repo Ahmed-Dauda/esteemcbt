@@ -1,0 +1,25 @@
+
+
+
+<form action="{% url 'teacher:save-results' %}" method="POST">
+    {% csrf_token %}
+    <table border="1" cellpadding="10" cellspacing="0">
+        <!-- Your table structure here with input fields -->
+        <tbody>
+            {% for result in student_results %}
+            <tr>
+                <td>{{ result.student.first_name }} {{ result.student.last_name }}</td>
+                <td>{{ result.admission_no }}</td>
+                <td><input type="number" name="ca_marks_{{ result.id }}" value="{{ result.ca_marks }}"></td>
+                <td>{{ result.ca_total }}</td>
+                <td><input type="number" name="midterm_marks_{{ result.id }}" value="{{ result.midterm_marks }}"></td>
+                <td>{{ result.midterm_total }}</td>
+                <td><input type="number" name="exam_marks_{{ result.id }}" value="{{ result.exam_marks }}"></td>
+                <td>{{ result.exam_total }}</td>
+                <td>{{ result.final_total }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button type="submit">Save</button>
+</form>

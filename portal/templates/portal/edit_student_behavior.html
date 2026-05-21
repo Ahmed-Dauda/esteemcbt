@@ -1,0 +1,57 @@
+<h2>Edit Behavior for {{ student.first_name }} {{ student.last_name }}</h2>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <h3>Psychomotor Skills (1-5)</h3>
+    <label>Handwriting:</label>
+    <input type="number" name="handwriting" min="1" max="5" value="{{ record.handwriting }}">
+
+    <label>Games:</label>
+    <input type="number" name="games" min="1" max="5" value="{{ record.games }}">
+
+    <label>Sports:</label>
+    <input type="number" name="sports" min="1" max="5" value="{{ record.sports }}">
+
+    <label>Drawing & Painting:</label>
+    <input type="number" name="drawing_painting" min="1" max="5" value="{{ record.drawing_painting }}">
+
+    <label>Crafts:</label>
+    <input type="number" name="crafts" min="1" max="5" value="{{ record.crafts }}">
+
+    <h3>Affective Traits (1-5)</h3>
+    <label>Punctuality:</label>
+    <input type="number" name="punctuality" min="1" max="5" value="{{ record.punctuality }}">
+
+    <label>Attendance:</label>
+    <input type="number" name="attendance" min="1" max="5" value="{{ record.attendance }}">
+
+    <label>Reliability:</label>
+    <input type="number" name="reliability" min="1" max="5" value="{{ record.reliability }}">
+
+    <label>Neatness:</label>
+    <input type="number" name="neatness" min="1" max="5" value="{{ record.neatness }}">
+
+    <label>Politeness:</label>
+    <input type="number" name="politeness" min="1" max="5" value="{{ record.politeness }}">
+
+    <label>Honesty:</label>
+    <input type="number" name="honesty" min="1" max="5" value="{{ record.honesty }}">
+
+    <label>Relationship w/ Students:</label>
+    <input type="number" name="relationship_with_students" min="1" max="5" value="{{ record.relationship_with_students }}">
+
+    <label>Self Control:</label>
+    <input type="number" name="self_control" min="1" max="5" value="{{ record.self_control }}">
+
+    <label>Attentiveness:</label>
+    <input type="number" name="attentiveness" min="1" max="5" value="{{ record.attentiveness }}">
+
+    <label>Perseverance:</label>
+    <input type="number" name="perseverance" min="1" max="5" value="{{ record.perseverance }}">
+
+    <h3>Form Teacher Comment</h3>
+    <textarea name="form_teacher_comment">{{ record.form_teacher_comment }}</textarea>
+
+    <button type="submit">Save</button>
+</form>

@@ -1,0 +1,102 @@
+
+
+{% extends 'sms/dashboard/base.html' %}
+{% load hitcount_tags %}
+
+{% block title %} pdf detail view {% endblock %}
+
+  {% block content %} 
+<style>
+    .center-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh; /* Adjust as needed */
+}
+
+.content-container {
+  text-align: center;
+}
+
+</style>
+
+<br> <br>
+<div class="container">
+  <div class="content-container bg-success text-white">
+
+    <h2>You have purchased {{ document.title }} for the price &#8358;{{ document.price }}</h2>
+   
+  </div>
+ 
+</div>
+<br>
+<div class="content-container">
+ <button class="btn "><a href="{% url 'sms:pdfpaymentconfirmation' object.id %}">Go to confirmation page</a></button> 
+</div>
+
+
+
+
+<script>
+    // paystack payment
+    
+    
+    const paymentForm = document.getElementById('paymentForm');
+    paymentForm.addEventListener("submit", payWithPaystack, false);
+    
+    function payWithPaystack(e) {
+      e.preventDefault();
+    
+      let handler = PaystackPop.setup({
+        key: '{{paystack_public_key}}', // Replace with your public key
+        email: document.getElementById("email-address").value,
+        amount: document.getElementById("amount").value * 100,
+        ref: ''+Math.floor((Math.random() * 1000000000) + 1), // generates a pseudo-unique reference. Please replace with a reference you generated. Or remove the line entirely so our API will generate one for you
+        // label: "Optional string that replaces customer email"
+        onClose: function(){
+          alert('Window closed.');
+        },
+        
+             callback: function (response) {
+              // If transaction successful, do this
+              var referenceid = response.reference;
+              window.location.href = "{% url 'student:view_result' %}"
+    
+              // Set the referenceid value to the ref hidden input field
+              $("#ref").val(referenceid);
+    
+              // Make an http request to cart process
+              $.ajax({
+                type: "GET",
+                url: "/student/verify/" + referenceid,
+                beforeSend: function () {
+                  console.log("Sending request");
+                  $(".alert").text("Sending request");
+                },
+                success: function (response) {
+                  if (response[3].status == "success") {
+                    // Once transaction completed, redirect to complete page
+                    $(".alert").removeClass("alert-warning");
+                    $(".alert").addClass("alert-success");
+                    $(".alert").text("Transaction verified");
+                    console.log("Transaction verified");
+                    $("form").trigger("reset");
+                  } else {
+                    $(".alert").text("Transaction reference not found");
+                  }
+                }
+              });
+            },
+            onClose: function () {
+              // Do stuff
+            }
+          });
+      
+      handler.openIframe();
+    }
+    
+    
+    
+    </script>
+    
+{% endblock %} 

@@ -1,0 +1,15 @@
+<!-- users/templates/users/become_referrer.html -->
+{% extends 'sms/dashboard/base.html' %}
+
+{% block content %}
+<div class="text-center">
+    <br><br>
+  <h2>Become a Referrer</h2>
+  <form method="post" action="{% url 'users:become_referrer' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Submit</button>
+  </form>
+
+</div>
+{% endblock %}

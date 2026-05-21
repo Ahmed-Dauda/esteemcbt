@@ -1,0 +1,107 @@
+
+
+<h1 style="text-align: center;">maintenance mode</h1>
+<!-- {% extends 'sms/dashboard/studentbase.html' %}
+
+{% block title %} Leaderboard {% endblock %}
+
+{% block content %}
+
+<style>
+    .leaderboard-wrapper {
+        margin-top: 30px;
+    }
+    .leaderboard-table {
+        width: 100%;
+        margin: 0 auto;
+        text-align: center;
+        border-collapse: collapse;
+    }
+    .leaderboard-table th, .leaderboard-table td {
+        border: 1px solid #ddd;
+        padding: 12px;
+    }
+    .leaderboard-table th {
+        background-color: #f8f9fa;
+    }
+    .leaderboard-table tbody tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+    .badge-gold {
+        color: #FFD700;
+        font-weight: bold;
+    }
+    .badge-silver {
+        color: #C0C0C0;
+        font-weight: bold;
+    }
+    .badge-bronze {
+        color: #CD7F32;
+        font-weight: bold;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+    .dataTables_wrapper .dataTables_paginate .paginate_button:active,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.selected {
+        background-color: #007bff !important;
+        color: white !important;
+        border: 1px solid #007bff !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background-color: #0056b3 !important;
+        color: white !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+        background-color: #e9ecef;
+        border-color: #ddd;
+        color: #6c757d;
+    }
+</style>
+
+<div class="container leaderboard-wrapper">
+    <h4 style="text-align: center;">Leaderboard for {{ session }} - {{ term }} Term</h4>
+
+    <table class="table leaderboard-table" id="leaderboardTable">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Student</th>
+                <th>School Name</th>
+                <th>Total Marks (Sum of Percentages)</th>
+                <th>Final Average (%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in leaderboard %}
+            <tr>
+                <td>{{ entry.rank }}</td>
+                <td>{{ entry.student.user.first_name }} - {{ entry.student.user.last_name }}</td>
+                <td>{{ entry.student.schools }}</td>
+                <td>{{ entry.total_marks|floatformat:2 }}</td>
+                <td>{{ entry.final_average|floatformat:2 }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $(document).ready(function() {
+        var table = $('#leaderboardTable').DataTable({
+            "paging": true,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "lengthMenu": [20, 40, 60]
+        });
+
+        $('#leaderboardTable').on('click', '.paginate_button', function() {
+            $('.paginate_button').removeClass('selected');
+            $(this).addClass('selected');
+        });
+    });
+</script>
+
+{% endblock %} -->

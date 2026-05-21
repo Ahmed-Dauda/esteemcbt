@@ -1,0 +1,19 @@
+<!-- your_template.html -->
+
+{% extends 'sms/dashboard/base.html' %}
+
+
+{% block content %}
+
+<br> <br>
+
+  <div class="text-center">
+    <h2>Sign Up for School</h2>
+    <br>
+  <form method="post" action="">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Sign Up</button>
+  </form>
+</div>
+{% endblock %}

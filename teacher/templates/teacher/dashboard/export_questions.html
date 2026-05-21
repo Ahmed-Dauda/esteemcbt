@@ -1,0 +1,36 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %}Import Questions{% endblock %}
+
+{% block content %}  
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white text-center">
+            <h4 class="mb-0">Select Subject to Export</h4>
+          </div>
+          <div class="card-body">
+            <form method="post">
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="courses" class="font-weight-bold">Select Subject:</label>
+                <select class="form-control" name="courses" id="courses" multiple>
+                  {% for course in courses %}
+                    <option value="{{ course.id }}">{{ course }}</option>
+                  {% endfor %}
+                </select>
+                <small class="form-text text-muted">Hold down the Ctrl (Windows) or Command (Mac) button to select multiple options.</small>
+              </div>
+              <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-download"></i> Export Questions
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

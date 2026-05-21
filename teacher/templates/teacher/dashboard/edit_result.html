@@ -1,0 +1,16 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Edit Result</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row mb-6">
+            {{ form.as_p }}
+        </div>
+       
+        <button type="submit">Save changes</button>
+    </form>
+</div>
+
+{% endblock %}

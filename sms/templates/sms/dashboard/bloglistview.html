@@ -1,0 +1,152 @@
+{% extends 'sms/dashboard/base.html' %}
+
+{% block title %}blog list{% endblock %}
+{% load hitcount_tags %}
+  {% block content %} 
+
+  <style>
+.container1 {
+    display: flex;
+    overflow-x: auto;
+    height: 435px;
+    overflow-y: hidden;     
+}
+
+.beginner {
+    display: flex;
+    overflow-x: auto;
+    height: 380px;
+    overflow-y: hidden;     
+}
+
+.container {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+}
+.left-column {
+    flex: 1;
+    margin: 2px;
+    background-color: #4158D0;
+    color: white;
+    background-image: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+
+}
+
+.left-column-cat {
+    flex: 1;
+    margin: 5px;
+    background-color: #4158D0;
+    color: black;
+    
+    background-image: linear-gradient(#ffff 100%, #ffff 46%, white 100%);
+
+}
+
+
+.container2 {
+    height: 100vh;
+    width: 100%;
+    background-position: center;
+    
+    /* background-size: cover; */
+    /* padding-right: 3%;
+    padding-left: 5%; */
+    /* box-sizing: border-box;
+    position: relative; */
+}
+
+.images {
+  max-height: 100%;
+  min-width: 100%;
+  object-fit: cover;
+  vertical-align: bottom;
+}
+
+	
+	</style>
+	
+
+
+  <!--DIFFERENT  COURSES-->
+  <br> <br> <br>
+
+  <div class="card-body">
+    <div class="">
+  <h3 style="color: black;  font-weight: bold;" >Latest News Feed</h3>
+  
+  </div>
+  </div>
+ 
+  <div style="height: 450px;"  class="beginner ">
+  
+    {% for obj in object_list %}
+   
+    <a style="height: 10px;" class="" href="{% url 'sms:blogdetaillistview' obj.slug %}">
+    <div  class="left-column-cat border ">
+        <!-- <p class=" card rounded-4 category"> -->
+        
+            {% if obj.img_blog %}
+            <img class="rounded images" src="{{obj.img_blog.url}}" width="250px" height="200px" alt="cetagory image">
+          
+            
+            {% endif %}
+            <div class="pl-2">
+            <!-- <div class="d-flex rounded owner">
+              <div class="d-flex rounded owner">
+                {% if obj.course_logo.url %}
+                <img  class="rounded" src="{{ obj.img_blog.url }}" width="30px"  height="33px" alt=""> <br>
+                {% else %}
+                <img  class="rounded" src=" /static/sms/images/newlogo3.jpg" width="30px"  height="33px" alt="{{obj.desc}}"> <br>
+              {% endif %}
+      
+              {% if obj.course_owner %}
+              <small class="text-dark">{{obj.course_owner|safe}}</small>
+              {% else %}
+              <small class="text-dark">Codethinkers Academy</small>
+              {% endif %}
+  
+              </div>
+            </div> -->
+           
+            <p style="color: black;">Image source: {{obj.img_source}}</p>
+			      <small style="color: black;">{{obj.created|timesince}}</small> <br>
+            {% if obj.author %}
+              <p style="color: black; font-weight: bold;" class="card-text">By {{obj.author}}</p>
+              {% else %}
+              <small style="color: black; font-weight: bold;" class="card-text">By {{obj.poster}}</small>
+              {% endif %}	
+              <p  style="color: black; ">{{obj.desc|safe|striptags|truncatewords:10}}</p>
+              <a style="font-size: 12px;"  href="{% url 'sms:blogdetaillistview' obj.slug %}" class="btn btn-primary">Read More....</a><hr> <br>
+             <br>
+            
+          <!-- <a style="font-size: 12px;"  href="{% url 'sms:blogdetaillistview' obj.pk %}">{{obj.title}} </a> -->
+          <!-- {% if obj.price %}
+          <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}} |  #{{obj.price|safe|floatformat:"0g"}}</p> 
+          {% else %}
+          <p style="color: black; font-size: 18px; font-weight: bold;" class="">{{obj.status_type|safe}}</p> 
+          {% endif %}
+          <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.categories.name|safe|title}}</small> <br>
+          <small data-label="my-label-button" class="line-numbers copy-to-clipboard-button " >{{obj.course_type|safe}}</small> -->
+        </div>
+            <!-- <a style="font-size: 12px;" class="pl-3" href="{% url 'sms:courseslist' obj.pk %}">{{obj|safe}}</a>
+            <p class="pl-3">{% get_hit_count for obj %} <i class="fas fa-eye"></i> </p>
+       
+            <p class="pl-3">{{obj.desc}}</p> -->
+        
+            <!-- <div class="text-left container">{{beginner_count}}</div>  -->
+      
+        <!-- </p> -->
+       
+    </div>
+  </a>
+
+    {% empty %}
+      <h1 class="card text-center text-danger">No Courses Categories Yet. CHECK LATER</h1>
+    {% endfor %}
+  </div>
+  <!-- END CATEGORIES OF COURSES-->
+
+
+	  {% endblock %} 
+ 

@@ -1,0 +1,297 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %} See and Export Results {% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+<form method="POST" action="" class="mb-3">
+  {% csrf_token %}
+
+  <h2 class="mt-2 mb-3">Results for {{ course.course_name }}</h2>
+
+  <!-- ACTION BUTTONS -->
+  <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+
+    <!-- ORIGINAL DELETE BUTTON (unchanged) -->
+    <button type="submit" class="btn btn-danger me-2" id="delete-btn">
+      <i class="fas fa-trash"></i> Delete Selected
+    </button>
+
+    <!-- ORIGINAL EXPORT CSV BUTTON (unchanged) -->
+    <!-- <a href="{% url 'teacher:export_results_csv' %}" class="btn btn-primary">
+      <i class="fas fa-file-csv"></i> Export to CSV
+    </a> -->
+
+    <!-- NEW EXPORT CSV BUTTON -->
+    <button type="button" id="export-btn"
+      style="
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 22px;
+        background: #1a7a4a;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.4px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(26,122,74,0.3);
+        transition: background 0.2s, transform 0.15s;
+      "
+      onmouseover="this.style.background='#145e38';this.style.transform='translateY(-1px)';"
+      onmouseout="this.style.background='#1a7a4a';this.style.transform='translateY(0)';">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Export CSV
+    </button>
+
+    <!-- NEW EXPORT PDF BUTTON -->
+    <button type="button" id="export-btn-pdf"
+      style="
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 22px;
+        background: #c0392b;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.4px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(192,57,43,0.3);
+        transition: background 0.2s, transform 0.15s;
+      "
+      onmouseover="this.style.background='#a93226';this.style.transform='translateY(-1px)';"
+      onmouseout="this.style.background='#c0392b';this.style.transform='translateY(0)';">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <line x1="9" y1="15" x2="15" y2="15"/>
+      </svg>
+      Export PDF
+    </button>
+
+    <!-- LIVE COUNT -->
+    <span id="export-count"
+      style="font-size:12px;color:#6c757d;background:#f0f0f0;padding:4px 10px;border-radius:20px;">
+      Loading...
+    </span>
+
+  </div>
+
+  <!-- FILTER ROW -->
+  <div class="row mb-3 g-2 align-items-end">
+    <div class="col-auto">
+      <label class="form-label mb-1 fw-semibold" style="font-size:13px;">Term</label>
+      <select id="termFilter" class="form-select form-select-sm">
+        <option value="">All Terms</option>
+        {% for result in results %}
+          <option value="{{ result.term.name }}">{{ result.term.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <label class="form-label mb-1 fw-semibold" style="font-size:13px;">Session</label>
+      <select id="sessionFilter" class="form-select form-select-sm">
+        <option value="">All Sessions</option>
+        {% for result in results %}
+          <option value="{{ result.session.name }}">{{ result.session.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <label class="form-label mb-1 fw-semibold" style="font-size:13px;">Exam Type</label>
+      <select id="examTypeFilter" class="form-select form-select-sm">
+        <option value="">All Exam Types</option>
+        {% for result in results %}
+          <option value="{{ result.exam_type.name }}">{{ result.exam_type.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="button" id="clear-filters" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-times me-1"></i>Clear Filters
+      </button>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table id="resultsTable" class="table table-striped table-bordered">
+      <thead class="table-dark">
+        <tr>
+          <th><input type="checkbox" id="select-all"></th>
+          <th>Student</th>
+          <th>Marks</th>
+          <th>Result Class</th>
+          <th>Session</th>
+          <th>Term</th>
+          <th>Exam Type</th>
+          <th>Created</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for result in results %}
+        <tr>
+          <td>
+            <input type="checkbox" name="selected_results" value="{{ result.id }}" class="check-item">
+          </td>
+          <td>{{ result.student.first_name }} {{ result.student.last_name }}</td>
+          <td>{{ result.marks }}</td>
+          <td>{{ result.result_class }}</td>
+          <td>{{ result.session.name }}</td>
+          <td>{{ result.term.name }}</td>
+          <td>{{ result.exam_type.name }}</td>
+          <td>{{ result.created|date:"Y-m-d H:i" }}</td>
+          <td>
+            <a href="{% url 'teacher:edit_teacher_results' course.id result.id %}"
+               class="btn btn-sm btn-warning mb-1">Edit</a>
+            <a href="{% url 'teacher:delete_teacher_result' course.id result.id %}"
+               class="btn btn-sm btn-danger"
+               onclick="return confirm('Are you sure you want to delete this result?');">Delete</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</form>
+
+<a href="{% url 'teacher:teacher_results' %}" class="btn btn-secondary mt-3">← Back to result list</a>
+
+</div>
+
+
+<script>
+$(document).ready(function () {
+
+    // Remove duplicate dropdown options
+    ['#termFilter', '#sessionFilter', '#examTypeFilter'].forEach(function(sel) {
+        let seen = {};
+        $(sel + ' option').each(function() {
+            let val = $(this).val();
+            if (seen[val]) $(this).remove();
+            else seen[val] = true;
+        });
+    });
+
+    let table = $('#resultsTable').DataTable({
+        "order": [[1, "asc"]],
+        "pageLength": 10,
+        "columnDefs": [
+            { "orderable": false, "targets": [0, 8] }
+        ],
+        "language": {
+            "emptyTable": "No results available for this course."
+        }
+    });
+
+    // Live count update
+    function updateCount() {
+        let count = table.rows({ search: 'applied' }).count();
+        $('#export-count').text(count + ' record(s) ready to export');
+    }
+    updateCount();
+    table.on('draw', updateCount);
+
+    // COLUMN FILTERS
+    $('#termFilter').on('change', function () {
+        table.column(5).search($(this).val()).draw();
+    });
+    $('#sessionFilter').on('change', function () {
+        table.column(4).search($(this).val()).draw();
+    });
+    $('#examTypeFilter').on('change', function () {
+        table.column(6).search($(this).val()).draw();
+    });
+    $('#clear-filters').on('click', function () {
+        $('#termFilter, #sessionFilter, #examTypeFilter').val('');
+        table.columns([4, 5, 6]).search('').draw();
+    });
+
+    // SELECT ALL (filtered rows only)
+    $('#select-all').on('click', function () {
+        let checked = this.checked;
+        table.rows({ search: 'applied' }).every(function () {
+            $(this.node()).find('input.check-item').prop('checked', checked);
+        });
+    });
+
+    // BULK DELETE
+    $('#delete-btn').on('click', function(e) {
+        e.preventDefault();
+        let selected = $('input.check-item:checked');
+        let count = selected.length;
+        if (count === 0) { alert("No results selected to delete."); return; }
+        if (!confirm(`Are you sure you want to delete ${count} selected result(s)?`)) return;
+
+        let ids = [];
+        selected.each(function() { ids.push($(this).val()); });
+
+        $.ajax({
+            url: "",
+            type: "POST",
+            data: { 'selected_results[]': ids, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+            success: function(response) {
+                if (response.status === 'success') {
+                    selected.each(function() {
+                        table.row($(this).closest('tr')).remove().draw();
+                    });
+                    alert(`${response.deleted_count} result(s) deleted successfully.`);
+                    if (table.rows().count() === 0) location.reload();
+                } else {
+                    alert(response.message || 'Error deleting results.');
+                }
+            },
+            error: function() { alert('AJAX request failed. Please try again.'); }
+        });
+    });
+
+    // SHARED EXPORT FUNCTION
+    function doExport(fmt) {
+    let ids = [];
+    table.rows({ search: 'applied' }).every(function () {
+        let checkbox = $(this.node()).find('input.check-item');
+        if (checkbox.length) ids.push(checkbox.val());
+    });
+
+    if (ids.length === 0) { alert("No results to export."); return; }
+
+    // Build a hidden form and POST it — handles unlimited IDs safely
+    let form = $('<form method="POST" action="{% url 'teacher:export_filtered_results_csv' %}" style="display:none;">');
+    form.append('<input name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
+    form.append('<input name="course_id" value="{{ course.id }}">');
+    form.append('<input name="format" value="' + fmt + '">');
+    ids.forEach(function(id) {
+        form.append('<input name="ids" value="' + id + '">');
+    });
+    $('body').append(form);
+    form.submit();
+    form.remove();
+}
+
+    // GREEN EXPORT BUTTON — CSV
+    $('#export-btn').on('click', function () { doExport('csv'); });
+
+    // RED EXPORT BUTTON — PDF
+    $('#export-btn-pdf').on('click', function () { doExport('pdf'); });
+
+});
+</script>
+
+{% endblock %}

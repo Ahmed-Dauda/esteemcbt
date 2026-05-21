@@ -1,0 +1,136 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Manage Course Questions{% endblock %}
+
+{% block content %}
+<!-- Additional CSS for this page -->
+<style>
+    .form-label { font-weight: 600; }
+    .row.flex-form { display: flex; flex-wrap: wrap; gap: 20px; }
+    .row.flex-form > .col-md-6 { flex: 1 1 45%; min-width: 300px; }
+    .submit-btn { padding: 12px 40px; font-size: 16px; font-weight: 600; }
+    .select2-container--default .select2-selection--multiple {
+        border: 1px solid #ced4da;
+        border-radius: .375rem;
+        padding: .4rem;
+        min-height: 42px;
+    }
+    .select2-dropdown { z-index: 2000; }
+    @media (max-width: 768px) {
+        .row.flex-form > .col-md-6 { flex: 1 1 100%; }
+    }
+
+    /* Replace × with a visible checkbox checkmark */
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        font-size: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 17px;
+        height: 17px;
+        min-width: 17px;
+        margin-right: 6px;
+        border: 2px solid white;
+        border-radius: 3px;
+        background-color: white;
+        cursor: pointer;
+        vertical-align: middle;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove::after {
+        content: '✔';
+        font-size: 11px;
+        color: #0d6efd;
+        line-height: 1;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+        background-color: #dc3545;
+        border-color: white;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover::after {
+        color: white;
+    }
+
+    .alert.hide {
+        opacity: 0;
+        transition: opacity 0.3s ease-out;
+    }
+</style>
+
+<!-- Messages display -->
+{% if messages %}
+<div class="container mt-3">
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-header bg-primary text-white text-center rounded-top-4">
+            <h4 class="mb-0">
+                Edit Class Assignment: <strong>{{ course_grade.name }}</strong>
+            </h4>
+        </div>
+        <div class="card-body px-4 py-5">
+            <!-- Back button -->
+            <div class="mb-3">
+                <a class="btn btn-success btn-lg" href="{% url 'teacher:examiner_dashboard' %}">Back to manage subjects</a>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="form-group mb-3">
+                    <label>{{ form.subjects.label }}</label>
+                    {{ form.subjects }}
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-success btn-lg submit-btn">Save Changes</button>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>{{ form.students.label }}</label>
+                    {{ form.students }}
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-success btn-lg submit-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery and Select2 scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 on all select elements with class 'select2' or multiple selects
+        $('select[multiple], .select2').select2({
+            placeholder: "Search and select...",
+            closeOnSelect: false,
+            allowClear: true,
+            width: '100%',
+            hideSelected: false,
+        });
+
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut(500, function() {
+                $(this).remove();
+            });
+        }, 5000);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+<head>
+    <!-- Include the Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+</head>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+    }
+
+    .form-container {
+        max-width: 600px;
+        margin: auto;
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container button {
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .form-container button:hover {
+        background-color: #45a049;
+    }
+
+    .form-container select {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+    }
+</style>
+
+<body>
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div style="color: #45a049;text-align: center;" class="alert alert-success" id="success-message">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    <script>
+        // Set a timeout to hide the success message after 5 seconds
+        setTimeout(function() {
+            var successMessage = document.getElementById('success-message');
+            if (successMessage) {
+                successMessage.style.display = 'none';
+            }
+        }, 5000);  // 5000ms = 5 seconds
+    </script>
+{% endif %}
+
+    <!-- Your content here -->
+    <div class="form-container">
+        <p><a href="{% url 'academics:list_conducts'%}">View Records</a></p>
+        <h2>Student Conduct Form</h2>
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Render the form fields -->
+            {{ form.as_p }} 
+            
+            <button  type="submit">Submit</button>
+        </form>
+    </div>
+
+    <!-- Include jQuery (needed for Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Include the Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+
+    <script type="text/javascript">
+        // Initialize Select2 on the select field with the ID of the student field
+        $(document).ready(function() {
+            $('#id_student').select2({
+                placeholder: 'Search for a student...',
+                allowClear: true,
+                width: '100%',
+                minimumInputLength: 2  // Start searching after 2 characters
+            });
+        });
+    </script>
+</body>

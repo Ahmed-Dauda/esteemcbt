@@ -1,0 +1,84 @@
+
+{% extends 'sms/dashboard/base.html' %}
+
+
+{% load hitcount_tags %}
+{% load cloudinary %}
+{% load embed_video_tags %}
+{% block title %} Courses list view page {% endblock %}
+
+
+{% block content %} 
+<!-- Include DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.1/css/dataTables.dataTables.css">
+
+<!-- Include necessary libraries (jQuery and DataTables) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.5/js/jquery.dataTables.min.js"></script>
+
+
+
+<p><button id="submit" type="submit">Submit form</button></p>
+    <table id="example" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Position</th>
+                <th>Office</th>
+            </tr>
+        </thead>
+        <tbody>
+     
+            <tr>
+                <td>Cedric Kelly</td>
+                <td><input type="text" id="row-4-age" name="row-4-age" value="22"></td>
+                <td><input type="text" id="row-4-position" name="row-4-position" value="Senior Javascript Developer"></td>
+                <td><select size="1" id="row-4-office" name="row-4-office">
+                    <option value="Edinburgh" selected="selected">
+                        Edinburgh
+                    </option>
+                    <option value="London">
+                        London
+                    </option>
+                    <option value="New York">
+                        New York
+                    </option>
+                    <option value="San Francisco">
+                        San Francisco
+                    </option>
+                    <option value="Tokyo">
+                        Tokyo
+                    </option>
+                </select></td>
+            </tr>
+           
+          
+        </tbody>
+
+    </table>
+
+<script>
+  var table = $('#example').DataTable({
+    pageLength: 1,
+    columnDefs: [
+        {
+            orderable: false,
+            targets: [1, 2, 3]
+        }
+    ]
+});
+ 
+$('#submit').on('click', function (e) {
+    e.preventDefault();
+ 
+    var data = table.$('input, select').serialize();
+ 
+    alert(
+        'The following data would have been submitted to the server: \n\n' +
+            data.substr(0, 120) +
+            '...'
+    );
+});
+</script>
+{% endblock %} 

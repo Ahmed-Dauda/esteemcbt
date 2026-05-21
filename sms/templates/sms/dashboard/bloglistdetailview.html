@@ -1,0 +1,124 @@
+{% extends 'sms/dashboard/base.html' %}
+
+
+{% block title %} {{object.title|title}} {% endblock %}
+
+  {% block content %}
+  {% load hitcount_tags %}
+  {% load static %}
+
+  <style>
+     .share-icon{
+      display: flex;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+    .share-icon>*{
+      flex: 1px 1px auto;
+      margin: 5px;
+    }
+    .comments-section{
+      display: flex;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+    .comments-section>*{
+      flex: 1px 1px auto;
+      margin: 5px;
+    }
+  </style> 
+  <br><br>
+  
+
+<section >
+
+    
+  <div  class="  shadow-lg p-3 mb-5 bg-body rounded">
+  
+      <div class="card d-flex">
+      
+      <h3 class="">{{object.title|title}}</h3>
+
+      <small class="">{{object.created}}, {{object.created|timesince}}</small>
+      {% if blog.author %}
+        <small >By {{blog.author}}</small><hr>
+        {% else %}
+        <small class="">By {{blog.poster}}</small><hr>
+      {% endif %}
+      <div class="col-lg-4 my-3 my-lg-0">
+   
+</div>
+    </div>
+      
+      <img src="{{object.img_blog.url}}" class="card-img-top" alt="Fissure in Sandstone"/>
+      <small class="container text-center">Image source: {{object.img_source}}</small>
+      <div class="card-body">
+        
+        <p data-label="my-label-button" class="line-numbers copy-to-clipboard-button" style='text-align:left' class=" card-text">{{object.desc|safe}}</p><hr>
+       
+       
+        {% load social_share %}      
+<div id="home_page" class="share-icon">
+  <!-- <p style="color: blue;">share post: </p> -->
+  <p  class="">{{comments_count}} <i  class=" fas fa-comment"> </i></p>
+  <p  class="text-center">{{ hitcount.total_hits}} <i class="fas fa-eye"></i> </p>
+<p onclick="share()" ><i class="fa-2x fas fa-share"> </i></p><br>
+<div id="share" style="display: none;">
+
+{% post_to_facebook object_or_url  "<i class='fa-2x fab fa-facebook'> </i>" %}
+{% post_to_whatsapp object_or_url "<i class='fa-2x fab fa-whatsapp'> </i>" %}
+{% post_to_twitter "{{object.title}}. Check it out!" object_or_url "<i class='fa-2x fab fa-twitter'> </i>" %}
+{% post_to_telegram "{{object.title}}" object_or_url "<i class='fa-2x fab fa-telegram'> </i>" %}
+{% send_email object.title "{{object.title}}. Check it out!" object_or_url "<i class='fa-2x fab fa-google'> </i>" %}
+</div>
+
+</div>
+<hr>
+<a href="{% url 'sms:bloglistview' %}" class="btn btn-primary">read more articles....</a>
+<hr>
+
+  <div class="comments-section">
+
+    <button style="width: 110px;"  class="btn" onclick="comment()">See comments...</button>
+  
+    <a style="width: 110px;" href="{% url 'sms:blogcommentform' object.slug %}" class="btn btn-primary">Add comment</a><br>  
+  </div>
+    <div id="comment" style="display: none;"><hr>
+  {% for comment  in comments  %}
+  
+  <h6 class="" >{{comment.name}} {{comment.created|timesince}}</h6>
+ 
+  <pre data-label="my-label-button" class="line-numbers copy-to-clipboard-button"><code>{{comment.content|safe}}</code> </pre>
+ 
+  {% empty %}
+  <h2>No comment Yet</h2>
+
+  {% endfor %}
+</div>
+  
+    
+  
+  </div>
+  
+  </div>
+  </section>
+  
+  
+  <script>
+    function comment() {
+      var x = document.getElementById("comment");
+        x.style.display = "block";
+    }
+  </script>
+
+  <script>
+    function share() {
+      var x = document.getElementById("share");
+        x.style.display = "block";
+      
+    }
+  </script>
+
+  
+  {% endblock %} 
+ 

@@ -1,0 +1,87 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %} Student registration form {% endblock title %} 
+{% block content %}
+
+<div class="container">
+    <br><br>
+    <h4>Student registration form</h4>
+
+    {% if messages %}
+    <ul id="messages" class="messages">
+        {% for message in messages %}
+            <li style="color: green;" {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="post" id="myForm">
+        {% csrf_token %}
+
+        {{ form.school }}
+        {{ form.honeypot }}
+        {{ form.js_honeypot }}
+
+        <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+
+            <div style="flex: 1 1 45%;">
+                {{ form.email|as_crispy_field }}
+            </div>
+            <div style="flex: 1 1 45%;">
+                {{ form.username|as_crispy_field }}
+            </div>
+
+            <div style="flex: 1 1 45%;">
+                {{ form.first_name|as_crispy_field }}
+            </div>
+            <div style="flex: 1 1 45%;">
+                {{ form.last_name|as_crispy_field }}
+            </div>
+
+            <div style="flex: 1 1 45%;">
+                {{ form.admission_no|as_crispy_field }}
+            </div>
+            <div style="flex: 1 1 45%;">
+                {{ form.student_class|as_crispy_field }}
+            </div>
+            <div style="flex: 1 1 45%;">
+                {{ form.gender|as_crispy_field }}
+            </div>
+
+            <div style="flex: 1 1 45%;">
+                {{ form.password1|as_crispy_field }}
+            </div>
+            <div style="flex: 1 1 45%;">
+                {{ form.password2|as_crispy_field }}
+            </div>
+
+        </div>
+
+        <br>
+        <button type="submit" class="btn btn-primary">Submit</button>
+
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const honeypotField = document.querySelector('input[name="js_honeypot"]');
+            if (honeypotField) {
+                honeypotField.value = 'human';
+            }
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const messagesContainer = document.getElementById('messages');
+            if (messagesContainer) {
+                setTimeout(() => {
+                    messagesContainer.style.display = 'none';
+                }, 5000);
+            }
+        });
+    </script>
+
+</div>
+{% endblock %}

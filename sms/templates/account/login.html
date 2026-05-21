@@ -1,0 +1,74 @@
+{% extends "account/login.html" %}
+
+{% load i18n %}
+{% load account socialaccount %}
+
+{% block head_title %}{% trans "Sign In" %}{% endblock %}
+
+{% block content %}
+<!-- Success Notification -->
+<div class="row justify-content-center mb-4">
+  <div class="col-md-6">
+    <div class="alert alert-success text-center d-flex align-items-center">
+      <i class="fas fa-check-circle fa-2x mr-2"></i> <!-- Success icon -->
+      <p class="mb-0">
+        <strong class="align-middle">Important:</strong> Login as Teacher or Student. Thank you!
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Card Body -->
+<div class="card shadow-lg border-primary">
+  <div class="card-body">
+    <div class="text-center mb-4">
+      <h1 class="display-4"><i class="fas fa-sign-in-alt"></i> Login Options</h1>
+    </div>
+
+    <div class="row">
+      <!-- Login as Teacher -->
+      <div class="col-md-6 mb-3">
+        <div class="card border-primary">
+          <div class="card-body text-center">
+            <h3 class="card-title"><i class="fas fa-chalkboard-teacher"></i> Login as Teacher</h3>
+            <a href="{% url 'teacher:teacher_login' %}" class="btn btn-primary btn-lg">
+              <i class="fas fa-user-tie"></i> Teacher Login
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Login as Student -->
+      <div class="col-md-6 mb-3">
+        <div class="card border-primary">
+          <div class="card-body">
+            <h3 class="text-danger">Login as Student</h3>
+            <a href="{% url 'student:student-login' %}" class="btn btn-primary btn-lg">
+              <i class="fas fa-user-graduate"></i> Student Login
+            </a>
+            <!-- <h3 class="card-title text-center"><i class="fas fa-user-graduate"></i> Login as Student</h3>
+            <form method="POST" action="{% url 'account_login' %}">
+              {% csrf_token %}
+              {{ form.as_p }}
+              <hr>
+
+
+              {% if redirect_field_value %}
+                <input type="" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+              {% endif %}
+              <div class="text-center">
+                <button class="btn btn-primary btn-lg" type="submit">
+                  <i class="fas fa-sign-in-alt"></i> {% trans "Sign In" %}
+                </button>
+              </div>
+            </form>
+          </div> -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+{% endblock %}

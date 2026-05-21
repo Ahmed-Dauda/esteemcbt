@@ -1,0 +1,209 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% load static %}
+
+{% block title %}Generate CSV from JSON{% endblock %}
+
+{% block content %}
+
+<style>
+.copy-btn {
+    margin-top: 8px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 4px;
+    background-color: #6c757d;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.copy-btn:hover {
+    background-color: #5a6268;
+}
+pre {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.9em;
+}
+.subject-box {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: #f9fafc;
+}
+.fixed-toolbar {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1050;
+    background: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.15);
+}
+</style>
+
+<!-- Fixed Toolbar -->
+<div class="d-flex flex-wrap align-items-center justify-content-center gap-3 my-3 fixed-toolbar">
+  <a href="https://docs.google.com/document/d/1aDY4sKhT7zkyOnNiLM2OoDFvsHSrvm0r/edit?usp=sharing" target="_blank" class="btn btn-outline-info d-flex align-items-center gap-2">
+    <i class="fas fa-file-download"></i> Download Sample CSV
+  </a>
+  <a class="btn btn-warning btn-lg d-flex align-items-center gap-2" href="{% url 'teacher:import_data' %}">
+    <i class="fas fa-file-import"></i> Import Questions
+  </a>
+</div>
+
+<div class="container mt-5 pt-5">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">Sample of Prompt</h2>
+            <h4 class="mb-3">Instructions</h4>
+            <p>
+                Enter the number of questions and the learning objectives you want to generate questions for.
+                Copy the prompt, paste it into AI to generate questions in JSON format, then copy the output and paste it in the textarea below.
+                Click <strong>"Generate CSV"</strong> to convert it.
+            </p>
+        </div>
+    </div>
+
+    <!-- Loop subjects -->
+    <div class="row mb-5">
+        <div class="col-lg-8 col-md-10 col-12">
+            {% for subject in teacher_subjects %}
+            <div class="subject-box mb-4 shadow-sm">
+                <h5 class="mb-2 text-primary">
+                    {{ subject.course_name }}{% if subject.term %} - {{ subject.term }}{% endif %}{% if subject.session %}, {{ subject.session }}{% endif %}
+                    {% if subject.exam_type %} ({{ subject.exam_type }}){% endif %}
+                </h5>
+
+                <a href="{% url 'teacher:update_teacher_settings' %}" class="btn btn-sm btn-outline-primary mb-3">
+                    Edit Question Number & Learning Objectives
+                </a>
+
+                <pre id="sample{{ forloop.counter }}">
+<code>
+    
+{% if 'MATH' in subject.course_name|upper or 'MATHEMATICS' in subject.course_name|upper or 'MATHS' in subject.course_name|upper %}
+Give me <strong>{{ subject.ai_question_num }}</strong> MCQs and answers for {{ subject.course_name }} on these objectives:
+<strong>{{ subject.learning_objectives }}</strong>.
+Questions and options should be formatted as MathML's tag structure (http://www.w3.org/1998/Math/MathML) as shown below with position of correct answers must be randomized to avoid patterns:
+
+[
+{
+    "course": "{{ subject.course_name }}",
+    "marks": "1",
+    "question": "Evaluate: <math xmlns='http://www.w3.org/1998/Math/MathML'><mfrac><mn>3</mn><mn>5</mn></mfrac></math>",
+    "img_quiz": "",
+    "option1": "<math xmlns='http://www.w3.org/1998/Math/MathML'><mfrac><mn>3</mn><mn>5</mn></mfrac></math>",
+    "option2": "<math xmlns='http://www.w3.org/1998/Math/MathML'><mfrac><mn>5</mn><mn>6</mn></mfrac></math>",
+    "option3": "<math xmlns='http://www.w3.org/1998/Math/MathML'><mfrac><mn>7</mn><mn>6</mn></mfrac></math>",
+    "option4": "<math xmlns='http://www.w3.org/1998/Math/MathML'><mfrac><mn>8</mn><mn>9</mn></mfrac></math>",
+    "answer": "A"
+}
+]
+{% elif 'CHEM' in subject.course_name|upper %}
+Give me <strong>{{ subject.ai_question_num }}</strong> MCQs and answers for {{ subject.course_name }} on these objectives:
+<strong>{{ subject.learning_objectives }}</strong>.
+Questions and options should be formatted as MathML's tag structure (http://www.w3.org/1998/Math/MathML) as shown below with position of correct answers must be randomized to avoid patterns:
+
+[
+{
+    "course": "{{ subject.course_name }}",
+    "marks": "1",
+    "question": "What is the formula for water?",
+    "img_quiz": "",
+    "option1": "<math xmlns='http://www.w3.org/1998/Math/MathML'><msub><mi>H</mi><mn>2</mn></msub><mi>O</mi></math>",
+    "option2": "CO₂",
+    "option3": "NaCl",
+    "option4": "O₂",
+    "answer": "A"
+}
+]
+{% elif 'PHYS' in subject.course_name|upper %}
+Give me <strong>{{ subject.ai_question_num }}</strong> MCQs and answers for {{ subject.course_name }} on these objectives:
+<strong>{{ subject.learning_objectives }}</strong>.
+Questions and options should be formatted as MathML's tag structure (http://www.w3.org/1998/Math/MathML) as shown below with position of correct answers must be randomized to avoid patterns:
+
+[
+{
+    "course":"{{ subject.course_name }}",
+    "marks":"1",
+    "question":"<math xmlns='http://www.w3.org/1998/Math/MathML'><msup><mi>v</mi><mn>2</mn></msup><mo>=</mo><msup><mi>u</mi><mn>2</mn></msup><mo>+</mo><mn>2</mn><mi>a</mi><mi>s</mi></math>",
+    "img_quiz":"",
+    "option1":"<math xmlns='http://www.w3.org/1998/Math/MathML'><mi>s</mi><mo>=</mo><mi>u</mi><mi>t</mi><mo>+</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><mi>a</mi><msup><mi>t</mi><mn>2</mn></msup></math>",
+    "option2":"<math xmlns='http://www.w3.org/1998/Math/MathML'><mi>v</mi><mo>=</mo><mi>u</mi><mo>+</mo><mi>a</mi><mi>t</mi></math>",
+    "option3":"<math xmlns='http://www.w3.org/1998/Math/MathML'><msup><mi>v</mi><mn>2</mn></msup><mo>=</mo><msup><mi>u</mi><mn>2</mn></msup><mo>+</mo><mn>2</mn><mi>a</mi><mi>s</mi></math>",
+    "option4":"<math xmlns='http://www.w3.org/1998/Math/MathML'><mi>s</mi><mo>=</mo><mi>vt</mi><mo>-</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><mi>a</mi><msup><mi>t</mi><mn>2</mn></msup></math>",
+    "answer":"C"
+}
+]
+{% else %}
+Give me <strong>{{ subject.ai_question_num }}</strong> MCQs and answers for {{ subject.course_name }} on these objectives:
+<strong>{{ subject.learning_objectives }}</strong>.
+
+Questions and options should be formatted as shown below with position of correct answers must be randomized to avoid patterns.:
+
+[
+{
+    "course": "{{ subject.course_name }}",
+    "marks": "1",
+    "question": "Which of the following factors should developers consider when selecting an IDE?",
+    "img_quiz": "",
+    "option1": "Language support, feature set, customization options, and performance",
+    "option2": "Number of likes on IDE's Facebook page",
+    "option3": "Coffee quality in the office",
+    "option4": "The color of the IDE's logo",
+    "answer": "A"
+}
+]
+{% endif %}
+</code>
+                </pre>
+                <button class="copy-btn" onclick="copyToClipboard('sample{{ forloop.counter }}')">
+                    Copy Prompt
+                </button>
+            </div>
+            {% empty %}
+            <p>No subjects found for this teacher.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- JSON to CSV Form -->
+    <div class="row">
+        <div class="col-lg-8 col-md-10 col-12">
+            <h3 class="mb-3">Generate CSV from JSON</h3>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <textarea class="form-control" name="json_data" rows="10" placeholder="Paste your JSON data here..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Generate CSV</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function copyToClipboard(id) {
+    const element = document.getElementById(id);
+    const range = document.createRange();
+    range.selectNode(element);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    try {
+        document.execCommand("copy");
+        alert("Prompt copied to clipboard!");
+    } catch (err) {
+        alert("Failed to copy. Please copy manually.");
+    }
+    window.getSelection().removeAllRanges();
+}
+</script>
+
+{% endblock %}

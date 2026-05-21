@@ -1,0 +1,34 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %} Class Reports List{% endblock %}
+
+{% block content %}
+
+<h4>Available Class Reports</h4>
+
+<ul class="list-group mt-3">
+
+    {% for r in reports %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+
+            <span>
+                {{ r.result_class }} - {{ r.session__name }} - {{ r.term__name }}
+            </span>
+
+            <a href="{% url 'portal:class_report_detail' r.result_class r.session_id r.term_id %}"
+               class="btn btn-primary btn-sm">
+                View Report
+            </a>
+
+        </li>
+        {% empty %}
+            <li class="list-group-item">
+                No class reports available.
+                <a href="{% url 'portal:enter_select'%}">Enter Report</a>
+            </li> 
+        {% endfor %}
+
+</ul>
+
+
+{% endblock %}

@@ -1,0 +1,126 @@
+<!-- users/templates/users/referral_signup.html -->
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+    <br><br>
+   
+<div class="container">
+    <h2 class="text-center text-success">Teacher Registration</h2>
+    {% if messages %}
+  <div id="message-container">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<!-- JavaScript to auto-hide the message -->
+<script>
+  setTimeout(function() {
+    const msg = document.getElementById('message-container');
+    if (msg) {
+      msg.style.transition = 'opacity 0.5s ease';
+      msg.style.opacity = '0';
+      setTimeout(() => msg.remove(), 500);
+    }
+  }, 3000);  // Disappear after 3 seconds
+</script>
+
+    <!-- <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-primary">Sign in</button>
+      </form> -->
+
+      <hr>
+
+      <form method="post">
+        {{ form|as_crispy_errors }}
+        {% csrf_token %}
+        <!-- <div class="form-row">
+          <div class="form-group col-md-6 mb-0">
+            {{ form.email|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-6 mb-0">
+            {{ form.username|as_crispy_field }}
+          </div>
+        </div> -->
+
+        <div class="form-row">
+          <div class="form-group col-md-3 mb-0">
+            {{ form.email|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-3 mb-0">
+            {{ form.username|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-3 mb-0">
+            {{form.first_name|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-3 mb-0">
+            {{ form.last_name|as_crispy_field }}
+          </div>
+          
+        </div>
+
+      <div class="form-row">  
+        <div class="form-group col-md-4 mb-0">
+            {{ form.password1|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-4 mb-0">
+            {{ form.password2|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-4 mb-0">
+            {{ form.school|as_crispy_field }}
+          </div>
+      </div>
+       
+        <div class="form-row">
+          <div style="font-size: 14px;" class="form-group col-md-6 mb-0">
+            {{ form.subjects_taught|as_crispy_field }}
+          </div>
+          <div class="form-group col-md-6 mb-0">
+            {{ form.classes_taught|as_crispy_field }}
+          </div>
+        </div>
+       
+        <button type="submit" class="btn btn-primary">Register</button>
+      </form>
+</div>
+    
+      
+    <!-- <h2>Teacher Registration</h2>
+    <form method="post">
+        {% csrf_token %}
+       <p>{{ form.as_p }}</p> 
+        <button type="submit">Register</button>
+    </form>
+     -->
+
+
+{% endblock %}
+
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Registration</title>
+</head>
+<body>
+    <h2>Teacher Registration</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Register</button>
+    </form>
+
+</body>
+</html> -->

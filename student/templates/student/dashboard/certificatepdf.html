@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate</title>
+    <link href="https://fonts.googleapis.com/css?family=Satisfy" rel="stylesheet">
+    <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css?family=Tangerine&effect=shadow-multiple">
+    <style>
+      body{
+        margin: 0;
+        padding: 0;
+        font-family: 'Tangerine, serif';
+        font-size: 40px;
+
+        
+      }
+      @font-face {
+        font-family: 'Tangerine, serif';
+        src: url("https://fonts.googleapis.com/css?family=Tangerine");
+    }
+    .t{
+      font-family: 'Tangerine', serif;
+    }
+    
+      @page {
+        
+        background-image: url('https://i.ibb.co/MBzdyQ8/certificate2.png');
+        /* background-image: url('https://i.ibb.co/dbJbXzZ/Copy-of-Blue-Orange-Elegant-Company-Certificate-Landscape-3.png'); */
+        background-object-position:0px 0px;
+        background-width: 100%;
+        background-height: 100%;
+        size: a4 landscape;
+        
+        @frame header_frame {           /* Static Frame */
+            -pdf-frame-content: header_content;
+            
+            left: 0pt; width: 512pt; top: 0pt; height: 0pt;margin: 0pt;
+        }
+        @frame content_frame {          /* Content Frame */
+            left: 10pt; width: 820pt; top: 0pt; height: 650pt;margin: 5pt;
+        }
+        @frame footer_frame {           /* Another static Frame */
+            -pdf-frame-content: footer_content;
+            left: 0pt; width: 512pt; top: 772pt; height: 0pt;margin: 0pt;
+        }
+    }  
+       table{
+       /* background-color:white; 
+        color: white; */
+        max-height: 512px;
+        font-family: Arial, Helvetica, sans-serif
+   
+       } 
+      
+ 
+       .flex-container {
+  -webkit-display: -webkit-box;
+  -webkit-display: -webkit-flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-wrap: wrap;
+
+
+}
+.flex-item {
+  /* border: 1px solid #4a4a4a; */
+  display: inline-block;
+  width: 20%;
+  margin: 5px;
+  font-size: 15px;
+  margin: 0 auto;
+  
+}
+
+.dark-signature {
+            filter: brightness(50%);
+            padding: 50px;
+        }
+    </style>
+</head>
+<body>
+    
+<table style= class="cert">
+
+  <tr style="font-size: 20px;">
+    <td>
+        
+<div style="width:800px; height:700px; padding:0px; text-align:center;">
+    <div style="width:750px; height:550px; padding:100px 270px; text-align:right; border: 50px dashed rgb(18, 18, 19)">
+
+ <div  class="flex-container">
+
+<div class="flex-item">
+{% for c in  course %}
+{% if c.img_partdesc1 %}
+<img style="width: 300px;height:300px;" src="{{c.img_partdesc1.url}}" alt="">
+{% if c.partdesc1 %}
+<span style="color: rgb(42, 39, 239);font-size:90px;" class="flex-item">{{c.partdesc1 }}</span>
+ {% endif %}
+
+
+{% endif %}
+{% endfor %}
+</div>
+
+<!-- beginning of school information -->
+
+{% if school_logo %}
+<img style="width: 300px; height: 300px;border-radius: 50%; object-fit: cover;" src="{{ school_logo.url }}" alt="school logo">
+{% endif %}
+{% if school_name %}
+<span style="color: rgb(42, 39, 239);font-size:75px; font-weight: bold" class="flex-item">{{school_name|upper }}</span>
+ {% endif %}
+
+
+
+<div class="flex-item">
+  {% for c in course %} 
+  {% if c.img_partdesc2 %}
+  <img style="width: 300px;height:300px;" src="{{c.img_partdesc2.url}}" alt=""> 
+  {% if c.partdesc2 %}
+  <span style="color: rgb(42, 39, 239); font-size:90px;" class="flex-item"> {{c.partdesc2 }}  </span>
+  {% endif %}
+
+  {% endif %}
+  {% endfor %}
+
+</div>
+
+
+</div>
+<br> <br> 
+<i >
+          {% for part in course %} 
+           {% if part.partdesc3 %} <br>
+           <span style="font-size:210px; font-weight:bold;color:rgb(17, 18, 18);">Certificate of Completion</span>
+           <br> <br> <br>
+         
+           {% else %}
+           <span style="font-size:110px; font-weight:bold;color:rgb(17, 18, 18);">Certificate of Completion</span>
+           {% endif %}
+           {% endfor %}
+          </i>
+         
+       
+      
+           <br> <br> <br> <br>
+           <i >
+           {% for part in course %} 
+           {% if part.partdesc3 %} <br>
+           <span style="font-size:130px;color:rgb(17, 18, 18);"><i>This is to certify that</i></span>
+           {% else %}
+           <span style="font-size:90px;color:rgb(17, 18, 18);"><i>This is to certify that</i></span> 
+           {% endif %}
+           {% endfor %}
+          </i>
+           <br>
+           <span style="font-size:70px; color:rgb(86, 15, 218);"><i>on  {{date|date:"D d M Y"}}</i></span><br> <br> <br> <br>
+           {% for part in course %} 
+           {% if part.partdesc3 %} <br>
+           <span style="font-size:150px;color:rgb(42, 39, 239)"><b>{{student.first_name|upper }} {{student.last_name|upper}}</b></span><br/><br/><br/> <br/><br/>
+
+           {% else %}
+           <span style="font-size:90px;color:rgb(42, 39, 239)"><b>{{student.first_name|upper }} {{student.last_name|upper}}</b></span><br/><br/><br/> <br/><br/>
+           {% endif %}
+           {% endfor %}
+          </i>
+
+           <i >
+           {% for part in course %} 
+           {% if part.partdesc3 %} <br><br>
+           <span style="font-size:110px;color: rgb(17, 18, 18);"><i>has successfully completed the course</i></span> <br/><br/><br> <br>
+           {% else %}
+           <span style="font-size:50px;color: rgb(17, 18, 18);"><i>has successfully completed the course</i></span> <br/><br/><br> <br>
+          
+           {% endif %}
+           {% endfor %}
+          </i>
+
+           {% for name in course %}
+           <i >
+           {% for part in course %} 
+           {% if part.partdesc3 %} <br>
+           <span style="font-size:60px;color:rgb(42, 39, 239); font-weight: bold;">{{name|upper}}</span> <br><br>
+           {% else %}
+           <span style="font-size:50px;color:rgb(42, 39, 239); font-weight: bold;">{{name|upper}}</span> <br><br>
+           {% endif %}
+           {% endfor %}
+
+           {% endfor %}
+           <br><br>
+           <span style="font-size:70px;color:rgb(17, 18, 18);">
+          <i style="font-size: 70px;">
+          {% for part in course %}
+
+          
+
+           {% if part.partdesc3 %} </br>
+          {{part.partdesc3}}  
+
+           {% endif %}
+           {% endfor %}
+          </i>
+          
+          </span> 
+
+          <i >
+           {% for part in course %} 
+           {% if part.partdesc3 %} <br>
+           <br>  <br> <br>  <br> <br>  <br> <br>  <br> <br>  <br> <br>  <br> <br>  <br> <br>  
+           {% endif %}
+           {% endfor %}
+          </i>
+
+         
+
+          
+          {% if not school_sign %}
+            {% for c in  course %}
+            {% if c.signature %}
+            <br> <br> <br> <br>
+            <img style="" src="{{c.signature.url}}" alt="" > <br>
+            <span >  ______________________________________________________________ </span> <br>  <br><br> 
+            <p style="font-size:90px;" class="flex-item">{{c.signby }}</p> <br> <br>
+            <p style="font-size:90px;" class="flex-item">{{c.signby_portfolio }}</p>
+
+            {% else %}
+            <br> <br><br> <br> 
+            <img src="https://i.ibb.co/jrYnKvS/signature33.png" height ="280px" alt="" class="dark-signature"> <br>
+            <!-- <img  src="https://i.ibb.co/5sMd74C/ahmedsignature-1-removebg-preview.png" alt="" >-->
+            <span > ______________________________________________ </span> <br>  <br>
+        
+            <p style="font-size:40px;" class="flex-item"> Global Director, Codethinkers' Academy </p> 
+            <a style="font-size:30px;" href="https://codethinkers.org/"> Visit Academy</a>
+            {% endif %}
+            {% endfor %}
+
+            {% endif %}
+
+            <!--school signature -->
+
+            {% if school_sign %}
+            <br> <br> <br> <br> 
+            <img style="" src="{{school_sign.url}}" height ="280px" alt="" > <br>
+            <span >  ______________________________________________________________ </span> <br>  <br>
+            <p style="font-size:60px;" class="flex-item">{{principal_name }}, {{portfolio }}</p>
+            <a style="font-size:30px;" href="https://codethinkers.org/"> Visit Academy</a> <br><br>
+        
+
+            {% else %}
+      
+            {% endif %}
+
+            
+       
+           
+    </div>
+    </div>
+    </td>
+  </tr>
+
+</table>
+
+</body>
+</html>

@@ -1,0 +1,146 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Project Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Sora', sans-serif;
+      background: #f5f6fa; min-height: 100vh;
+    }
+    header {
+      background: #fff; border-bottom: 1px solid #e8eaf0;
+      padding: 0 32px; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .brand-icon {
+      width: 36px; height: 36px; border-radius: 9px;
+      background: linear-gradient(135deg,#2563eb,#7c3aed);
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .brand-name { font-size: 15px; font-weight: 700; color: #111827; }
+
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg,#2563eb,#7c3aed);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 13px; font-weight: 700;
+    }
+    .logout-btn {
+      font-family: 'Sora', sans-serif; font-size: 13px;
+      color: #6b7280; background: none; border: none; cursor: pointer;
+    }
+    .logout-btn:hover { color: #dc2626; }
+
+    .main { max-width: 860px; margin: 0 auto; padding: 48px 24px; }
+    .page-title { font-size: 26px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+    .page-sub   { font-size: 14px; color: #6b7280; margin-bottom: 32px; }
+
+    .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+
+    .new-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 20px; border-radius: 9px;
+      background: linear-gradient(135deg,#2563eb,#7c3aed);
+      color: #fff; font-family: 'Sora', sans-serif;
+      font-size: 13.5px; font-weight: 700;
+      border: none; cursor: pointer; text-decoration: none;
+      transition: opacity .15s, transform .15s;
+    }
+    .new-btn:hover { opacity: .9; transform: translateY(-1px); }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 18px;
+    }
+
+    .project-card {
+      background: #fff; border: 1.5px solid #e8eaf0;
+      border-radius: 12px; padding: 22px 20px;
+      text-decoration: none; color: inherit;
+      transition: box-shadow .15s, border-color .15s, transform .15s;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .project-card:hover {
+      box-shadow: 0 6px 20px rgba(37,99,235,.1);
+      border-color: #93c5fd; transform: translateY(-2px);
+    }
+    .project-card-icon {
+      font-size: 28px; margin-bottom: 4px;
+    }
+    .project-card-title { font-size: 15px; font-weight: 700; color: #111827; }
+    .project-card-meta  { font-size: 12px; color: #9ca3af; }
+    .project-card-words {
+      font-size: 12px; color: #2563eb; font-weight: 600;
+      background: #eff6ff; padding: 3px 10px; border-radius: 20px;
+      display: inline-block;
+    }
+
+    .empty {
+      text-align: center; padding: 80px 20px;
+      color: #9ca3af; font-size: 15px;
+    }
+    .empty-icon { font-size: 52px; margin-bottom: 16px; }
+    .empty p { margin-bottom: 24px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="{% url 'home' %}" class="brand">
+    <div class="brand-icon">🎓</div>
+    <div class="brand-name">AI Project Studio</div>
+  </a>
+  <div class="header-right">
+    <div class="avatar">{{ request.user.username|first|upper }}</div>
+    <form method="POST" action="{% url 'logout' %}" style="margin:0">
+      {% csrf_token %}
+      <button type="submit" class="logout-btn">Logout</button>
+    </form>
+  </div>
+</header>
+
+<div class="main">
+  <div class="top-row">
+    <div>
+      <h1 class="page-title">My Projects</h1>
+      <p class="page-sub">Welcome back, {{ request.user.first_name|default:request.user.username }} 👋</p>
+    </div>
+    <a href="{% url 'create_project' %}" class="new-btn">＋ New Project</a>
+  </div>
+
+  {% if projects %}
+  <div class="projects-grid">
+    {% for project in projects %}
+    <a href="{% url 'project_detail' project.pk %}" class="project-card">
+      <div class="project-card-icon">📚</div>
+      <div class="project-card-title">{{ project.title }}</div>
+      <div class="project-card-meta">
+        Updated {{ project.updated_at|timesince }} ago
+      </div>
+      <span class="project-card-words">{{ project.word_count }} words</span>
+    </a>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty">
+    <div class="empty-icon">📭</div>
+    <p>You have no projects yet. Create one to get started!</p>
+    <a href="{% url 'create_project' %}" class="new-btn" style="display:inline-flex">
+      ＋ Start Your First Project
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+</body>
+</html>

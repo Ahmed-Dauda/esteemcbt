@@ -1,0 +1,413 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% load static %}
+
+{% block title %} AI Summative Assessment {% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+  body { font-family: Arial; }
+  .form-section { max-width: 800px; margin: auto; }
+  .form-group { margin-bottom: 15px; }
+  label { display: block; font-weight: bold; margin-bottom: 5px; }
+  input[type="text"], textarea, select { width: 100%; padding: 8px; }
+  button { padding: 10px 20px; cursor: pointer; }
+  .question-block { border: 1px solid #ddd; margin-bottom: 10px; padding: 10px; border-radius:5px;}
+  #loader-container { display:none; margin-top:20px; text-align:center; }
+  #progress-wrapper { background:#eee; width:100%; height:20px; border-radius:5px; overflow:hidden; margin-top:5px; }
+  #progress-bar { width:0%; height:100%; background:#4caf50; border-radius:5px; transition: width 0.3s; }
+
+  /* Toast popup styles */
+  #toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+  }
+  .toast-message {
+    min-width: 250px;
+    margin-bottom: 10px;
+    padding: 12px 20px;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 14px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    opacity: 0.95;
+    animation: fadein 0.5s, fadeout 0.5s 3.5s;
+  }
+  .toast-success { background-color: #28a745; }
+  .toast-warning { background-color: #ffc107; color: #212529; }
+  .toast-error   { background-color: #dc3545; }
+
+  @keyframes fadein { from {opacity: 0; transform: translateY(-20px);} to {opacity: 0.95; transform: translateY(0);} }
+  @keyframes fadeout { from {opacity: 0.95;} to {opacity: 0; transform: translateY(-20px);} }
+
+  /* ── Button Spinner ── */
+  .btn-with-spinner {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-width: 200px;
+  }
+  .btn-spinner-ring {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top: 3px solid #ffffff;
+    border-radius: 50%;
+    flex-shrink: 0;
+    /* animation applied via JS to guarantee it starts */
+  }
+  @keyframes btn-spin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .btn-with-spinner.loading {
+    opacity: 0.85;
+    pointer-events: none;
+    cursor: not-allowed;
+  }
+</style>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<div class="form-section">
+  <h2>🤖 Generate Question with AI</h2>
+  <a href="{% url 'teacher:teacher_subjects' %}">
+    <button type="button" class="btn-primary">View Questions</button>
+  </a>
+  
+  <form id="generate-form" method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+      <label>Select Course:</label>
+      <select id="course" name="course" required>
+        {% for c in courses %}
+          <option value="{{ c.id }}">{{ c.course_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Learning Objectives:</label>
+      <textarea id="learning_objectives" name="learning_objectives" rows="4" placeholder="Enter learning objectives..." required>{{ saved_objectives }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Number of Questions:</label>
+      <input type="number" id="num_questions" name="num_questions" value="5" min="1" required>
+    </div>
+
+    <div class="form-group">
+      <label>Difficulty Level:</label>
+      <select id="difficulty" name="difficulty">
+        <option value="very_easy">Very Easy</option>
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+        <option value="very_hard">Very Hard</option>
+      </select>
+    </div>
+
+    <div style="text-align:center;">
+      <!-- ✅ Generate button with spinner -->
+      <button type="submit" id="generate-btn" class="btn-with-spinner">
+        <span class="btn-label">⚙️ Generate AI Questions</span>
+        <span class="btn-spinner-ring"></span>
+      </button>
+    </div>
+  </form>
+
+  <div id="loader-container">
+    <p>Generating questions… <span id="progress_text"></span></p>
+    <div id="progress-wrapper">
+      <div id="progress-bar"></div>
+    </div>
+  </div>
+<h4>If you have prepared quesions <a href="{% url 'quiz:paste_questions' %}">click here</a></h4>
+  <div id="preview-area" style="margin-top:20px;"></div>
+  <div id="preview-save-container"></div>
+
+  <hr>
+  
+</div>
+
+<!-- Load jQuery if not already loaded -->
+<script>
+if (typeof jQuery == 'undefined') {
+  document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+
+<script>
+if (typeof jQuery == 'undefined') {
+  document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+(function() {
+  function initializeForm() {
+    if (typeof jQuery === 'undefined') {
+      setTimeout(initializeForm, 50);
+      return;
+    }
+
+    var $ = jQuery;
+
+    $(document).ready(function() {
+      $('#course').select2({width:'100%'});
+      $('#difficulty').select2({width:'100%'});
+
+      const csrftoken = '{{ csrf_token }}';
+
+      // ── Objectives per course from Django context ──
+      const objectivesMap = {{ objectives_map|safe }};
+
+      // ── Populate objectives when course changes ──
+      $('#course').on('change', function() {
+        const courseId = parseInt($(this).val());
+        const obj = objectivesMap[courseId] || '';
+        $('#learning_objectives').val(obj);
+      });
+
+      function showMessage(message, type='success') {
+        const toast = $(`<div class="toast-message toast-${type}">${message}</div>`);
+        $('#toast-container').append(toast);
+        setTimeout(() => toast.fadeOut(600, () => toast.remove()), 4000);
+      }
+
+      function setLoading($btn, isLoading, labelText) {
+        if (isLoading) {
+          $btn.addClass('loading');
+          $btn.prop('disabled', true);
+        } else {
+          $btn.removeClass('loading');
+          $btn.prop('disabled', false);
+          if (labelText) $btn.find('.btn-label').text(labelText);
+        }
+      }
+
+      $('#generate-form').off('submit');
+
+      $('#generate-form').on('submit', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+
+        const $btn = $('#generate-btn');
+        setLoading($btn, true);
+        $('#loader-container').show();
+        $('#preview-area, #preview-save-container').empty();
+
+        const data = {
+          course: $('#course').val(),
+          learning_objectives: $('#learning_objectives').val(),
+          num_questions: $('#num_questions').val(),
+          difficulty: $('#difficulty').val()
+        };
+
+        fetch("{% url 'quiz:ai_generate_api' %}", {
+          method:'POST',
+          headers: {'Content-Type':'application/json','X-CSRFToken':csrftoken},
+          body: JSON.stringify(data)
+        })
+        .then(r => r.json())
+        .then(resp => {
+          if(resp.job_id) pollStatus(resp.job_id, parseInt(data.num_questions));
+          else {
+            showMessage('Failed to start generation', 'error');
+            $('#loader-container').hide();
+            setLoading($btn, false, '⚙️ Generate AI Questions');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          showMessage('Error generating questions', 'error');
+          $('#loader-container').hide();
+          setLoading($btn, false, '⚙️ Generate AI Questions');
+        });
+
+        return false;
+      });
+
+      function pollStatus(jobId, totalQuestions){
+        fetch(`/quiz/api/job-status/${jobId}/`)
+          .then(r=>r.json())
+          .then(data=>{
+            if(data.status==='processing'){
+              const partial = data.result?.partial_count || 0;
+              const percent = Math.min(100, (partial/totalQuestions)*100);
+              $('#progress-bar').css('width',percent+'%');
+              $('#progress_text').text(`${partial}/${totalQuestions} generated`);
+              setTimeout(()=>pollStatus(jobId,totalQuestions),1500);
+            }
+            else if(data.status==='completed'){
+              $('#loader-container').hide();
+              setLoading($('#generate-btn'), false, '⚙️ Generate AI Questions');
+              renderPreview(data.result.questions || []);
+            }
+            else if(data.status==='failed'){
+              showMessage('Generation failed: ' + (data.error||'unknown'), 'error');
+              $('#loader-container').hide();
+              setLoading($('#generate-btn'), false, '⚙️ Generate AI Questions');
+            }
+            else setTimeout(()=>pollStatus(jobId,totalQuestions),1500);
+          })
+          .catch(()=>setTimeout(()=>pollStatus(jobId,totalQuestions),3000));
+      }
+
+      function renderPreview(questions){
+        if(!questions.length){
+          $('#preview-area').html('<p>No questions returned</p>');
+          return;
+        }
+
+        let html = `<div class="form-section"><h3>✏️ Review Questions Before Saving</h3>
+          <form id="preview-save-form" method="POST">
+          <input type="hidden" name="confirm_save" value="1">
+          <input type="hidden" name="course_id" value="${$('#course').val()}">
+          <input type="hidden" name="total_questions" value="${questions.length}">
+          <input type="hidden" name="marks" value="1">
+          <input type="hidden" name="difficulty" value="${$('#difficulty').val()}">
+          <input type="hidden" name="learning_objectives" value="${escapeHtml($('#learning_objectives').val())}">`;
+
+        questions.forEach((q,i)=>{
+          const idx=i+1;
+          html+=`<div class="question-block">
+            <div class="form-group"><label>Question ${idx}</label>
+            <textarea name="question_${idx}" rows="2">${escapeHtml(q.question)}</textarea></div>
+            <div class="form-group"><label>Option A:</label><input type="text" name="option1_${idx}" value="${escapeHtml(q.option1)}"></div>
+            <div class="form-group"><label>Option B:</label><input type="text" name="option2_${idx}" value="${escapeHtml(q.option2)}"></div>
+            <div class="form-group"><label>Option C:</label><input type="text" name="option3_${idx}" value="${escapeHtml(q.option3)}"></div>
+            <div class="form-group"><label>Option D:</label><input type="text" name="option4_${idx}" value="${escapeHtml(q.option4)}"></div>
+            <div class="form-group"><label>Correct Answer:</label>
+              <select name="answer_${idx}">
+                <option value="Option1" ${q.answer==='Option1'?'selected':''}>A</option>
+                <option value="Option2" ${q.answer==='Option2'?'selected':''}>B</option>
+                <option value="Option3" ${q.answer==='Option3'?'selected':''}>C</option>
+                <option value="Option4" ${q.answer==='Option4'?'selected':''}>D</option>
+              </select>
+            </div></div>`;
+        });
+
+        html+=`<div style="text-align:center; margin-top:16px;">
+          <button type="submit" id="save-btn" style="
+            padding: 12px 28px;
+            background: #28a745;
+            color: #fff;
+            font-size: 15px;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            min-width: 220px;
+          ">✅ Save All Questions</button>
+          <a href="{% url 'teacher:teacher_subjects' %}">
+            <button type="button" class="btn-primary">View Questions</button>
+          </a>
+          <div id="save-spinner" style="
+            display: none;
+            margin: 14px auto 0;
+            width: 36px;
+            height: 36px;
+            border: 4px solid #e0e0e0;
+            border-top: 4px solid #28a745;
+            border-radius: 50%;
+          "></div>
+          <p id="save-spinner-text" style="display:none; margin-top:8px; color:#555; font-size:13px;">Saving questions…</p>
+        </div></form></div>`;
+
+        $('#preview-save-container').html(html);
+
+        // ── Double-submission guard ──
+        let isSaving = false;
+
+        $('#preview-save-form').off('submit').on('submit', function(e){
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (isSaving) return false;
+          isSaving = true;
+
+          const saveBtn     = document.getElementById('save-btn');
+          const spinner     = document.getElementById('save-spinner');
+          const spinnerText = document.getElementById('save-spinner-text');
+
+          saveBtn.style.display = 'none';
+          spinner.style.display = 'block';
+          spinnerText.style.display = 'block';
+
+          let deg = 0;
+          const spinInterval = setInterval(function() {
+            deg += 10;
+            spinner.style.transform = 'rotate(' + deg + 'deg)';
+          }, 30);
+
+          const formData = new FormData(this);
+          formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+          fetch("{% url 'quiz:ai_summative_assessment' %}", {
+            method:'POST',
+            body: formData,
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+          })
+          .then(r => r.json())
+          .then(resp => {
+            showMessage(resp.message, resp.status || 'success');
+            clearInterval(spinInterval);
+            spinner.style.display     = 'none';
+            spinnerText.style.display = 'none';
+            isSaving = false;
+
+            // ── Keep objectivesMap in sync so course switch shows latest ──
+            if (resp.status === 'success' || resp.status === 'warning') {
+              const savedCourseId = parseInt(formData.get('course_id'));
+              const savedObj = formData.get('learning_objectives');
+              if (savedCourseId && savedObj) {
+                objectivesMap[savedCourseId] = savedObj;
+                $('#learning_objectives').val(savedObj);
+              }
+            }
+
+            const savedBadge = document.createElement('div');
+            savedBadge.innerHTML = '✅ Questions Saved!';
+            savedBadge.style.cssText = 'margin-top:12px; color:#28a745; font-weight:bold; font-size:15px;';
+            spinner.parentNode.appendChild(savedBadge);
+          })
+          .catch(err => {
+            console.error(err);
+            showMessage('Error saving questions', 'error');
+            clearInterval(spinInterval);
+            spinner.style.display     = 'none';
+            spinnerText.style.display = 'none';
+            saveBtn.style.display     = 'inline-block';
+            isSaving = false;
+          });
+
+          return false;
+        });
+      }
+
+      function escapeHtml(text){
+        if(!text) return '';
+        return text.replaceAll("&","&amp;")
+                   .replaceAll("<","&lt;")
+                   .replaceAll(">","&gt;")
+                   .replaceAll('"',"&quot;")
+                   .replaceAll("'","&#039;");
+      }
+    });
+  }
+
+  initializeForm();
+})();
+</script>
+
+
+{% endblock %}

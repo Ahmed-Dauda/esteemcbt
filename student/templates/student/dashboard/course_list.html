@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    {% for course in courses %}
+    <div>
+        <h2>{{ course.title }}</h2>
+        <p>{{ course.desc }}</p>
+        <p>Price: ${{ course.price }}</p>
+        
+        <a href="{% url 'student:add_to_cart' course_id=course.id %}">Add to Cart</a>
+    </div>
+{% endfor %}
+
+    
+</body>
+</html>

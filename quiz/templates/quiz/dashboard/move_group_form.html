@@ -1,0 +1,34 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %} Move Students from One Class to Another {% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 700px; margin: 50px auto;">
+    <h1>Move Students from One Class to Another</h1>
+
+    {% if messages %}
+        <div style="margin-bottom: 20px;">
+            {% for message in messages %}
+                <p style="color: {% if message.tags == 'success' %}green{% else %}red{% endif %};">{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <p>
+            <label>From Class:</label>
+            {{ form.from_group }}
+        </p>
+        <p>
+            <label>To Class (must be empty):</label>
+            {{ form.to_group }}
+        </p>
+        <button type="submit" style="background-color: green; color: white; padding: 10px 20px; border-radius: 5px;">Move Group</button>
+    </form>
+
+    <div style="margin-top: 20px; padding: 10px; background-color: #f0f0f0; border-left: 4px solid green;">
+        <p>Only empty classes are allowed as the target class. Ensure that the "To Class" has no students.</p>
+    </div>
+</div>
+{% endblock %}

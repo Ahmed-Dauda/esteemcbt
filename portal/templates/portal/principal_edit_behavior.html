@@ -1,0 +1,18 @@
+<h2>Edit Principal Comment</h2>
+
+<p>
+    <strong>Student:</strong> {{ record.student.first_name }} {{ record.student.last_name }}<br>
+    <strong>Session:</strong> {{ record.session }}<br>
+    <strong>Term:</strong> {{ record.term }}<br>
+</p>
+
+<h3>Form Teacher Comment</h3>
+<p>{{ record.form_teacher_comment|default:"No comment yet" }}</p>
+
+<form method="POST">
+    {% csrf_token %}
+    <label for="principal_comment"><strong>Principal Remark:</strong></label><br>
+    <textarea name="principal_comment" id="principal_comment" rows="4" style="width:100%;">{{ record.principal_comment }}</textarea>
+    <br><br>
+    <button type="submit">Save</button>
+</form>

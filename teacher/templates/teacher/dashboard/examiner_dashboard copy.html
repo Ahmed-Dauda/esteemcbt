@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Manage Students</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f8f9fa;
+    margin: 0;
+    padding: 20px;
+  }
+  h2 {
+    text-align: center;
+    color: #333;
+  }
+  .search-container {
+    text-align: center;
+    margin: 20px 0;
+  }
+  #searchInput {
+    padding: 10px;
+    width: 60%;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  }
+  th, td {
+    text-align: left;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    vertical-align: top;
+  }
+  th {
+    background: #007bff;
+    color: white;
+    text-align: center;
+  }
+  tr:hover {
+    background-color: #f1f1f1;
+  }
+  mark {
+    background: yellow;
+    color: black;
+    font-weight: bold;
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+  #noResults {
+    text-align: center;
+    color: #999;
+    margin-top: 10px;
+    display: none;
+  }
+  .btn {
+    display: inline-block;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 5px;
+    text-decoration: none;
+    margin-right: 5px;
+  }
+  .btn-info {
+    background-color: #17a2b8;
+    color: #fff;
+    border: 1px solid #17a2b8;
+  }
+  .btn-info:hover {
+    background-color: #138496;
+  }
+  .btn-danger {
+    background-color: #dc3545;
+    color: #fff;
+    border: 1px solid #dc3545;
+  }
+  .btn-danger:hover {
+    background-color: #c82333;
+  }
+  .footer-link {
+    text-align: center;
+    margin-top: 30px;
+  }
+  .footer-link a {
+    background: #007bff;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 8px;
+  }
+  .footer-link a:hover {
+    background: #0056b3;
+  }
+</style>
+
+</head>
+<body>
+
+<h2>Manage Students (Currently Assigned Subjects)</h2>
+
+<div class="search-container">
+  <input type="text" id="searchInput" placeholder="Search by class, student name, or subject...">
+</div>
+
+<table id="assignedSubjectsTable">
+  <thead>
+    <tr>
+      <th>Class Name</th>
+      <th>Students</th>
+      <th>Subjects</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>JSS1 Esteem Boys College</td>
+      <td class="students-cell">
+        LAMIDO MUSTAPHA IBRAHIM - elccbt221<br>
+        AHMAD YUSUF BOBI - elccbt223<br>
+        HASSAN MUKHTAR ZUBAIRU - elccbt226
+      </td>
+      <td>
+        CCA JS1 FIRST 2025-2026 MIDTERM<br>
+        ENGLISH STUDIES JS1 FIRST 2025-2026 MIDTERM
+      </td>
+      <td style="text-align:center;">
+        <a href="{% url 'teacher:edit_coursegrade' 1 %}" class="btn btn-info">Edit</a>
+        <a href="{% url 'teacher:delete_coursegrade' 1 %}" class="btn btn-danger">Delete</a>
+      </td>
+    </tr>
+
+    <tr>
+      <td>JSS2 Esteem Boys College</td>
+      <td class="students-cell">
+        Junaid Shamsudeem Abba - elccbt285<br>
+        Adil Jaafar Adamu - elccbt287<br>
+        Umar Abdulhafiz Paki - elccbt289
+      </td>
+      <td>
+        CCA JS2 FIRST 2025-2026 MIDTERM<br>
+        ENGLISH STUDIES JS2 FIRST 2025-2026 MIDTERM
+      </td>
+      <td style="text-align:center;">
+        <a href="{% url 'teacher:edit_coursegrade' 2 %}" class="btn btn-info">Edit</a>
+        <a href="{% url 'teacher:delete_coursegrade' 2 %}" class="btn btn-danger">Delete</a>
+      </td>
+    </tr>
+
+    <tr>
+      <td>JSS3 Esteem Boys College</td>
+      <td class="students-cell">
+        Sa'ad Nuru Tafida - elccbt37<br>
+        Muhammad Adamu Abbas - elccbt38<br>
+        Ja'afar Ibrahim Mohammed - elccbt68
+      </td>
+      <td>
+        AGRIC JSS3 FIRST 2025-2026 MIDTERM<br>
+        MATHS JSS3 FIRST 2025-2026 MIDTERM
+      </td>
+      <td style="text-align:center;">
+        <a href="{% url 'teacher:edit_coursegrade' 3 %}" class="btn btn-info">Edit</a>
+        <a href="{% url 'teacher:delete_coursegrade' 3 %}" class="btn btn-danger">Delete</a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p id="noResults">No results found.</p>
+
+<!-- <div class="footer-link">
+  <a href="{% url 'teacher:examiner_dashboard' %}">← Back to Dashboard</a>
+</div> -->
+
+<!-- ✅ Search + Highlight Script (highlight only students) -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const searchInput = document.getElementById("searchInput");
+  const tableRows = document.querySelectorAll("#assignedSubjectsTable tbody tr");
+  const noResults = document.getElementById("noResults");
+
+  function highlightText(element, query) {
+    const text = element.textContent;
+    const regex = new RegExp(`(${query})`, "gi");
+    const newText = text.replace(regex, '<mark>$1</mark>');
+    element.innerHTML = newText;
+  }
+
+  function removeHighlights(element) {
+    element.innerHTML = element.textContent;
+  }
+
+  searchInput.addEventListener("input", function() {
+    const query = this.value.toLowerCase().trim();
+    let visibleCount = 0;
+
+    tableRows.forEach(row => {
+      const studentCell = row.querySelector(".students-cell");
+      removeHighlights(studentCell);
+
+      const rowText = row.textContent.toLowerCase();
+      const matchFound = rowText.includes(query);
+
+      if (matchFound || query === "") {
+        row.style.display = "";
+        if (query && studentCell.textContent.toLowerCase().includes(query)) {
+          highlightText(studentCell, query);
+        }
+        visibleCount++;
+      } else {
+        row.style.display = "none";
+      }
+    });
+
+    noResults.style.display = visibleCount === 0 ? "block" : "none";
+  });
+});
+</script>
+
+</body>
+</html>

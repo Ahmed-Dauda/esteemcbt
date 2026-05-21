@@ -1,0 +1,170 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Teacher Add Questions{% endblock %}
+
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        },
+        "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+</script>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+    }
+    textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        height: 80px;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+    }
+    button {
+        padding: 10px 20px;
+        font-size: 16px;
+        margin-top: 10px;
+        border-radius: 5px;
+    }
+    pre {
+        padding: 15px;
+        background-color: #f4f4f4;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-top: 10px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        height: 150px;
+        overflow-y: scroll;
+    }
+    #rendered {
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-top: 10px;
+        background-color: #f9f9f9;
+    }
+</style>
+
+<div class="container">
+    <a href="https://docs.google.com/document/d/12vxSEux5wiOwdd-sMLJ4apl9Z0rY8wrt/edit?usp=drive_link&ouid=113278886889002422986&rtpof=true&sd=true" target="_blank">Math Equation Editor Documentation</a>
+
+    <h2 class="mb-4">Math Equation Editor</h2>
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <textarea id="input" rows="10" placeholder="Enter plain text here...">1/2 * 3 + H2O</textarea>
+            <br>
+            <button class="btn btn-success" onclick="renderEquation()">Render Equation</button>
+            <h4 class="mt-4">Rendered Equation:</h4>
+            <div id="rendered"></div>
+            <h4 class="mt-4">MathML Output:</h4>
+            <pre id="output"></pre>
+            <button class="btn btn-info" onclick="copyMathML()">Copy MathML</button>
+        </div>
+    </div>
+
+    <h2 class="mb-4">Add Question</h2>
+    {% for subject in subjects_taught %}
+    <p><strong>Subject and school taught:</strong> {{ subject }}</p>
+    {% endfor %}
+    <br>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div id="formset-container">
+            {{ formset|crispy }}
+            <div id="formset-template" style="display: none;">
+                {{ formset.empty_form|crispy }}
+            </div>
+        </div>
+    
+        <button type="button" class="btn btn-secondary mt-3" id="add-more">Add More</button>
+        <button type="submit" class="btn btn-primary mt-3">Submit</button>
+    </form>
+</div>
+
+<script>
+    function parsePlainText(input) {
+        // Convert plain text fractions to LaTeX
+        input = input.replace(/(\d+)\s*\/\s*(\d+)/g, '\\frac{$1}{$2}'); // Convert '1/2' to '\frac{1}{2}'
+        
+        // Convert '1 over 2' to LaTeX
+        input = input.replace(/(\d+)\s+over\s+(\d+)/g, '\\frac{$1}{$2}');
+
+        // Convert '*' to '×' for multiplication
+        input = input.replace(/\*/g, '\\times'); // Convert '*' to '\times'
+
+        // Convert superscripts (e.g., x^2)
+        input = input.replace(/(\w+)\s*\^(\d+)/g, '$1^{ $2 }'); // x^2 -> x^{2}
+
+        // Convert subscripts (e.g., H2O or H2SO4)
+        input = input.replace(/([A-Z][a-z]*)(\d+)/g, '$1_{ $2 }'); // H2 -> H_{2}
+
+        // Handle addition and subtraction
+        input = input.replace(/(\d+)\s*\+\s*(\d+)/g, '$1 + $2'); // 1 + 2 -> 1 + 2
+        input = input.replace(/(\d+)\s*\-\s*(\d+)/g, '$1 - $2'); // 1 - 2 -> 1 - 2
+
+        // Handle multiplication
+        input = input.replace(/(\d+)\s*×\s*(\d+)/g, '$1 \\times $2'); // 1 × 2 -> 1 \\times 2
+
+        // Return the processed LaTeX string
+        return input;
+    }
+
+    function renderEquation() {
+        var input = document.getElementById('input').value;
+        var outputElement = document.getElementById('output');
+        var renderedElement = document.getElementById('rendered');
+
+        // Clear previous content
+        renderedElement.innerHTML = '';
+        outputElement.textContent = ''; // Clear previous MathML output
+
+        // Parse plain text to LaTeX
+        var parsedInput = parsePlainText(input);
+
+        // Create a MathJax container and render the LaTeX
+        var container = document.createElement('div');
+        container.innerHTML = '\\[' + parsedInput + '\\]'; // Use display math delimiters
+        renderedElement.appendChild(container);
+
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub, container, function() {
+            var math = MathJax.Hub.getAllJax(container)[0];
+            if (math) {
+                var mml = math.root.toMathML("");
+                outputElement.textContent = mml;
+            } else {
+                outputElement.textContent = "No valid MathJax found.";
+            }
+        }]);
+    }
+
+    function copyMathML() {
+        var mathml = document.getElementById('output').textContent;
+        navigator.clipboard.writeText(mathml).then(function() {
+            alert("MathML copied to clipboard!");
+        }, function(err) {
+            console.error('Failed to copy MathML: ', err);
+        });
+    }
+
+    $(document).ready(function() {
+        var formsetContainer = $('#formset-container');
+        var formsetTemplate = $('#formset-template');
+
+        $('#add-more').click(function() {
+            var clonedForm = formsetTemplate.clone();
+            clonedForm.removeAttr('id').removeAttr('style');
+            formsetContainer.append(clonedForm);
+        });
+    });
+</script>
+{% endblock %}

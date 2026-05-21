@@ -1,0 +1,30 @@
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Session</th>
+            <th>Term</th>
+            <th>Student</th>
+            <th>Class</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for card in report_cards %}
+            <tr>
+                <td>{{ card.session__name }}</td>
+                <td>{{ card.term__name }}</td>
+                <td>{{ card.student__first_name }} {{ card.student__last_name }}</td>
+                <td>{{ card.student__student_class }}</td>
+                <td>
+                    <a href="{% url 'view_report_card' card.student__id card.session__name card.term__name %}">
+                        View Report Card
+                    </a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="5">No report cards found.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

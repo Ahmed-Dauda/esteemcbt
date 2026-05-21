@@ -1,0 +1,733 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Complete Data Analysis Suite – {{ project.title }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --primary: #3b82f6;
+      --secondary: #8b5cf6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --dark: #1e293b;
+      --gray: #64748b;
+      --light: #f8fafc;
+      --border: #e2e8f0;
+      --white: #ffffff;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--light);
+      color: var(--dark);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      font-weight: 800;
+      color: var(--dark);
+    }
+    
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+    
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: auto;
+    }
+    
+    .status-pending { background: #fef3c7; color: #d97706; }
+    .status-ready { background: #d1fae5; color: #059669; }
+    .status-generating { background: #dbeafe; color: #2563eb; }
+    
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray);
+      text-decoration: none;
+    }
+    
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    .sidebar {
+      width: 280px;
+      background: var(--white);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    
+    .sidebar-section {
+      padding: 20px 16px;
+    }
+    
+    .sidebar-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 12px;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 4px;
+    }
+    
+    .nav-item:hover {
+      background: var(--light);
+      color: var(--dark);
+    }
+    
+    .nav-item.active {
+      background: linear-gradient(135deg, #eff6ff, #f5f3ff);
+      color: var(--primary);
+      font-weight: 600;
+    }
+    
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px;
+    }
+    
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--light);
+    }
+    
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+    }
+    
+    .btn-outline {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      color: var(--gray);
+    }
+    
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+    
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--light);
+    }
+    
+    .drop-zone:hover {
+      border-color: var(--primary);
+      background: #eff6ff;
+    }
+    
+    .academic-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 11px;
+      font-family: 'Times New Roman', serif;
+    }
+    
+    .academic-table th {
+      background: #f0f0f0;
+      padding: 10px 8px;
+      text-align: center;
+      border: 1px solid var(--border);
+      font-weight: 700;
+    }
+    
+    .academic-table td {
+      padding: 8px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    
+    .academic-table tr:hover {
+      background: var(--light);
+    }
+    
+    .table-caption {
+      font-size: 10px;
+      font-style: italic;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      text-align: center;
+      color: var(--gray);
+    }
+    
+    .chart-container {
+      height: 350px;
+      margin: 20px 0;
+      position: relative;
+    }
+    
+    .chart-caption {
+      text-align: center;
+      font-size: 11px;
+      color: var(--gray);
+      margin-top: 8px;
+      font-style: italic;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--dark);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 40px;
+      font-size: 13px;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    
+    .toast.show { opacity: 1; }
+    
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .chapter-content {
+      font-family: 'Times New Roman', serif;
+      line-height: 1.8;
+      font-size: 12pt;
+    }
+    
+    .chapter-content h2 {
+      font-size: 16pt;
+      font-weight: 700;
+      text-align: center;
+      margin: 30px 0 20px;
+    }
+    
+    .chapter-content h3 {
+      font-size: 14pt;
+      font-weight: 600;
+      margin: 25px 0 15px;
+    }
+    
+    .chapter-content p {
+      margin-bottom: 12px;
+      text-align: justify;
+    }
+    
+    .progress-container {
+      background: var(--light);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    
+    .progress-steps {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    
+    .progress-step {
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      background: var(--border);
+      color: var(--gray);
+    }
+    
+    .progress-step.active {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .progress-step.completed {
+      background: var(--success);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="{% url 'home' %}" class="brand">
+    <div class="brand-icon">📊</div>
+    <span>AI Research Studio</span>
+  </a>
+  <div class="separator"></div>
+  <div class="project-title">{{ project.title }}</div>
+  <div id="statusBadge" class="status-badge status-pending">⏳ No Data</div>
+  <a href="{% url 'section_detail' chapter4_first_section_pk %}" class="back-btn">← Back to Editor</a>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Chapter 4 Sections</div>
+      <div class="nav-item" onclick="showStep(1)"><span>📂</span> 1. Upload Data</div>
+      <div class="nav-item" onclick="showStep(2)"><span>📊</span> 2. Generate Chapter 4</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">AI Generation Process</div>
+      <div style="font-size: 11px; color: var(--gray); padding: 0 12px;">
+        <div>✓ Data Analysis (AI-powered)</div>
+        <div>✓ Statistical Computation</div>
+        <div>✓ Table Generation</div>
+        <div>✓ Chart Creation</div>
+        <div>✓ Narrative Writing</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main" id="mainContent">
+    <div id="step1" class="step-panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📂 Upload Your Dataset</div>
+        </div>
+        <div class="drop-zone" id="dropZone"
+             onclick="document.getElementById('fileInput').click()"
+             ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+          <div style="font-size: 48px; margin-bottom: 12px;">📊</div>
+          <div style="font-weight: 600; margin-bottom: 6px;">Drop CSV/Excel file here or click to browse</div>
+          <div style="font-size: 12px; color: var(--gray);">Supports CSV, XLSX, XLS · Max 10MB</div>
+          <div id="filePill" style="display: none; margin-top: 16px; padding: 8px 12px; background: #eff6ff; border-radius: 8px;">
+            📄 <span id="fileName"></span>
+          </div>
+        </div>
+        <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display: none" onchange="fileSelected(this)"/>
+        <div id="uploadProgress" style="display: none; margin-top: 16px;">
+          <div style="height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;">
+            <div id="progressBar" style="width: 0%; height: 100%; background: linear-gradient(135deg, var(--primary), var(--secondary)); transition: width 0.3s;"></div>
+          </div>
+        </div>
+        <div id="uploadError" style="display: none; margin-top: 16px; padding: 12px; background: #fee2e2; border-radius: 8px; color: #dc2626;"></div>
+        <button class="btn btn-primary" id="uploadBtn" onclick="doUpload()" style="width: 100%; margin-top: 20px;" disabled>Upload & Analyse Dataset</button>
+      </div>
+    </div>
+
+    <div id="step2" class="step-panel" style="display: none;">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🤖 AI-Powered Chapter 4 Generation</div>
+          <div>
+            <button class="btn btn-primary" id="generateBtn" onclick="generateFullChapterWithAI()">✨ Generate Chapter 4 with AI</button>
+            <button class="btn btn-success" id="saveBtn" onclick="saveChapter()" style="display: none;">💾 Save to Project</button>
+          </div>
+        </div>
+        <div id="generationProgress" style="display: none;" class="progress-container">
+          <div><strong>AI is generating your chapter...</strong></div>
+          <div class="progress-steps" id="progressSteps"></div>
+          <div style="margin-top: 10px;"><span class="loading"></span> Processing...</div>
+        </div>
+        <div id="chapterPreview" class="chapter-content" style="max-height: 600px; overflow-y: auto; padding: 30px; background: var(--white); border-radius: 12px; border: 1px solid var(--border);">
+          <div class="empty-state">Click "Generate Chapter 4 with AI" to create a complete academic chapter based on your dataset. The AI will analyze your data and generate all tables, charts, and interpretations.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const CSRF = "{{ csrf_token }}";
+  const PROJECT_ID = {{ project.pk }};
+  const UPLOAD_URL = "{% url 'upload_dataset' project.pk %}";
+  
+  let currentDatasetId = null;
+  let selectedFile = null;
+  let generatedChapter = null;
+  
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+  
+  function showStep(step) {
+    document.querySelectorAll('.step-panel').forEach(p => p.style.display = 'none');
+    document.getElementById(`step${step}`).style.display = 'block';
+  }
+  
+  function fileSelected(input) {
+    const file = input.files[0];
+    if (!file) return;
+    selectedFile = file;
+    document.getElementById('fileName').textContent = file.name + ' (' + (file.size/1024).toFixed(1) + ' KB)';
+    document.getElementById('filePill').style.display = 'flex';
+    document.getElementById('uploadBtn').disabled = false;
+  }
+  
+  function dragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); }
+  function dragLeave() { document.getElementById('dropZone').classList.remove('dragover'); }
+  function dropFile(e) {
+    e.preventDefault();
+    dragLeave();
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('fileInput').files = dt.files;
+    fileSelected(document.getElementById('fileInput'));
+  }
+  
+  async function doUpload() {
+    if (!selectedFile) return;
+    
+    const btn = document.getElementById('uploadBtn');
+    const progressDiv = document.getElementById('uploadProgress');
+    const progressBar = document.getElementById('progressBar');
+    
+    btn.disabled = true;
+    btn.innerHTML = 'Uploading...';
+    progressDiv.style.display = 'block';
+    
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress = Math.min(progress + 10, 90);
+      progressBar.style.width = progress + '%';
+    }, 100);
+    
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    
+    try {
+      const response = await fetch(UPLOAD_URL, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF },
+        credentials: 'same-origin',
+        body: formData
+      });
+      
+      clearInterval(interval);
+      
+      if (!response.ok) throw new Error('Upload failed');
+      
+      progressBar.style.width = '100%';
+      const data = await response.json();
+      
+      currentDatasetId = data.dataset_id;
+      
+      setTimeout(() => {
+        progressDiv.style.display = 'none';
+        btn.innerHTML = '✓ Dataset Ready';
+        document.getElementById('statusBadge').className = 'status-badge status-ready';
+        document.getElementById('statusBadge').innerHTML = '✓ Data Loaded';
+        showToast('Dataset uploaded successfully! Ready to generate Chapter 4.');
+        showStep(2);
+      }, 500);
+      
+    } catch (error) {
+      clearInterval(interval);
+      progressDiv.style.display = 'none';
+      document.getElementById('uploadError').innerHTML = 'Upload failed: ' + error.message;
+      document.getElementById('uploadError').style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = 'Upload & Analyse Dataset';
+    }
+  }
+  
+  async function generateFullChapterWithAI() {
+    if (!currentDatasetId) {
+      showToast('Please upload a dataset first');
+      return;
+    }
+    
+    const generateBtn = document.getElementById('generateBtn');
+    const progressDiv = document.getElementById('generationProgress');
+    const progressSteps = document.getElementById('progressSteps');
+    const saveBtn = document.getElementById('saveBtn');
+    
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<span class="loading"></span> AI Generating...';
+    progressDiv.style.display = 'block';
+    document.getElementById('statusBadge').className = 'status-badge status-generating';
+    document.getElementById('statusBadge').innerHTML = '🤖 AI Generating...';
+    
+    const steps = [
+      'Analyzing dataset structure',
+      'Computing descriptive statistics',
+      'Generating demographic tables',
+      'Performing correlation analysis',
+      'Running regression analysis',
+      'Creating data visualizations',
+      'Writing interpretations',
+      'Compiling chapter content'
+    ];
+    
+    progressSteps.innerHTML = steps.map((step, i) => 
+      `<div class="progress-step" id="step_${i}">${step}</div>`
+    ).join('');
+    
+    try {
+      // Call AI endpoint to generate complete chapter
+      const response = await fetch('/research/api/generate-chapter4-ai/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({
+          dataset_id: currentDatasetId,
+          project_id: PROJECT_ID
+        })
+      });
+      
+      // Update progress steps
+      for (let i = 0; i < steps.length; i++) {
+        setTimeout(() => {
+          const stepEl = document.getElementById(`step_${i}`);
+          if (stepEl) stepEl.classList.add('completed');
+        }, i * 800);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.chapter_content) {
+        generatedChapter = data.chapter_content;
+        document.getElementById('chapterPreview').innerHTML = data.chapter_content;
+        
+        // Create any charts in the content
+        if (data.chart_data) {
+          createChartsFromData(data.chart_data);
+        }
+        
+        showToast('Chapter 4 generated successfully!');
+        saveBtn.style.display = 'inline-flex';
+        document.getElementById('statusBadge').className = 'status-badge status-ready';
+        document.getElementById('statusBadge').innerHTML = '✓ Chapter Ready';
+      } else {
+        throw new Error(data.error || 'Generation failed');
+      }
+      
+    } catch (error) {
+      console.error('Generation error:', error);
+      showToast('Error generating chapter: ' + error.message);
+      document.getElementById('chapterPreview').innerHTML = `
+        <div class="empty-state" style="color: var(--danger);">
+          <strong>Error generating chapter</strong><br>
+          ${error.message}<br><br>
+          Please try again or check your dataset format.
+        </div>
+      `;
+    } finally {
+      generateBtn.disabled = false;
+      generateBtn.innerHTML = '✨ Regenerate Chapter 4';
+      setTimeout(() => {
+        progressDiv.style.display = 'none';
+      }, 3000);
+    }
+  }
+  
+  function createChartsFromData(chartData) {
+    // Create age distribution chart
+    if (chartData.age_labels && chartData.age_values) {
+      const ageCanvas = document.getElementById('ageChart');
+      if (ageCanvas) {
+        new Chart(ageCanvas, {
+          type: 'bar',
+          data: {
+            labels: chartData.age_labels,
+            datasets: [{ label: 'Frequency', data: chartData.age_values, backgroundColor: 'rgba(59, 130, 246, 0.7)' }]
+          },
+          options: { responsive: true, maintainAspectRatio: true }
+        });
+      }
+    }
+    
+    // Create mean scores chart
+    if (chartData.mean_labels && chartData.mean_values) {
+      const meanCanvas = document.getElementById('meanChart');
+      if (meanCanvas) {
+        new Chart(meanCanvas, {
+          type: 'bar',
+          data: {
+            labels: chartData.mean_labels,
+            datasets: [{ label: 'Mean Score', data: chartData.mean_values, backgroundColor: 'rgba(16, 185, 129, 0.7)' }]
+          },
+          options: { responsive: true, maintainAspectRatio: true, scales: { y: { max: 5 } } }
+        });
+      }
+    }
+    
+    // Create correlation chart
+    if (chartData.corr_labels && chartData.corr_values) {
+      const corrCanvas = document.getElementById('correlationChart');
+      if (corrCanvas) {
+        new Chart(corrCanvas, {
+          type: 'bar',
+          data: {
+            labels: chartData.corr_labels,
+            datasets: [{ label: 'Correlation (r)', data: chartData.corr_values, backgroundColor: 'rgba(139, 92, 246, 0.7)' }]
+          },
+          options: { responsive: true, maintainAspectRatio: true, scales: { y: { min: -1, max: 1 } } }
+        });
+      }
+    }
+    
+    // Create beta coefficients chart
+    if (chartData.beta_labels && chartData.beta_values) {
+      const betaCanvas = document.getElementById('betaChart');
+      if (betaCanvas) {
+        new Chart(betaCanvas, {
+          type: 'bar',
+          data: {
+            labels: chartData.beta_labels,
+            datasets: [{ label: 'Beta Coefficient (β)', data: chartData.beta_values, backgroundColor: 'rgba(245, 158, 11, 0.7)' }]
+          },
+          options: { responsive: true, maintainAspectRatio: true }
+        });
+      }
+    }
+  }
+  
+  async function saveChapter() {
+    if (!generatedChapter) {
+      showToast('No chapter content to save');
+      return;
+    }
+    
+    const response = await fetch('/research/api/save-chapter4/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({
+        project_id: PROJECT_ID,
+        content: generatedChapter
+      })
+    });
+    
+    const data = await response.json();
+    if (response.ok) {
+      showToast('Chapter 4 saved! Redirecting...');
+      setTimeout(() => window.location.href = data.redirect_url, 1500);
+    } else {
+      showToast('Error saving chapter');
+    }
+  }
+  
+  {% if initial_analysis %}
+  currentDatasetId = {{ initial_dataset_id|default:'null' }};
+  if (currentDatasetId) {
+    setTimeout(() => {
+      document.getElementById('statusBadge').className = 'status-badge status-ready';
+      document.getElementById('statusBadge').innerHTML = '✓ Data Loaded';
+      showStep(2);
+    }, 500);
+  }
+  {% endif %}
+</script>
+</body>
+</html>

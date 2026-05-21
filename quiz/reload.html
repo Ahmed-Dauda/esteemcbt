@@ -1,0 +1,147 @@
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  </head>
+  
+  <body>
+    <div class="container">
+
+      <form action="" method="POST">
+ 
+         <button type="submit" id="submit" name="submit" class="btn btn-info">Complete</button>
+          <br />
+          <div class="row">
+            
+              <div id="Result">
+
+                  <label class="radioContainer">Ok<input class="radio" type="radio" name="Result" id ="ok" value="1"> 
+                  </label>
+
+                  <label class="radioContainer">Fasle Alarm <input class="radio" type="radio" name="Result" id="fa" value="2">
+                  </label>
+
+                  <label class="radioContainer">False Pass <input class="radio" type="radio" name="Result" id="fp" value="3" > 
+                  </label> 
+                  
+                  <label class="radioContainer">Blatant Pass <input class="radio" type="radio" name="Result" id="bp" value="4"> 
+                </label>
+
+              </div>
+        
+            <br />
+
+          
+              <div id="ResultCategories"><label>Result Categories:</label>
+                <div>
+                  <label class="radioContainer">Cat 1 <input class="radio" type="radio" name="ResultCategories" id="cat1" value="1">
+      
+                  </label>
+                  <label class="radioContainer">Cat 2 <input class="radio" type="radio" name="ResultCategories" id="cat2" value="2">
+              
+                  </label>
+                  <label class="radioContainer">Cat 3 <input class="radio" type="radio" name="ResultCategories" id="cat3" value="3">
+                  
+                  </label> 
+                  <label class="radioContainer">Cat 4 <input class="radio" type="radio" name="ResultCategories" id="cat4" value="4">
+                  
+                  </label>                
+                  <label class="radioContainer">Cat 5 <input class="radio" type="radio" name="ResultCategories" id="cat5" value="5">
+                  
+                  </label> <label class="radioContainer">Cat 6 <input class="radio" type="radio" name="ResultCategories" id="cat6" value="6">
+                  
+                  </label>                
+                  <label class="radioContainer">Cat 7 <input class="radio" type="radio" name="ResultCategories" id="cat7" value="7">
+                  
+                  </label> <label class="radioContainer">Cat 8 <input class="radio" type="radio" name="ResultCategories" id="cat8" value="8">
+                  
+                  </label>                
+                  <label class="radioContainer">Cat 9 <input class="radio" type="radio" name="ResultCategories" id="cat9" value="9"> 
+                  
+                  </label>
+                </div>
+              </div>
+      
+          </div>
+    
+      </form>
+    </div>
+  </body>
+  
+  <script>
+    $('input:radio').click(function() {
+      location.reload();
+    });
+  
+  
+  
+  $(document).ready(function() {
+  
+    var result_dom = $('input[name="Result"]');
+    var categories_dom = $('input[name="ResultCategories"]');
+    var cat9 = $('#cat9');
+    var fa = $('#fa')
+  
+    result_dom.on('change', function() {
+      var checked_val = $(this).val();
+      if (checked_val == 1) {
+        categories_dom.prop('checked', false);
+      } else if (checked_val == 3 || checked_val == 4) {
+        cat9.prop('checked', true);
+      }
+    });
+  
+    categories_dom.on('change', function() {
+      var checked_val = $(this).val();
+      if (checked_val >= 1 && checked_val <= 8) {
+        fa.prop('checked', true);
+      }
+    });
+  
+  });
+  
+  $(document).ready(function() {
+  
+    var result_dom = $('input[name="Result"]');
+    var categories_dom = $('input[name="ResultCategories"]');
+    var cat9 = $('#cat9');
+    var fa = $('#fa')
+  
+    result_dom.on('change', function() {
+      var checked_val = $(this).val();
+      if (checked_val == 1) {
+        categories_dom.prop('checked', false);
+      } else if (checked_val == 3 || checked_val == 4) {
+        cat9.prop('checked', true);
+      }
+    });
+  
+    categories_dom.on('change', function() {
+      var checked_val = $(this).val();
+      if (checked_val >= 1 && checked_val <= 8) {
+        fa.prop('checked', true);
+      }
+    });
+  
+  });
+  
+  $(document).ready(function() {
+      // Initialize radio selection from localStorage
+      var radioGroups = JSON.parse(localStorage.getItem('selected') || '{}');
+      Object.values(radioGroups).forEach(function(radioId) {
+        document.getElementById(radioId).checked = true;
+      });
+  
+      // Handle radio click events
+      $('.radio').on('click', function() {
+        radioGroups[this.name] = this.id;
+        localStorage.setItem("selected", JSON.stringify(radioGroups));
+      });
+  
+      // Handle "Complete" button click
+      $('#submit').on('click', function() {
+        // Clear radio selection from localStorage
+        localStorage.removeItem('selected');
+      });
+    });
+  
+  </script>
+  

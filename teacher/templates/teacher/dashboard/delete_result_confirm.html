@@ -1,0 +1,11 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block content %}
+    <h2>Delete Result</h2>
+    <p>Are you sure you want to delete this result?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Yes, delete</button>
+        <a href="{% url 'teacher:exam_list' %}">Cancel</a>
+    </form>
+{% endblock %}

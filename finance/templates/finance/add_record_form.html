@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Record</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e7eaef;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            margin-top: 50px;
+            background-color: rgb(70, 118, 239);
+            
+        }
+
+        form {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-row {
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-control {
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .form-control:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        .form-group label {
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .form-row .col-md-2, .form-row .col-md-1 {
+            margin-bottom: 10px;
+        }
+
+        .col-md-4 {
+            margin-bottom: 20px;
+        }
+     
+    .form-group textarea {
+        height: 30px;  /* Adjust to desired height */
+    }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 class="text-center" style="color: white;">Add Finance Record</h2>
+    <form method="post">
+        {% csrf_token %}
+        
+        <!-- First Row: Names, Class, Deposit Fields -->
+        <div class="form-row">
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="names">Names</label>
+                    {{ form.names }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="student_class">Class</label>
+                    {{ form.student_class }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="initial_total_deposit">Initial Total Deposit</label>
+                    {{ form.initial_total_deposit }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="total_deposit">Total Deposit</label>
+                    {{ form.total_deposit }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="school">School</label>
+                    {{ form.school }}
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="form-group">
+                    <label for="session">Session</label>
+                    {{ form.session }}
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="form-group">
+                    <label for="term">Term</label>
+                    {{ form.term }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Second Row: Expenses and Notes -->
+        <div class="form-row">
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="school_shop">School Shop</label>
+                    {{ form.school_shop }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="caps">Caps</label>
+                    {{ form.caps }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="haircut">Haircut</label>
+                    {{ form.haircut }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="others">Others</label>
+                    {{ form.others }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group" style="height: 100px;">
+                    <label for="note">Note</label>
+                    {{ form.note }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-row">
+            <div class="col-12 text-center">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="{% url 'finance:finance_record_view' %}" style="background-color: rgb(70, 118, 239);color: white;" class="btn">Back</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+</body>
+</html>

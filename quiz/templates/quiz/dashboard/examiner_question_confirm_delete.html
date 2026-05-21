@@ -1,0 +1,21 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %}Delete Question{% endblock %}
+
+{% block content %}
+  <h2>Delete Question</h2>
+
+  <p>Are you sure you want to delete this question?</p>
+  <div class="mb-3">
+    <strong>Course:</strong> {{ question.course }} <br>
+    <strong>Question:</strong> {{ question.question|safe }} <br>
+    <strong>Marks:</strong> {{ question.marks }}
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+<a href="{% url 'quiz:examiner_course_questions' question.course.pk %}" class="btn btn-secondary">Cancel</a>
+
+  </form>
+{% endblock %}

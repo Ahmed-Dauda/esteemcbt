@@ -1,0 +1,468 @@
+{% extends 'sms/dashboard/base.html' %}
+{% load hitcount_tags %}
+
+
+{% block title %} Course Details {% endblock %}
+
+  {% block content %}  
+<style>
+  .benefits{
+    width: 200px;
+    height: 50px;
+  
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .benefits >*{
+   flex: 1 1 auto;
+   width: 10px;
+   margin: -10px;
+  
+
+  }
+  [aria-expanded="false"] > .expanded,
+[aria-expanded="true"] > .collapsed {
+  display: none;
+}
+ .page{
+  display: flex;
+  flex-wrap: wrap;
+ }
+ .page > *{
+  flex: 1 1 auto;
+  margin: 5px;
+ }
+ .rounded{
+  width: 30px;
+  height: 150px;
+ }
+
+ .gallery {
+    display: flex;
+    overflow-x: auto;
+    height: 400px;
+    overflow-y: hidden;       
+}
+.gallery>* {
+   flex: 1 1 auto;
+   margin: 10px;
+       
+}
+
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.rounded{
+  width: 50px;
+  height: 53px;
+}
+
+.course-owner{
+  display: flex;
+  flex-wrap: wrap;
+}
+.course-owner >*{
+
+  margin: 5px;
+}
+.sta{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sta >*{
+  flex: 1 1 auto;
+  margin: 10px;
+
+}
+.name{
+  padding: 20px;
+}
+
+  /* ebooks */
+  .child-review{
+  display: flex;
+  margin-top: -25px;
+}
+
+.child-review >*{
+  margin: 10px;
+}
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card-review{
+  width: 300px;
+}
+.card-review:hover {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
+.flex-container >*{
+  margin: 10px;
+}
+
+ /* end of ebooks */
+
+  /* fixed-bottom */
+  .fixed-bottom {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      margin: 25px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .fixed-bottom.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    @media (min-width: 768px) {
+      .fixed-bottom {
+        display: none;
+      }
+    }
+
+  /* end fixed-bottom */
+
+  /* whatyouwilllearn */
+  .whatyouwilllearn{
+    display: flex;
+    flex-wrap: wrap;
+    background-color: black;
+    color: white;
+    min-height: 370px;
+  }
+  .whatyouwilllearn >*{
+    margin: 10px;
+  }
+  .card:hover {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.desc-hidden {
+      display: none;
+  }
+
+
+  
+</style>
+
+<br> <br> <br>
+<div style="margin: 50 auto; " class="container">
+
+    <!-- User has made a payment for this course -->
+    <a href="{% url 'sms:courseslistdesc' course.id %}">
+      Start {{ course.title|safe }}
+    </a>
+    <br>
+    <div>
+      <p class="" style="color: green;">Payment successful! You can now proceed with the course enrollment.</p>
+    </div>
+
+
+  </div>
+
+<br>
+
+<!-- <form method="get" onsubmit="handleSubmit(event)">
+  <div class="main">
+    {% csrf_token %}
+    <div class="form-group">
+
+      <label for="amount">Any Amount</label>
+      <input 
+      value = "{{object.price|safe}}" 
+      type="hidden" name="amount" class="" 
+      id="amount"  placeholder="Enter your amount"/> {{object.price|safe|floatformat:'0g'}}
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <div class="form-group">
+
+          <label for="course">course</label>
+          <input
+            type="hidden"
+            name="course"
+            class=""
+            id="course"
+            placeholder=""
+            value="{{ object.title|safe }}"
+          /> {{ object.title|safe }}
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="form-group">
+
+          <label for="email">Email</label>
+          <input
+          type="hidden"
+            class=""
+            name="email"
+            id="email"
+            placeholder="Enter your email"
+            value = '{{request.user}}'
+          /> {{request.user}}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="first-name">First Name</label>
+        <input name="first-name" value="ttttt" type="hiden" id="first-name" /> {{request.user.profile.first_name}}
+      </div>
+      <div class="form-group">
+        <label for="last-name">Last Name</label>
+        <input name="last-name" value="ggggg" type="hiden" id="last-name" /> {{request.user.profile.last_name}}
+      </div>
+      <div class="form-group">
+
+        <label for="ref">reference</label>
+        <input
+          type="hidden"
+          name="ref"
+          class=""
+          id="ref"
+          placeholder=""
+          value="{{random_reference }}"
+        /> {{random_reference }}
+      </div>
+
+    </div>
+    <div class="form-group">
+      <input
+        type="submit"
+        class=""
+        id="purchasebtn"
+        value="Make Payment"
+      />
+  
+    </div>
+  </div>
+</form> -->
+
+   <!-- Paystack starts here -->
+   <script src="https://js.paystack.co/v1/inline.js"></script>
+ 
+<!-- 
+  <script src="https://js.paystack.co/v1/inline.js"></script> -->
+
+<!-- <ul>
+  {% if request.user.profile in course.student.all or object.status_type  == 'Free'  %}
+<a href="{% url 'sms:topicslistview' object.id %}"> <button class="btn btn-primary">Enroll {{ object.title|safe }}</button> </a> 
+  {% else %}
+
+  
+  {% endif %}
+</ul> -->
+
+
+
+<div class="pl-3 pr-3">
+
+</div>
+<!-- end of related courses -->
+
+<!-- {% if object.student.status_type  == 'Premium' and object.status_type  == 'Premium'  or object.status_type  == 'Free'  %}
+  
+<a class="btn btn-secondary fixed-bottom" href="{% url 'sms:topicslistview' object.id %}">Enroll {{ object.title|safe }}</a>
+{% else %}
+
+
+{% endif %} -->
+
+<ul>
+  {% if request.user.profile in course.student.all or object.status_type  == 'Free'  %}
+<a href="{% url 'sms:topicslistview' object.id %}"> <button class="btn btn-primary fixed-bottom">Enroll {{ object.title|safe }}</button> </a> 
+  {% else %}
+
+  
+  {% endif %}
+</ul>
+
+
+<!-- about scroll top to see enrollment -->
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    window.addEventListener("scroll", function() {
+      var button = document.querySelector(".fixed-bottom");
+      var scrollPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+
+      if (scrollPosition > 500) {
+        button.classList.add("show");
+      } else {
+        button.classList.remove("show");
+      }
+    });
+  });
+
+
+  // $(document).ready(function () {
+  //   //Trigger submit when make payment button is clicked
+  //   $("#purchasebtn").click(function (e) {
+  //     e.preventDefault();
+  //     //Submit details for payment
+  //     var email = $("#email").val();
+  //     var name = $("#name").val();
+  //     var amount = $("#amount").val();
+  //     var first_name = $("#first-name").val();
+  //     var last_name = $("#last-name").val();
+  //     //Check if email, name, and amount are empty
+  //     if (email == "" || name == "" || amount == "") {
+  //       alert("Please enter your email, name, and amount."); // Display a notification
+  //       return; // Stop running the query
+  //     }
+
+  //     // Run paystack query
+  //     var handler = PaystackPop.setup({
+  //       key: "{{paystack_public_key}}",
+  //       email: email,
+  //       amount: amount + "00",
+  //       currency: "NGN",
+  //       ref: "" + Math.floor(Math.random() * 1000000000 + 1), // Generates a pseudo-unique reference. Remove this line to let Paystack API generate the reference.
+  //       metadata: {
+  //         custom_fields: [
+  //           {
+  //             display_name: name,
+  //             variable_name: name
+  //           }
+  //         ]
+  //       },
+  //       callback: function (response) {
+  //         // If transaction successful, do this
+  //         var referenceid = response.reference;
+
+  //         // Set the referenceid value to the ref hidden input field
+  //         $("#ref").val(referenceid);
+
+  //         // Make an http request to cart process
+  //         $.ajax({
+  //           type: "GET",
+  //           url: "/student/verify/" + referenceid,
+  //           beforeSend: function () {
+  //             console.log("Sending request");
+  //             $(".alert").text("Sending request");
+  //           },
+  //           success: function (response) {
+  //             if (response[3].status == "success") {
+  //               // Once transaction completed, redirect to complete page
+  //               $(".alert").removeClass("alert-warning");
+  //               $(".alert").addClass("alert-success");
+  //               $(".alert").text("Transaction verified");
+  //               console.log("Transaction verified");
+  //               $("form").trigger("reset");
+  //             } else {
+  //               $(".alert").text("Transaction reference not found");
+  //             }
+  //           }
+  //         });
+  //       },
+  //       onClose: function () {
+  //         // Do stuff
+  //       }
+  //     });
+
+
+  //     handler.openIframe();
+  //   });
+  // });
+
+
+// paystack payment
+
+
+const paymentForm = document.getElementById('paymentForm');
+paymentForm.addEventListener("submit", payWithPaystack, false);
+
+function payWithPaystack(e) {
+  e.preventDefault();
+
+  let handler = PaystackPop.setup({
+    key: '{{paystack_public_key}}', // Replace with your public key
+    email: document.getElementById("email-address").value,
+    amount: document.getElementById("amount").value * 100,
+    ref: ''+Math.floor((Math.random() * 1000000000) + 1), // generates a pseudo-unique reference. Please replace with a reference you generated. Or remove the line entirely so our API will generate one for you
+    // label: "Optional string that replaces customer email"
+    onClose: function(){
+      alert('Window closed.');
+    },
+    
+         callback: function (response) {
+          // If transaction successful, do this
+          var referenceid = response.reference;
+          window.location.href = "{% url 'sms:courseslistdesc' object.id %}"
+
+          // Set the referenceid value to the ref hidden input field
+          $("#ref").val(referenceid);
+
+          // Make an http request to cart process
+          $.ajax({
+            type: "GET",
+            url: "/student/verify/" + referenceid,
+            beforeSend: function () {
+              console.log("Sending request");
+              $(".alert").text("Sending request");
+            },
+            success: function (response) {
+              if (response[3].status == "success") {
+                // Once transaction completed, redirect to complete page
+                $(".alert").removeClass("alert-warning");
+                $(".alert").addClass("alert-success");
+                $(".alert").text("Transaction verified");
+                console.log("Transaction verified");
+                $("form").trigger("reset");
+              } else {
+                $(".alert").text("Transaction reference not found");
+              }
+            }
+          });
+        },
+        onClose: function () {
+          // Do stuff
+        }
+      });
+  
+  handler.openIframe();
+}
+
+
+
+</script>
+<script>
+  function handleSubmit(event) {
+    var amount = document.getElementById('amount').value;
+    var course = document.getElementById('course').value;
+    var email = document.getElementById('email').value;
+    var firstName = document.getElementById('first-name').value;
+    var lastName = document.getElementById('last-name').value;
+    var ref = document.getElementById('ref').value;
+
+    if (!amount || !course || !email || !firstName || !lastName || !ref) {
+      event.preventDefault();
+      alert('Please fill in all required fields.');
+    }
+  }
+</script>
+
+<!-- about the course owner -->
+
+
+
+  {% endblock %} 
+
+
+
+

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Class Results</title>
+    <style>
+        .profile-picture {
+                width: 150px;
+                height: 150px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 3px solid #007bff;
+            }
+            .no-image {
+                width: 150px;
+                height: 150px;
+                border-radius: 50%;
+                background-color: #ccc;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                font-size: 1em;
+                border: 3px solid #007bff;
+            }
+            .profile-info {
+                margin-top: 20px;
+                padding: 20px;
+                background-color: #f9f9f9;
+                border-radius: 8px;
+                border: 1px solid #ddd;
+            }
+            .profile-info p {
+                margin: 5px 0;
+            }
+            
+            .flex-item {
+      /* border: 1px solid #4a4a4a; */
+      display: inline-block;
+      width: 20%;
+      margin: 5px;
+      font-size: 15px;
+      margin: 0 auto;
+      
+    }
+    
+    </style>
+</head>
+<body>
+<h1>hhhhhhhhhhhhhhhhhhh</h1>
+    <table style="width: 100%; font-size: 14px; margin-top: -10px; margin-left: 0px; border-collapse: collapse;">
+        <tr>
+            <!-- Profile Picture Section -->
+            <td style="width: 100px; padding-right: 10px; vertical-align: top;">
+                {% if school_logo_url %}
+                    <img src="{{ school_logo_url }}" alt="School Logo" style="width: 100px; height: 100px; border-radius: 50%; display: block;">
+                {% else %}
+                    <p>No logo available</p>
+                {% endif %}
+            </td>
+    
+            <!-- Text Content Section (Header and School Information) -->
+            <td style="vertical-align: top; text-align: center;padding-right: 50px;">
+                <h1 style="margin: 0;">{{ student_school|upper }}</h1> <br>
+                <p style="margin: 2px 0;"><strong>Motto:</strong> {{ school_motto|upper }}</p>
+                <p style="margin: 2px 0;"><strong>Address:</strong> {{ school_address }}</p>
+                <h6 style="margin: 0;">REPORT SHEET FOR {{ term|upper }} TERM, {{ session|upper }} ACADEMIC SESSION</h6>
+            </td>
+        </tr>
+    </table>
+        
+    <hr>
+
+        <table class="container" style="width: 100%; border-collapse: collapse; margin: 0 40px; ">
+            <tr style="text-align: center;">
+                <!-- Student Information Section -->
+                <td style="padding: 2px; border: none; font-size: 12px; text-align: left;">
+                    <p><strong style="color: black;">Name:</strong> {{ student_name }}</p>
+                    <p><strong style="color: black;">Gender:</strong> {{ student_gender }}</p>
+                    <p><strong style="color: black;">Class:</strong> {{ student_class }}</p>
+                    <p><strong style="color: black;">Admission No:</strong> {{ student_admission_no }}</p>
+                    <p><strong style="color: black;">No. In Class:</strong> {{ student_class_count }}</p>
+                </td>
+        
+                <!-- Academic Performance Section -->
+                <td style="padding: 2px; border: none; font-size: 12px; text-align: left;">
+                    <p><strong style="color: black;">Class Average:</strong> {{ class_average }}</p>
+                    <p><strong style="color: black;">Highest Ave. In Class:</strong> {{ highest_average_in_class|floatformat:1 }}</p>
+                    <p><strong style="color: black;">Lowest Ave. In Class:</strong> {{ lowest_average_in_class|floatformat:1 }}</p>
+                    <p><strong style="color: black;">Final Grade:</strong> {{ final_grade }}</p>
+                    <p><strong style="color: black;">Total Marks:</strong> {{ total_marks_obtaine|floatformat:1 }}</p>
+                </td>
+        
+                <!-- Additional Information Section -->
+                <td style="padding: 2px; border: none; font-size: 12px; text-align: left;">
+                    <p><strong style="color: black;">Final Position:</strong> {{ final_position2 }} out of {{ student_class_count }}</p>
+                    <p><strong style="color: black;">Student's Average:</strong> {{ student_averages1 }}</p>
+                    <p><strong style="color: black;">Term:</strong> {{ term }}</p>
+                    <p><strong style="color: black;">Exam Type: </strong>{{e_type}}</p>
+                
+                </td>
+            </tr>
+        </table>
+<hr>        
+
+    <h1>Class Results for {{ result_class }}</h1>
+    <h2>Session: {{ session.name }}</h2>
+    <h2>Term: {{ term.name }}</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Exam</th>
+                <th>Marks</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+            <tr>
+                <td>{{ result.student }}</td>
+                <td>{{ result.exam.course_name }}</td>
+                <td>{{ result.marks }}</td>
+                <td>{{ result.date }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No results available.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

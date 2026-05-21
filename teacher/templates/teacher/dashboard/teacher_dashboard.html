@@ -1,0 +1,308 @@
+{% extends 'sms/dashboard/teacherbase.html' %}
+
+{% block title %} Teacher Dashboard {% endblock %}
+
+{% block content %}
+
+<style>
+  /* Light Theme */
+  body {
+      background-color: #f8f9fa;
+      color: #212529;
+      transition: background-color 0.3s, color 0.3s;
+  }
+
+  .dashboard-header {
+      background-color: #e4e7eb;
+      padding: 20px;
+      border-bottom: 1px solid #dee2e6;
+  }
+
+  .dashboard-header img {
+      max-height: 80px;
+  }
+
+  .card {
+      border: 1px solid #dee2e6;
+      border-radius: 0.375rem;
+      background-color: #ffffff;
+  }
+
+  .card-header {
+      background-color: #007bff;
+      color: #ffffff;
+      border-bottom: 0;
+  }
+
+  .card-body {
+      padding: 20px;
+  }
+
+  .card-body ul li {
+      font-size: 1.1rem;
+  }
+
+  .card-footer {
+      background-color: #f8f9fa;
+      border-top: 1px solid #dee2e6;
+  }
+
+  .btn-custom {
+      background-color: #007bff;
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      padding: 10px 20px;
+      border-radius: 0.375rem;
+  }
+
+  .btn-custom:hover {
+      background-color: #0056b3;
+      color: #ffffff;
+  }
+
+  .text-primary {
+      color: #007bff !important;
+  }
+
+  /* Dark Theme Styles */
+  .dark-theme body {
+      background-color: #343a40;
+      color: #f8f9fa;
+  }
+
+  .dark-theme .dashboard-header {
+      background-color: #3b41e7;
+  }
+
+  .dark-theme .card {
+      border: 1px solid #6c757d;
+      background-color: #495057;
+  }
+
+  .dark-theme .card-header {
+      background-color: #007bff;
+      color: #ffffff;
+  }
+
+  .dark-theme .card-body ul li {
+      color: #f8f9fa;
+  }
+
+  .dark-theme .card-footer {
+      background-color: #495057;
+      border-top: 1px solid #6c757d;
+  }
+
+  .dark-theme .btn-custom {
+      background-color: #007bff;
+      color: #ffffff;
+  }
+
+  .dark-theme .btn-custom:hover {
+      background-color: #0056b3;
+      color: #ffffff;
+  }
+
+  .dark-theme .text-primary {
+      color: #007bff !important;
+  }
+</style>
+
+
+<div class="container-fluid">
+    <div class="dashboard-header text-center mb-4">
+        {% if school.logo %}
+            <img src="{{ school.logo.url }}" alt="School Logo" class="img-fluid">
+        {% endif %}
+        <h3 class="mt-2">{{ school.school_name }}</h3>
+        {% if request.user.is_superuser %}
+            <p class="text-success font-weight-bold">You are logged in as Super Admin</p>
+            <p class="text-success font-weight-bold">{{ request.user.first_name }} {{ request.user.last_name }}</p>
+            <p class="text-success font-weight-bold">{{ request.user.email }}</p>
+        {% else %}
+            <p class="text-primary font-weight-bold">You are logged in as Teacher</p>
+                        <p class="text-success font-weight-bold">{{ request.user.first_name }} {{ request.user.last_name }}</p>
+            <p class="text-success font-weight-bold">{{ request.user.email }}</p>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header text-center">
+                    <h5 class="mb-0">Classes Taught</h5>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Welcome, {{ request.user.first_name }}</h5>
+                    <ul class="list-group list-group-flush">
+                        {% for teacher_cla in teacher_class %}
+                            <li class="list-group-item">Class: {{ teacher_cla.name }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="card-footer text-center">
+                    <!-- Optional footer content -->
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+  <div class="card h-100 shadow-sm">
+  <div class="text-center mt-3 d-flex justify-content-center gap-2">
+ {% if request.user.is_authenticated and request.user.is_superuser %} 
+
+   <a href="{% url 'teacher:examiner_class_list' %}" class="btn btn-success btn-sm">
+    <i class="bi bi-arrow-repeat"></i> Create classes
+  </a>   
+  <a href="{% url 'teacher:bulk_update_courses' %}" class="btn btn-success btn-sm">
+    <i class="bi bi-arrow-repeat"></i> Bulk Update Subjects
+  </a>
+ 
+  <a href="{% url 'teacher:manage_academic_setup' %}" class="btn btn-success btn-sm">
+    <i class="bi bi-arrow-repeat"></i> manage academic setup
+  </a>
+   {% endif %}
+ </div>
+<hr>
+    <div class="card-header text-center bg-success text-white">
+      
+      <h5 class="mb-0">Subjects Taught</h5>
+      
+    </div>
+
+    <div class="card-body">
+        <h6 class="text-black">Change session, term and exam type to create new exam</h6>
+        <br>
+      <!-- 🔍 Search Bar -->
+      <div class="input-group mb-3">
+        <span class="input-group-text bg-success text-white">
+          <i class="bi bi-search"></i>
+        </span>
+        <input
+          type="text"
+          id="subjectSearch"
+          class="form-control"
+          placeholder="Search subjects..."
+        >
+      </div>
+
+      {% if request.user.is_authenticated and request.user.is_superuser %}
+      <ul class="list-group list-group-flush" id="subjectList">
+  {% for course in courses %}
+  <li class="list-group-item search-item"
+      style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+    <div class="fw-bold" style="font-size: 13px;">
+      {{ course }} - {{ course.term }} - {{ course.session }} - {{ course.exam_type }}
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 4px;">
+      <a href="{% url 'teacher:edit_subjects_view' course.id %}"
+         class="btn btn-sm btn-outline-primary"
+         style="display: flex; align-items: center; gap: 4px;">
+        <i class="bi bi-pencil-square"></i> Edit
+      </a>
+      <a href="{% url 'teacher:delete_subject_view' course.id %}"
+         class="btn btn-sm btn-outline-danger"
+         style="display: flex; align-items: center; gap: 4px;">
+        <i class="bi bi-trash"></i> Delete
+      </a>
+    </div>
+  </li>
+  {% empty %}
+  <li class="list-group-item text-muted">No subjects found.</li>
+  {% endfor %}
+</ul>
+
+{% else %}
+
+<ul class="list-group list-group-flush" id="subjectList">
+  {% for subject in teacher_subjects %}
+  <li class="list-group-item search-item"
+      style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; font-size: 14px;">
+    <div>
+      {{ subject.course_name }} - {{ subject.term }} - {{ subject.session }} - {{ subject.exam_type }}
+    </div>
+  </li>
+  {% empty %}
+  <li class="list-group-item text-muted">No subjects found.</li>
+  {% endfor %}
+</ul>
+
+      {% endif %}
+
+      <div id="noResults" class="text-center text-muted mt-2" style="display:none;">
+        No matching subjects found.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ JavaScript -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const searchInput = document.getElementById("subjectSearch");
+  const listItems = document.querySelectorAll("#subjectList .search-item");
+  const noResults = document.getElementById("noResults");
+
+  searchInput.addEventListener("input", function() {
+    const query = this.value.toLowerCase().trim();
+    let visibleCount = 0;
+
+    listItems.forEach(item => {
+      const text = item.textContent.toLowerCase();
+      if (text.includes(query)) {
+        item.style.display = "";
+        visibleCount++;
+      } else {
+        item.style.display = "none";
+      }
+    });
+
+    noResults.style.display = visibleCount === 0 ? "block" : "none";
+  });
+});
+</script>
+
+        <!-- <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header text-center bg-success">
+                    <h5 class="mb-0">Subjects Taught</h5>
+                </div>
+                <div class="card-body">
+                    {% if request.user.is_authenticated and request.user.is_superuser %}
+                    <ul class="list-group list-group-flush">
+                        {% for course in courses %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div style="font-size: 12px;" class="fw-bold">{{ course }} - {{ course.term }} - {{ course.session }} - {{ course.exam_type }}</div>
+                                <div>
+                                    <a href="{% url 'teacher:edit_subjects_view' course.id %}" class="btn btn-sm btn-outline-primary me-2">
+                                        <i class="bi bi-pencil-square"></i> Edit
+                                    </a>
+                                    <a href="{% url 'teacher:delete_subject_view' course.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </li>
+                        {% empty %}
+                            <li class="list-group-item text-muted">No subjects found.</li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+               <ul class="list-group list-group-flush">
+                        {% for subject in teacher_subjects %}
+                        <li style="font-size: 14px;" class="list-group-item">{{ subject.course_name }} - {{ subject.term }} - {{ subject.session }} - {{ subject.exam_type }}</li>
+                           
+                        {% endfor %}
+                    </ul>         
+                    {% endif %}
+
+                </div>
+                <div class="card-footer text-center">
+                  
+                </div>
+            </div>
+        </div>
+         -->
+    </div>
+</div>
+
+{% endblock %}
