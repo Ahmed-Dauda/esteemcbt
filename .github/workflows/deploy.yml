@@ -17,6 +17,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /var/www/examspower
+            git remote set-url origin https://Ahmed-Dauda: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@github.com/Ahmed-Dauda/examspower.git
             git pull origin main
             source venv/bin/activate
             pip install -r requirements.txt
