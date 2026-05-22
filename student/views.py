@@ -4759,25 +4759,22 @@ def start_exams_view(request: HttpRequest, pk: int) -> HttpResponse:
     if not request.user.is_authenticated:
         return redirect('account_login')
     return _start_exam_sync(request, pk)
-
+ 
 def _start_exam_sync(request, pk):
     user = request.user
     course = _get_course_cached(pk)
     if course is None:
         return redirect('student:take_exams')
-
-    # Sequential calls – no executor
+ 
     attempt, created = _get_or_create_attempt(user, course)
     questions = _get_shuffled_questions_cached(user, course)
-
+ 
     if created:
-        # Fire-and‑forget log – can be called directly (sync, but lightweight)
         _log_event(user, course, 'exam_started', {'resume_code': attempt.resume_code})
-
-    # Serialize questions to JSON
+ 
     def _clean(val):
         return None if val is None else str(val).strip()
-
+ 
     questions_json = json.dumps([
         {
             'id': q.id,
@@ -4793,7 +4790,7 @@ def _start_exam_sync(request, pk):
         }
         for q in questions
     ], ensure_ascii=False)
-
+ 
     context = {
         'course': course,
         'q_count': len(questions),
@@ -4802,7 +4799,7 @@ def _start_exam_sync(request, pk):
         'tab_limit': course.num_attemps,
         'questions_json': questions_json,
     }
-
+ 
     response = render(request, 'student/dashboard/start_exams.html', context)
     response.set_cookie('course_id', str(course.id), httponly=True, samesite='Lax')
     response.set_cookie('attempt_id', str(attempt.id), httponly=True, samesite='Lax')
