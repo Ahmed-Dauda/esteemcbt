@@ -491,7 +491,7 @@ ALLOWED_HOSTS = ['*']  # temporary for testing
 # Load .env file — won't crash if file is missing
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-DEBUG = env("DEBUG")
+# DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
 # ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
