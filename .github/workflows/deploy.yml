@@ -24,4 +24,8 @@ jobs:
             python manage.py migrate
             python manage.py collectstatic --noinput
             systemctl restart examspower
+            systemctl restart examspower-celery
+            systemctl restart examspower-celerybeat
+            systemctl restart nginx
             echo "Deployment successful!"
+            
