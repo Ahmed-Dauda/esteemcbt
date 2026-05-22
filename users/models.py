@@ -117,7 +117,7 @@ class Profile(models.Model):
     gender_choice = [('Male', 'MALE'), ('Female', 'FEMALE')]
 
     user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE, unique=True, related_name='profile', blank=True, null=True, db_index=True)
-    username = models.CharField(max_length=225, blank=True, null=True, db_index=True)
+    username = models.CharField(max_length=225, blank=True, null=True, db_index=True, unique=True)
     schools = models.ForeignKey('quiz.School', related_name='profile_school', on_delete=models.SET_NULL, blank=True, null=True, db_index=True)
     student_course = models.ForeignKey('sms.Courses', on_delete=models.SET_NULL, related_name='students', null=True, db_index=True)
     first_name = models.CharField(max_length=225, blank=True, null=True, db_index=True)
