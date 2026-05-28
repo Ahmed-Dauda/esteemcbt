@@ -1,0 +1,24 @@
+/* Target autocomplete fields */
+.select2-container {
+    width: 70% !important;
+    max-width: 70% !important;
+}
+
+/* Make the rendered selections wrap instead of overflow */
+.select2-selection__rendered {
+    white-space: normal !important;
+    word-wrap: break-word;
+    line-height: 1.5;
+}
+
+/* Make list of checkboxes (if used) also respect 70% width */
+.checkbox-multiple {
+    width: 70% !important;
+    display: block;
+    white-space: normal;
+}
+
+.checkbox-multiple li {
+    white-space: normal;
+    line-height: 1.5;
+}

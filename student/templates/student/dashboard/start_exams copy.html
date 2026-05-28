@@ -1,10 +1,11 @@
 {% extends 'sms/dashboard/startexambase.html' %}
 
+{% load hitcount_tags %}
 {% load cloudinary %}
 {% load embed_video_tags %}
 {% block title %} Courses list view page {% endblock %}
 
-{% block content %}
+{% block content %} 
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
@@ -12,72 +13,240 @@
 
 <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.5/js/jquery.dataTables.min.js"></script>
 
 <style>
-/* ========== ORIGINAL STYLES ========== */
-.page-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin: 0 2px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 12px;
-  line-height: 1;
-  flex-shrink: 0;
-  box-sizing: border-box;
-  text-align: center;
-}
-
-.page-number.answered {
-  background-color: green;
-  color: white;
-  border-color: green;
-}
-
-.page-number.active {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
-}
-
-#paginationBoxes {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px;
-  margin-top: 15px;
-  padding: 5px;
-  width: 100%;
+  @media print {
+    body { display: none; }
 }
 
 div.quiz p { text-align: left; }
 .quiz p { text-align: left; }
-.quiz { width: 100%; display: flex; border: 1px solid #ccc; }
-.quiz > * { margin: 10px; overflow-x: hidden; }
-.quiz input[type="radio"] { transform: scale(1.5); margin-right: 10px; }
-.custom-container { background-color: green; color: white; display: inline-block; padding: 5px; margin: 5px; }
-.pagination-box { display: inline-block; width: 100px; height: 30px; border: 1px solid #ccc; text-align: center; line-height: 30px; margin-right: 5px; cursor: pointer; }
+.quiz {
+  width: 100%;
+  display: flex;
+  border: 1px solid #ccc;
+}
+.quiz > * {
+  margin: 10px;
+  overflow-x: hidden;
+}
+.quiz input[type="radio"] {
+  transform: scale(1.5);
+  margin-right: 10px;
+}
+.custom-container {
+  background-color: green;
+  color: white;
+  display: inline-block;
+  padding: 5px;
+  margin: 5px;
+}
+.pagination-box {
+  display: inline-block;
+  width: 100px;
+  height: 30px;
+  border: 1px solid #ccc;
+  text-align: center;
+  line-height: 30px;
+  margin-right: 5px;
+  cursor: pointer;
+}
 .clicked { background-color: rgb(211, 247, 211); }
-.question-table { margin-top: 10px; padding-top: 80px; }
-
+.question-table {
+  margin-top: 10px;
+  padding-top: 80px;
+}
+@media (max-width: 767px) {
+  .sticky-top { position: static; top: 0; }
+  .alert { flex-direction: column; align-items: center; }
+  .alert div { width: 100%; }
+  .question-table { margin-top: 0px; padding-top: 170px; }
+  .container { display: flex; flex-direction: column; align-items: center; padding: 20px; }
+  .examinfo { color: red; display: none; }
+  .pagination-boxes { margin-bottom: 10px; width: 100%; }
+  .submit-button { width: 100%; margin: 0; }
+  div.dataTables_info { position: absolute; }
+  div.dataTables_wrapper div.dataTables_paginate { float: none; text-align: center; padding: 30px; }
+}
 .container { display: flex; justify-content: center; align-items: center; padding: 20px; }
-.quiz-container { margin: 20px; padding: 10px; background: white; border-radius: 8px; }
-.pagination-controls { text-align: center; margin: 20px 0; }
+div.dataTables_wrapper div.dataTables_paginate { float: none; text-align: center; }
+</style>
 
-#calculator button { width: 48px; height: 36px; margin: 2px; font-size: 14px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background-color: #fff; }
+<style>
+.custom-page-number {
+  cursor: pointer;
+  padding: 5px;
+  margin: 2px;
+  border: 1px solid #ccc;
+  user-select: none;
+}
+.active-page { font-weight: bold; text-decoration: underline; }
+.answered-page { background-color: green; color: white !important; border-radius: 4px; }
+math { font-size: 1.2em; margin: 0 4px; vertical-align: middle; }
+</style>
+
+<style>
+#calculator button {
+  width: 48px; height: 36px; margin: 2px;
+  font-size: 14px; cursor: pointer;
+  border: 1px solid #ccc; border-radius: 4px;
+  background-color: #fff;
+}
 #calculator button:hover { background-color: #e9ecef; }
+</style>
+
+<style>
 .exam-container { text-align: center; }
 #fullscreenPopup {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.95); color: #fff; display: none;
-  justify-content: center; align-items: center; flex-direction: column; z-index: 9999;
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.95);
+  color: #fff; display: none;
+  justify-content: center; align-items: center;
+  flex-direction: column; z-index: 9999;
 }
 button:hover { background: #0b5ed7; }
+</style>
+
+<form novalidate autocomplete="off" class="no-copy" id="quizf" action="/student/calculate_marks" onsubmit="return false;" enctype="multipart/form-data" method="POST">
+  {% csrf_token %}
+
+  <div class="sticky-top" style="position: fixed; top: 0; width: 100%; z-index: 1000; background-color: #dfe8f2; border-bottom: 1px solid #dee2e6;">
+    <div class="row justify-content-left" style="margin: 0;">
+      <div class="col-12">
+        <div class="alert alert-success" role="alert" style="padding: 5px; display: flex; flex-wrap: wrap; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+          <!-- Camera Frame -->
+          <div class="col-12 col-md-4" style="padding: 0px;">
+            <div style="position: relative; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+              <p style="position: absolute; background-color: black; color: white; padding: 0px; top: -10px; left: 0; z-index: 1;">Focus on Camera</p>
+              {% if course.room_name %}
+              <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;"
+                src="{{ course.room_name }}" width="100%" height="120" style="border: none;"></iframe>
+              {% endif %}
+            </div>
+          </div>
+          <!-- Timer -->
+          <div class="col-12 col-md-4" style="padding: 10px;">
+
+            <p style="color: red; text-align: center;">
+              <span id="screenshotCount">0</span> / {{ course.num_attemps }} screenshot attempts detected. <br>
+              <span id="tabCount">0</span> / {{ course.num_attemps }} attempts to leave the exam page detected.
+              <!-- Add this right below the tabCount line in your sticky header -->
+            </p>
+            <div id="timer" style="font-size: 24px; font-weight: bold; color: #333; text-align: center; margin: 10px 0;">00:00</div>
+          </div>
+          <!-- Exam Info -->
+          <div class="examinfo col-12 col-md-4" style="padding: 10px;">
+            <h6 style="font-size: 12px; font-weight: bold;">{{ course.course_name }} -- {{ course.exam_type }}</h6>
+            <p style="margin: 5px 0;">Number of Questions: {{ q_count }} -- {{ course.session }} -- {{ course.term }}</p>
+            <h4 style="font-weight: bold; color: black;">{{ request.user.first_name|upper }} {{ request.user.last_name|upper }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <table id="example" class="display question-table" style="width:98%;">
+    <thead><tr></tr></thead>
+    <tbody onclick="openFullscreen()" style="user-select: none;">
+      {% for q in page_obj %}
+      <tr>
+        <td colspan="4">
+          {% if q.img_quiz.url %}
+          <div class="text-center">
+            <img src="{{ q.img_quiz.url|safe }}" width="40%" height="250px" alt="">
+          </div><br>
+          {% endif %}
+
+          <label style="font-size: 18px; {% if q.img_quiz.url %}text-align: center; display: block;{% endif %}">
+            {{ q.question|safe }}
+          </label>
+
+          <h6 style="text-align: right;">[marks {{ q.marks }}]</h6>
+
+          {% if q.option1 %}
+          <div class="quiz">
+            <div class="radio-container">
+              <input class="radio-button" type="radio" name="{{ q.id }}" id="option1-{{ q.id }}" value="Option1" required>
+              <label for="option1-{{ q.id }}">{{ q.option1|safe }}</label>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if q.option2 %}
+          <div class="quiz">
+            <div class="radio-container">
+              <input class="radio-button" type="radio" name="{{ q.id }}" id="option2-{{ q.id }}" value="Option2" required>
+              <label for="option2-{{ q.id }}">{{ q.option2|safe }}</label>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if q.option3 %}
+          <div class="quiz">
+            <div class="radio-container">
+              <input class="radio-button" type="radio" name="{{ q.id }}" id="option3-{{ q.id }}" value="Option3" required>
+              <label for="option3-{{ q.id }}">{{ q.option3|safe }}</label>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if q.option4 %}
+          <div class="quiz">
+            <div class="radio-container">
+              <input class="radio-button" type="radio" name="{{ q.id }}" id="option4-{{ q.id }}" value="Option4" required>
+              <label for="option4-{{ q.id }}">{{ q.option4|safe }}</label>
+            </div>
+          </div>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</form>
+
+<!-- Fullscreen Popup -->
+<div id="fullscreenPopup" style="
+  display: none; justify-content: center; align-items: center; flex-direction: column;
+  position: fixed; inset: 0; background: rgba(0,0,0,0.9); color: #fff;
+  z-index: 999999; font-family: Arial, sans-serif; text-align: center;">
+  <h2 style="font-size: 2rem; margin-bottom: 1rem;">⚠️ Exam Paused</h2>
+  <p id="fullscreenWarningText" style="font-size: 1.2rem; margin-bottom: 1rem;">
+    You exited fullscreen. Please return to continue your exam.
+  </p>
+  <p id="fullscreenCounterText" style="font-size: 1rem; margin-bottom: 2rem; color: yellow;">
+    Fullscreen Strikes: 0
+    <span></span>
+  </p>
+  <button onclick="returnToFullscreen()" style="
+    background: #fff; color: #000; border: none;
+    padding: 0.75rem 1.5rem; font-size: 1rem;
+    border-radius: 6px; cursor: pointer; font-weight: bold;">
+    Re-enter Fullscreen
+  </button>
+</div>
+
+<!-- Submit + Pagination -->
+<div class="container buttonheight" style="display: flex; justify-content: center; align-items: center; padding: 20px;">
+  <button class="submit-button" id="submit" type="button"
+    style="background-color: #28a745; max-height: 50px; border-radius: 10px; border: none; color: white;
+           font-size: 16px; padding: 10px 20px; margin: 0 5px; cursor: pointer;
+           box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: background-color 0.3s ease, transform 0.2s ease;"
+    onmouseover="this.style.backgroundColor='#218838';"
+    onmouseout="this.style.backgroundColor='#28a745';"
+    onmousedown="this.style.backgroundColor='#1e7e34'; this.style.transform='scale(0.98)';"
+    onmouseup="this.style.backgroundColor='#218838'; this.style.transform='scale(1)';">
+    Submit
+  </button>
+  <div id="paginationWrapper" style="text-align: center; margin-top: 20px;">
+    <div id="paginationBoxes" onclick="openFullscreen()"></div>
+  </div>
+</div>
+
+<!-- Network Status -->
+<style>
 #network-status {
   position: fixed; top: 0; left: 0; width: 100%;
   padding: 10px; color: white; text-align: center;
@@ -85,814 +254,333 @@ button:hover { background: #0b5ed7; }
 }
 #network-status.offline { background-color: #d9534f; display: block; }
 #network-status.online  { background-color: #5cb85c; display: block; }
-
-/* ========== PROFESSIONAL EXAM HEADER STYLES ========== */
-.exam-header-wrap {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  z-index: 1000;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
-}
-
-.exam-topbar {
-  background: #0f172a;
-  color: #94a3b8;
-  padding: 5px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
-  letter-spacing: 0.3px;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.exam-topbar .brand {
-  font-weight: 600;
-  font-size: 13px;
-  color: #f1f5f9;
-  letter-spacing: 0.5px;
-}
-
-.exam-topbar .session-chips {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.exam-topbar .session-chips span { color: #e2e8f0; font-weight: 500; }
-
-.net-indicator {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  color: #4ade80;
-  font-weight: 500;
-}
-
-.net-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: #4ade80;
-  animation: pulse-dot 2s infinite;
-}
-
-@keyframes pulse-dot {
-  0%,100% { opacity: 1; }
-  50%      { opacity: 0.35; }
-}
-
-.exam-header-main {
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  display: grid;
-  grid-template-columns: 170px 1fr auto auto;
-  align-items: stretch;
-  min-height: 88px;
-}
-
-.cam-panel {
-  border-right: 1px solid #e2e8f0;
-  padding: 10px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.panel-label {
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #94a3b8;
-  margin-bottom: 3px;
-}
-
-.cam-feed-box {
-  background: #0f172a;
-  border-radius: 6px;
-  height: 54px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #1e293b;
-  position: relative;
-  overflow: hidden;
-}
-
-.cam-live-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: #4ade80;
-  position: absolute;
-  top: 6px; right: 6px;
-  animation: pulse-dot 2s infinite;
-}
-
-.cam-feed-box svg { opacity: 0.25; }
-.cam-status-text {
-  font-size: 10px;
-  color: #94a3b8;
-  text-align: center;
-  margin-top: 2px;
-}
-
-.cam-iframe-wrap {
-  position: relative;
-  border-radius: 6px;
-  overflow: hidden;
-  height: 54px;
-}
-
-.cam-iframe-wrap p {
-  position: absolute;
-  background: rgba(0,0,0,0.7);
-  color: white;
-  font-size: 9px;
-  padding: 1px 5px;
-  top: 0; left: 0;
-  z-index: 1;
-  margin: 0;
-}
-
-.info-panel {
-  padding: 12px 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-}
-
-.student-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.2px;
-}
-
-.exam-subtitle {
-  font-size: 13px;
-  color: #64748b;
-}
-
-.exam-meta-chips {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 3px;
-}
-
-.meta-chip {
-  font-size: 11px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
-  font-weight: 500;
-}
-
-.violations-panel {
-  padding: 10px 18px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-  border-left: 1px solid #e2e8f0;
-  min-width: 190px;
-}
-
-.viol-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.viol-label {
-  font-size: 11px;
-  color: #94a3b8;
-  min-width: 80px;
-}
-
-.viol-count {
-  font-size: 11px;
-  font-weight: 700;
-  min-width: 32px;
-  text-align: right;
-}
-
-.viol-count.ok     { color: #22c55e; }
-.viol-count.warn   { color: #f59e0b; }
-.viol-count.danger { color: #ef4444; }
-
-.viol-bar-track {
-  flex: 1;
-  height: 4px;
-  background: #f1f5f9;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.viol-bar-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.4s ease;
-}
-
-.viol-bar-fill.ok     { background: #22c55e; }
-.viol-bar-fill.warn   { background: #f59e0b; }
-.viol-bar-fill.danger { background: #ef4444; }
-
-.timer-panel {
-  border-left: 1px solid #e2e8f0;
-  padding: 12px 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  min-width: 130px;
-  background: #fafbfc;
-}
-
-.timer-panel .panel-label { text-align: center; }
-#timer {
-  font-size: 30px;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: 2px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-#timer.timer-warn   { color: #f59e0b; }
-#timer.timer-danger { color: #ef4444; }
-
-.timer-badge {
-  font-size: 10px;
-  color: #22c55e;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.submit-button {
-  background-color: #28a745;
-  max-height: 50px;
-  border-radius: 10px;
-  border: none;
-  color: white;
-  font-size: 16px;
-  padding: 10px 20px;
-  margin: 0 5px;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.submit-button:hover { background-color: #218838; }
-.submit-button:active {
-  background-color: #1e7e34;
-  transform: scale(0.98);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .exam-header-main {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-  }
-  .cam-panel     { grid-column: 1; grid-row: 1; }
-  .timer-panel   { grid-column: 2; grid-row: 1; border-left: 1px solid #e2e8f0; }
-  .info-panel    { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid #e2e8f0; }
-  .violations-panel { display: none; }
-  .exam-topbar .session-chips { display: none; }
-  
-  .question-table { margin-top: 0px; padding-top: 170px; }
-  .examinfo { color: red; display: none; }
-  .submit-button { width: 100%; margin: 0; }
-}
-
-@media (max-width: 767px) {
-  .sticky-top { position: static; top: 0; }
-  .alert { flex-direction: column; align-items: center; }
-  .alert div { width: 100%; }
-}
 </style>
-
-<input type="hidden" id="attemptId" value="{{ attempt.id }}">
-
-<!-- ========== PROFESSIONAL EXAM HEADER ========== -->
-<div class="exam-header-wrap">
-  <div class="exam-topbar">
-    <div class="brand">ExamPortal &mdash; CBT System</div>
-    <div class="session-chips">
-      <div>Course: <span>{{ course.course_name }}</span></div>
-      <div>Type: <span>{{ course.exam_type }}</span></div>
-      <div>Session: <span>{{ course.session }}</span></div>
-      <div>Term: <span>{{ course.term }}</span></div>
-      <div class="net-indicator">
-        <div class="net-dot"></div>
-        <span id="net-label">Connected</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="exam-header-main">
-    <!-- Camera / proctoring -->
-    <div class="cam-panel">
-      <div class="panel-label">Proctoring</div>
-      {% if course.room_name %}
-        <div class="cam-iframe-wrap">
-          <p>Focus on Camera</p>
-          <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;"
-            src="{{ course.room_name }}" width="100%" height="54" style="border:none;display:block;"></iframe>
-        </div>
-      {% else %}
-        <div class="cam-feed-box">
-          <div class="cam-live-dot"></div>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="8" r="4" stroke="#94a3b8" stroke-width="1.5"/>
-            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-        </div>
-      {% endif %}
-      <div class="cam-status-text">Camera active</div>
-    </div>
-
-    <!-- Student & exam info -->
-    <div class="info-panel">
-      <div class="student-name">{{ request.user.first_name|upper }} {{ request.user.last_name|upper }}</div>
-      <div class="exam-subtitle">{{ course.course_name }} &mdash; {{ course.exam_type }}</div>
-      <div class="exam-meta-chips">
-        <span class="meta-chip">{{ q_count }} Questions</span>
-        <span class="meta-chip">{{ course.session }}</span>
-        <span class="meta-chip">{{ course.term }} Term</span>
-      </div>
-    </div>
-
-    <!-- Violations -->
-    <div class="violations-panel">
-      <div class="panel-label">Violations</div>
-      <div class="viol-row">
-        <span class="viol-label">Window blur</span>
-        <div class="viol-bar-track">
-          <div class="viol-bar-fill ok" id="blurBar" style="width:0%"></div>
-        </div>
-        <span class="viol-count ok" id="blurCountDisplay">0</span>
-      </div>
-      <div class="viol-row">
-        <span class="viol-label">Tab switches</span>
-        <div class="viol-bar-track">
-          <div class="viol-bar-fill ok" id="tabBar" style="width:0%"></div>
-        </div>
-        <span class="viol-count ok" id="tabCount">0</span>
-      </div>
-      <div class="viol-row">
-        <span class="viol-label">Screenshots</span>
-        <div class="viol-bar-track">
-          <div class="viol-bar-fill ok" id="screenshotBar" style="width:0%"></div>
-        </div>
-        <span class="viol-count ok" id="screenshotCountDisplay">0</span>
-      </div>
-    </div>
-
-    <!-- Timer -->
-    <div class="timer-panel">
-      <div class="panel-label">Time Remaining</div>
-      <div id="timer">00:00</div>
-      <div class="timer-badge">In Progress</div>
-    </div>
-  </div>
-</div>
-
-<!-- Add padding to prevent content from hiding under fixed header -->
-<div style="padding-top: 100px;"></div>
-
-<form novalidate autocomplete="off" class="no-copy" id="quizf" action="/student/calculate_marks" onsubmit="return false;" enctype="multipart/form-data" method="POST">
-  {% csrf_token %}
-
-  <!-- Client‑side question container -->
-  <div id="question-container" class="quiz-container" style="margin: 0px; padding-left: 40px; padding-right: 40px;"></div>
-
-  <!-- Pagination controls -->
-  <div class="pagination-controls">
-    <button id="prev-btn" class="btn btn-secondary" disabled>← Previous</button>
-    <span id="page-indicator" style="margin: 0 15px;">Question 1 of <span id="total-count"></span></span>
-    <button id="next-btn" class="btn btn-secondary">Next →</button>
-  </div>
-
-  <!-- Numbered pagination bar -->
-  <div id="paginationBoxes" style="text-align: center; margin-top: 15px;" onclick="openFullscreen()"></div>
-</form>
-
-<div id="fullscreenPopup" style="display:none;justify-content:center;align-items:center;flex-direction:column;position:fixed;inset:0;background:#000;color:#fff;z-index:999999;font-family:Arial,sans-serif;text-align:center;">
-  <h2 style="font-size:2rem;margin-bottom:1rem;">⚠️ Exam Paused</h2>
-  <p id="fullscreenWarningText" style="font-size:1.2rem;margin-bottom:1rem;">You exited fullscreen. Please return to continue your exam.</p>
-  <p id="fullscreenCounterText" style="font-size:1rem;margin-bottom:2rem;color:yellow;">Fullscreen Strikes: 0</p>
-  <button onclick="returnToFullscreen()" style="background:#fff;color:#000;border:none;padding:0.75rem 1.5rem;font-size:1rem;border-radius:6px;cursor:pointer;font-weight:bold;">Re-enter Fullscreen</button>
-</div>
-
-<div class="container buttonheight" style="display:flex;justify-content:center;align-items:center;padding:20px;">
-  <button class="submit-button" id="submit" type="button">Submit Exam</button>
-</div>
-
 <div id="network-status"></div>
 
-<button onclick="toggleCalculator()" style="position:fixed;top:10px;right:10px;z-index:9999;">Calculator</button>
-<div id="calculator" style="position:fixed;top:50px;right:10px;width:260px;background-color:#f8f9fa;border:1px solid #ccc;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.1);display:none;z-index:9999;">
-  <div id="calc-header" style="cursor:move;padding:4px 8px;background:#007bff;color:white;font-weight:bold;font-size:14px;border-radius:6px 6px 0 0;display:flex;justify-content:space-between;align-items:center;">
+<!-- Calculator -->
+<button onclick="toggleCalculator()" style="position: fixed; top: 10px; right: 10px; z-index: 9999;">Calculator</button>
+<div id="calculator" style="
+  position: fixed; top: 50px; right: 10px; width: 260px;
+  background-color: #f8f9fa; border: 1px solid #ccc; border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: none; z-index: 9999;">
+  <div id="calc-header" style="
+    cursor: move; padding: 4px 8px; background: #007bff; color: white;
+    font-weight: bold; font-size: 14px; border-radius: 6px 6px 0 0;
+    display: flex; justify-content: space-between; align-items: center;">
     <span>Calc</span>
     <button onclick="toggleCalculator()" style="background:none;border:none;color:white;font-size:14px;cursor:pointer;">✖</button>
   </div>
-  <input type="text" id="calc-display" style="width:100%;font-size:16px;padding:6px;box-sizing:border-box;border:none;border-top:1px solid #ccc;border-bottom:1px solid #ccc;outline:none;" readonly>
-  <div style="padding:6px;">
-    <div><button onclick="appendCalc('7')">7</button><button onclick="appendCalc('8')">8</button><button onclick="appendCalc('9')">9</button><button onclick="appendCalc('/')">÷</button></div>
-    <div><button onclick="appendCalc('4')">4</button><button onclick="appendCalc('5')">5</button><button onclick="appendCalc('6')">6</button><button onclick="appendCalc('*')">×</button></div>
-    <div><button onclick="appendCalc('1')">1</button><button onclick="appendCalc('2')">2</button><button onclick="appendCalc('3')">3</button><button onclick="appendCalc('-')">−</button></div>
-    <div><button onclick="appendCalc('0')">0</button><button onclick="appendCalc('.')">.</button><button onclick="calculate()">=</button><button onclick="appendCalc('+')">+</button></div>
-    <div><button onclick="clearCalc()">C</button><button onclick="appendCalc('(')">(</button><button onclick="appendCalc(')')">)</button><button onclick="toggleScientific()">Sci</button></div>
-    <div id="scientific" style="display:none;margin-top:6px;">
-      <button onclick="appendCalc('Math.sqrt(')">√</button><button onclick="appendCalc('Math.pow(')">xʸ</button>
-      <button onclick="appendCalc('Math.sin(')">sin</button><button onclick="appendCalc('Math.cos(')">cos</button>
-      <button onclick="appendCalc('Math.tan(')">tan</button><button onclick="appendCalc('Math.log(')">log</button>
-      <button onclick="appendCalc('Math.PI')">π</button><button onclick="appendCalc('Math.E')">e</button>
+  <input type="text" id="calc-display" style="
+    width: 100%; font-size: 16px; padding: 6px; box-sizing: border-box;
+    border: none; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; outline: none;" readonly>
+  <div style="padding: 6px;">
+    <div>
+      <button onclick="appendCalc('7')">7</button>
+      <button onclick="appendCalc('8')">8</button>
+      <button onclick="appendCalc('9')">9</button>
+      <button onclick="appendCalc('/')">÷</button>
+    </div>
+    <div>
+      <button onclick="appendCalc('4')">4</button>
+      <button onclick="appendCalc('5')">5</button>
+      <button onclick="appendCalc('6')">6</button>
+      <button onclick="appendCalc('*')">×</button>
+    </div>
+    <div>
+      <button onclick="appendCalc('1')">1</button>
+      <button onclick="appendCalc('2')">2</button>
+      <button onclick="appendCalc('3')">3</button>
+      <button onclick="appendCalc('-')">−</button>
+    </div>
+    <div>
+      <button onclick="appendCalc('0')">0</button>
+      <button onclick="appendCalc('.')">.</button>
+      <button onclick="calculate()">=</button>
+      <button onclick="appendCalc('+')">+</button>
+    </div>
+    <div>
+      <button onclick="clearCalc()">C</button>
+      <button onclick="appendCalc('(')">(</button>
+      <button onclick="appendCalc(')')">)</button>
+      <button onclick="toggleScientific()">Sci</button>
+    </div>
+    <div id="scientific" style="display: none; margin-top: 6px;">
+      <button onclick="appendCalc('Math.sqrt(')">√</button>
+      <button onclick="appendCalc('Math.pow(')">xʸ</button>
+      <button onclick="appendCalc('Math.sin(')">sin</button>
+      <button onclick="appendCalc('Math.cos(')">cos</button>
+      <button onclick="appendCalc('Math.tan(')">tan</button>
+      <button onclick="appendCalc('Math.log(')">log</button>
+      <button onclick="appendCalc('Math.PI')">π</button>
+      <button onclick="appendCalc('Math.E')">e</button>
     </div>
   </div>
 </div>
 
+<br><br><br><br><br><br>
+
+<!-- ============================================================ -->
+<!--  ALL JAVASCRIPT                                              -->
+<!-- ============================================================ -->
 <script>
-// ==================== CONSTANTS ====================
-const COURSE_ID          = {{ course.id }};
-const ATTEMPT_ID         = {{ attempt.id }};
-const SERVER_REMAINING   = {{ attempt.remaining_seconds }};
-const TAB_LIMIT          = {{ tab_limit }};
-const STUDENT_NAME       = "{{ request.user.first_name|upper }} {{ request.user.last_name|upper }}";
-const FULLSCREEN_COUNTER = Number({{ course.fullscreencounter|default:"3" }});
-const QUESTIONS_JSON     = {{ questions_json|safe }};
+// ── DataTable ────────────────────────────────────────────────
+$.fn.dataTable.ext.errMode = 'none';
 
-const LS = {
-  timer:      `remainingTime_${COURSE_ID}`,
-  started:    `quizStartedForCourse_${COURSE_ID}`,
-  answers:    'quizAnswers',
-  fullscreen: 'examFullscreen',
-};
+var table = $('#example').DataTable({
+  pageLength: 1,
+  lengthChange: false,
+  stateSave: true,
+  ordering: false,
+  dom: 'rtp',
+  pagingType: "simple",
+  columnDefs: [{ orderable: false, targets: [1, 2, 3] }]
+});
 
-const URLS = {
-  calculateMarks:    "{% url 'student:calculate_marks' %}",
-  updateAnswer:      "{% url 'student:update_answer' %}",
-  recordTabSwitch:   "{% url 'student:record_tab_switch' %}",
-  recordScreenshot:  "{% url 'student:record_screenshot' %}",
-  recordBlur:        "{% url 'student:record_blur' %}",
-  autoSave:          "{% url 'student:auto_save_exam' %}",
-  heartbeat:         "{% url 'student:exam_heartbeat' attempt_id=attempt.id %}",
-  getSavedAnswers:   "{% url 'student:get_saved_answers' attempt_id=attempt.id %}",
-  getViolations:     "{% url 'student:get_violation_counts' attempt_id=attempt.id %}",
-  viewResult:        "{% url 'student:view_result' %}",
-};
+const lastPage = parseInt(localStorage.getItem('lastVisitedPage') || 0);
+table.page(lastPage).draw(false);
 
-// ==================== STATE ====================
-let heartbeatInterval;
-let autoSaveInterval;
-let answerSaveTimer;
-let isManuallySubmitting = false;
-let examAlreadySubmitted = false;
-let currentIndex = 0;
-let answers = JSON.parse(localStorage.getItem(LS.answers)) || {};
-const TOTAL_QS = QUESTIONS_JSON.length;
-
-// ==================== UTILITIES ====================
-function getCookie(name) {
-  const match = document.cookie.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]*)'));
-  return match ? decodeURIComponent(match[1]) : null;
-}
-const CSRF = getCookie('csrftoken');
-
-function post(url, body) {
-  return fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
-    body: JSON.stringify(body),
-  });
-}
-
-function setEl(id, val) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = val;
-}
-
-// ==================== VIOLATION BAR HELPER ====================
-const LIMIT = {{ course.num_attemps }};
-
-function colorClass(count) {
-  const pct = count / LIMIT;
-  if (pct >= 1)    return 'danger';
-  if (pct >= 0.5)  return 'warn';
-  return 'ok';
-}
-
-function updateBar(barId, countId, count) {
-  const bar   = document.getElementById(barId);
-  const label = document.getElementById(countId);
-  if (!bar || !label) return;
-  const pct   = Math.min((count / LIMIT) * 100, 100);
-  const cls   = colorClass(count);
-  bar.style.width = pct + '%';
-  bar.className   = 'viol-bar-fill ' + cls;
-  label.className = 'viol-count '    + cls;
-}
-
-window.updateViolBars = function () {
-  const blur       = parseInt(document.getElementById('blurCountDisplay')?.textContent) || 0;
-  const tab        = parseInt(document.getElementById('tabCount')?.textContent) || 0;
-  const screenshot = parseInt(document.getElementById('screenshotCountDisplay')?.textContent) || 0;
-  updateBar('blurBar', 'blurCountDisplay', blur);
-  updateBar('tabBar', 'tabCount', tab);
-  updateBar('screenshotBar', 'screenshotCountDisplay', screenshot);
-};
-
-// ==================== RENDER CURRENT QUESTION ====================
-function escapeHtml(str) {
-  if (!str) return '';
-  return str.replace(/[&<>]/g, function(m) {
-    if (m === '&') return '&amp;';
-    if (m === '<') return '&lt;';
-    if (m === '>') return '&gt;';
-    return m;
-  });
-}
-
-function renderQuestion() {
-  const q = QUESTIONS_JSON[currentIndex];
-  if (!q) return;
-
-  const imgHtml = q.img ? `<div class="text-center"><img src="${q.img}" width="40%" height="250px" alt=""></div><br>` : '';
-  const optionsHtml = q.options.map((opt, idx) => {
-    if (!opt) return '';
-    const optValue = `Option${idx+1}`;
-    const checked = (answers[q.id] === optValue) ? 'checked' : '';
-    return `<div class="quiz">
-              <div class="radio-container">
-                <input class="radio-button" type="radio" name="q${q.id}" value="${optValue}" id="opt${idx+1}_${q.id}" ${checked}>
-                <label for="opt${idx+1}_${q.id}">${escapeHtml(opt)}</label>
-              </div>
-            </div>`;
-  }).join('');
-
-  const html = `
-    ${imgHtml}
-    <label style="font-size: 18px;">${escapeHtml(q.text)}</label>
-    <h6 style="text-align: right;">[marks ${q.marks}]</h6>
-    ${optionsHtml}
-  `;
-  const container = document.getElementById('question-container');
-  if (container) container.innerHTML = html;
-
-  const pageIndicator = document.getElementById('page-indicator');
-  if (pageIndicator) pageIndicator.innerHTML = `Question ${currentIndex+1} of ${TOTAL_QS}`;
-  const totalCountSpan = document.getElementById('total-count');
-  if (totalCountSpan) totalCountSpan.innerText = TOTAL_QS;
-  const prevBtn = document.getElementById('prev-btn');
-  if (prevBtn) prevBtn.disabled = (currentIndex === 0);
-  const nextBtn = document.getElementById('next-btn');
-  if (nextBtn) nextBtn.disabled = (currentIndex === TOTAL_QS-1);
-
-  renderPaginationNumbers();
-}
-
-function renderPaginationNumbers() {
-  const container = document.getElementById('paginationBoxes');
-  if (!container) return;
-
-  if (TOTAL_QS <= 1) {
-    container.innerHTML = '';
-    return;
-  }
+// ── Pagination ───────────────────────────────────────────────
+function renderCustomPagination(tableInstance) {
+  const pageInfo    = tableInstance.page.info();
+  const totalPages  = pageInfo.pages;
+  const currentPage = pageInfo.page;
+  const storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
 
   let html = '';
-  for (let i = 1; i <= TOTAL_QS; i++) {
-    const questionObj = QUESTIONS_JSON[i - 1];
-    const isAnswered  = answers[questionObj.id] !== undefined && answers[questionObj.id] !== null;
-    const activeClass   = (i === currentIndex + 1) ? 'active' : '';
-    const answeredClass = isAnswered ? 'answered' : '';
-    html += `<span class="page-number ${activeClass} ${answeredClass}" data-page="${i}">${i}</span>`;
-  }
-  container.innerHTML = html;
+  for (let i = 0; i < totalPages; i++) {
+    const startIndex = i * pageInfo.length;
+    const rows       = tableInstance.rows({ order: 'applied' }).nodes();
+    const pageRows   = $(rows).slice(startIndex, startIndex + pageInfo.length);
 
-  document.querySelectorAll('#paginationBoxes .page-number').forEach(el => {
-    el.removeEventListener('click', pageNumberClickHandler);
-    el.addEventListener('click', pageNumberClickHandler);
+    let isAnswered = false;
+    pageRows.find('input[type=radio], input[type=checkbox]').each(function () {
+      const name  = $(this).attr('name');
+      const value = $(this).val();
+      if (storedAnswers[name] && storedAnswers[name] == value) {
+        isAnswered = true;
+        return false;
+      }
+    });
+
+    let classes = 'custom-page-number';
+    if (i === currentPage) classes += ' active-page';
+    if (isAnswered)        classes += ' answered-page';
+    html += `<span class="${classes}" data-page="${i}" style="cursor:pointer;padding:5px;">${i + 1}</span> `;
+  }
+  $('#paginationBoxes').html(html);
+}
+
+$(document).ready(function () {
+  const courseKey = 'quizStartedForCourse_{{ course.id }}';
+  if (!localStorage.getItem(courseKey)) {
+    localStorage.removeItem('quizAnswers');
+    localStorage.setItem(courseKey, 'true');
+  }
+  const storedAnswers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+  Object.keys(storedAnswers).forEach(function (qid) {
+    $(`input[name="${qid}"][value="${storedAnswers[qid]}"]`).prop('checked', true);
   });
-}
-
-function pageNumberClickHandler(e) {
-  e.stopPropagation();
-  const page = parseInt(e.currentTarget.getAttribute('data-page'), 10);
-  if (!isNaN(page) && page !== currentIndex + 1) {
-    currentIndex = page - 1;
-    renderQuestion();
-    attachAnswerListener();
-  }
-}
-
-// ==================== ANSWER SAVE ====================
-function onAnswerChange(e) {
-  if (!e.target.classList.contains('radio-button')) return;
-  const qid = parseInt(e.target.name.substring(1));
-  const val = e.target.value;
-
-  answers[qid] = val;
-  localStorage.setItem(LS.answers, JSON.stringify(answers));
-  renderPaginationNumbers();
-
-  clearTimeout(answerSaveTimer);
-  answerSaveTimer = setTimeout(() => {
-    post(URLS.updateAnswer, {
-      attempt_id: ATTEMPT_ID,
-      question_id: qid,
-      selected_value: val,
-    }).catch(err => console.error('Save failed', err));
-  }, 800);
-}
-
-function attachAnswerListener() {
-  const container = document.getElementById('question-container');
-  if (!container) return;
-  container.removeEventListener('change', onAnswerChange);
-  container.addEventListener('change', onAnswerChange);
-}
-
-// ==================== PAGINATION BUTTONS ====================
-document.getElementById('prev-btn')?.addEventListener('click', () => {
-  if (currentIndex > 0) {
-    currentIndex--;
-    renderQuestion();
-    attachAnswerListener();
-  }
+  renderCustomPagination(table);
 });
-document.getElementById('next-btn')?.addEventListener('click', () => {
-  if (currentIndex < TOTAL_QS-1) {
-    currentIndex++;
-    renderQuestion();
-    attachAnswerListener();
+
+$('#example tbody').on('change', 'input[type=checkbox], input[type=radio]', function () {
+  let stored = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+  stored[$(this).attr('name')] = $(this).val();
+  localStorage.setItem('quizAnswers', JSON.stringify(stored));
+  renderCustomPagination(table);
+});
+
+$('#paginationBoxes').on('click', '.custom-page-number', function (e) {
+  e.preventDefault();
+  const page = $(this).data('page');
+  table.page(page).draw(false);
+  localStorage.setItem('lastVisitedPage', page);
+});
+
+table.on('draw', function () {
+  const stored = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+  Object.keys(stored).forEach(function (qid) {
+    $(`input[name="${qid}"][value="${stored[qid]}"]`).prop('checked', true);
+  });
+  renderCustomPagination(table);
+});
+
+// Arrow key navigation
+$(document).on('keydown', function (e) {
+  const info = table.page.info();
+  if (e.key === 'ArrowRight' && info.page < info.pages - 1) {
+    table.page(info.page + 1).draw(false);
+    localStorage.setItem('lastVisitedPage', info.page + 1);
+  }
+  if (e.key === 'ArrowLeft' && info.page > 0) {
+    table.page(info.page - 1).draw(false);
+    localStorage.setItem('lastVisitedPage', info.page - 1);
   }
 });
 
-// ==================== TIMER ====================
-function initTimer() {
-  const timerEl = document.getElementById('timer');
-  const localVal = parseInt(localStorage.getItem(LS.timer));
-  let remaining = (!localVal || SERVER_REMAINING < localVal - 10) ? SERVER_REMAINING : localVal;
-  localStorage.setItem(LS.timer, remaining);
+
+// ── Timer ────────────────────────────────────────────────────
+$(document).ready(function () {
+  const timerElement   = document.getElementById('timer');
+  const courseTimerKey = 'remainingTime_{{ course.id }}';
+  let storedTime       = localStorage.getItem(courseTimerKey);
+  let remainingTime    = storedTime !== null ? parseInt(storedTime) : {{ course.duration_minutes }} * 60;
+
+  if (storedTime === null) localStorage.setItem(courseTimerKey, remainingTime);
   if (window.timerInterval) clearInterval(window.timerInterval);
 
   window.timerInterval = setInterval(() => {
-    if (remaining <= 0) {
+    const m = Math.floor(remainingTime / 60);
+    const s = remainingTime % 60;
+    timerElement.innerHTML = `<span>Time Left: ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span>`;
+
+    if (remainingTime <= 0) {
       clearInterval(window.timerInterval);
-      localStorage.removeItem(LS.timer);
-      localStorage.removeItem(LS.started);
+      localStorage.removeItem(courseTimerKey);
+      localStorage.removeItem('quizStartedForCourse_{{ course.id }}');
       doSubmit('timeout');
       return;
     }
-    const m = Math.floor(remaining / 60);
-    const s = remaining % 60;
-    timerEl.innerHTML = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-    
-    // Timer color warning
-    if (remaining < 300) {
-      timerEl.className = 'timer-danger';
-    } else if (remaining < 600) {
-      timerEl.className = 'timer-warn';
-    }
-    
-    remaining--;
-    localStorage.setItem(LS.timer, remaining);
+    remainingTime--;
+    localStorage.setItem(courseTimerKey, remainingTime);
   }, 1000);
-}
+});
 
-// ==================== SUBMIT ====================
+
+// ── Core submit function (single source of truth) ────────────
+let isManuallySubmitting = false;
+let examAlreadySubmitted = false;
+
 function doSubmit(reason) {
   if (examAlreadySubmitted) return;
   examAlreadySubmitted = true;
 
-  clearInterval(window.timerInterval);
-  clearInterval(heartbeatInterval);
-  clearInterval(autoSaveInterval);
-  clearTimeout(answerSaveTimer);
+  if (window.timerInterval) clearInterval(window.timerInterval);
 
-  const finalAnswers = JSON.parse(localStorage.getItem(LS.answers)) || {};
-  finalAnswers['submissionReason'] = reason;
-  finalAnswers['attempt_id'] = ATTEMPT_ID;
+  const courseTimerKey = 'remainingTime_{{ course.id }}';
+  const tabCount       = parseInt(localStorage.getItem('tabSwitchCount')) || 0;
+  const storedAnswers  = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+  storedAnswers['tabSwitchCount']    = tabCount;
+  storedAnswers['submissionReason']  = reason;
 
   $.ajax({
-    type: 'POST',
-    url: URLS.calculateMarks,
-    contentType: 'application/json',
-    headers: { 'X-CSRFToken': CSRF },
-    data: JSON.stringify(finalAnswers),
+    type: "POST",
+    url: "/student/calculate_marks",
+    contentType: "application/json",
+    data: JSON.stringify(storedAnswers),
     success: function (response) {
-      Object.values(LS).forEach(k => localStorage.removeItem(k));
-      const messages = {
-        timeout:         "Time's up! Your exam has been submitted.",
-        tabswitch:       "Exam submitted due to tab switching limit.",
-        fullscreen:      "Exam submitted due to fullscreen violations.",
-        screenshot:      "Exam submitted due to screenshot attempts.",
-        violation_limit: "Exam submitted due to repeated violations.",
-      };
-      alert(messages[reason] || "Quiz submitted successfully!");
-      window.location.href = response.redirect_url || URLS.viewResult;
+      console.log("Submit response:", response);
+      
+      localStorage.removeItem('screenshotCount_{{ course.id }}');
+      localStorage.removeItem('quizAnswers');
+      localStorage.removeItem('lastVisitedPage');
+      localStorage.removeItem('tabSwitchCount');
+      localStorage.removeItem(courseTimerKey);
+      localStorage.removeItem('quizStartedForCourse_{{ course.id }}');
+      localStorage.removeItem('examFullscreen');
+      // In your existing doSubmit() function, update the msg block:
+    const msg = reason === 'timeout'     ? "Time's up! Your exam has been submitted."
+              : reason === 'tabswitch'   ? "Exam submitted due to tab switching limit."
+              : reason === 'fullscreen'  ? "Exam submitted due to fullscreen violations."
+              : reason === 'screenshot'  ? "Exam submitted due to repeated screenshot attempts."
+              : reason === 'screenshot' ? "Exam submitted due to repeated screenshot attempts."
+              : reason === 'screenshot' ? "Exam submitted due to repeated screenshot attempts."
+              :                           "Quiz submitted successfully!";
+              
+      alert(msg);
+      window.location.href = "{% url 'student:view_result' %}";
     },
-    error: function (xhr) {
-      examAlreadySubmitted = false;
-      alert("Submission failed: " + (xhr.responseJSON?.error || "Please try again."));
+    error: function (xhr, status, error) {
+      examAlreadySubmitted = false; // allow retry on error
+      console.error("Submission error:", xhr.responseText);
+      alert("Submission failed. Please try again.");
     }
   });
 }
 
+// Convenience aliases
+function manualSubmitQuiz()   { doSubmit('manual'); }
+function submitQuiz()         { doSubmit('timeout'); }
+function inactivesubmitQuiz() { doSubmit('tabswitch'); }
+
+
+// ── Single submit button listener ───────────────────────────
 document.getElementById('submit').addEventListener('click', function () {
   if (!confirm("Are you sure you want to submit the quiz?")) return;
   isManuallySubmitting = true;
+  localStorage.setItem('tabSwitchCount', '0');
   doSubmit('manual');
 });
 
-// ==================== VIOLATION HANDLERS ====================
+
+// ── Tab switch detection ─────────────────────────────────────
+let tabSwitchCount    = parseInt(localStorage.getItem('tabSwitchCount')) || 0;
+const tabLimit        = {{ tab_limit }};
+const tabCountDisplay = document.getElementById('tabCount');
+const studentName     = "{{ request.user.first_name|upper }} {{ request.user.last_name|upper }}";
+
+if (tabSwitchCount > tabLimit) {
+  tabSwitchCount = tabLimit;
+  localStorage.setItem('tabSwitchCount', tabSwitchCount);
+}
+tabCountDisplay.textContent = tabSwitchCount;
+
 document.addEventListener("visibilitychange", function () {
   if (!document.hidden || examAlreadySubmitted || isManuallySubmitting) return;
-  post(URLS.recordTabSwitch, { attempt_id: ATTEMPT_ID })
-    .then(r => r.json())
-    .then(data => {
-      setEl('tabCount', data.count);
-      updateViolBars();
-      if (data.should_submit && !examAlreadySubmitted) {
-        setTimeout(() => { alert('Exam submitted: tab switching limit reached.'); doSubmit('tabswitch'); }, 300);
-      }
-    })
-    .catch(err => console.warn('Tab switch record failed', err));
+
+  tabSwitchCount = Math.min(tabSwitchCount + 1, tabLimit);
+  tabCountDisplay.textContent = tabSwitchCount;
+  localStorage.setItem('tabSwitchCount', tabSwitchCount);
+
+  if ('speechSynthesis' in window) {
+    const msg = new SpeechSynthesisUtterance(
+      `${tabSwitchCount} out of ${tabLimit} attempts to leave the exam page detected. ${studentName}`
+    );
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(msg);
+  }
+
+  if (tabSwitchCount >= tabLimit) {
+    examAlreadySubmitted = true;
+    setTimeout(function () {
+      alert('Exam will be submitted due to tab switching limit reached.');
+      doSubmit('tabswitch');
+    }, 300);
+  }
 });
 
-document.addEventListener('keyup', function (e) {
-  if (e.key !== 'PrintScreen' && e.code !== 'PrintScreen') return;
-  if (examAlreadySubmitted || isManuallySubmitting) return;
-  if (navigator.clipboard?.writeText) navigator.clipboard.writeText('').catch(() => {});
-  post(URLS.recordScreenshot, { attempt_id: ATTEMPT_ID })
-    .then(r => r.json())
-    .then(data => {
-      setEl('screenshotCountDisplay', data.count);
-      updateViolBars();
-      if (data.should_submit && !examAlreadySubmitted) {
-        alert(`❌ ${data.count}/${data.limit} screenshot attempts. Exam submitted.`);
-        doSubmit('screenshot');
-        return;
-      }
-      alert(`⚠️ Screenshot ${data.count}/${data.limit}. ${data.limit - data.count} remaining.`);
-    })
-    .catch(err => console.warn('Screenshot record failed', err));
-});
 
-window.addEventListener('blur', () => {
-  if (examAlreadySubmitted || isManuallySubmitting) return;
-  post(URLS.recordBlur, { attempt_id: ATTEMPT_ID })
-    .then(r => r.json())
-    .then(data => {
-      setEl('blurCountDisplay', data.count);
-      updateViolBars();
-      if (data.should_submit && !examAlreadySubmitted) {
-        alert(`Exam submitted: window blur (${data.count}/${data.limit})`);
-        doSubmit('tabswitch');
-      }
-    })
-    .catch(err => console.warn('Blur record failed', err));
-});
-
-// ==================== FULLSCREEN ====================
+// ── Fullscreen ───────────────────────────────────────────────
 const elem = document.documentElement;
-let fullscreenExitCount = 0;
-let flashInterval = null;
+let fullscreenExitCount     = 0;
+let fullscreencounter       = Number({{ course.fullscreencounter|default:"3" }});
+let flashInterval           = null;
 let skipFirstFullscreenExit = true;
 let isReturningToFullscreen = false;
 
 function updateFullscreenCounter() {
   const el = document.getElementById("fullscreenCounterText");
   if (!el) return;
-  el.innerText = `You exited Fullscreen: ${fullscreenExitCount} / ${FULLSCREEN_COUNTER} times. Limit: ${FULLSCREEN_COUNTER}.`;
-  if (fullscreenExitCount === FULLSCREEN_COUNTER) {
-    if (!flashInterval) flashInterval = setInterval(() => {
-      el.style.color = el.style.color === "yellow" ? "red" : "yellow";
-    }, 500);
+  el.innerText = `You exited Fullscreen: ${fullscreenExitCount} / ${fullscreencounter} times. If you reach ${fullscreencounter} times, your exam will be submitted.`;
+  if (fullscreenExitCount === fullscreencounter) {
+    if (!flashInterval) {
+      flashInterval = setInterval(() => {
+        el.style.color = el.style.color === "yellow" ? "red" : "yellow";
+      }, 500);
+    }
   } else {
-    clearInterval(flashInterval); flashInterval = null; el.style.color = "yellow";
+    clearInterval(flashInterval);
+    flashInterval = null;
+    el.style.color = "yellow";
   }
 }
 
 function openFullscreen() {
   isReturningToFullscreen = true;
-  (elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen || (() => {})).call(elem);
-  localStorage.setItem(LS.fullscreen, "true");
+  if (elem.requestFullscreen)            elem.requestFullscreen();
+  else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+  else if (elem.msRequestFullscreen)     elem.msRequestFullscreen();
+  localStorage.setItem("examFullscreen", "true");
   setTimeout(() => { isReturningToFullscreen = false; }, 500);
 }
 
@@ -902,11 +590,12 @@ function returnToFullscreen() {
 }
 
 function registerFullscreenStrike() {
-  if (fullscreenExitCount >= FULLSCREEN_COUNTER) return;
+  if (fullscreenExitCount >= fullscreencounter) return;
   fullscreenExitCount++;
   updateFullscreenCounter();
-  if (fullscreenExitCount >= FULLSCREEN_COUNTER) {
-    alert(`❌ You exited fullscreen ${fullscreenExitCount} times. Exam submitted.`);
+  if (fullscreenExitCount >= fullscreencounter) {
+    localStorage.setItem('tabSwitchCount', '0');
+    alert(`❌ You exited fullscreen ${fullscreenExitCount} times. Your exam was submitted successfully.`);
     doSubmit('fullscreen');
   }
 }
@@ -919,116 +608,42 @@ document.addEventListener("fullscreenchange", () => {
     return;
   }
   registerFullscreenStrike();
-  if (fullscreenExitCount < FULLSCREEN_COUNTER) {
+  if (fullscreenExitCount < fullscreencounter) {
     document.getElementById("fullscreenPopup").style.display = "flex";
   }
 });
 
-document.addEventListener('click', (e) => {
-  if (e.target && e.target.classList && e.target.classList.contains('radio-button')) {
-    openFullscreen();
-  }
+window.addEventListener("load", () => {
+  if (localStorage.getItem("examFullscreen") === "true") setTimeout(openFullscreen, 500);
+  document.querySelectorAll(".radio-button").forEach(r => r.addEventListener("click", openFullscreen));
+  updateFullscreenCounter();
 });
-updateFullscreenCounter();
 
-// ==================== NETWORK STATUS ====================
+
+// ── Network status ───────────────────────────────────────────
 const networkStatusEl = document.getElementById('network-status');
 function updateNetworkStatus() {
-  const netLabel = document.getElementById('net-label');
-  const netDot = document.querySelector('.net-dot');
-  
   if (navigator.onLine) {
     networkStatusEl.textContent = "Back online! Your exam is syncing...";
     networkStatusEl.className = 'online';
-    if (netLabel) netLabel.textContent = 'Connected';
-    if (netDot) netDot.style.background = '#4ade80';
     setTimeout(() => { networkStatusEl.style.display = 'none'; }, 3000);
   } else {
-    networkStatusEl.textContent = "You are offline. Wait for internet before submitting.";
+    networkStatusEl.textContent = "You are currently offline. Wait for internet before submitting.";
     networkStatusEl.className = 'offline';
-    if (netLabel) netLabel.textContent = 'Offline';
-    if (netDot) netDot.style.background = '#f87171';
   }
 }
 updateNetworkStatus();
-window.addEventListener('online', updateNetworkStatus);
+window.addEventListener('online',  updateNetworkStatus);
 window.addEventListener('offline', updateNetworkStatus);
 
-// ==================== HEARTBEAT ====================
-function startHeartbeat() {
-  heartbeatInterval = setInterval(() => {
-    const remaining = parseInt(localStorage.getItem(LS.timer)) || 0;
-    fetch(`${URLS.heartbeat}?remaining=${remaining}`)
-      .then(r => r.json())
-      .then(data => { if (data.remaining <= 0) { clearInterval(heartbeatInterval); doSubmit('timeout'); } })
-      .catch(err => console.warn('Heartbeat failed', err));
-  }, 30000);
-}
 
-// ==================== AUTO SAVE ====================
-function autoSaveToServer() {
-  const answers = {};
-  document.querySelectorAll('input[type=radio]:checked').forEach(i => { answers[i.name] = i.value; });
-  if (!Object.keys(answers).length) return;
-  post(URLS.autoSave, { attempt_id: ATTEMPT_ID, answers })
-    .catch(err => console.warn('Auto-save failed', err));
-}
-
-// ==================== FETCH VIOLATIONS ====================
-function fetchViolationCounts() {
-  fetch(URLS.getViolations)
-    .then(r => r.json())
-    .then(data => {
-      setEl('tabCount', data.tab_switch_count);
-      setEl('blurCountDisplay', data.blur_count);
-      setEl('screenshotCountDisplay', data.screenshot_count);
-      updateViolBars();
-      if (!examAlreadySubmitted && (
-        data.tab_switch_count >= data.limit ||
-        data.blur_count >= data.limit ||
-        data.screenshot_count >= data.limit
-      )) doSubmit('violation_limit');
-    })
-    .catch(console.warn);
-}
-
-// ==================== RESTORE SAVED ANSWERS ====================
-function mergeAndRender() {
-  renderQuestion();
-  attachAnswerListener();
-
-  fetch(URLS.getSavedAnswers)
-    .then(r => r.json())
-    .then(data => {
-      if (data.answers && Object.keys(data.answers).length > 0) {
-        let changed = false;
-        for (const [qid, val] of Object.entries(data.answers)) {
-          if (answers[qid] !== val) {
-            answers[qid] = val;
-            changed = true;
-          }
-        }
-        if (changed) {
-          localStorage.setItem(LS.answers, JSON.stringify(answers));
-          const currentQ = QUESTIONS_JSON[currentIndex];
-          if (currentQ && data.answers[currentQ.id]) {
-            renderQuestion();
-            attachAnswerListener();
-          }
-          renderPaginationNumbers();
-        }
-      }
-    })
-    .catch(err => console.warn('Could not restore server answers:', err));
-}
-
-// ==================== CALCULATOR ====================
+// ── Calculator ───────────────────────────────────────────────
 function toggleCalculator() {
   const c = document.getElementById('calculator');
   c.style.display = (c.style.display === 'none' || !c.style.display) ? 'block' : 'none';
 }
 function appendCalc(v) { document.getElementById('calc-display').value += v; }
-function clearCalc() { document.getElementById('calc-display').value = ''; }
+function clearCalc()   { document.getElementById('calc-display').value = ''; }
 function calculate() {
   const d = document.getElementById('calc-display');
   try { d.value = eval(d.value); } catch { d.value = 'Error'; }
@@ -1037,6 +652,15 @@ function toggleScientific() {
   const s = document.getElementById('scientific');
   s.style.display = s.style.display === 'none' ? 'block' : 'none';
 }
+document.addEventListener('keydown', function (e) {
+  if (document.getElementById('calculator').style.display !== 'block') return;
+  const d = document.getElementById('calc-display');
+  if ((e.key >= '0' && e.key <= '9') || ['+','-','*','/','.',`(`,`)`].includes(e.key)) {
+    d.value += e.key;
+  } else if (e.key === 'Enter')   { e.preventDefault(); calculate(); }
+  else if (e.key === 'Backspace') { d.value = d.value.slice(0, -1); }
+  else if (e.key === 'Escape')    { clearCalc(); }
+});
 
 dragElement(document.getElementById("calculator"));
 function dragElement(elmnt) {
@@ -1045,45 +669,105 @@ function dragElement(elmnt) {
   if (header) header.onmousedown = function(e) {
     e.preventDefault();
     pos3 = e.clientX; pos4 = e.clientY;
-    document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
+    document.onmouseup   = () => { document.onmouseup = null; document.onmousemove = null; };
     document.onmousemove = function(e) {
       e.preventDefault();
       pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
-      pos3 = e.clientX; pos4 = e.clientY;
-      elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+      pos3 = e.clientX;        pos4 = e.clientY;
+      elmnt.style.top  = (elmnt.offsetTop  - pos2) + "px";
       elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
     };
   };
 }
 
-// ==================== PREVENT CHEATING ====================
-document.addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('keydown', e => {
-  if (e.ctrlKey && ['p','s','PrintScreen'].includes(e.key)) e.preventDefault();
-});
 
-// ==================== BOOT ====================
-$(document).ready(function () {
-  if (!localStorage.getItem(LS.started)) {
-    localStorage.removeItem(LS.answers);
-    localStorage.setItem(LS.started, 'true');
+// ── Screenshot Detection ─────────────────────────────────────
+
+
+// ── Screenshot Detection (PrintScreen) ───────────────────────
+let screenshotCount = parseInt(localStorage.getItem('screenshotCount_{{ course.id }}')) || 0;
+const screenshotLimit = {{ course.num_attemps }};
+
+function updateScreenshotDisplay() {
+  const el = document.getElementById('screenshotCount');
+  if (el) el.textContent = screenshotCount;
+}
+
+document.addEventListener('keyup', function(e) {
+  if (e.key !== 'PrintScreen') return;
+  if (examAlreadySubmitted) return;
+
+  // Clear clipboard immediately
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText('').catch(() => {});
   }
-  const stored = JSON.parse(localStorage.getItem(LS.answers)) || {};
-  answers = { ...answers, ...stored };
 
-  initTimer();
-  startHeartbeat();
-  autoSaveInterval = setInterval(autoSaveToServer, 30000);
-  fetchViolationCounts();
-  mergeAndRender();
-  
-  // Set up violation bar observers
-  ['blurCountDisplay', 'tabCount', 'screenshotCountDisplay'].forEach(function (id) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    new MutationObserver(window.updateViolBars).observe(el, { childList: true, subtree: true, characterData: true });
-  });
+  screenshotCount++;
+  localStorage.setItem('screenshotCount_{{ course.id }}', screenshotCount);
+  updateScreenshotDisplay();
+
+  // Voice warning
+  if ('speechSynthesis' in window) {
+    const msg = new SpeechSynthesisUtterance(
+      `Screenshot attempt ${screenshotCount} of ${screenshotLimit} detected. ${studentName}`
+    );
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(msg);
+  }
+
+  // Submit if limit reached
+  if (screenshotCount >= screenshotLimit) {
+    localStorage.removeItem('screenshotCount_{{ course.id }}');
+    alert(`❌ ${screenshotCount}/${screenshotLimit} screenshot attempts detected. Your exam is being submitted.`);
+    doSubmit('screenshot');
+    return;
+  }
+
+  const remaining = screenshotLimit - screenshotCount;
+  alert(`⚠️ Screenshot attempt ${screenshotCount}/${screenshotLimit} detected.\n${remaining} attempt(s) remaining before your exam is auto-submitted.`);
 });
+
+// Init display on page load
+$(document).ready(function() {
+  updateScreenshotDisplay();
+});
+
+window.addEventListener('blur', () => {
+    document.body.style.display = 'none'; // Hide exam
+});
+window.addEventListener('focus', () => {
+    document.body.style.display = 'block'; // Show exam
+});
+
+
+window.addEventListener('keydown', function(e) {
+    if (e.key === 'S' && e.shiftKey && e.metaKey) { // MetaKey often acts as Win
+        e.preventDefault();
+        alert('Screenshotting is disabled!');
+    }
+});
+
+setInterval(() => {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText('').catch(e => console.log);
+  }
+}, 500);
+
+
+
+let blurCount = 0;
+
+window.addEventListener('blur', () => {
+  blurCount++;
+
+  if (blurCount > {{ course.num_attemps }}) {
+    localStorage.setItem('tabSwitchCount', '0');
+    doSubmit('tabswitch');
+    return;
+  }
+
+});
+
 </script>
 
 {% endblock %}

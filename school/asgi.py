@@ -38,6 +38,10 @@
 
 # application = get_asgi_application()
 import os
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path="/app/.env", override=True)
+
 from django.core.asgi import get_asgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'school.settings')

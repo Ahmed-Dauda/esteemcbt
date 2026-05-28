@@ -3,11 +3,8 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY
 
-# Celery is optional
-try:
-    from school import celery
-except ImportError:
-    celery = None
+from school import celery
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -47,7 +44,7 @@ INSTALLED_APPS = [
     'dal',
     'dal_select2',
     'academics',
-    
+    'sweetify',
     'widget_tweaks',
     'hitcount',
     'crispy_forms',
@@ -57,8 +54,8 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'cloudinary',
     'django_select2',
-    # 'embed_video',
-    # 'xhtml2pdf',
+    'embed_video',
+    'xhtml2pdf',
     'tinymce',
     'django_social_share',
     'import_export',
@@ -188,16 +185,11 @@ SOCIALACCOUNT_PROVIDERS = {
 
 
 # Configure Cloudinary
-# Configure Cloudinary - Optional
-try:
-    import cloudinary
-    import cloudinary.uploader
-    import cloudinary.api
-    CLOUDINARY_AVAILABLE = True
-except ImportError:
-    CLOUDINARY_AVAILABLE = False
-    cloudinary = None
-    print("Cloudinary not installed - running without it")
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+
 # import cloudinary
 
 
@@ -258,11 +250,8 @@ MIDDLEWARE = [
 
 
 import os
-# Celery schedules - optional
-try:
-    from celery.schedules import crontab
-except ImportError:
-    crontab = None
+from celery.schedules import crontab
+
 # # Redis config for Celery
 # CELERY_BROKER_URL = os.environ.get('REDISCLOUD_URL', 'redis://localhost:6379')
 # CELERY_ACCEPT_CONTENT = ['json']
@@ -352,27 +341,16 @@ import os
 # settings.py
 import dj_database_url
 from pathlib import Path
-import dj_database_url
-import os
-
-import dj_database_url
-import os
 
 DATABASES = {
-    "default": dj_database_url.config(
-        default="sqlite:///db.sqlite3"
+    'default': dj_database_url.config(
+        conn_max_age=0,
+        conn_health_checks=True,
+        ssl_require=False,
     )
 }
 
-# DATABASES = {
-#     'default': dj_database_url.config(
-#         conn_max_age=0,
-#         conn_health_checks=True,
-#         ssl_require=False,
-#     )
-# }
-#
-# DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
+DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
 # import ssl
 
@@ -480,20 +458,19 @@ import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent  # make sure this is before environ
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 env = environ.Env(
     DEBUG=(bool, False),
     SECRET_KEY=(str, 'fallback-secret-key-change-in-production'),
-    # ALLOWED_HOSTS=(list, ['*']),
+    ALLOWED_HOSTS=(list, ['*']),
 )
-ALLOWED_HOSTS = ['*']  # temporary for testing
+
 # Load .env file — won't crash if file is missing
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-# DEBUG = env("DEBUG")
+DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
-# ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
 # STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -716,13 +693,3 @@ INTERNAL_IPS = [
     # ...
 ]
 
-#coolify password: MyServer2026!Coolify
-
-#database information FOR HETZNER CLOUD
-# CREATE DATABASE mydb;
-# CREATE USER myuser WITH PASSWORD 'StrongPassword123';
-# ALTER ROLE myuser SET client_encoding TO 'utf8';
-# ALTER ROLE myuser SET default_transaction_isolation TO 'read committed';
-# ALTER ROLE myuser SET timezone TO 'UTC';
-# GRANT ALL PRIVILEGES ON DATABASE mydb TO myuser;
-# \q

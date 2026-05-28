@@ -166,7 +166,7 @@ from django.http import HttpResponseForbidden
 from .models import School
 from .forms import SchoolForm
 
-#testing111
+
 @login_required(login_url='teacher:teacher_login')
 def edit_school(request):
     # Get the examiner's school

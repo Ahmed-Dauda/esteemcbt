@@ -477,7 +477,7 @@ button:hover { background: #0b5ed7; }
 <form novalidate autocomplete="off" class="no-copy" id="quizf" action="/student/calculate_marks" onsubmit="return false;" enctype="multipart/form-data" method="POST">
   {% csrf_token %}
 
-  <!-- Client-side question container -->
+  <!-- Client‑side question container -->
   <div id="question-container" class="quiz-container" style="margin: 0px; padding-left: 40px; padding-right: 40px;"></div>
 
   <!-- Pagination controls -->
@@ -636,19 +636,17 @@ function renderQuestion() {
     if (!opt) return '';
     const optValue = `Option${idx+1}`;
     const checked = (answers[q.id] === optValue) ? 'checked' : '';
-    // Use opt directly (not escaped) so HTML formatting in options is preserved
     return `<div class="quiz">
               <div class="radio-container">
                 <input class="radio-button" type="radio" name="q${q.id}" value="${optValue}" id="opt${idx+1}_${q.id}" ${checked}>
-                <label for="opt${idx+1}_${q.id}">${opt}</label>
+                <label for="opt${idx+1}_${q.id}">${escapeHtml(opt)}</label>
               </div>
             </div>`;
   }).join('');
 
-  // Use q.text directly (not escaped) so HTML formatting in questions is preserved
   const html = `
     ${imgHtml}
-    <label style="font-size: 18px;">${q.text}</label>
+    <label style="font-size: 18px;">${escapeHtml(q.text)}</label>
     <h6 style="text-align: right;">[marks ${q.marks}]</h6>
     ${optionsHtml}
   `;

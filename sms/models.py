@@ -8,8 +8,7 @@ from django.db import models
 from django.db.models.deletion import CASCADE
 from users.models import NewUser
 from cloudinary.models import CloudinaryField
-# from embed_video.fields import EmbedVideoField
-from django.db import models as django_models
+from embed_video.fields import EmbedVideoField
 from django.conf import settings
 from hitcount.models import HitCount, HitCountMixin
 from django.utils.text import slugify

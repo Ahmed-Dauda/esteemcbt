@@ -1,32 +1,28 @@
-FROM python:3.12-slim
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    gcc \
-    curl \
-    libfreetype6-dev \
-    libjpeg-dev \
-    libxml2-dev \
-    libxslt1-dev \
-    zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
+FROM python:3.11.9-slim
 
 WORKDIR /app
 
-# Install setuptools FIRST before requirements
-RUN pip install --no-cache-dir setuptools
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gcc \
+    python3-dev \
+    pkg-config \
+    libpq-dev \
+    libfreetype6 \
+    libfreetype6-dev \
+    libjpeg-dev \
+    libjpeg62-turbo-dev \
+    zlib1g-dev \
+    libpng-dev \
+    fontconfig \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy and install requirements
+RUN pip install --upgrade pip setuptools wheel
+
 COPY requirements.txt .
+
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the app
 COPY . .
 
-# Make entrypoint executable
-RUN chmod +x entrypoint.sh
-
-EXPOSE 8000
-
-ENTRYPOINT ["./entrypoint.sh"]
+CMD ["uvicorn", "school.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--timeout-keep-alive", "120"]
