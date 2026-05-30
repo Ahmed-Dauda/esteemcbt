@@ -693,3 +693,5 @@ INTERNAL_IPS = [
     # ...
 ]
 
+# MyServer2026!Coolify
+#cd /var/www/esteemcbt
