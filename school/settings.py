@@ -693,7 +693,6 @@ INTERNAL_IPS = [
     # ...
 ]
 
-
 # DEPLOYMENT QUICK REFERENCE
 # ===========================
 
@@ -703,28 +702,41 @@ INTERNAL_IPS = [
 # git commit -m "your message"
 # git push origin development
 
-# # ROLLBACK TO STABLE (main-working branch):
+# ROLLBACK TO STABLE (main-working branch):
 # git checkout main-working
 # git commit --allow-empty -m "rollback to stable"
 # git push origin main-working
 
-# # SSH INTO HETZNER SERVER:
+# BEFORE MERGING - TAG CURRENT STABLE FIRST:
+# git checkout main-working
+# git tag v1.0-stable        (increment version each time e.g v1.1-stable, v1.2-stable)
+# git push origin v1.0-stable
+
+# MERGE DEVELOPMENT INTO MAIN-WORKING:
+# git checkout main-working
+# git merge development
+# git push origin main-working
+
+# IF SOMETHING BREAKS AFTER MERGE - REVERT TO TAG:
+# git reset --hard v1.0-stable
+# git push origin main-working --force
+
+# SSH INTO HETZNER SERVER:
 # ssh root@204.168.237.20
 # MyServer2026!Coolify
 
-# # NAVIGATE TO PROJECT:
+# NAVIGATE TO PROJECT:
 # cd /var/www/esteemcbt
 
-# # RESTART SERVICES:
+# RESTART SERVICES:
 # systemctl restart esteemcbt
 # systemctl restart celery
 
-# # CHECK LOGS:
+# CHECK LOGS:
 # journalctl -u esteemcbt -n 20 --no-pager
 
-# # CHECK SERVICE STATUS:
+# CHECK SERVICE STATUS:
 # systemctl status esteemcbt
 # systemctl status celery
 # systemctl status redis
 # systemctl status nginx
-
