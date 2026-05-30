@@ -3,7 +3,7 @@ name: Deploy to Hetzner
 on:
   push:
     branches:
-      - main-working
+      - development
 
 jobs:
   deploy:
@@ -18,10 +18,8 @@ jobs:
           script: |
             cd /var/www/esteemcbt
             git fetch origin
-            git reset --hard origin/main-working
-            echo "import importlib" > /tmp/admin_fix.py
-            tail -n +2 student/admin.py >> /tmp/admin_fix.py
-            mv /tmp/admin_fix.py student/admin.py
+            git reset --hard origin/development
+            git checkout origin/development -- student/admin.py
             source venv/bin/activate
             pip install -r requirements.txt
             python manage.py migrate
