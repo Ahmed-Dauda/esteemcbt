@@ -1,4 +1,4 @@
-import importlibortlib
+import importlib
 from django.contrib import admin
 from student.models import (Payment,PDFDocument,Clubs,
                             PDFGallery,Directors, Management,
