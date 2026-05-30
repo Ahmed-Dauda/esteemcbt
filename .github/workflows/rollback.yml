@@ -1,0 +1,28 @@
+name: Deploy Stable to Hetzner
+
+on:
+  push:
+    branches:
+      - main-working
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Stable to Hetzner
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            cd /var/www/esteemcbt
+            git fetch origin
+            git reset --hard origin/main-working
+            git checkout origin/main-working -- student/admin.py
+            source venv/bin/activate
+            pip install -r requirements.txt
+            python manage.py migrate
+            python manage.py collectstatic --noinput
+            systemctl restart esteemcbt
+            systemctl restart celery
