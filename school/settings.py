@@ -693,5 +693,38 @@ INTERNAL_IPS = [
     # ...
 ]
 
+
+# DEPLOYMENT QUICK REFERENCE
+# ===========================
+
+# DEPLOY NEW CHANGES (development branch):
+# git checkout development
+# git add .
+# git commit -m "your message"
+# git push origin development
+
+# # ROLLBACK TO STABLE (main-working branch):
+# git checkout main-working
+# git commit --allow-empty -m "rollback to stable"
+# git push origin main-working
+
+# # SSH INTO HETZNER SERVER:
+# ssh root@204.168.237.20
 # MyServer2026!Coolify
-#cd /var/www/esteemcbt
+
+# # NAVIGATE TO PROJECT:
+# cd /var/www/esteemcbt
+
+# # RESTART SERVICES:
+# systemctl restart esteemcbt
+# systemctl restart celery
+
+# # CHECK LOGS:
+# journalctl -u esteemcbt -n 20 --no-pager
+
+# # CHECK SERVICE STATUS:
+# systemctl status esteemcbt
+# systemctl status celery
+# systemctl status redis
+# systemctl status nginx
+
