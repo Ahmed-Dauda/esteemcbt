@@ -693,6 +693,11 @@ INTERNAL_IPS = [
     # ...
 ]
 
+
+# Then log into your local admin at http://127.0.0.1:8000/admin/ with:
+# Username: addatainsight@gmail.com
+# Password: admin1234
+
 # DEPLOYMENT QUICK REFERENCE
 # ===========================
 
