@@ -808,6 +808,107 @@
 </div>
 
 
+<style>
+  /* Stats Section - Fully responsive flexbox for mobile */
+  .sec-white {
+    background: #ffffff;
+  }
+  .container-w {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  .stats-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 24px;
+    margin: 0 -12px;
+  }
+  .stat-cell {
+    flex: 1 1 auto;
+    min-width: 160px;
+    text-align: center;
+    padding: 28px 16px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    border: 1px solid rgba(26,86,219,0.08);
+  }
+  .stat-cell:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 32px rgba(0,0,0,0.08);
+  }
+  .stat-num {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2.6rem;
+    font-weight: 700;
+    color: #1A56DB;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .stat-label {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #526080;
+    letter-spacing: -0.2px;
+  }
+  
+  /* Mobile-first flexbox adjustments */
+  @media (max-width: 768px) {
+    .stats-row {
+      gap: 16px;
+      margin: 0;
+      justify-content: center;
+    }
+    .stat-cell {
+      flex: 0 1 calc(50% - 16px);
+      min-width: 140px;
+      padding: 20px 12px;
+    }
+    .stat-num {
+      font-size: 2rem;
+    }
+    .stat-label {
+      font-size: 0.8rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .stats-row {
+      gap: 12px;
+    }
+    .stat-cell {
+      flex: 0 1 calc(50% - 12px);
+      min-width: 130px;
+      padding: 16px 8px;
+    }
+    .stat-num {
+      font-size: 1.8rem;
+    }
+    .stat-label {
+      font-size: 0.75rem;
+    }
+  }
+  
+  /* Optional animation class (sa-up) */
+  .sa-up {
+    animation: fadeUp 0.6s ease forwards;
+  }
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+
 <!-- ── STATS ─────────────────────────────────────── -->
 <section class="section-sm sec-white">
   <div class="container-w">
@@ -831,7 +932,6 @@
     </div>
   </div>
 </section>
-
 
 <!-- ── PROGRAMS ──────────────────────────────────── -->
 <section class="section sec-gray" id="program">
