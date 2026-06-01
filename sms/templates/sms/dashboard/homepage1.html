@@ -95,7 +95,7 @@
     height: 640px;
     object-fit: cover;
     object-position: center;
-    filter: brightness(0.9) saturate(0.8);  /* was 0.38 */
+    filter: brightness(0.9) saturate(0.8);
     display: block;
   }
 
@@ -109,6 +109,7 @@
     z-index: 2;
   }
 
+  /* Desktop: hero text positioned over the carousel */
   .hero-text {
     position: absolute;
     top: 50%;
@@ -116,6 +117,11 @@
     transform: translateY(-50%);
     max-width: 580px;
     z-index: 10;
+  }
+
+  /* Mobile: hero text will be moved below carousel via separate block */
+  .hero-text-mobile {
+    display: none;
   }
 
   .hero-pill {
@@ -641,147 +647,91 @@
   }
   .faq-item.open .faq-a { display: block; }
 
-  /* ── POPUP ────────────────────────────────── */
-  /* #popup-container {
-    display: none;
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%,-50%);
-    background: var(--white);
-    border: 1px solid var(--gray-200);
-    border-radius: var(--r-lg);
-    box-shadow: 0 32px 100px rgba(14,22,49,0.22);
-    z-index: 9999;
-    width: 90%;
-    max-width: 440px;
-    overflow: hidden;
-  }
-
-  .pop-header {
-    background: var(--gray-50);
-    padding: 18px 22px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--gray-200);
-  }
-  .pop-header h5 {
-    font-family: var(--font-display);
-    color: var(--text-primary);
-    font-size: 15px;
-    font-weight: 600;
-  }
-  .pop-close {
-    background: none; border: none;
-    color: var(--text-muted);
-    cursor: pointer; font-size: 20px; line-height: 1;
-    transition: color 0.2s;
-  }
-  .pop-close:hover { color: var(--text-primary); }
-
-  .popup-image { width: 100%; height: 220px; object-fit: cover; display: none; }
-  .popup-image.active { display: block; }
-
-  .pop-desc { padding: 18px 22px; }
-  .pop-desc p { font-size: 14px; color: var(--text-secondary); line-height: 1.68; }
-
-  .pop-controls { display: flex; gap: 8px; padding: 10px 22px 20px; }
-  .pop-btn {
-    flex: 1;
-    padding: 9px 12px;
-    border-radius: var(--r-sm);
-    border: 1px solid var(--gray-200);
-    background: var(--gray-50);
-    font-family: var(--font-body);
-    font-size: 13px; font-weight: 500;
-    cursor: pointer;
-    color: var(--text-secondary);
-    transition: var(--transition);
-  }
-  .pop-btn:hover { background: var(--gray-100); color: var(--text-primary); } */
-
-  /* ── RESPONSIVE ──────────────────────────── */
+  /* ===== MOBILE: Move hero text BELOW carousel ===== */
   @media (max-width: 768px) {
-    .hero-wrap .carousel-item img { height: 400px; }
-    .hero-text { left: 5%; right: 5%; max-width: 100%; }
-    .hero-title { font-size: 1.75rem; }
-    .section { padding: 64px 16px; }
-    .vid-wrapper iframe { height: 220px; }
-    .cta-band { padding: 44px 28px; }
-    .action-btn-cta { margin-left: 0; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); }
-  }
-
-
-  /* Stats Section - Original design restored, but flexbox on mobile */
-  .container-w {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-  }
-  
-  /* Original stats row styling - using grid for desktop (like original) */
-  .stats-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 30px;
-  }
-  
-  /* Original stat-cell shape - restored exactly as before */
-  .stat-cell {
-    text-align: center;
-    padding: 0 10px;
-    flex: 1;
-    min-width: 120px;
-  }
-  
-  /* Original typography styling */
-  .stat-num {
-    font-family: var(--font-display, 'Playfair Display', Georgia, serif);
-    font-size: 42px;
-    font-weight: 700;
-    color: var(--brand-blue, #1A56DB);
-    margin-bottom: 8px;
-    line-height: 1.2;
-  }
-  
-  .stat-label {
-    font-family: var(--font-body, 'DM Sans', system-ui, sans-serif);
-    font-size: 14px;
-    color: var(--brand-muted, #526080);
-    font-weight: 500;
-    letter-spacing: 0.3px;
-  }
-  
-  /* Optional animation class (sa-up) - keep your existing reveal */
-  .sa-up {
-    animation: fadeUp 0.6s ease forwards;
-  }
-  @keyframes fadeUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
+    /* Hide desktop overlay text */
+    .hero-wrap .hero-text {
+      display: none;
     }
-    to {
-      opacity: 1;
-      transform: translateY(0);
+    
+    /* Show mobile text block (below carousel) */
+    .hero-text-mobile {
+      display: block;
+      background: var(--white);
+      padding: 48px 24px;
+      text-align: center;
     }
-  }
-  
-  /* ===== FLEXBOX ON MOBILE (but keeping original shape) ===== */
-  @media (max-width: 768px) {
-    .stats-row {
-      display: flex;
-      flex-wrap: wrap;
+    
+    /* Adjust carousel image height for mobile */
+    .hero-wrap .carousel-item img {
+      height: 380px;
+    }
+    
+    /* Mobile hero text styles */
+    .hero-text-mobile .hero-pill {
       justify-content: center;
-      gap: 24px;
+      display: inline-flex;
+      margin-bottom: 20px;
+      background: var(--blue-50);
+      color: var(--blue-600);
+      border-color: var(--blue-100);
+    }
+    
+    .hero-text-mobile .hero-pill-dot {
+      background: var(--blue-400);
+    }
+    
+    .hero-text-mobile .hero-title {
+      color: var(--text-primary);
+      font-size: 1.8rem;
+    }
+    
+    .hero-text-mobile .hero-title em {
+      color: var(--blue-500);
+    }
+    
+    .hero-text-mobile .hero-sub {
+      color: var(--text-secondary);
+      max-width: 100%;
+      margin-bottom: 28px;
+    }
+    
+    .hero-text-mobile .hero-btns {
+      justify-content: center;
+    }
+    
+    .hero-text-mobile .btn-primary,
+    .hero-text-mobile .btn-ghost {
+      padding: 12px 24px;
+      font-size: 13px;
+    }
+    
+    .hero-text-mobile .btn-ghost {
+      color: var(--blue-500);
+      border-color: var(--blue-300);
+    }
+    
+    .hero-text-mobile .btn-ghost:hover {
+      background: var(--blue-50);
+    }
+    
+    /* Adjust overlay opacity on mobile (less important since text is gone) */
+    .hero-overlay {
+      background: linear-gradient(to bottom, rgba(3,8,46,0.3) 0%, rgba(3,8,46,0.5) 100%);
+    }
+    
+    /* Stats mobile adjustments */
+    .stats-row {
+      gap: 20px;
+      justify-content: center;
     }
     
     .stat-cell {
-      flex: 0 0 calc(50% - 24px);
+      flex: 0 0 calc(50% - 20px);
       min-width: 140px;
-      padding: 0 8px;
+      padding: 24px 16px;
+      background: #FFFFFF !important;
+      background-color: #FFFFFF !important;
     }
     
     .stat-num {
@@ -792,19 +742,44 @@
       font-size: 13px;
     }
   }
-  
+
   @media (max-width: 480px) {
+    .hero-wrap .carousel-item img {
+      height: 280px;
+    }
+    
+    .hero-text-mobile {
+      padding: 36px 20px;
+    }
+    
+    .hero-text-mobile .hero-title {
+      font-size: 1.5rem;
+    }
+    
+    .hero-text-mobile .hero-sub {
+      font-size: 13px;
+    }
+    
+    .hero-text-mobile .hero-btns .btn-primary,
+    .hero-text-mobile .hero-btns .btn-ghost {
+      padding: 10px 18px;
+      font-size: 12px;
+    }
+    
     .stats-row {
-      gap: 20px;
+      gap: 16px;
     }
     
     .stat-cell {
-      flex: 0 0 calc(50% - 20px);
+      flex: 0 0 calc(50% - 16px);
       min-width: 130px;
+      padding: 20px 12px;
+      background: #FFFFFF !important;
+      background-color: #FFFFFF !important;
     }
     
     .stat-num {
-      font-size: 32px;
+      font-size: 30px;
     }
     
     .stat-label {
@@ -812,38 +787,52 @@
     }
   }
 
+  /* Stats Section - PURE WHITE cards */
+  .sec-white {
+    background: white;
+  }
+
+  .stats-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 30px;
+  }
+
+  .stat-cell {
+    flex: 1;
+    min-width: 160px;
+    text-align: center;
+    padding: 32px 24px;
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    border: 1px solid rgba(26, 86, 219, 0.12);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .stat-cell:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.1);
+    border-color: rgba(26, 86, 219, 0.25);
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 </style>
-
-
-<!-- ── POPUP ────────────────────────────────────── -->
-<!--  
-<div id="popup-container">
-  <div class="pop-header">
-    <h5>Announcement</h5>
-    <button class="pop-close" onclick="closePopup()">&#10005;</button>
-  </div>
-  {% for image in advertisement_images %}
-  <img class="popup-image {% if forloop.first %}active{% endif %}"
-       src="{{ image.image.url }}" alt="Advertisement {{ forloop.counter }}"
-       onerror="handleImageError(this);">
-  <div class="desc pop-desc" {% if not forloop.first %}style="display:none;"{% endif %}>
-    <p>{{ image.desc }}</p>
-    {% if image.link %}
-    <a href="{{ image.link }}" class="btn-primary" style="margin-top:12px;font-size:13px;">Learn More &#8594;</a>
-    {% endif %}
-  </div>
-  {% endfor %}
-  <div class="pop-controls">
-    <button class="pop-btn" onclick="prevImage()">&#8592; Prev</button>
-    <button class="pop-btn" onclick="nextImage()">Next &#8594;</button>
-    <button class="pop-btn" onclick="closePopup()">Close</button>
-  </div>
-</div> -->
 
 
 <div id="main-content">
 
-<!-- ── HERO ─────────────────────────────────────── -->
+<!-- ── HERO CAROUSEL (Image only on mobile) ───────── -->
 <section class="hero-wrap">
   <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
     <ol class="carousel-indicators">
@@ -870,6 +859,8 @@
   </div>
 
   <div class="hero-overlay"></div>
+  
+  <!-- Desktop: hero text over the carousel -->
   <div class="hero-text">
     <div class="hero-pill">
       <div class="hero-pill-dot"></div>
@@ -886,6 +877,23 @@
     </div>
   </div>
 </section>
+
+<!-- Mobile: Hero text block BELOW the carousel image -->
+<div class="hero-text-mobile">
+  <div class="hero-pill">
+    <div class="hero-pill-dot"></div>
+    Abuja &bull; Est. 2010
+  </div>
+  <h1 class="hero-title">Where <em>Knowledge,</em><br>Faith &amp; Discipline<br>Come Together</h1>
+  <p class="hero-sub">Nurturing young minds from Pre-Nursery through Secondary, rooted in values that last a lifetime.</p>
+  <div class="hero-btns">
+    <a href="{% url 'sms:digital_form' %}" class="btn-primary">
+      Enroll Now
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" style="width:13px;height:13px;"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+    </a>
+    <a href="#program" class="btn-ghost">Our Programs</a>
+  </div>
+</div>
 
 
 <!-- ── ACTION BAR ───────────────────────────────── -->
@@ -917,7 +925,7 @@
     <div class="stats-row sa sa-up">
       <div class="stat-cell">
         <div class="stat-num">12+</div>
-        <div class="stat-label">Years of Excellence.</div>
+        <div class="stat-label">Years of Excellence</div>
       </div>
       <div class="stat-cell">
         <div class="stat-num">1,000+</div>
@@ -934,7 +942,6 @@
     </div>
   </div>
 </section>
-
 
 <!-- ── PROGRAMS ──────────────────────────────────── -->
 <section class="section sec-gray" id="program">
