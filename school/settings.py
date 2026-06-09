@@ -732,6 +732,7 @@ INTERNAL_IPS = [
 
 # NAVIGATE TO PROJECT:
 # cd /var/www/esteemcbt
+# source venv/bin/activate
 
 # RESTART SERVICES:
 # systemctl restart esteemcbt
