@@ -19,6 +19,9 @@ jobs:
           script: |
             cd /var/www/esteemcbt
 
+            # Clean up unused Docker resources to save disk space
+            docker system prune -f
+
             # Ensure REDIS_URL is set
             grep -q "REDIS_URL" .env || echo "REDIS_URL=${{ secrets.REDIS_URL }}" >> .env
 
@@ -32,7 +35,7 @@ jobs:
 
             # Deploy with Docker
             docker compose down
-            docker compose build --no-cache
+            docker compose build
             docker compose up -d
             sleep 15
 
@@ -46,7 +49,7 @@ jobs:
               echo "Deploy failed - rolling back"
               git reset --hard $LAST_WORKING
               docker compose down
-              docker compose build --no-cache
+              docker compose build
               docker compose up -d
               echo "Rollback complete"
               exit 1
