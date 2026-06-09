@@ -1,8 +1,10 @@
 name: Deploy to Hetzner
+
 on:
   push:
     branches:
       - development
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -15,12 +17,31 @@ jobs:
           key: ${{ secrets.HETZNER_SSH_KEY }}
           script: |
             cd /var/www/esteemcbt
+
+            # Save last working commit
+            LAST_WORKING=$(git rev-parse HEAD)
+            echo $LAST_WORKING > /tmp/esteemcbt_last_working
+
+            # Pull new code
             git fetch origin
             git reset --hard origin/development
+
+            # Deploy with Docker
             docker compose down
             docker compose build --no-cache
             docker compose up -d
-            sleep 5
-            docker compose exec -T web python manage.py migrate --noinput
-            docker compose exec -T web python manage.py collectstatic --noinput
-            docker compose ps
+            sleep 15
+
+            # Check if app is running
+            if docker compose ps | grep -q "Up"; then
+              echo "Deploy successful"
+              docker compose exec -T web python manage.py migrate --noinput
+              docker compose exec -T web python manage.py collectstatic --noinput
+              echo "Migration complete"
+            else
+              echo "Deploy failed - rolling back"
+              git reset --hard $LAST_WORKING
+              docker compose down
+              docker compose up -d
+              echo "Rollback complete"
+            fi
