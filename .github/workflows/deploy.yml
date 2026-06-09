@@ -18,15 +18,26 @@ jobs:
           key: ${{ secrets.HETZNER_SSH_KEY }}
           script: |
             cd /var/www/esteemcbt
+
+            # Ensure REDIS_URL is set
+            grep -q "REDIS_URL" .env || echo "REDIS_URL=${{ secrets.REDIS_URL }}" >> .env
+
+            # Save last working commit
             LAST_WORKING=$(git rev-parse HEAD)
             echo $LAST_WORKING > /tmp/esteemcbt_last_working
+
+            # Pull new code
             git fetch origin
             git reset --hard origin/development
+
+            # Deploy with Docker
             docker compose down
             docker compose build --no-cache
             docker compose up -d
             sleep 15
-            if docker compose ps | grep -q "Up"; then
+
+            # Check if app is running
+            if docker compose ps | grep -q "healthy"; then
               echo "Deploy successful"
               docker compose exec -T web python manage.py migrate --noinput
               docker compose exec -T web python manage.py collectstatic --noinput
@@ -35,6 +46,7 @@ jobs:
               echo "Deploy failed - rolling back"
               git reset --hard $LAST_WORKING
               docker compose down
+              docker compose build --no-cache
               docker compose up -d
               echo "Rollback complete"
               exit 1
@@ -65,3 +77,4 @@ jobs:
           to: addatainsight@gmail.com
           from: ${{ secrets.EMAIL_USER }}
           body: "EsteemCBT deploy FAILED and was rolled back to last working version. Commit: ${{ github.sha }}"
+          
