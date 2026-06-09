@@ -1,10 +1,8 @@
 name: Deploy Stable to Hetzner
-
 on:
   push:
     branches:
       - main-working
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -19,10 +17,10 @@ jobs:
             cd /var/www/esteemcbt
             git fetch origin
             git reset --hard origin/main-working
-            git checkout origin/main-working -- student/admin.py
-            source venv/bin/activate
-            pip install -r requirements.txt
-            python manage.py migrate
-            python manage.py collectstatic --noinput
-            systemctl restart esteemcbt
-            systemctl restart celery
+            docker compose down
+            docker compose build --no-cache
+            docker compose up -d
+            sleep 5
+            docker compose exec -T web python manage.py migrate --noinput
+            docker compose exec -T web python manage.py collectstatic --noinput
+            docker compose ps
