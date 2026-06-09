@@ -734,6 +734,9 @@ INTERNAL_IPS = [
 # cd /var/www/esteemcbt
 # source venv/bin/activate
 
+# USE THIS COMMAND TO PUSH TO HETZNER SERVER:
+# /var/www/esteemcbt/deploy.sh
+
 # RESTART SERVICES:
 # systemctl restart esteemcbt
 # systemctl restart celery
