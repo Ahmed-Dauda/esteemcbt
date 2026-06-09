@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to Hetzner
+        id: deploy
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.HETZNER_HOST }}
@@ -17,69 +18,50 @@ jobs:
           key: ${{ secrets.HETZNER_SSH_KEY }}
           script: |
             cd /var/www/esteemcbt
-
-            # Save last working commit
             LAST_WORKING=$(git rev-parse HEAD)
             echo $LAST_WORKING > /tmp/esteemcbt_last_working
-
-            # Pull new code
             git fetch origin
             git reset --hard origin/development
-
-            # Deploy with Docker
             docker compose down
             docker compose build --no-cache
             docker compose up -d
             sleep 15
-
-            # Check if app is running
             if docker compose ps | grep -q "Up"; then
               echo "Deploy successful"
               docker compose exec -T web python manage.py migrate --noinput
               docker compose exec -T web python manage.py collectstatic --noinput
               echo "Migration complete"
-
-              # Send success email
-              python3 -c "
-              import smtplib
-              from email.mime.text import MIMEText
-              import os
-              from dotenv import load_dotenv
-              load_dotenv('/var/www/esteemcbt/.env')
-              msg = MIMEText('EsteemCBT deployed successfully.')
-              msg['Subject'] = '✅ EsteemCBT Deploy Successful'
-              msg['From'] = os.getenv('DEFAULT_FROM_EMAIL')
-              msg['To'] = os.getenv('DEFAULT_FROM_EMAIL')
-              s = smtplib.SMTP('smtp.gmail.com', 587)
-              s.starttls()
-              s.login(os.getenv('EMAIL_HOST_USER'), os.getenv('EMAIL_HOST_PASSWORD'))
-              s.send_message(msg)
-              s.quit()
-              print('Email sent')
-              "
             else
               echo "Deploy failed - rolling back"
               git reset --hard $LAST_WORKING
               docker compose down
               docker compose up -d
-
-              # Send failure email
-              python3 -c "
-              import smtplib
-              from email.mime.text import MIMEText
-              import os
-              from dotenv import load_dotenv
-              load_dotenv('/var/www/esteemcbt/.env')
-              msg = MIMEText('EsteemCBT deploy FAILED. Rolled back to last working version.')
-              msg['Subject'] = '❌ EsteemCBT Deploy FAILED - Rolled Back'
-              msg['From'] = os.getenv('DEFAULT_FROM_EMAIL')
-              msg['To'] = os.getenv('DEFAULT_FROM_EMAIL')
-              s = smtplib.SMTP('smtp.gmail.com', 587)
-              s.starttls()
-              s.login(os.getenv('EMAIL_HOST_USER'), os.getenv('EMAIL_HOST_PASSWORD'))
-              s.send_message(msg)
-              s.quit()
-              print('Email sent')
-              "
               echo "Rollback complete"
+              exit 1
             fi
+
+      - name: Send success email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USER }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "✅ EsteemCBT Deploy Successful"
+          to: addatainsight@gmail.com
+          from: ${{ secrets.EMAIL_USER }}
+          body: "EsteemCBT deployed successfully on ${{ github.event.head_commit.timestamp }}. Commit: ${{ github.sha }}"
+
+      - name: Send failure email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USER }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "❌ EsteemCBT Deploy FAILED - Rolled Back"
+          to: addatainsight@gmail.com
+          from: ${{ secrets.EMAIL_USER }}
+          body: "EsteemCBT deploy FAILED and was rolled back to last working version. Commit: ${{ github.sha }}"
