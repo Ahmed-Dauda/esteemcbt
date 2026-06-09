@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'cloudinary',
     'django_select2',
+    'django_celery_beat',  # add this
     'embed_video',
     'xhtml2pdf',
     'tinymce',
@@ -271,7 +272,8 @@ from django.core.exceptions import ImproperlyConfigured
 import os
 import ssl
 
-REDIS_URL = os.environ.get("REDIS", "redis://127.0.0.1:6379/0")
+REDIS_URL = os.environ.get("REDIS_URL", "redis://host.docker.internal:6379/0")
+
 
 # Detect SSL Redis
 if REDIS_URL.startswith("rediss://"):
