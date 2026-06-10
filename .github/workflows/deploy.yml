@@ -19,6 +19,9 @@ jobs:
           script: |
             cd /var/www/esteemcbt
 
+            # Verify Redis is reachable
+            redis-cli ping | grep -q PONG || { echo "Redis is DOWN"; exit 1; }
+
             # Save last working commit
             LAST_WORKING=$(git rev-parse HEAD)
             echo $LAST_WORKING > /tmp/esteemcbt_last_working
@@ -28,8 +31,8 @@ jobs:
             git reset --hard origin/development
             source venv/bin/activate
             pip install -r requirements.txt
-            python manage.py migrate --noinput 2>&1 | tee /tmp/esteemcbt_deploy.log
-            python manage.py collectstatic --noinput 2>&1 | tee -a /tmp/esteemcbt_deploy.log
+            python manage.py migrate --noinput
+            python manage.py collectstatic --noinput
             systemctl restart esteemcbt
             sleep 15
 
@@ -42,11 +45,9 @@ jobs:
 
             if [ -z "$ERRORS" ]; then
               echo "Deploy successful"
-              # Get last 10 lines of app log for success email
               journalctl -u esteemcbt -n 10 --no-pager > /tmp/esteemcbt_success.log
             else
               echo "Deploy failed - rolling back"
-              # Capture error logs
               journalctl -u esteemcbt -n 20 --no-pager >> /tmp/esteemcbt_deploy.log
               echo -e "$ERRORS" >> /tmp/esteemcbt_deploy.log
               git reset --hard $LAST_WORKING

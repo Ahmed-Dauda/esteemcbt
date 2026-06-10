@@ -40,7 +40,6 @@ from datetime import datetime, timedelta
 from django.utils.timezone import make_aware
 from quiz.models import StudentExamSession
 
-
   
 def parse_ai_output(output):
     """Parse AI text into list of question dicts (question, option1..4, answer)"""
