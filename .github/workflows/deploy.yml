@@ -28,19 +28,31 @@ jobs:
             git reset --hard origin/development
             source venv/bin/activate
             pip install -r requirements.txt
-            python manage.py migrate --noinput
-            python manage.py collectstatic --noinput
+            python manage.py migrate --noinput 2>&1 | tee /tmp/esteemcbt_deploy.log
+            python manage.py collectstatic --noinput 2>&1 | tee -a /tmp/esteemcbt_deploy.log
             systemctl restart esteemcbt
             sleep 15
 
-            # Check if app is running
-            if systemctl is-active --quiet esteemcbt; then
+            # Check services
+            ERRORS=""
+            systemctl is-active --quiet esteemcbt || ERRORS="$ERRORS\n❌ esteemcbt (web) is DOWN"
+            systemctl is-active --quiet esteemcbt-celery || ERRORS="$ERRORS\n❌ esteemcbt-celery is DOWN"
+            systemctl is-active --quiet esteemcbt-celerybeat || ERRORS="$ERRORS\n❌ esteemcbt-celerybeat is DOWN"
+            systemctl is-active --quiet redis || ERRORS="$ERRORS\n❌ Redis is DOWN"
+
+            if [ -z "$ERRORS" ]; then
               echo "Deploy successful"
+              # Get last 10 lines of app log for success email
+              journalctl -u esteemcbt -n 10 --no-pager > /tmp/esteemcbt_success.log
             else
               echo "Deploy failed - rolling back"
+              # Capture error logs
+              journalctl -u esteemcbt -n 20 --no-pager >> /tmp/esteemcbt_deploy.log
+              echo -e "$ERRORS" >> /tmp/esteemcbt_deploy.log
               git reset --hard $LAST_WORKING
               systemctl restart esteemcbt
               echo "Rollback complete"
+              cat /tmp/esteemcbt_deploy.log
               exit 1
             fi
 
@@ -55,7 +67,18 @@ jobs:
           subject: "✅ EsteemCBT Deploy Successful"
           to: addatainsight@gmail.com
           from: ${{ secrets.EMAIL_USER }}
-          body: "EsteemCBT deployed successfully on ${{ github.event.head_commit.timestamp }}. Commit: ${{ github.sha }}"
+          body: |
+            EsteemCBT deployed successfully!
+
+            Commit: ${{ github.sha }}
+            Time: ${{ github.event.head_commit.timestamp }}
+            Message: ${{ github.event.head_commit.message }}
+
+            Services Status:
+            ✅ Web app: Running
+            ✅ Celery worker: Running
+            ✅ Celery beat: Running
+            ✅ Redis: Running
 
       - name: Send failure email
         if: failure()
@@ -68,4 +91,12 @@ jobs:
           subject: "❌ EsteemCBT Deploy FAILED - Rolled Back"
           to: addatainsight@gmail.com
           from: ${{ secrets.EMAIL_USER }}
-          body: "EsteemCBT deploy FAILED and was rolled back to last working version. Commit: ${{ github.sha }}"
+          body: |
+            EsteemCBT deploy FAILED and was rolled back!
+
+            Commit: ${{ github.sha }}
+            Time: ${{ github.event.head_commit.timestamp }}
+            Message: ${{ github.event.head_commit.message }}
+
+            Check the GitHub Actions logs for full error details:
+            https://github.com/Ahmed-Dauda/esteemcbt/actions
