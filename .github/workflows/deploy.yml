@@ -19,12 +19,6 @@ jobs:
           script: |
             cd /var/www/esteemcbt
 
-            # Clean up unused Docker resources to save disk space
-            docker system prune -f
-
-            # Ensure REDIS_URL is set
-            grep -q "REDIS_URL" .env || echo "REDIS_URL=${{ secrets.REDIS_URL }}" >> .env
-
             # Save last working commit
             LAST_WORKING=$(git rev-parse HEAD)
             echo $LAST_WORKING > /tmp/esteemcbt_last_working
@@ -32,25 +26,20 @@ jobs:
             # Pull new code
             git fetch origin
             git reset --hard origin/development
-
-            # Deploy with Docker
-            docker compose down
-            docker compose build
-            docker compose up -d
+            source venv/bin/activate
+            pip install -r requirements.txt
+            python manage.py migrate --noinput
+            python manage.py collectstatic --noinput
+            systemctl restart esteemcbt
             sleep 15
 
             # Check if app is running
-            if docker compose ps | grep -q "healthy"; then
+            if systemctl is-active --quiet esteemcbt; then
               echo "Deploy successful"
-              docker compose exec -T web python manage.py migrate --noinput
-              docker compose exec -T web python manage.py collectstatic --noinput
-              echo "Migration complete"
             else
               echo "Deploy failed - rolling back"
               git reset --hard $LAST_WORKING
-              docker compose down
-              docker compose build
-              docker compose up -d
+              systemctl restart esteemcbt
               echo "Rollback complete"
               exit 1
             fi
@@ -80,4 +69,3 @@ jobs:
           to: addatainsight@gmail.com
           from: ${{ secrets.EMAIL_USER }}
           body: "EsteemCBT deploy FAILED and was rolled back to last working version. Commit: ${{ github.sha }}"
-          
