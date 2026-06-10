@@ -448,6 +448,7 @@ def grade_exam_task(self, course_id, user_id, answers_dict):
         cache.set(cache_key, True, timeout=3600)
         cache.delete(f"user_exam_data:{user_id}")
         cache.delete(f"user_results:{user_id}")
+        cache.delete(f"take_exams_{user_id}")
 
         return f"Graded exam for student {user_id}, total marks: {total_marks}"
 
