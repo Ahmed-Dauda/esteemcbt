@@ -3580,87 +3580,6 @@ from django.core.cache import cache
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404
 
-# @login_required
-# def take_exams_view(request):
-#     user = request.user
-
-#     # -------------------------------
-#     # 1. Get student profile & school
-#     # -------------------------------
-#     student = get_object_or_404(
-#         NewUser.objects.select_related('school').only(
-#             'id', 'email', 'school__id', 'school__school_name', 'student_class'
-#         ),
-#         email=user.email
-#     )
-
-#     school = student.school
-#     student_class = student.student_class
-#     school_name = school.school_name if school else "Default School"
-
-#     # -------------------------------
-#     # 2. Cache subjects per class
-#     # -------------------------------
-#     cache_key = f"class_subjects_{user.id}"
-#     cached_data = cache.get(cache_key)
-
-#     if cached_data:
-#         sub_grade, class_subj = cached_data
-#     else:
-#         course_grade = (
-#             QMODEL.CourseGrade.objects
-#             .prefetch_related('subjects')
-#             .filter(students=user)
-#             .only('id', 'name')
-#             .first()
-#         )
-
-#         if course_grade:
-#             sub_grade = course_grade.name
-#             class_subj = list(course_grade.subjects.only('id', 'name'))
-#         else:
-#             sub_grade = None
-#             class_subj = []
-
-#         cache.set(cache_key, (sub_grade, class_subj), 300)  # 5 mins cache
-
-#     # -------------------------------
-#     # 3. Load ONLY relevant courses
-#     # -------------------------------
-#     courses = (
-#         Course.objects
-#         .filter(schools=school)
-#         .select_related('course_name', 'exam_type')
-#         .only(
-#             'id',
-#             'course_name__title',
-#             'exam_type__name',
-#             'session',
-#             'term'
-#         )
-#     )
-
-#     # -------------------------------
-#     # 4. Load results efficiently
-#     # -------------------------------
-#     user_results = (
-#         Result.objects
-#         .filter(student__user=user)
-#         .select_related('exam')
-#         .only('exam__id', 'exam__course_name', 'marks')
-#     )
-
-#     context = {
-#         'courses': courses,
-#         'class_subj': class_subj,
-#         'student_class': student_class,
-#         'school_name': school_name,
-#         'sub_grade': sub_grade,
-#         'user_results': user_results,
-#     }
-
-#     return render(request, 'student/dashboard/take_exams.html', context)
-
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Prefetch
@@ -3668,75 +3587,6 @@ from django.core.cache import cache
 import logging
 
 logger = logging.getLogger(__name__)
-
-# @login_required
-# def take_exams_view(request):
- 
-#     course = Course.objects.select_related('schools', 'course_name').only(
-#         'id', 'schools__name', 'course_name__title','session','term', 'exam_type__name'
-#     )
-
-#     current_user = request.user
-#     user_profile = get_object_or_404(
-#             Profile.objects.select_related('user').only(
-#                 'user__id', 'user__username', 'username', 'first_name', 'last_name'), user=request.user
-#         )
-#     # Get the results related to this user
-#     user_results =Result.objects.filter(student = user_profile).select_related('exam').only(
-#         'exam__id', 'exam__course_name', 'marks')
-
-#     # user_newuser = get_object_or_404(NewUser, email=request.user)
-#     user_newuser = get_object_or_404(
-#             NewUser.objects.select_related('school').only(
-#                 'id', 'email', 'school__id', 'school__name', 'student_class'
-#             ), 
-#             email=request.user.email)
-    
-#     if user_newuser is not None:
-#         school = user_newuser.school
-#         if school is not None:
-#             school_name = school.school_name
-#             # course_pay = school.course_pay
-#             # course_names = Course.objects.filter(course_pay=course_pay)
-#         else:
-#             school_name = "Default School Name"
-#             # course_names = []
-#             # course_pay = None
-#         student_class = user_newuser.student_class
-#     else:
-#         school_name = "Default School Name"
-#         student_class = "Default Class"
-#         # course_names = []
-#         # course_pay = None
-
-#     sub_grade = None  # Initialize sub_grade with a default value
-#     subjects = None  # Initialize subjects with a default value
-#     class_subj = []  # Initialize class_subj with a default value
-
-#     course_grade = QMODEL.CourseGrade.objects.prefetch_related('subjects').filter(students__in=[current_user]).first()
-
-#     if course_grade:
-#         # If the CourseGrade instance exists, you can access its name and subjects
-#         sub_grade = course_grade.name
-#         subjects = course_grade.subjects.all()
-#         for subject in subjects:
-#             class_subj.append(subject)
-#     else:
-#         print("No CourseGrade instance found for the current user.")
-
-#     context = {
-#         'courses': course,
-#         'class_subj': class_subj,
-#         'student_class': student_class,
-#         'school_name': school_name,
-#         "sub_grade": sub_grade,
-#         "subjects": subjects,
-#         # "course_names": course_names,
-#         # 'course_pay': course_pay,
-#         # "grades": QMODEL.CourseGrade.objects.all(),
-#         'user_results':user_results,
-#     }
-#     return render(request, 'student/dashboard/take_exams.html', context=context)
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
@@ -3747,103 +3597,6 @@ from django.db.models import Prefetch
 
 #before deleting the score
 
-# @login_required
-# def take_exams_view(request):
-#     user = request.user
-
-#     # 1️⃣ Single source of truth — NewUser has school + student_class
-#     user_newuser = (
-#         NewUser.objects
-#         .select_related('school')
-#         .filter(id=user.id)
-#         .first()
-#     )
-
-#     if not user_newuser or not user_newuser.school:
-#         return render(request, "student/dashboard/take_exams.html", {
-#             "courses": [], "subjects": [], "student_class": None,
-#             "school_name": None, "sub_grade": None,
-#             "user_results": {}, "taken_exam_ids": set(),
-#         })
-
-#     school        = user_newuser.school
-#     school_name   = school.school_name
-#     student_class = user_newuser.student_class
-
-#     # 2️⃣ Profile — scoped to same user, used only for Result lookup
-#     user_profile = Profile.objects.filter(user=user).first()
-
-#     # 3️⃣ Courses — scoped to school AND student's class
-#     courses_cache_key = f"courses:{school.id}:{student_class}"
-#     courses = cache.get(courses_cache_key)
-
-#     if not courses:
-#         courses = list(
-#             Course.objects
-#             .select_related('schools', 'course_name', 'session', 'term', 'exam_type')
-#             .filter(
-#                 schools=school,
-#                 course_grade__students=user,
-#                 course_grade__name=student_class,
-#                 course_grade__schools=school,
-#             )
-#             .distinct()
-#             .order_by('-id')[:30]
-#         )
-#         cache.set(courses_cache_key, courses, timeout=300)
-
-#     # 4️⃣ Results + CourseGrade batched
-#     user_data_key = f"user_exam_data:{user.id}"
-#     user_data = cache.get(user_data_key)
-
-#     if not user_data:
-#         course_ids = [c.id for c in courses]
-
-#         user_results = {}
-#         if user_profile and course_ids:
-#             results_qs = (
-#                 Result.objects
-#                 .filter(student=user_profile, exam_id__in=course_ids)
-#                 .values('exam_id', 'marks')
-#             )
-#             user_results = {int(r['exam_id']): r['marks'] for r in results_qs}
-
-#         course_grade = (
-#             CourseGrade.objects
-#             .prefetch_related('subjects')
-#             .filter(students=user, schools=school)
-#             .first()
-#         )
-#         subjects  = list(course_grade.subjects.all()) if course_grade else []
-#         sub_grade = course_grade.name if course_grade else None
-
-#         user_data = {
-#             'user_results': user_results,
-#             'subjects':     subjects,
-#             'sub_grade':    sub_grade,
-#         }
-#         cache.set(user_data_key, user_data, timeout=300)
-
-#     user_results   = user_data['user_results']
-#     subjects       = user_data['subjects']
-#     sub_grade      = user_data['sub_grade']
-#     taken_exam_ids = set(int(k) for k in user_results.keys())
-
-#     return render(
-#         request,
-#         "student/dashboard/take_exams.html",
-#         {
-#             "courses":        courses,
-#             "subjects":       subjects,
-#             "student_class":  student_class,
-#             "school_name":    school_name,
-#             "sub_grade":      sub_grade,
-#             "user_results":   user_results,
-#             "taken_exam_ids": taken_exam_ids,
-#         }
-#     )
-
-
 from django.core.cache import cache
 from django.db.models import Prefetch
 from quiz.models import Course
@@ -3852,14 +3605,114 @@ from django.core.cache import cache
 from django.db.models import Prefetch
 import concurrent.futures
 
+# @login_required
+# def take_exams_view(request):
+#     user = request.user
+#     cache_key = f"take_exams_{user.id}"
+
+#     cached = cache.get(cache_key)
+#     if cached:
+#         return render(request, "student/dashboard/take_exams.html", cached)
+
+#     user_newuser = (
+#         NewUser.objects
+#         .select_related('school')
+#         .filter(id=user.id)
+#         .only('id', 'school__id', 'school__school_name', 'student_class')
+#         .first()
+#     )
+
+#     empty_ctx = {
+#         "courses": [], "subjects": [], "student_class": None,
+#         "school_name": None, "sub_grade": None,
+#         "user_results": {}, "taken_exam_ids": set(),
+#         "taken_course_keys": set(),
+#     }
+
+#     if not user_newuser or not user_newuser.school:
+#         return render(request, "student/dashboard/take_exams.html", empty_ctx)
+
+#     school = user_newuser.school
+#     school_name = school.school_name
+#     student_class = user_newuser.student_class
+
+#     # 1. Fetch courses (one query)
+#     courses = list(
+#         Course.objects
+#         .select_related('schools', 'course_name', 'session', 'term', 'exam_type')
+#         .filter(
+#             schools=school,
+#             course_grade__students=user,
+#             course_grade__name=student_class,
+#             course_grade__schools=school,
+#         )
+#         .only('id', 'course_name', 'session_id', 'term_id', 'exam_type_id', 'schools_id')
+#         .distinct()
+#         .order_by('-id')[:30]
+#     )
+
+#     # 2. Fetch profile
+#     user_profile = (
+#         Profile.objects
+#         .filter(user=user)
+#         .only('id', 'user_id')
+#         .first()
+#     )
+
+#     # 3. Fetch CourseGrade (subjects)
+#     course_grade = (
+#         CourseGrade.objects
+#         .prefetch_related(
+#             Prefetch('subjects', queryset=Course.objects.only('id', 'course_name'))
+#         )
+#         .filter(students=user, schools=school, name=student_class)
+#         .only('id', 'name')
+#         .first()
+#     )
+
+#     # 4. Fetch results (one query)
+#     user_results = {}
+#     taken_course_keys = set()
+#     if user_profile and courses:
+#         course_ids = [c.id for c in courses]
+#         for r in (
+#             Result.objects
+#             .filter(student=user_profile, exam_id__in=course_ids)
+#             .values('exam_id', 'session_id', 'term_id', 'exam_type_id', 'marks')
+#         ):
+#             eid = int(r['exam_id'])
+#             user_results[eid] = r['marks']
+#             taken_course_keys.add(
+#                 f"{r['exam_id']}_{r['session_id']}_{r['term_id']}_{r['exam_type_id']}"
+#             )
+
+#     subjects = list(course_grade.subjects.all()) if course_grade else []
+#     sub_grade = course_grade.name if course_grade else None
+#     taken_exam_ids = set(user_results.keys())
+
+#     ctx = {
+#         "courses": courses,
+#         "subjects": subjects,
+#         "student_class": student_class,
+#         "school_name": school_name,
+#         "sub_grade": sub_grade,
+#         "user_results": user_results,
+#         "taken_exam_ids": taken_exam_ids,
+#         "taken_course_keys": taken_course_keys,
+#     }
+
+#     # Cache (convert sets to lists for JSON‑compatibility)
+#     cache.set(cache_key, {
+#         **ctx,
+#         "taken_exam_ids": list(taken_exam_ids),
+#         "taken_course_keys": list(taken_course_keys),
+#     }, timeout=10)
+
+#     return render(request, "student/dashboard/take_exams.html", ctx)
+
 @login_required
 def take_exams_view(request):
     user = request.user
-    cache_key = f"take_exams_{user.id}"
-
-    cached = cache.get(cache_key)
-    if cached:
-        return render(request, "student/dashboard/take_exams.html", cached)
 
     user_newuser = (
         NewUser.objects
@@ -3870,9 +3723,13 @@ def take_exams_view(request):
     )
 
     empty_ctx = {
-        "courses": [], "subjects": [], "student_class": None,
-        "school_name": None, "sub_grade": None,
-        "user_results": {}, "taken_exam_ids": set(),
+        "courses": [],
+        "subjects": [],
+        "student_class": None,
+        "school_name": None,
+        "sub_grade": None,
+        "user_results": {},
+        "taken_exam_ids": set(),
         "taken_course_keys": set(),
     }
 
@@ -3883,22 +3740,35 @@ def take_exams_view(request):
     school_name = school.school_name
     student_class = user_newuser.student_class
 
-    # 1. Fetch courses (one query)
+    # Fetch courses
     courses = list(
         Course.objects
-        .select_related('schools', 'course_name', 'session', 'term', 'exam_type')
+        .select_related(
+            'schools',
+            'course_name',
+            'session',
+            'term',
+            'exam_type'
+        )
         .filter(
             schools=school,
             course_grade__students=user,
             course_grade__name=student_class,
             course_grade__schools=school,
         )
-        .only('id', 'course_name', 'session_id', 'term_id', 'exam_type_id', 'schools_id')
+        .only(
+            'id',
+            'course_name',
+            'session_id',
+            'term_id',
+            'exam_type_id',
+            'schools_id'
+        )
         .distinct()
         .order_by('-id')[:30]
     )
 
-    # 2. Fetch profile
+    # Fetch user profile
     user_profile = (
         Profile.objects
         .filter(user=user)
@@ -3906,38 +3776,57 @@ def take_exams_view(request):
         .first()
     )
 
-    # 3. Fetch CourseGrade (subjects)
+    # Fetch CourseGrade and subjects
     course_grade = (
         CourseGrade.objects
         .prefetch_related(
-            Prefetch('subjects', queryset=Course.objects.only('id', 'course_name'))
+            Prefetch(
+                'subjects',
+                queryset=Course.objects.only('id', 'course_name')
+            )
         )
-        .filter(students=user, schools=school, name=student_class)
+        .filter(
+            students=user,
+            schools=school,
+            name=student_class
+        )
         .only('id', 'name')
         .first()
     )
 
-    # 4. Fetch results (one query)
+    # Fetch results
     user_results = {}
     taken_course_keys = set()
+
     if user_profile and courses:
-        course_ids = [c.id for c in courses]
-        for r in (
+        course_ids = [course.id for course in courses]
+
+        results = (
             Result.objects
             .filter(student=user_profile, exam_id__in=course_ids)
-            .values('exam_id', 'session_id', 'term_id', 'exam_type_id', 'marks')
-        ):
-            eid = int(r['exam_id'])
-            user_results[eid] = r['marks']
+            .values(
+                'exam_id',
+                'session_id',
+                'term_id',
+                'exam_type_id',
+                'marks'
+            )
+        )
+
+        for result in results:
+            exam_id = int(result['exam_id'])
+
+            user_results[exam_id] = result['marks']
+
             taken_course_keys.add(
-                f"{r['exam_id']}_{r['session_id']}_{r['term_id']}_{r['exam_type_id']}"
+                f"{result['exam_id']}_{result['session_id']}_{result['term_id']}_{result['exam_type_id']}"
             )
 
     subjects = list(course_grade.subjects.all()) if course_grade else []
     sub_grade = course_grade.name if course_grade else None
     taken_exam_ids = set(user_results.keys())
 
-    ctx = {
+    context = {
         "courses": courses,
         "subjects": subjects,
         "student_class": student_class,
@@ -3948,360 +3837,11 @@ def take_exams_view(request):
         "taken_course_keys": taken_course_keys,
     }
 
-    # Cache (convert sets to lists for JSON‑compatibility)
-    cache.set(cache_key, {
-        **ctx,
-        "taken_exam_ids": list(taken_exam_ids),
-        "taken_course_keys": list(taken_course_keys),
-    }, timeout=10)
-
-    return render(request, "student/dashboard/take_exams.html", ctx)
-
-
-#last update
-# @login_required
-# def take_exams_view(request):
-#     user = request.user
-
-#     user_newuser = (
-#         NewUser.objects
-#         .select_related('school')
-#         .filter(id=user.id)
-#         .first()
-#     )
-
-#     if not user_newuser or not user_newuser.school:
-#         return render(request, "student/dashboard/take_exams.html", {
-#             "courses": [], "subjects": [], "student_class": None,
-#             "school_name": None, "sub_grade": None,
-#             "user_results": {}, "taken_exam_ids": set(),
-#             "taken_course_keys": set(),
-#         })
-
-#     school        = user_newuser.school
-#     school_name   = school.school_name
-#     student_class = user_newuser.student_class
-
-#     user_profile = Profile.objects.filter(user=user).first()
-
-#     # ── Courses ──
-#     courses = list(
-#         Course.objects
-#         .select_related('schools', 'course_name', 'session', 'term', 'exam_type')
-#         .filter(
-#             schools=school,
-#             course_grade__students=user,
-#             course_grade__name=student_class,
-#             course_grade__schools=school,
-#         )
-#         .distinct()
-#         .order_by('-id')[:30]
-#     )
-
-#     # ── Results ──
-#     course_ids = [c.id for c in courses]
-#     user_results = {}
-#     taken_course_keys = set()
-
-#     if user_profile and course_ids:
-#         results_qs = (
-#             Result.objects
-#             .filter(student=user_profile, exam_id__in=course_ids)
-#             .values('exam_id', 'session_id', 'term_id', 'exam_type_id', 'marks')
-#         )
-#         for r in results_qs:
-#             user_results[int(r['exam_id'])] = r['marks']
-#             taken_course_keys.add(
-#                 f"{r['exam_id']}_{r['session_id']}_{r['term_id']}_{r['exam_type_id']}"
-#             )
-
-#     # ── CourseGrade ──
-#     course_grade = (
-#         CourseGrade.objects
-#         .prefetch_related('subjects')
-#         .filter(students=user, schools=school)
-#         .first()
-#     )
-#     subjects       = list(course_grade.subjects.all()) if course_grade else []
-#     sub_grade      = course_grade.name if course_grade else None
-#     taken_exam_ids = set(user_results.keys())
-
-#     logger.info(f"taken_course_keys: {taken_course_keys}")
-#     logger.info(f"course keys in template would be: {[f'{c.id}_{c.session_id}_{c.term_id}_{c.exam_type_id}' for c in courses]}")
-
-
-#     return render(
-#         request,
-#         "student/dashboard/take_exams.html",
-#         {
-#             "courses":           courses,
-#             "subjects":          subjects,
-#             "student_class":     student_class,
-#             "school_name":       school_name,
-#             "sub_grade":         sub_grade,
-#             "user_results":      user_results,
-#             "taken_exam_ids":    taken_exam_ids,
-#             "taken_course_keys": taken_course_keys,
-#         }
-#     )
-
-
-
-# @login_required
-# def take_exams_view(request):
-#     user = request.user
-
-#     # 1️⃣ Profile (single lightweight query)
-#     user_profile = (
-#         Profile.objects
-#         .select_related('user')
-#         .only('id', 'user_id', 'student_class')
-#         .filter(user=user)
-#         .first()
-#     )
-
-#     # 2️⃣ School + class (single query)
-#     user_newuser = (
-#         NewUser.objects
-#         .select_related('school')
-#         .only('student_class', 'school__school_name')
-#         .filter(email=user.email)
-#         .first()
-#     )
-
-#     school_name = (
-#         user_newuser.school.school_name
-#         if user_newuser and user_newuser.school
-#         else "Default School Name"
-#     )
-
-#     student_class = (
-#         user_newuser.student_class
-#         if user_newuser
-#         else "Default Class"
-#     )
-
-#     # 3️⃣ Courses (LIMITED + annotated)
-#     courses = (
-#         Course.objects
-#         .select_related('schools', 'course_name', 'session', 'term', 'exam_type')
-#         .only(
-#             'id',
-#             'course_name__title',
-#             'schools__name',
-#             'session',
-#             'term',
-#             'exam_type__name',
-#         )
-#         .order_by('-id')[:30]   # HARD CAP → protects DB
-#     )
-
-#     # 4️⃣ Results (EXISTS is cheap)
-#     user_results = (
-#         Result.objects
-#         .filter(student=user_profile)
-#         .only('id', 'marks', 'exam_id')
-#     )
-
-#     # 5️⃣ Grade & subjects (prefetch once)
-#     course_grade = (
-#         QMODEL.CourseGrade.objects
-#         .prefetch_related('subjects')
-#         .only('id', 'name')
-#         .filter(students=user)
-#         .first()
-#     )
-
-#     subjects = course_grade.subjects.all() if course_grade else []
-#     sub_grade = course_grade.name if course_grade else None
-
-#     context = {
-#         "courses": courses,
-#         "subjects": subjects,
-#         "class_subj": subjects,
-#         "student_class": student_class,
-#         "school_name": school_name,
-#         "sub_grade": sub_grade,
-#         "user_results": user_results,
-#     }
-
-#     return render(request, "student/dashboard/take_exams.html", context)
-
-
-# @login_required
-# def take_exams_view(request):
-#     current_user = request.user
-
-#     # Fetch user profile
-#     user_profile = Profile.objects.select_related('user').only(
-#         'user__id', 'user__username', 'username', 'first_name', 'last_name'
-#     ).filter(user=current_user).first()
-
-#     # Fetch user results
-#     user_results = Result.objects.filter(student=user_profile).select_related('exam').only(
-#         'exam__id', 'exam__course_name', 'marks'
-#     )
-
-#     # Fetch NewUser & school info
-#     user_newuser = NewUser.objects.select_related('school').only(
-#         'id', 'email', 'school__id', 'school__name', 'student_class'
-#     ).filter(email=current_user.email).first()
-
-#     school_name = user_newuser.school.school_name if user_newuser and user_newuser.school else "Default School Name"
-#     student_class = user_newuser.student_class if user_newuser else "Default Class"
-
-#     # Fetch courses the student can take
-#     course = Course.objects.select_related('schools', 'course_name').only(
-#         'id', 'schools__name', 'course_name__title','session','term', 'exam_type__name'
-#     )[:50]  # LIMIT to first 50 courses for speed
-
-#     # Fetch CourseGrade and subjects
-#     course_grade = QMODEL.CourseGrade.objects.prefetch_related('subjects').filter(students=current_user).first()
-#     subjects = course_grade.subjects.all() if course_grade else []
-#     sub_grade = course_grade.name if course_grade else None
-
-#     context = {
-#         'courses': course,
-#         'class_subj': subjects,
-#         'student_class': student_class,
-#         'school_name': school_name,
-#         "sub_grade": sub_grade,
-#         "subjects": subjects,
-#         'user_results': user_results,
-#     }
-#     return render(request, 'student/dashboard/take_exams.html', context=context)
-
-
-#working fine
-# @login_required
-# def take_exams_view(request):
- 
-#     course = Course.objects.select_related('schools', 'course_name').only(
-#         'id', 'schools__name', 'course_name__title','session','term', 'exam_type__name'
-#     )
-#     current_user = request.user
-#     user_profile = get_object_or_404(
-#             Profile.objects.select_related('user').only(
-#                 'user__id', 'user__username', 'username', 'first_name', 'last_name'), user=request.user
-#         )
-#     # Get the results related to this user
-#     user_results =Result.objects.filter(student = user_profile).select_related('exam').only(
-#         'exam__id', 'exam__course_name', 'marks')
-
-#     # user_newuser = get_object_or_404(NewUser, email=request.user)
-#     user_newuser = get_object_or_404(
-#             NewUser.objects.select_related('school').only(
-#                 'id', 'email', 'school__id', 'school__name', 'student_class'
-#             ), 
-#             email=request.user.email)
-    
-#     if user_newuser is not None:
-#         school = user_newuser.school
-#         if school is not None:
-#             school_name = school.school_name
-#             # course_pay = school.course_pay
-#             # course_names = Course.objects.filter(course_pay=course_pay)
-#         else:
-#             school_name = "Default School Name"
-#             # course_names = []
-#             # course_pay = None
-#         student_class = user_newuser.student_class
-#     else:
-#         school_name = "Default School Name"
-#         student_class = "Default Class"
-#         # course_names = []
-#         # course_pay = None
-
-#     sub_grade = None  # Initialize sub_grade with a default value
-#     subjects = None  # Initialize subjects with a default value
-#     class_subj = []  # Initialize class_subj with a default value
-
-#     course_grade = QMODEL.CourseGrade.objects.prefetch_related('subjects').filter(students__in=[current_user]).first()
-
-#     if course_grade:
-#         # If the CourseGrade instance exists, you can access its name and subjects
-#         sub_grade = course_grade.name
-#         subjects = course_grade.subjects.all()
-#         for subject in subjects:
-#             class_subj.append(subject)
-#     else:
-#         print("No CourseGrade instance found for the current user.")
-
-#     context = {
-#         'courses': course,
-#         'class_subj': class_subj,
-#         'student_class': student_class,
-#         'school_name': school_name,
-#         "sub_grade": sub_grade,
-#         "subjects": subjects,
-#         # "course_names": course_names,
-#         # 'course_pay': course_pay,
-#         # "grades": QMODEL.CourseGrade.objects.all(),
-#         'user_results':user_results,
-#     }
-#     return render(request, 'student/dashboard/take_exams.html', context=context)
-
-
-# @login_required
-# def take_exams_view(request):
-#     course = QMODEL.Course.objects.all()
-#     current_user = request.user
-#     user_profile = get_object_or_404(Profile, user=request.user)
-    
-#     # Get the results related to this user
-#     user_results = Result.objects.filter(student=user_profile)
-#     print('user_results',user_results)
-#     # Optionally, get the related courses for these results
-#     user_courses = Course.objects.filter(result__student=user_profile).distinct()
-#     print(' user_courses', user_courses)
-
-#     user_newuser = get_object_or_404(NewUser, email=request.user)
-#     if user_newuser is not None:
-#         school = user_newuser.school
-#         if school is not None:
-#             school_name = school.school_name
-#             course_pay = school.course_pay
-#             course_names = Course.objects.filter(course_pay=course_pay)
-#         else:
-#             school_name = "Default School Name"
-#             course_names = []
-#             course_pay = None
-#         student_class = user_newuser.student_class
-#     else:
-#         school_name = "Default School Name"
-#         student_class = "Default Class"
-#         course_names = []
-#         course_pay = None
-
-#     sub_grade = None  # Initialize sub_grade with a default value
-#     subjects = None  # Initialize subjects with a default value
-#     class_subj = []  # Initialize class_subj with a default value
-
-#     # Query the CourseGrade instance associated with the current user
-#     course_grade = QMODEL.CourseGrade.objects.filter(students__in=[current_user]).first()
-
-#     if course_grade:
-#         # If the CourseGrade instance exists, you can access its name and subjects
-#         sub_grade = course_grade.name
-#         subjects = course_grade.subjects.all()
-#         for subject in subjects:
-#             class_subj.append(subject)
-#     else:
-#         print("No CourseGrade instance found for the current user.")
-
-#     context = {
-#         'courses': course,
-#         'class_subj': class_subj,
-#         'student_class': student_class,
-#         'school_name': school_name,
-#         "sub_grade": sub_grade,
-#         "subjects": subjects,
-#         "course_names": course_names,
-#         'course_pay': course_pay,
-#         "grades": QMODEL.CourseGrade.objects.all(),
-#         'user_results':user_results,
-#     }
-#     return render(request, 'student/dashboard/take_exams.html', context=context)
+    return render(
+        request,
+        "student/dashboard/take_exams.html",
+        context,
+    )
 
 
 from datetime import datetime, timedelta
