@@ -86,7 +86,7 @@ from celery import shared_task
 from .models import GenerationJob, Course
 
 
-@shared_task(bind=True, max_retries=3, default_retry_delay=5)
+@shared_task(bind=True, max_retries=3, default_retry_delay=5, queue='esteemcbt')
 def generate_ai_questions_task(
     self, job_id, course_id, num_questions, difficulty, marks, learning_objectives
 ):
@@ -377,7 +377,7 @@ def _mark_attempt_submitted(course_id, user_id):
     )
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), max_retries=3, countdown=5)
+@shared_task(bind=True, autoretry_for=(Exception,), max_retries=3, countdown=5, queue='esteemcbt')
 def grade_exam_task(self, course_id, user_id, answers_dict):
     try:
         course = Course.objects.select_related(
