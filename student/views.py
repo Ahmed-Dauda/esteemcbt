@@ -3857,9 +3857,9 @@ def take_exams_view(request):
     user = request.user
     cache_key = f"take_exams_{user.id}"
 
-    cached = cache.get(cache_key)
-    if cached:
-        return render(request, "student/dashboard/take_exams.html", cached)
+   # cached = cache.get(cache_key)
+    #if cached:
+       # return render(request, "student/dashboard/take_exams.html", cached)
 
     user_newuser = (
         NewUser.objects
@@ -3949,11 +3949,11 @@ def take_exams_view(request):
     }
 
     # Cache (convert sets to lists for JSON‑compatibility)
-    cache.set(cache_key, {
-        **ctx,
-        "taken_exam_ids": list(taken_exam_ids),
-        "taken_course_keys": list(taken_course_keys),
-    }, timeout=10)
+    # cache.set(cache_key, {
+        # **ctx,
+        # "taken_exam_ids": list(taken_exam_ids),
+        # "taken_course_keys": list(taken_course_keys),
+    # }, timeout=10)
 
     return render(request, "student/dashboard/take_exams.html", ctx)
 
