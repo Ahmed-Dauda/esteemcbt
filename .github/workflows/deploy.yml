@@ -19,43 +19,92 @@ jobs:
           script: |
             cd /var/www/esteemcbt
 
-            # Verify Redis is reachable
-            redis-cli ping | grep -q PONG || { echo "Redis is DOWN"; exit 1; }
+            # ── Auto-fix function ─────────────────────────────────────────
+            auto_fix_service() {
+              SERVICE=$1
+              echo "Checking $SERVICE..."
+              if ! systemctl is-active --quiet $SERVICE; then
+                echo "$SERVICE is DOWN - attempting auto-restart"
+                systemctl restart $SERVICE
+                sleep 5
+                if systemctl is-active --quiet $SERVICE; then
+                  echo "$SERVICE auto-restarted successfully"
+                else
+                  echo "$SERVICE failed to restart"
+                  return 1
+                fi
+              fi
+              return 0
+            }
 
-            # Save last working commit
+            # ── Check and auto-fix Redis ──────────────────────────────────
+            if ! redis-cli ping | grep -q PONG; then
+              echo "Redis is DOWN - attempting auto-restart"
+              systemctl restart redis
+              sleep 5
+              if ! redis-cli ping | grep -q PONG; then
+                echo "Redis failed to restart - aborting deploy"
+                exit 1
+              fi
+              echo "Redis auto-restarted successfully"
+            fi
+
+            # ── Check and auto-fix Celery ─────────────────────────────────
+            auto_fix_service esteemcbt-celery || exit 1
+            auto_fix_service esteemcbt-celerybeat || exit 1
+
+            # ── Save last working commit ──────────────────────────────────
             LAST_WORKING=$(git rev-parse HEAD)
             echo $LAST_WORKING > /tmp/esteemcbt_last_working
 
-            # Pull new code
+            # ── Pull new code ─────────────────────────────────────────────
             git fetch origin
             git reset --hard origin/development
             source venv/bin/activate
             pip install -r requirements.txt
             python manage.py migrate --noinput
             python manage.py collectstatic --noinput
+
+            # ── Restart web app ───────────────────────────────────────────
             systemctl restart esteemcbt
             sleep 15
 
-            # Check services
+            # ── Verify all services after deploy ──────────────────────────
             ERRORS=""
-            systemctl is-active --quiet esteemcbt || ERRORS="$ERRORS\n❌ esteemcbt (web) is DOWN"
-            systemctl is-active --quiet esteemcbt-celery || ERRORS="$ERRORS\n❌ esteemcbt-celery is DOWN"
-            systemctl is-active --quiet esteemcbt-celerybeat || ERRORS="$ERRORS\n❌ esteemcbt-celerybeat is DOWN"
-            systemctl is-active --quiet redis || ERRORS="$ERRORS\n❌ Redis is DOWN"
 
-            if [ -z "$ERRORS" ]; then
-              echo "Deploy successful"
-              journalctl -u esteemcbt -n 10 --no-pager > /tmp/esteemcbt_success.log
-            else
-              echo "Deploy failed - rolling back"
-              journalctl -u esteemcbt -n 20 --no-pager >> /tmp/esteemcbt_deploy.log
-              echo -e "$ERRORS" >> /tmp/esteemcbt_deploy.log
+            if ! redis-cli ping | grep -q PONG; then
+              systemctl restart redis
+              sleep 5
+              redis-cli ping | grep -q PONG || ERRORS="$ERRORS\n❌ Redis is DOWN"
+            fi
+
+            if ! systemctl is-active --quiet esteemcbt; then
+              echo "Web app down after deploy - rolling back"
               git reset --hard $LAST_WORKING
               systemctl restart esteemcbt
-              echo "Rollback complete"
-              cat /tmp/esteemcbt_deploy.log
+              sleep 10
+              systemctl is-active --quiet esteemcbt || ERRORS="$ERRORS\n❌ Web app DOWN even after rollback"
+              ERRORS="$ERRORS\n⚠️ Code rolled back to last working version"
+            fi
+
+            if ! systemctl is-active --quiet esteemcbt-celery; then
+              systemctl restart esteemcbt-celery
+              sleep 5
+              systemctl is-active --quiet esteemcbt-celery || ERRORS="$ERRORS\n❌ Celery worker DOWN"
+            fi
+
+            if ! systemctl is-active --quiet esteemcbt-celerybeat; then
+              systemctl restart esteemcbt-celerybeat
+              sleep 5
+              systemctl is-active --quiet esteemcbt-celerybeat || ERRORS="$ERRORS\n❌ Celery beat DOWN"
+            fi
+
+            if [ -n "$ERRORS" ]; then
+              echo -e "$ERRORS"
               exit 1
             fi
+
+            echo "Deploy successful - all services running"
 
       - name: Send success email
         if: success()
@@ -89,15 +138,18 @@ jobs:
           server_port: 587
           username: ${{ secrets.EMAIL_USER }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "❌ EsteemCBT Deploy FAILED - Rolled Back"
+          subject: "❌ EsteemCBT Deploy FAILED - Action Required"
           to: addatainsight@gmail.com
           from: ${{ secrets.EMAIL_USER }}
           body: |
-            EsteemCBT deploy FAILED and was rolled back!
+            EsteemCBT deploy encountered issues!
 
             Commit: ${{ github.sha }}
             Time: ${{ github.event.head_commit.timestamp }}
             Message: ${{ github.event.head_commit.message }}
 
-            Check the GitHub Actions logs for full error details:
+            Auto-fix was attempted but could not resolve all issues.
+            Manual intervention may be required.
+
+            Check full logs:
             https://github.com/Ahmed-Dauda/esteemcbt/actions
