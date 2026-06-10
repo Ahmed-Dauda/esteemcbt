@@ -91,8 +91,8 @@ def generate_ai_questions_task(
     self, job_id, course_id, num_questions, difficulty, marks, learning_objectives
 ):
     """
-    Celery task to generate AI questions for a school-specific course.
-    Guaranteed to return EXACTLY num_questions unique questions.
+    Celery task to generate AI questions for a school-specific course
+    Guaranteed to return EXACTLY num_questions unique questions
     """
     job = GenerationJob.objects.get(job_id=job_id)
     job.status = "processing"
