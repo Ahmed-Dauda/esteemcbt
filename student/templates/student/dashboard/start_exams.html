@@ -805,7 +805,7 @@ function doSubmit(reason) {
         violation_limit: "Exam submitted due to repeated violations.",
       };
       alert(messages[reason] || "Quiz submitted successfully!");
-      window.location.href = response.redirect_url || URLS.viewResult;
+      setTimeout(function() { window.location.href = response.redirect_url || URLS.viewResult; }, 5000);
     },
     error: function (xhr) {
       examAlreadySubmitted = false;
@@ -942,7 +942,7 @@ function updateNetworkStatus() {
     networkStatusEl.className = 'online';
     if (netLabel) netLabel.textContent = 'Connected';
     if (netDot) netDot.style.background = '#4ade80';
-    setTimeout(() => { networkStatusEl.style.display = 'none'; }, 3000);
+    setTimeout(() => { networkStatusEl.style.display = 'none'; }, 5000);
   } else {
     networkStatusEl.textContent = "You are offline. Wait for internet before submitting.";
     networkStatusEl.className = 'offline';
