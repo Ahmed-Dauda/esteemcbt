@@ -50,8 +50,8 @@ jobs:
             fi
 
             # ── Check and auto-fix Celery ─────────────────────────────────
-            auto_fix_service esteemcbt-celery || exit 1
-            auto_fix_service esteemcbt-celerybeat || exit 1
+            auto_fix_service celery-esteemcbt || exit 1
+            auto_fix_service celerybeat-esteemcbt || exit 1
 
             # ── Save last working commit ──────────────────────────────────
             LAST_WORKING=$(git rev-parse HEAD)
@@ -65,8 +65,9 @@ jobs:
             python manage.py migrate --noinput
             python manage.py collectstatic --noinput
 
-            # ── Restart web app ───────────────────────────────────────────
+            # ── Restart web app and celery ────────────────────────────────
             systemctl restart esteemcbt
+            systemctl restart celery-esteemcbt
             sleep 15
 
             # ── Verify all services after deploy ──────────────────────────
@@ -87,16 +88,16 @@ jobs:
               ERRORS="$ERRORS\n⚠️ Code rolled back to last working version"
             fi
 
-            if ! systemctl is-active --quiet esteemcbt-celery; then
-              systemctl restart esteemcbt-celery
+            if ! systemctl is-active --quiet celery-esteemcbt; then
+              systemctl restart celery-esteemcbt
               sleep 5
-              systemctl is-active --quiet esteemcbt-celery || ERRORS="$ERRORS\n❌ Celery worker DOWN"
+              systemctl is-active --quiet celery-esteemcbt || ERRORS="$ERRORS\n❌ Celery worker DOWN"
             fi
 
-            if ! systemctl is-active --quiet esteemcbt-celerybeat; then
-              systemctl restart esteemcbt-celerybeat
+            if ! systemctl is-active --quiet celerybeat-esteemcbt; then
+              systemctl restart celerybeat-esteemcbt
               sleep 5
-              systemctl is-active --quiet esteemcbt-celerybeat || ERRORS="$ERRORS\n❌ Celery beat DOWN"
+              systemctl is-active --quiet celerybeat-esteemcbt || ERRORS="$ERRORS\n❌ Celery beat DOWN"
             fi
 
             if [ -n "$ERRORS" ]; then
