@@ -62,11 +62,18 @@ jobs:
             git reset --hard origin/development
             source venv/bin/activate
             pip install -r requirements.txt
+            # ── Database backup before migrate ────────────────────────────
+            BACKUP_FILE=/var/backups/esteemcbt/backup_$(date +%Y%m%d_%H%M%S).sql
+            pg_dump -U esteemcbt_user -h localhost -p 5433 esteemcbt > $BACKUP_FILE
+            echo "Backup saved: $BACKUP_FILE ($(du -sh $BACKUP_FILE | cut -f1))"
+            # Keep only last 7 backups
+            ls -t /var/backups/esteemcbt/*.sql | tail -n +8 | xargs rm -f 2>/dev/null
+
             python manage.py migrate --noinput
             python manage.py collectstatic --noinput
 
             # ── Restart web app and celery ────────────────────────────────
-            systemctl restart esteemcbt
+            systemctl reload esteemcbt 2>/dev/null || systemctl restart esteemcbt
             systemctl restart celery-esteemcbt
             sleep 15
 
