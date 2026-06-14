@@ -763,3 +763,4 @@ INTERNAL_IPS = [
 # scp root@204.168.237.20:/var/www/esteemcbt/quiz/tasks.py ./quiz/tasks.py
 # scp root@204.168.237.20:/var/www/esteemcbt/school/settings.py ./school/settings.py
 
+ff?
