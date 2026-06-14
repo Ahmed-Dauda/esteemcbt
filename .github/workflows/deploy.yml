@@ -123,7 +123,7 @@ jobs:
           username: ${{ secrets.EMAIL_USER }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "✅ EsteemCBT Deploy Successful"
-          to: addatainsight@gmail.com
+          to: codethinkersa@gmail.com
           from: ${{ secrets.EMAIL_USER }}
           body: |
             EsteemCBT deployed successfully!
@@ -147,7 +147,7 @@ jobs:
           username: ${{ secrets.EMAIL_USER }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "❌ EsteemCBT Deploy FAILED - Action Required"
-          to: addatainsight@gmail.com
+          to: codethinkersa@gmail.com
           from: ${{ secrets.EMAIL_USER }}
           body: |
             EsteemCBT deploy encountered issues!
