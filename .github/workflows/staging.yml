@@ -1,0 +1,93 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Staging
+        id: deploy
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            cd /var/www/esteemcbt-staging
+            git fetch origin
+            git reset --hard origin/staging
+            source venv/bin/activate
+            pip install -r requirements.txt
+            python manage.py migrate --noinput
+            python manage.py collectstatic --noinput
+
+            # ── Restart staging services ──────────────────────────────────
+            systemctl restart esteemcbt-staging
+            systemctl restart celery-esteemcbt-staging
+            sleep 10
+
+            # ── Verify staging is up ──────────────────────────────────────
+            ERRORS=""
+
+            if ! systemctl is-active --quiet esteemcbt-staging; then
+              ERRORS="$ERRORS\n❌ Staging web app is DOWN"
+            fi
+
+            if ! systemctl is-active --quiet celery-esteemcbt-staging; then
+              ERRORS="$ERRORS\n❌ Staging Celery worker is DOWN"
+            fi
+
+            if [ -n "$ERRORS" ]; then
+              echo -e "$ERRORS"
+              exit 1
+            fi
+
+            echo "Staging deploy successful - test at https://staging.esteemlearningcenter.com"
+
+      - name: Send success email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USER }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "✅ EsteemCBT Staging Deploy Successful"
+          to: codethinkersa@gmail.com
+          from: ${{ secrets.EMAIL_USER }}
+          body: |
+            EsteemCBT staging deployed successfully!
+
+            Commit: ${{ github.sha }}
+            Time: ${{ github.event.head_commit.timestamp }}
+            Message: ${{ github.event.head_commit.message }}
+
+            ✅ Test it at: https://staging.esteemlearningcenter.com
+
+            When satisfied, merge staging → main-working to deploy to production.
+
+      - name: Send failure email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USER }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "❌ EsteemCBT Staging Deploy FAILED"
+          to: codethinkersa@gmail.com
+          from: ${{ secrets.EMAIL_USER }}
+          body: |
+            EsteemCBT staging deploy failed!
+
+            Commit: ${{ github.sha }}
+            Time: ${{ github.event.head_commit.timestamp }}
+            Message: ${{ github.event.head_commit.message }}
+
+            Fix the issue before merging to main-working/production.
+
+            Check logs: https://github.com/Ahmed-Dauda/esteemcbt/actions
