@@ -1,4 +1,4 @@
-name: Deploy to Hetzner
+name: Deploy to Staging (Development)
 
 on:
   push:
@@ -9,7 +9,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to Hetzner
+      - name: Deploy to Staging
         id: deploy
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -17,94 +17,31 @@ jobs:
           username: ${{ secrets.HETZNER_USER }}
           key: ${{ secrets.HETZNER_SSH_KEY }}
           script: |
-            cd /var/www/esteemcbt
-
-            # ── Auto-fix function ─────────────────────────────────────────
-            auto_fix_service() {
-              SERVICE=$1
-              echo "Checking $SERVICE..."
-              if ! systemctl is-active --quiet $SERVICE; then
-                echo "$SERVICE is DOWN - attempting auto-restart"
-                systemctl restart $SERVICE
-                sleep 5
-                if systemctl is-active --quiet $SERVICE; then
-                  echo "$SERVICE auto-restarted successfully"
-                else
-                  echo "$SERVICE failed to restart"
-                  return 1
-                fi
-              fi
-              return 0
-            }
-
-            # ── Check and auto-fix Redis ──────────────────────────────────
-            if ! redis-cli ping | grep -q PONG; then
-              echo "Redis is DOWN - attempting auto-restart"
-              systemctl restart redis
-              sleep 5
-              if ! redis-cli ping | grep -q PONG; then
-                echo "Redis failed to restart - aborting deploy"
-                exit 1
-              fi
-              echo "Redis auto-restarted successfully"
-            fi
-
-            # ── Check and auto-fix Celery ─────────────────────────────────
-            auto_fix_service celery-esteemcbt || exit 1
-            auto_fix_service celerybeat-esteemcbt || exit 1
-
-            # ── Save last working commit ──────────────────────────────────
-            LAST_WORKING=$(git rev-parse HEAD)
-            echo $LAST_WORKING > /tmp/esteemcbt_last_working
+            cd /var/www/esteemcbt-staging
 
             # ── Pull new code ─────────────────────────────────────────────
             git fetch origin
             git reset --hard origin/development
             source venv/bin/activate
             pip install -r requirements.txt
-            # ── Database backup before migrate ────────────────────────────
-            BACKUP_FILE=/var/backups/esteemcbt/backup_$(date +%Y%m%d_%H%M%S).sql
-            pg_dump -U esteemcbt_user -h localhost -p 5433 esteemcbt > $BACKUP_FILE
-            echo "Backup saved: $BACKUP_FILE ($(du -sh $BACKUP_FILE | cut -f1))"
-            # Keep only last 7 backups
-            ls -t /var/backups/esteemcbt/*.sql | tail -n +8 | xargs rm -f 2>/dev/null
 
             python manage.py migrate --noinput
             python manage.py collectstatic --noinput
 
-            # ── Restart web app and celery ────────────────────────────────
-            systemctl reload esteemcbt 2>/dev/null || systemctl restart esteemcbt
-            systemctl restart celery-esteemcbt
-            sleep 15
+            # ── Restart staging services ──────────────────────────────────
+            systemctl restart esteemcbt-staging
+            systemctl restart celery-esteemcbt-staging
+            sleep 10
 
-            # ── Verify all services after deploy ──────────────────────────
+            # ── Verify staging is up ──────────────────────────────────────
             ERRORS=""
 
-            if ! redis-cli ping | grep -q PONG; then
-              systemctl restart redis
-              sleep 5
-              redis-cli ping | grep -q PONG || ERRORS="$ERRORS\n❌ Redis is DOWN"
+            if ! systemctl is-active --quiet esteemcbt-staging; then
+              ERRORS="$ERRORS\n❌ Staging web app is DOWN"
             fi
 
-            if ! systemctl is-active --quiet esteemcbt; then
-              echo "Web app down after deploy - rolling back"
-              git reset --hard $LAST_WORKING
-              systemctl restart esteemcbt
-              sleep 10
-              systemctl is-active --quiet esteemcbt || ERRORS="$ERRORS\n❌ Web app DOWN even after rollback"
-              ERRORS="$ERRORS\n⚠️ Code rolled back to last working version"
-            fi
-
-            if ! systemctl is-active --quiet celery-esteemcbt; then
-              systemctl restart celery-esteemcbt
-              sleep 5
-              systemctl is-active --quiet celery-esteemcbt || ERRORS="$ERRORS\n❌ Celery worker DOWN"
-            fi
-
-            if ! systemctl is-active --quiet celerybeat-esteemcbt; then
-              systemctl restart celerybeat-esteemcbt
-              sleep 5
-              systemctl is-active --quiet celerybeat-esteemcbt || ERRORS="$ERRORS\n❌ Celery beat DOWN"
+            if ! systemctl is-active --quiet celery-esteemcbt-staging; then
+              ERRORS="$ERRORS\n❌ Staging Celery worker is DOWN"
             fi
 
             if [ -n "$ERRORS" ]; then
@@ -112,7 +49,7 @@ jobs:
               exit 1
             fi
 
-            echo "Deploy successful - all services running"
+            echo "Development deployed to staging - test at https://staging.esteemlearningcenter.com"
 
       - name: Send success email
         if: success()
@@ -122,21 +59,19 @@ jobs:
           server_port: 587
           username: ${{ secrets.EMAIL_USER }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "✅ EsteemCBT Deploy Successful"
-          to: addatainsight@gmail.com
+          subject: "✅ EsteemCBT Staging Deploy Successful"
+          to: codethinkersa@gmail.com
           from: ${{ secrets.EMAIL_USER }}
           body: |
-            EsteemCBT deployed successfully!
+            EsteemCBT development branch deployed to staging!
 
             Commit: ${{ github.sha }}
             Time: ${{ github.event.head_commit.timestamp }}
             Message: ${{ github.event.head_commit.message }}
 
-            Services Status:
-            ✅ Web app: Running
-            ✅ Celery worker: Running
-            ✅ Celery beat: Running
-            ✅ Redis: Running
+            ✅ Test it at: https://staging.esteemlearningcenter.com
+
+            When satisfied, merge development → staging → main-working for production.
 
       - name: Send failure email
         if: failure()
@@ -146,18 +81,16 @@ jobs:
           server_port: 587
           username: ${{ secrets.EMAIL_USER }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "❌ EsteemCBT Deploy FAILED - Action Required"
-          to: addatainsight@gmail.com
+          subject: "❌ EsteemCBT Staging Deploy FAILED"
+          to: codethinkersa@gmail.com
           from: ${{ secrets.EMAIL_USER }}
           body: |
-            EsteemCBT deploy encountered issues!
+            EsteemCBT staging deploy failed!
 
             Commit: ${{ github.sha }}
             Time: ${{ github.event.head_commit.timestamp }}
             Message: ${{ github.event.head_commit.message }}
 
-            Auto-fix was attempted but could not resolve all issues.
-            Manual intervention may be required.
+            Fix the issue before merging to production.
 
-            Check full logs:
-            https://github.com/Ahmed-Dauda/esteemcbt/actions
+            Check logs: https://github.com/Ahmed-Dauda/esteemcbt/actions
