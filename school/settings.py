@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'cloudinary',
     'django_select2',
+    'django_celery_beat',  # add this
     'embed_video',
     'xhtml2pdf',
     'tinymce',
@@ -188,6 +189,12 @@ SOCIALACCOUNT_PROVIDERS = {
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+import os
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+)
 
 
 # import cloudinary
@@ -271,7 +278,8 @@ from django.core.exceptions import ImproperlyConfigured
 import os
 import ssl
 
-REDIS_URL = os.environ.get("REDIS", "redis://127.0.0.1:6379/0")
+REDIS_URL = os.environ.get("REDIS_URL", "redis://host.docker.internal:6379/0")
+
 
 # Detect SSL Redis
 if REDIS_URL.startswith("rediss://"):
@@ -692,4 +700,66 @@ INTERNAL_IPS = [
     "127.0.0.1",
     # ...
 ]
+
+
+# Then log into your local admin at http://127.0.0.1:8000/admin/ with:
+# Username: addatainsight@gmail.com
+# Password: admin1234
+
+# DEPLOYMENT QUICK REFERENCE
+# ===========================
+
+# DEPLOY NEW CHANGES (development branch):
+# git checkout development
+# git add .
+# git commit -m "your message"
+# git push origin development
+
+# ROLLBACK TO STABLE (main-working branch):
+# git checkout main-working
+# git commit --allow-empty -m "rollback to stable"
+# git push origin main-working
+
+# BEFORE MERGING - TAG CURRENT STABLE FIRST:
+# git checkout main-working
+# git tag v1.0-stable        (increment version each time e.g v1.1-stable, v1.2-stable)
+# git push origin v1.0-stable
+
+# MERGE DEVELOPMENT INTO MAIN-WORKING:
+# git checkout main-working
+# git merge development
+# git push origin main-working
+
+# IF SOMETHING BREAKS AFTER MERGE - REVERT TO TAG:
+# git reset --hard v1.0-stable
+# git push origin main-working --force
+
+# SSH INTO HETZNER SERVER:
+# ssh root@204.168.237.20
+# MyServer2026!Coolify
+
+# NAVIGATE TO PROJECT:
+# cd /var/www/esteemcbt
+# source venv/bin/activate
+
+# USE THIS COMMAND TO PUSH TO HETZNER SERVER:
+# /var/www/esteemcbt/deploy.sh
+
+# RESTART SERVICES:
+# systemctl restart esteemcbt
+# systemctl restart celery
+
+# CHECK LOGS:
+# journalctl -u esteemcbt -n 20 --no-pager
+
+# CHECK SERVICE STATUS:
+# systemctl status esteemcbt
+# systemctl status celery
+# systemctl status redis
+# systemctl status nginx.
+
+
+# get server changes on local machine
+# scp root@204.168.237.20:/var/www/esteemcbt/quiz/tasks.py ./quiz/tasks.py
+# scp root@204.168.237.20:/var/www/esteemcbt/school/settings.py ./school/settings.py
 

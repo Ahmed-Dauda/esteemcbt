@@ -1,9 +1,9 @@
-name: Deploy to Staging (Development)
+name: Deploy to Staging
 
 on:
   push:
     branches:
-      - development
+      - staging
 
 jobs:
   deploy:
@@ -18,13 +18,10 @@ jobs:
           key: ${{ secrets.HETZNER_SSH_KEY }}
           script: |
             cd /var/www/esteemcbt-staging
-
-            # ── Pull new code ─────────────────────────────────────────────
             git fetch origin
-            git reset --hard origin/development
+            git reset --hard origin/staging
             source venv/bin/activate
             pip install -r requirements.txt
-
             python manage.py migrate --noinput
             python manage.py collectstatic --noinput
 
@@ -49,7 +46,7 @@ jobs:
               exit 1
             fi
 
-            echo "Development deployed to staging - test at https://staging.esteemlearningcenter.com"
+            echo "Staging deploy successful - test at https://staging.esteemlearningcenter.com"
 
       - name: Send success email
         if: success()
@@ -60,10 +57,10 @@ jobs:
           username: ${{ secrets.EMAIL_USER }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "✅ EsteemCBT Staging Deploy Successful"
-          to: codethinkersa@gmail.com
+          to: addatainsight@gmail.com
           from: ${{ secrets.EMAIL_USER }}
           body: |
-            EsteemCBT development branch deployed to staging!
+            EsteemCBT staging deployed successfully!
 
             Commit: ${{ github.sha }}
             Time: ${{ github.event.head_commit.timestamp }}
@@ -71,7 +68,7 @@ jobs:
 
             ✅ Test it at: https://staging.esteemlearningcenter.com
 
-            When satisfied, merge development → staging → main-working for production.
+            When satisfied, merge staging → development to deploy to production.
 
       - name: Send failure email
         if: failure()
@@ -82,7 +79,7 @@ jobs:
           username: ${{ secrets.EMAIL_USER }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "❌ EsteemCBT Staging Deploy FAILED"
-          to: codethinkersa@gmail.com
+          to: addatainsight@gmail.com
           from: ${{ secrets.EMAIL_USER }}
           body: |
             EsteemCBT staging deploy failed!
@@ -91,6 +88,6 @@ jobs:
             Time: ${{ github.event.head_commit.timestamp }}
             Message: ${{ github.event.head_commit.message }}
 
-            Fix the issue before merging to production.
+            Fix the issue before merging to development/production.
 
             Check logs: https://github.com/Ahmed-Dauda/esteemcbt/actions

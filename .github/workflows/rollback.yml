@@ -1,0 +1,104 @@
+name: Deploy Stable to Hetzner
+
+on:
+  push:
+    branches:
+      - main-working
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Stable to Hetzner
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            cd /var/www/esteemcbt
+            git fetch origin
+            git reset --hard origin/main-working
+            source venv/bin/activate
+            pip install -r requirements.txt
+            python manage.py migrate --noinput
+            python manage.py collectstatic --noinput
+
+            # ── Restart all services ──────────────────────────────────────
+            systemctl restart esteemcbt
+            systemctl restart celery-esteemcbt
+            systemctl restart celerybeat-esteemcbt
+            sleep 10
+
+            # ── Verify all services ───────────────────────────────────────
+            ERRORS=""
+
+            if ! systemctl is-active --quiet esteemcbt; then
+              ERRORS="$ERRORS\n❌ Web app is DOWN"
+            fi
+
+            if ! systemctl is-active --quiet celery-esteemcbt; then
+              ERRORS="$ERRORS\n❌ Celery worker is DOWN"
+            fi
+
+            if ! systemctl is-active --quiet celerybeat-esteemcbt; then
+              ERRORS="$ERRORS\n❌ Celery beat is DOWN"
+            fi
+
+            if ! redis-cli ping | grep -q PONG; then
+              ERRORS="$ERRORS\n❌ Redis is DOWN"
+            fi
+
+            if [ -n "$ERRORS" ]; then
+              echo -e "$ERRORS"
+              exit 1
+            fi
+
+            echo "Rollback successful - all services running"
+
+      - name: Send success email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USER }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "✅ EsteemCBT Rollback Successful"
+          to: addatainsight@gmail.com
+          from: ${{ secrets.EMAIL_USER }}
+          body: |
+            EsteemCBT rolled back to stable (main-working) successfully!
+
+            Commit: ${{ github.sha }}
+            Time: ${{ github.event.head_commit.timestamp }}
+            Message: ${{ github.event.head_commit.message }}
+
+            Services Status:
+            ✅ Web app: Running
+            ✅ Celery worker: Running
+            ✅ Celery beat: Running
+            ✅ Redis: Running
+
+      - name: Send failure email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USER }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "❌ EsteemCBT Rollback FAILED - Action Required"
+          to: addatainsight@gmail.com
+          from: ${{ secrets.EMAIL_USER }}
+          body: |
+            EsteemCBT rollback to stable encountered issues!
+
+            Commit: ${{ github.sha }}
+            Time: ${{ github.event.head_commit.timestamp }}
+            Message: ${{ github.event.head_commit.message }}
+
+            Manual intervention required.
+
+            Check full logs:
+            https://github.com/Ahmed-Dauda/esteemcbt/actions

@@ -13,7 +13,7 @@
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
         <!-- Google Fonts -->
-        <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     
         <!-- Prism CSS -->
         <link rel="stylesheet" type="text/css" href="/static/sms/prism.css">
@@ -23,7 +23,6 @@
 
         <script src="https://cdn.jsdelivr.net/npm/@tinydrive/mathjax@5/index.min.js"></script>
 
-    
         <!-- MDB -->
         <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.2.0/mdb.min.css" rel="stylesheet"/>
     
@@ -44,533 +43,812 @@
         <!-- jQuery -->
         <script src="https://code.jquery.com/jquery-3.6.4.js" integrity="sha256-a9jBBRygX1Bh5lt8GZjXDzyOB+bWve9EiO7tROUtj/E=" crossorigin="anonymous"></script>
     </head>
-    
+
 <style>
+  /* ============================================================
+     DESIGN TOKENS
+  ============================================================ */
+  :root {
+    --navy:       #0d1b3e;
+    --navy-mid:   #162554;
+    --gold:       #2255D4;
+    --gold-light: #6B9BFF;
+    --gold-pale:  #EEF4FF;
+    --white:      #ffffff;
+    --off-white:  #f8f7f3;
+    --text-dark:  #1a1a2e;
+    --text-mid:   #4a4a6a;
+    --radius-sm:  6px;
+    --radius-md:  12px;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --nav-h:      76px;
+    --shadow-gold: 0 4px 24px rgba(34,85,212,0.18);
+    --shadow-nav:  0 2px 32px rgba(13,27,62,0.18);
+  }
 
- .navbar-fixed-top {
+  /* ============================================================
+     BASE
+  ============================================================ */
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    padding-top: var(--nav-h);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-dark);
+    background: var(--off-white);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============================================================
+     NAVBAR
+  ============================================================ */
+  .navbar {
     position: fixed;
-    top:0;
-    right: 0;
-    left: 0;
+    top: 0; left: 0; right: 0;
     z-index: 1030;
- }
-
- body {
-   padding-top: 70px;
-   color: black;
-  
-   
- }
- .nav-item{
-    font-size: 30px;
- }
-
- /* flip cards  */
- 
-/* our partners  */
-.flip-card {
-  perspective: 1000px;
-  width: 200px; /* Adjust the width as needed */
-  height: 200px; /* Adjust the height as needed */
-}
-
-.flip-card-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  text-align: center;
-  transition: transform 0.6s;
-  transform-style: preserve-3d;
-}
-
-.flip-card:hover .flip-card-inner {
-  transform: rotateY(180deg);
-}
-
-.flip-card-front, .flip-card-back {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-}
-
-.flip-card-back {
-  transform: rotateY(180deg);
-}
-
-/* Navbar Styles */
-
-
-.navbar {
-    min-height: 50px;
-    margin-bottom: 20px;
-    background-color: #333;
-    color: #fff;
-    padding: 5px 0;
-    position: fixed;
-    top:0;
-    right: 0;
-    left: 0;
-    z-index: 1030;
-}
-
-.containernav {
+    height: var(--nav-h);
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(34,85,212,0.15);
+    box-shadow: var(--shadow-nav);
+    padding: 0;
+    margin: 0;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    max-width: 1200px;
+  }
+
+  /* top blue accent line */
+  .navbar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--navy), var(--gold), var(--gold-light), var(--gold), var(--navy));
+  }
+
+  .containernav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1280px;
     margin: 0 auto;
-}
+    padding: 0 32px;
+  }
 
-.brand-logo {
-    font-size: 1.5rem;
+  /* Brand */
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     text-decoration: none;
-    color: #fff;
-    margin-right: 200px;
-}
+    flex-shrink: 0;
+  }
 
-.menu-toggle {
-    display: none; /* Hide the menu toggle by default */
-}
+  .brand-logo img {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 0 3px rgba(34,85,212,0.10);
+    transition: box-shadow var(--transition);
+  }
 
-.nav-links {
+  .brand-logo:hover img {
+    box-shadow: 0 0 0 5px rgba(34,85,212,0.18);
+  }
+
+  .brand-name {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+
+  .brand-name span:first-child {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--navy);
+    letter-spacing: 0.01em;
+  }
+
+  .brand-name span:last-child {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* Nav links */
+  .nav-links {
     list-style: none;
     display: flex;
-   
-}
-
-.nav-links li {
-    margin-right: 20px;
-
-}
-
-.nav-links a {
-    text-decoration: none;
-    color: #333;
-    transition: color 0.3s ease;
-}
-
-.nav-links a:hover {
-    color: #ffcc00;
-}
-
-/* Media Query for Mobile View */
-@media screen and (max-width: 768px) {
-    .menu-toggle {
-        display: block; /* Display the menu toggle for mobile view */
-        cursor: pointer;
-    }
-
-    .nav-links {
-        display: none; /* Hide the nav links by default on mobile view */
-        flex-direction: column;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        width: 100%;
-        background-color: #333;
-        padding: 10px 0;
-        text-align: center;
-    }
-
-    .nav-links.show {
-        display: flex; /* Show the nav links when the 'show' class is added */
-    }
-
-    .nav-links li {
-        margin: 10px 0;
-    }
-
-    .menu-toggle span {
-        display: block;
-        width: 25%;
-        height: 3px;
-        background-color: #fff;
-        margin: 5px;
-       
-    }
-}
-/* end of navcss */
-
-/* Navbar Styles */
-
-
-.navbar {
-    background-color: white;
-    color: #fff;
-    padding: 20px 0;
-    position: fixed;
-    top:0;
-    right: 0;
-    left: 0;
-    z-index: 1030;
-}
-
-.containernav {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    max-width: 1200px;
-    margin: 0 auto;
-}
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+  }
 
-.brand-logo {
-    font-size: 1.5rem;
-    text-decoration: none;
-    color: #fff;
-}
+  .nav-links li {
+    position: relative;
+  }
 
-.menu-toggle {
-    display: none; /* Hide the menu toggle by default */
-}
-
-.nav-links {
-    list-style: none;
+  .nav-links > li > a,
+  .nav-links > li > .dropdown-toggle {
     display: flex;
-}
-
-.nav-links li {
-    margin-right: 20px;
-}
-
-.nav-links a {
+    align-items: center;
+    gap: 4px;
+    padding: 8px 13px;
+    font-size: 0.83rem;
+    font-weight: 500;
+    color: var(--text-dark);
     text-decoration: none;
-    color: #0f0e0e;
-    transition: color 0.3s ease;
-   
-}
+    border-radius: var(--radius-sm);
+    transition: color var(--transition), background var(--transition);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    cursor: pointer;
+  }
 
-.nav-links a:hover {
-    color: #ffcc00;
-}
+  .nav-links > li > a:hover,
+  .nav-links > li > .dropdown-toggle:hover {
+    color: var(--gold);
+    background: rgba(34,85,212,0.06);
+  }
 
-/* Media Query for Mobile View */
-@media screen and (max-width: 768px) {
-    .menu-toggle {
-        display: block; /* Display the menu toggle for mobile view */
-        cursor: pointer;
-        margin-left: -10px;
-    }
+  /* active-style pill for current page */
+  .nav-links > li > a.active {
+    color: var(--navy);
+    background: var(--gold-pale);
+    font-weight: 600;
+  }
+
+  /* dropdown chevron */
+  .dropdown-toggle::after {
+    display: inline-block;
+    content: '';
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid currentColor;
+    transition: transform var(--transition);
+    margin-left: 2px;
+    flex-shrink: 0;
+  }
+
+  .dropdown:hover .dropdown-toggle::after,
+  .dropdown .dropdown-toggle.open::after {
+    transform: rotate(180deg);
+  }
+
+  /* Dropdown menus */
+  .nav-links .dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    min-width: 200px;
+    background: var(--white);
+    border: 1px solid rgba(34,85,212,0.15);
+    border-radius: var(--radius-md);
+    box-shadow: 0 16px 40px rgba(13,27,62,0.16);
+    padding: 6px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition), transform var(--transition);
+    z-index: 200;
+  }
+
+  .nav-links .dropdown-menu.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .nav-links .dropdown-menu .dropdown-item {
+    display: block;
+    padding: 9px 14px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: background var(--transition), color var(--transition);
+  }
+
+  .nav-links .dropdown-menu .dropdown-item:hover {
+    background: var(--gold-pale);
+    color: var(--navy);
+  }
+
+  /* Divider before "Contact Us" */
+  .nav-links .nav-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(34,85,212,0.2);
+    margin: 0 4px;
+    flex-shrink: 0;
+  }
+
+  .nav-cta a {
+    background: var(--navy) !important;
+    color: var(--white) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 8px 16px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.03em;
+  }
+
+  .nav-cta a:hover {
+    background: var(--gold) !important;
+    color: var(--white) !important;
+  }
+
+  /* Hamburger */
+  .menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 42px;
+    height: 42px;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(34,85,212,0.25);
+    background: transparent;
+    transition: background var(--transition);
+    flex-shrink: 0;
+  }
+
+  .menu-toggle:hover { background: rgba(34,85,212,0.06); }
+
+  .menu-toggle span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--navy);
+    border-radius: 2px;
+    transition: transform var(--transition), opacity var(--transition);
+  }
+
+  .menu-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .menu-toggle.open span:nth-child(2) { opacity: 0; }
+  .menu-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  /* ============================================================
+     RESPONSIVE NAVBAR
+  ============================================================ */
+  @media (max-width: 1024px) {
+    .containernav { padding: 0 20px; }
+    .nav-links > li > a,
+    .nav-links > li > .dropdown-toggle { padding: 7px 10px; font-size: 0.8rem; }
+  }
+
+  @media (max-width: 768px) {
+    .menu-toggle { display: flex; }
 
     .nav-links {
-        display: none; /* Hide the nav links by default on mobile view */
-        flex-direction: column;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        width: 100%;
-        background-color: #333;
-        padding: 10px 0;
-        text-align: center;
+      display: none;
+      position: absolute;
+      top: var(--nav-h);
+      left: 0; right: 0;
+      background: var(--white);
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      padding: 12px 16px 20px;
+      border-bottom: 3px solid var(--gold);
+      box-shadow: 0 16px 40px rgba(13,27,62,0.12);
+      max-height: calc(100vh - var(--nav-h));
+      overflow-y: auto;
     }
 
-    .nav-links.show {
-        display: flex; /* Show the nav links when the 'show' class is added */
+    .nav-links.show { display: flex; }
+
+    .nav-links > li > a,
+    .nav-links > li > .dropdown-toggle {
+      padding: 12px 16px;
+      font-size: 0.92rem;
+      border-radius: var(--radius-sm);
     }
 
-    .nav-links li {
-        margin: 10px 0;
+    .nav-links .dropdown-menu {
+      position: static;
+      transform: none !important;
+      opacity: 1;
+      pointer-events: auto;
+      box-shadow: none;
+      border: none;
+      border-left: 2px solid var(--gold-pale);
+      border-radius: 0;
+      padding: 0 0 0 12px;
+      margin: 4px 0 4px 16px;
+      display: none;
     }
 
-    .menu-toggle span {
-        display: block;
-        width: 25px;
-        height: 3px;
-        background-color: #fff;
-        margin: 5px;
+    .nav-links .dropdown-menu.show { display: block; }
+
+    .nav-links .nav-divider { display: none; }
+
+    .nav-cta a {
+      display: block;
+      text-align: center;
+      margin-top: 8px;
     }
-}
+  }
 
-.brand-logo img {
-    margin-left: 30px;
-    max-width: 150px; /* Adjust the maximum width as needed */
-    height: auto;
-    border-radius: 50%; /* Makes the image round */
-    overflow: hidden; /* Ensures the image stays within the rounded bounds */
-}
+  /* ============================================================
+     FOOTER
+  ============================================================ */
+  .site-footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.85);
+    font-family: 'DM Sans', sans-serif;
+    position: relative;
+    overflow: hidden;
+  }
 
-/* drop down menu  */
+  /* geometric background accent */
+  .site-footer::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 320px; height: 320px;
+    border: 60px solid rgba(34,85,212,0.07);
+    border-radius: 50%;
+    pointer-events: none;
+  }
 
-.logo {
-    width: 30px;
-    height: 30px;
-}
+  .site-footer::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -60px;
+    width: 240px; height: 240px;
+    border: 40px solid rgba(34,85,212,0.05);
+    border-radius: 50%;
+    pointer-events: none;
+  }
 
-/* Adjust menu toggle size for smaller screens */
-.menu-toggle {
-  
-    display: none; /* Hide menu toggle by default */
-    width: 30px; /* Set width of menu toggle */
-    height: 30px; /* Set height of menu toggle */
-    cursor: pointer; /* Add cursor pointer */
-    position: absolute; /* Position menu toggle */
-    top: 50%; /* Position menu toggle vertically */
-    right: 40px; /* Position menu toggle to the right */
-    transform: translateY(-50%); /* Center menu toggle vertically */
-}
+  /* top blue rule */
+  .footer-top-rule {
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold), var(--gold-light), var(--gold), transparent);
+  }
 
-/* Menu toggle icon styling */
-.menu-toggle span {
-    display: block; /* Display span as block element */
-    height: 3px; /* Set height of menu toggle bars */
-    background-color: white; /* Set color of menu toggle bars */
-    margin-bottom: 5px; /* Add space between menu toggle bars */
-}
+  .footer-inner {
+    padding: 60px 0 36px;
+    position: relative;
+    z-index: 1;
+  }
 
-/* Media query for small screens */
-@media only screen and (max-width: 768px) {
-    /* Adjust logo size for small screens */
-    .logo {
-        width: 20px;
-        height: 20px;
-        
-    }
-    
-    /* Show menu toggle for small screens */
-    .menu-toggle {
-        display: block;
-    }
-    
-    /* Hide regular menu for small screens */
-    .nav-links {
-        display: none;
-    }
-}
+  .footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
 
+  .footer-brand img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    object-fit: cover;
+  }
 
+  .footer-brand-text span:first-child {
+    display: block;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .footer-brand-text span:last-child {
+    font-size: 0.7rem;
+    color: var(--gold-light);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .footer-tagline {
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: rgba(255,255,255,0.65);
+    max-width: 280px;
+  }
+
+  .footer-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gold-light);
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    position: relative;
+  }
+
+  .footer-heading::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 32px; height: 2px;
+    background: var(--gold);
+    border-radius: 2px;
+  }
+
+  .footer-address {
+    font-size: 0.84rem;
+    line-height: 1.75;
+    color: rgba(255,255,255,0.65);
+  }
+
+  .footer-address strong {
+    display: block;
+    color: rgba(255,255,255,0.85);
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 10px;
+    margin-bottom: 2px;
+  }
+
+  .footer-address a {
+    color: var(--gold-light);
+    text-decoration: none;
+    transition: color var(--transition);
+  }
+  .footer-address a:hover { color: var(--white); }
+
+  .footer-hours-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.84rem;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 6px;
+  }
+
+  .footer-hours-row i {
+    color: var(--gold-light);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  .footer-social-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 14px;
+  }
+
+  .footer-socials {
+    display: flex;
+    gap: 10px;
+  }
+
+  .footer-socials a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(34,85,212,0.35);
+    color: rgba(255,255,255,0.7);
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: background var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
+  }
+
+  .footer-socials a:hover {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--white);
+    transform: translateY(-3px);
+  }
+
+  .footer-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    margin: 0;
+  }
+
+  .footer-bottom {
+    padding: 18px 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-copyright {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+  }
+
+  .footer-copyright span {
+    color: var(--gold-light);
+    font-weight: 600;
+  }
+
+  /* ============================================================
+     FLIP CARDS (preserved, untouched logic)
+  ============================================================ */
+  .flip-card {
+    perspective: 1000px;
+    width: 200px;
+    height: 200px;
+  }
+  .flip-card-inner {
+    position: relative;
+    width: 100%; height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+  }
+  .flip-card:hover .flip-card-inner { transform: rotateY(180deg); }
+  .flip-card-front, .flip-card-back {
+    position: absolute;
+    width: 100%; height: 100%;
+    backface-visibility: hidden;
+  }
+  .flip-card-back { transform: rotateY(180deg); }
 </style>
-
-
 
 <body>
 
-    <nav class="navbar" >
-        <div class="containernav" >
-            <a href="{% url 'sms:homepage' %}" class="brand-logo" style="">
-                <img src="/static/sms/images/esteemlogo.jpg" class="logo" alt="School Logo">  
-            </a>
-            
+  <!-- ============================================================
+       NAVBAR
+  ============================================================ -->
+  <nav class="navbar">
+    <div class="containernav">
 
-            <div class="menu-toggle" id="menu-toggle" style="background-color: rgb(22, 22, 190);">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-            
-            <ul style="background-color: white" class="nav-links" id="nav-links">
-                <li><a href="{% url 'sms:homepage' %}">Home</a></li>
-                <li><a href="{% url 'sms:about_us' %}">About Us</a></li>
-                <li><a href="{% url 'sms:digital_form' %}">Application Form</a></li>
-                <li><a href="{% url 'sms:pdf_gallery' %}">Gallery</a></li>
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" id="dropdownMenuLink">Success story</a>
-                    <ul class="dropdown-menu bg-primary" aria-labelledby="dropdownMenuLink">
-                        <li><a class="dropdown-item" href="{% url 'sms:awards' %}">Awards</a></li>
-                        <!-- <li><a class="dropdown-item" href="#">Old students</a></li> -->
-                        <!-- Add more dropdown options as needed -->
-                    </ul>
-                </li>
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" id="dropdownMenuLink2">Staff</a>
-                    <ul class="dropdown-menu bg-primary" aria-labelledby="dropdownMenuLink">
-                        <li><a class="dropdown-item" href="{% url 'sms:directors' %}">Board of Directors</a></li>
-                        <li><a class="dropdown-item" href="{% url 'sms:managements' %}">Managements Team</a></li>
-                        <!-- Add more dropdown options as needed -->
-                    </ul>
-                </li> 
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" id="dropdownMenuLinkschoolportal">Portal</a>
-                    <ul class="dropdown-menu bg-primary" aria-labelledby="dropdownMenuLink">
-                        <li><a class="dropdown-item" href="{% url 'teacher:student-dashboard' %}">Student Login</a></li>
-                        <li><a class="dropdown-item" href="{% url 'teacher:teacher-dashboard' %}">Staff Login</a></li>
-                        <!-- Add more dropdown options as needed -->
-                    </ul>
-                </li> 
-                
-                <li><a href="{% url 'sms:clubs' %}">Clubs</a></li>
-               
-                <li><a href="#contact-section">Contact Us</a></li>
-            </ul>
+      <!-- Brand -->
+      <a href="{% url 'sms:homepage' %}" class="brand-logo">
+        <img src="/static/sms/images/esteemlogo.jpg" alt="Esteem Logo">
+        <div class="brand-name">
+          <span>Esteem Learning Centre</span>
+          <span>Abuja, Nigeria</span>
         </div>
-    </nav>
-    
+      </a>
 
-            {% block content %} 
+      <!-- Hamburger -->
+      <div class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation" role="button" tabindex="0">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
 
+      <!-- Nav links -->
+      <ul class="nav-links" id="nav-links">
 
-            {% endblock %} 
-  
-                    
-            <!-- End of Main Content -->
+        <li><a href="{% url 'sms:homepage' %}">Home</a></li>
+        <li><a href="{% url 'sms:about_us' %}">About Us</a></li>
+        <li><a href="{% url 'sms:digital_form' %}">Apply</a></li>
+        <li><a href="{% url 'sms:pdf_gallery' %}">Gallery</a></li>
 
+        <!-- Success story -->
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" id="dropdownMenuLink">Success Story</a>
+          <ul class="dropdown-menu bg-primary" aria-labelledby="dropdownMenuLink">
+            <li><a class="dropdown-item" href="{% url 'sms:awards' %}">Awards</a></li>
+          </ul>
+        </li>
 
-            <!-- Footer -->
-           <br><br><br><br>
-        
-           <footer id="contact-section" class="sticky-footer" style="background-color: rgb(22, 22, 190); padding: 20px 0;">
-            <div class="container">
-                <div class="row">
-                    <!-- School Information: Our School -->
-                    <div class="col-md-4 mb-4">
-                        <h4 class="text-white">Our School</h4>
-                        <p class="text-white">Esteem Nursery and Primary School Wuse was the first school established under the Esteem banner. Located in the heart of Abuja, the Federal Capital Territory, Nigeria, Esteem also has a new site at Lokogoma, which comprises Pre-Nursery, Nursery, Primary School, and Boy’s College.</p>
-                    </div>
-                    <!-- School Information: Esteem School, Lokogoma -->
-                    <div class="col-md-4 mb-4">
-                        <h4 class="text-white">Esteem School, Lokogoma</h4>
-                        <p class="text-white">Pre-Nursery | Nursery | Primary</p>
-                        <p class="text-white">Address:<br>
-                        Plot 70, Cadastral Zone, C09 Lokogoma District,<br>
-                        Before River Valley Estate,<br>
-                        Abuja – Nigeria.</p>
-                        <p class="text-white">Telephone:<br>
-                        08065499838 & 08032108232</p>
-                    </div>
-                    <!-- School Information: Esteem School, Wuse -->
-                    <div class="col-md-4 mb-4">
-                        <h4 class="text-white">Esteem School, Wuse</h4>
-                        <p class="text-white">Pre-Nursery | Nursery | Primary</p>
-                        <p class="text-white">Address:<br>
-                        No. 7, Safi Street,<br>
-                        Wuse Zone 4,<br>
-                        Abuja – Nigeria.</p>
-                        <p class="text-white">Telephone:<br>
-                        08110000863 & 08110000864</p>
-                    </div>
-                    <!-- Working Hours -->
-                    <div class="col-md-4 mb-4">
-                        <h5 class="text-white">Working Hours</h5>
-                        <p class="text-white">Our support hotline is available 24 hours a day.</p>
-                        <p class="text-white">Enquiries: <a href="mailto:esteemboyscollegeabuja@gmail.com" class="text-white">esteemboyscollegeabuja@gmail.com</a></p>
-                        <p class="text-white">Monday-Friday: 7:30 am to 4:00 pm</p>
-                    </div>
-                    <!-- Social Media Icons -->
-                    <div class="col-md-4 mb-4">
-                        <div class="social-media-icons">
-                            <h5 class="text-white">Connect With Us</h5>
-                            <br>
-                            <a class="btn btn-white btn-social mx-2" href="https://youtube.com/@esteemlearningcentreabuja9514?si=Yxu1-4CSmlEKokrN" role="button"><i class="fab fa-youtube"></i></a>        
-                            <a class="btn btn-white btn-social mx-2" href="https://www.facebook.com/eis.abuja?mibextid=ZbWKwL"><i class="fab fa-facebook"></i></a>
-                        </div>
-                    </div>
-                    <!-- Copyright Text -->
-                    <div class="">
-                        <div class="copyright text-center text-white ">
-                            <span>&copy; <span id="current-year"></span> Esteem Learning Centre, Abuja</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </footer>
-        
-    
-        
-        <script>
-            document.getElementById('current-year').textContent = new Date().getFullYear();
-        </script>
-        
-        
-        
-            <!-- End of Footer -->
+        <!-- Staff -->
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" id="dropdownMenuLink2">Staff</a>
+          <ul class="dropdown-menu bg-primary" aria-labelledby="dropdownMenuLink2">
+            <li><a class="dropdown-item" href="{% url 'sms:directors' %}">Board of Directors</a></li>
+            <li><a class="dropdown-item" href="{% url 'sms:managements' %}">Management Team</a></li>
+          </ul>
+        </li>
 
-        </div>
-        <!-- End of Content Wrapper -->
+        <!-- Portal -->
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" id="dropdownMenuLinkschoolportal">Portal</a>
+          <ul class="dropdown-menu bg-primary" aria-labelledby="dropdownMenuLinkschoolportal">
+            <li><a class="dropdown-item" href="{% url 'teacher:student-dashboard' %}">Student Login</a></li>
+            <li><a class="dropdown-item" href="{% url 'teacher:teacher-dashboard' %}">Staff Login</a></li>
+          </ul>
+        </li>
 
+        <li><a href="{% url 'sms:clubs' %}">Clubs</a></li>
+
+        <li class="nav-divider" aria-hidden="true"></li>
+
+        <li class="nav-cta"><a href="#contact-section">Contact Us</a></li>
+
+      </ul>
     </div>
-    <!-- End of Page Wrapper -->
+  </nav>
 
-    <!-- Scroll to Top Button-->
-    <a class="scroll-to-top rounded" href="#page-top" style="display: none;">
-        <i class="fas fa-angle-up"></i>
-    </a>
 
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="{% url 'account_logout' %}">Logout</a>
-                  
-                </div>
+  {% block content %}
+  {% endblock %}
+
+
+  <!-- ============================================================
+       FOOTER
+  ============================================================ -->
+  <footer id="contact-section" class="site-footer">
+    <div class="footer-top-rule"></div>
+
+    <div class="footer-inner">
+      <div class="container">
+        <div class="row gy-5">
+
+          <!-- Col 1: Brand + about -->
+          <div class="col-lg-3 col-md-6">
+            <div class="footer-brand">
+              <div class="footer-brand-text">
+                <span>Esteem Learning Centre</span>
+                <span>Abuja, Nigeria</span>
+              </div>
             </div>
+            <p class="footer-tagline">
+              Esteem Nursery and Primary School — established in Wuse and expanded to Lokogoma — provides world-class education rooted in values, faith, and excellence.
+            </p>
+          </div>
+
+          <!-- Col 2: Lokogoma campus -->
+          <div class="col-lg-3 col-md-6">
+            <h5 class="footer-heading">Lokogoma Campus</h5>
+            <div class="footer-address">
+              <span>Pre-Nursery · Nursery · Primary</span>
+              <strong>Address</strong>
+              Plot 70, Cadastral Zone, C09<br>
+              Lokogoma District,<br>
+              Before River Valley Estate,<br>
+              Abuja – Nigeria
+              <strong>Telephone</strong>
+              <a href="tel:08065499838">08065499838</a> &amp;
+              <a href="tel:08032108232">08032108232</a>
+            </div>
+          </div>
+
+          <!-- Col 3: Wuse campus -->
+          <div class="col-lg-3 col-md-6">
+            <h5 class="footer-heading">Wuse Campus</h5>
+            <div class="footer-address">
+              <span>Pre-Nursery · Nursery · Primary</span>
+              <strong>Address</strong>
+              No. 7, Safi Street,<br>
+              Wuse Zone 4,<br>
+              Abuja – Nigeria
+              <strong>Telephone</strong>
+              <a href="tel:08110000863">08110000863</a> &amp;
+              <a href="tel:08110000864">08110000864</a>
+            </div>
+          </div>
+
+          <!-- Col 4: Hours + social -->
+          <div class="col-lg-3 col-md-6">
+            <h5 class="footer-heading">Get in Touch</h5>
+            <div class="footer-hours-row"><i class="fas fa-clock"></i> Mon – Fri: 7:30 am – 4:00 pm</div>
+            <div class="footer-hours-row"><i class="fas fa-headset"></i> Support hotline: 24 hours</div>
+            <div class="footer-hours-row">
+              <i class="fas fa-envelope"></i>
+              <a href="mailto:esteemboyscollegeabuja@gmail.com" style="color: var(--gold-light); text-decoration:none;">esteemboyscollegeabuja@gmail.com</a>
+            </div>
+
+            <div style="margin-top: 28px;">
+              <p class="footer-social-label">Follow us</p>
+              <div class="footer-socials">
+                <a href="https://youtube.com/@esteemlearningcentreabuja9514?si=Yxu1-4CSmlEKokrN" aria-label="YouTube" target="_blank" rel="noopener">
+                  <i class="fab fa-youtube"></i>
+                </a>
+                <a href="https://www.facebook.com/eis.abuja?mibextid=ZbWKwL" aria-label="Facebook" target="_blank" rel="noopener">
+                  <i class="fab fa-facebook-f"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+
         </div>
+      </div>
     </div>
 
-    <!-- Bootstrap core JavaScript-->
-    <script src="/static/sms/dashboard/vendor/jquery/jquery.min.js"></script>
-    <script src="/static/sms/dashboard/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <hr class="footer-divider">
 
-    <!-- Core plugin JavaScript-->
-    <script src="/static/sms/dashboard/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <div class="footer-bottom">
+      <div class="container">
+        <p class="footer-copyright">
+          &copy; <span id="current-year"></span>
+          <span>Esteem Learning Centre, Abuja.</span>
+          All rights reserved.
+        </p>
+      </div>
+    </div>
+  </footer>
 
-    <!-- Custom scripts for all pages-->
-    <script src="/static/sms/dashboard/js/sb-admin-2.min.js"></script>
 
-    <!-- Page level plugins -->
-    <script src="/static/sms/dashboard/vendor/chart.js/Chart.min.js"></script>
+  <!-- Scroll to Top -->
+  <a class="scroll-to-top rounded" href="#page-top" style="display: none;">
+    <i class="fas fa-angle-up"></i>
+  </a>
 
-    <!-- Page level custom scripts -->
-    <script src="/static/sms/dashboard/js/demo/chart-area-demo.js"></script>
-    <script src="/static/sms/dashboard/js/demo/chart-pie-demo.js"></script>
+  <!-- Logout Modal -->
+  <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
+          <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+          <a class="btn btn-primary" href="{% url 'account_logout' %}">Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Page level plugins -->
-    <script src="/static/sms/dashboard/vendor/datatables/jquery.dataTables.min.js"></script>
-    <script src="/static/sms/dashboard/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+  <!-- Bootstrap & vendor scripts -->
+  <script src="/static/sms/dashboard/vendor/jquery/jquery.min.js"></script>
+  <script src="/static/sms/dashboard/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/sms/dashboard/vendor/jquery-easing/jquery.easing.min.js"></script>
+  <script src="/static/sms/dashboard/js/sb-admin-2.min.js"></script>
+  <script src="/static/sms/dashboard/vendor/chart.js/Chart.min.js"></script>
+  <script src="/static/sms/dashboard/js/demo/chart-area-demo.js"></script>
+  <script src="/static/sms/dashboard/js/demo/chart-pie-demo.js"></script>
+  <script src="/static/sms/dashboard/vendor/datatables/jquery.dataTables.min.js"></script>
+  <script src="/static/sms/dashboard/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+  <script src="/static/sms/dashboard/js/demo/datatables-demo.js"></script>
+  <script src="/static/sms/prism.js"></script>
 
-    <!-- Page level custom scripts -->
-    <script src="/static/sms/dashboard/js/demo/datatables-demo.js"></script>
+  <script>
+    // Year
+    document.getElementById('current-year').textContent = new Date().getFullYear();
 
-    
-      <script src="/static/sms/prism.js"></script>
-
-      <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            var dropdownMenuLink = document.getElementById('dropdownMenuLink');
-            dropdownMenuLink.addEventListener('click', function() {
-                var dropdownMenu = this.nextElementSibling;
-                dropdownMenu.classList.toggle('show');
-            });
+    // Dropdown toggles
+    document.addEventListener("DOMContentLoaded", function () {
+      function bindDropdown(id) {
+        var toggle = document.getElementById(id);
+        if (!toggle) return;
+        toggle.addEventListener('click', function (e) {
+          e.preventDefault();
+          var menu = this.nextElementSibling;
+          var isOpen = menu.classList.contains('show');
+          document.querySelectorAll('.nav-links .dropdown-menu.show').forEach(function (m) { m.classList.remove('show'); });
+          document.querySelectorAll('.nav-links .dropdown-toggle').forEach(function (t) { t.classList.remove('open'); });
+          if (!isOpen) {
+            menu.classList.add('show');
+            this.classList.add('open');
+          }
         });
+      }
+      bindDropdown('dropdownMenuLink');
+      bindDropdown('dropdownMenuLink2');
+      bindDropdown('dropdownMenuLinkschoolportal');
 
-        // seconde drop down menu
-        document.addEventListener("DOMContentLoaded", function() {
-        var dropdownMenuLink = document.getElementById('dropdownMenuLink2');
-        dropdownMenuLink.addEventListener('click', function() {
-            var dropdownMenu = this.nextElementSibling;
-            dropdownMenu.classList.toggle('show');
-        });
+      // Close dropdowns on outside click
+      document.addEventListener('click', function (e) {
+        if (!e.target.closest('.dropdown')) {
+          document.querySelectorAll('.nav-links .dropdown-menu.show').forEach(function (m) { m.classList.remove('show'); });
+          document.querySelectorAll('.nav-links .dropdown-toggle.open').forEach(function (t) { t.classList.remove('open'); });
+        }
+      });
+
+      // Hamburger
+      var menuToggle = document.getElementById('menu-toggle');
+      var navLinks   = document.getElementById('nav-links');
+      menuToggle.addEventListener('click', function () {
+        this.classList.toggle('open');
+        navLinks.classList.toggle('show');
+      });
     });
-     // school portal drop down menu
-     document.addEventListener("DOMContentLoaded", function() {
-        var dropdownMenuLink = document.getElementById('dropdownMenuLinkschoolportal');
-        dropdownMenuLink.addEventListener('click', function() {
-            var dropdownMenu = this.nextElementSibling;
-            dropdownMenu.classList.toggle('show');
-        });
-    });
-    </script>
-
-
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const menuToggle = document.querySelector('.menu-toggle');
-        const navLinks = document.querySelector('.nav-links');
-
-        menuToggle.addEventListener('click', function() {
-            navLinks.classList.toggle('show');
-        });
-    });
-</script>
-
+  </script>
 
 </body>
 </html>
