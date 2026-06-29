@@ -258,18 +258,18 @@ def onboarding_dashboard_view(request):
     }
     return render(request, 'teacher/dashboard/onboarding_dashboard.html', context)
 
-@cache_page(60 * 15)
+
 def teacher_logout_view(request):
 
     return render(request, 'teacher/dashboard/teacher_logout.html')
 
-@cache_page(60 * 15)
+
 def student_logout_view(request):
 
     return render(request, 'teacher/dashboard/student_logout.html')
 
 
-@cache_page(60 * 15)
+
 def teacher_login_view(request):
     teachers = Teacher.objects.all()
     # print('teachers:',teachers)
@@ -759,7 +759,7 @@ def logged_in_superuser_view(request):
 
 from users.models import Profile  # Import your models here
 from quiz.models import Course
-# @cache_page(60 * 15)
+
 
 @login_required(login_url='account_login')
 def student_dashboard_view(request):
@@ -3708,7 +3708,7 @@ from django.shortcuts import render
 from django.contrib import messages
 import csv
 
-# @cache_page(60 * 15)
+
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib import messages
@@ -3955,7 +3955,7 @@ def subject_questions_view(request, subject_id):
     return render(request, 'teacher/dashboard/subject_questions.html', context)
 
   
-# @cache_page(60 * 15)
+
 def view_questions(request):
     # Check if user is authenticated
     if not request.user.is_authenticated:
