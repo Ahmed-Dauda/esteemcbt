@@ -1,25 +1,25 @@
-# Daily Development Workflow — EsteemCBT
+# Daily Development Workflow
 
 ## Branch Strategy
 
 Maintain these branches at all times:
 
-* `development` → Active development. Does not deploy anywhere — just your working branch and GitHub backup.
-* `staging` → Reviewed features ready for testing. Deploys automatically to `https://staging.esteemlearningcenter.com`.
-* `main` → Production branch. Deploys automatically to `https://esteemlearningcenter.com`.
+* `staging` → Testing environment
+* `development` → Production deployment branch
+* `main-working` → Last confirmed stable backup
 
 ---
 
 # Daily Development Process
 
-## Step 1 — Start from `development`
+## Step 1 — Start from `staging`
 
-Always begin new work on the `development` branch.
+Always begin new work on the `staging` branch.
 
 ```bash
-git branch
-git checkout development
-git pull origin development
+git branch --show-current
+git checkout staging
+git pull origin staging
 ```
 
 ---
@@ -32,85 +32,90 @@ git pull origin development
 
 ---
 
-## Step 3 — Push to `development`
+## Step 3 — Push to `staging`
 
 ```bash
 git add .
 git commit -m "feat: describe what you changed"
-git push origin development
-```
-
-This only backs up your work to GitHub. It does not deploy anywhere yet.
-
----
-
-## Step 4 — Merge to `staging` and test
-
-```bash
-git checkout staging
-git pull origin staging
-git merge development
 git push origin staging
 ```
 
 After deployment:
 
 * Wait for the deployment notification.
-* Open `https://staging.esteemlearningcenter.com`.
+* Open `staging.esteemlearningcenter.com`.
 * Test the new feature thoroughly.
 * Verify existing functionality still works.
 
-Only proceed to production if staging passes all tests.
+Only proceed if staging passes all tests.
 
 ---
 
-## Step 5 — Tag current production before touching it
+## Step 4 — Deploy to Production
 
-**Always do this before merging anything into `main`** — it's your rollback point if the new deployment fails.
+Merge the tested code into `development`.
 
 ```bash
-git checkout main
-git pull origin main
+git checkout development
+git pull origin development
+git merge staging
+git push origin development
+```
+
+Wait for deployment to complete.
+
+Then verify production:
+
+* Visit `esteemlearningcenter.com`
+* Test the newly deployed feature.
+* Confirm no regressions exist.
+
+---
+
+## Step 5 — Update Stable Backup
+
+**Only perform this step after confirming production is working correctly.**
+
+At this point, save the deployed version as the latest stable backup.
+
+```bash
+git checkout main-working
+git pull origin main-working
+git merge development
+git push origin main-working
+
 git tag v1.x-stable
 git push origin v1.x-stable
 ```
 
-Increment the version each time (`v1.1-stable`, `v1.2-stable`, etc.) so you can always identify and return to a specific past release.
-
----
-
-## Step 6 — Deploy to Production
-
-Merge tested and reviewed code from `staging` into `main`.
-
-```bash
-git merge staging
-git push origin main
-```
-
-Wait for deployment to complete, then verify production:
-
-* Visit `esteemlearningcenter.com`.
-* Test the newly deployed feature.
-* Confirm no regressions exist.
-
-If everything works, you're done — the tag from Step 5 stays as your safety net for next time.
+This ensures `main-working` always represents the latest confirmed working release.
 
 ---
 
 # Rollback Procedure
 
-If a production deployment fails — or you need to return to any earlier confirmed-stable release — reset `main` to the relevant tag:
+If a production deployment fails **before updating `main-working`**, simply redeploy the current `main-working` branch.
 
 ```bash
-git checkout main
-git reset --hard v1.x-stable
-git push origin main --force
+git checkout main-working
+git push origin main-working --force
 ```
 
-Replace `v1.x-stable` with the specific tag you need (e.g. the tag from Step 5 for the most recent rollback, or an older tag like `v1.0-stable` for a historical release).
+Because `main-working` was not updated yet, it still contains the previous stable release.
 
-Or trigger the rollback workflow manually from GitHub Actions:
+---
+
+# Rollback to an Older Stable Version
+
+If you need to return to a specific historical release:
+
+```bash
+git checkout main-working
+git reset --hard v1.0-stable
+git push origin main-working --force
+```
+
+This restores production to the tagged stable version.
 
 ---
 
@@ -130,14 +135,13 @@ hotfix: critical exam submission bug
 
 # Weekly Maintenance
 
-Sync staging database with production to keep testing realistic.
+Sync staging with production data to keep testing realistic.
 
 ```bash
 # On the server
+
 pg_dump -U esteemcbt_user -h localhost -p 5433 esteemcbt > /tmp/prod_dump.sql
 
-sudo -u postgres psql -p 5433 -c "DROP DATABASE esteemcbt_staging;"
-sudo -u postgres psql -p 5433 -c "CREATE DATABASE esteemcbt_staging OWNER esteemcbt_user;"
 sudo -u postgres psql -p 5433 esteemcbt_staging < /tmp/prod_dump.sql
 ```
 
@@ -145,65 +149,13 @@ sudo -u postgres psql -p 5433 esteemcbt_staging < /tmp/prod_dump.sql
 
 # Rules
 
-* Always develop on `development` — never deploy from it directly.
-* Never push directly to `main` without testing on staging first.
-* Test every feature on `https://staging.esteemlearningcenter.com` before merging to `main`.
-* Always tag the current `main` **before** merging new code into it.
-* Verify production immediately after every deployment.
-* Use stable tags for rollback whenever something breaks.
+* Always develop on `staging`.
+* Never push directly to `development` without testing.
+* Test every feature on staging before merging.
+* Verify production after deployment.
+* Only update `main-working` after production has been confirmed healthy.
+* Tag every stable production release.
+* Use `main-working` or a stable tag for rollback when necessary.
 
-# Update `.env` in Production
-
-### 1. SSH into the server
-
-```bash
-ssh root@204.168.237.20
-MyServer2026!Coolify
-cd /var/www/esteemcbt
-source env/bin/activate
-cat .env
-```
-### 4. Update the GitHub secret
-
-- Go to **GitHub** → **Settings** → **Secrets and variables**
-- Select the secret/variable to update
-- Save the changes
-
-### 5. Trigger deployment
-Run on your local machine:
-```bash
-git commit --allow-empty -m "Update OpenAI API key"
-git push origin esteemcbt
-```
-systemctl restart esteemcbt
-
-# Update `.env` in Production
-
-### 1. SSH into the server
-
-```bash
-ssh root@204.168.237.20
-MyServer2026!Coolify
-cd /var/www/esteemcbt
-source env/bin/activate
-cat .env
-```
-### 4. Update the GitHub secret
-
-- Go to **GitHub** → **Settings** → **Secrets and variables**
-- Select the secret/variable to update
-- Save the changes
-
-### 5. Trigger deployment
-Run on your local machine:
-```bash
-git commit --allow-empty -m "Update OpenAI API key"
-git push origin main
-```
-```bash
-git pull origin staging
-git push origin staging
-```
-
-
-systemctl restart esteemcbt
+# Username: addatainsight@gmail.com
+# Password: admin1234

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Finance Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        body { font-family: Arial, sans-serif; background: #e7eaef; margin: 0; }
+        .wrap { max-width: 1200px; margin: 30px auto; padding: 0 15px; }
+
+        .greeting {
+            background: rgb(70,118,239);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .greeting h1 { margin: 0 0 5px 0; font-size: 24px; }
+        .greeting p  { margin: 0; opacity: 0.9; font-size: 14px; }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            border-left: 4px solid rgb(70,118,239);
+        }
+        .stat-card.alert { border-left-color: #dc3545; }
+        .stat-card.success { border-left-color: #28a745; }
+        .stat-card .label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .stat-card .value {
+            font-size: 26px;
+            font-weight: bold;
+            color: #2c3e50;
+            font-variant-numeric: tabular-nums;
+        }
+        .stat-card .sub {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+        .stat-card .value.neg { color: #c0392b; }
+        .stat-card .value.pos { color: #27ae60; }
+
+        .panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px 25px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+        }
+        .panel h3 {
+            font-size: 16px;
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .panel h3 a { font-size: 13px; font-weight: normal; }
+
+        .exhausted-list { list-style: none; padding: 0; margin: 0; }
+        .exhausted-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            gap: 12px;
+        }
+        .exhausted-list li:last-child { border-bottom: none; }
+        .exhausted-list .who strong { color: #333; }
+        .exhausted-list .cls {
+            font-size: 12px;
+            color: #888;
+            margin-left: 8px;
+        }
+        .exhausted-list .amount {
+            color: #b02a37;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+        }
+        .exhausted-empty {
+            text-align: center;
+            color: #27ae60;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 18px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #2c3e50;
+            font-weight: 500;
+            border: 1px solid #e1e4e8;
+            transition: all 0.15s;
+        }
+        .action-btn:hover {
+            background: rgb(70,118,239);
+            color: white;
+            border-color: rgb(70,118,239);
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+        .action-btn i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+        .action-btn.primary {
+            background: rgb(70,118,239);
+            color: white;
+            border-color: rgb(70,118,239);
+        }
+        .action-btn.primary:hover { background: #3563c9; }
+        .action-btn.success {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        .action-btn.success:hover { background: #1e7e34; }
+    </style>
+</head>
+<body>
+
+<div class="wrap">
+
+    <!-- ===================== GREETING ===================== -->
+    <div class="greeting">
+        <h1><i class="fas fa-chart-line"></i> Welcome back, {{ request.user.first_name|default:request.user.username }}</h1>
+        <p>
+            {{ user_school }}
+            {% if current_session %} · Session {{ current_session.name }}{% endif %}
+            {% if current_term %} · {{ current_term.name }} Term{% endif %}
+            · {{ today|date:"l, d M Y" }}
+        </p>
+    </div>
+
+    <!-- ===================== TODAY'S NUMBERS ===================== -->
+    <h2 style="font-size:16px;color:#666;margin-bottom:12px;">Today</h2>
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="label">Records Entered</div>
+            <div class="value">{{ today_stats.records }}</div>
+            <div class="sub">week of {{ today|date:"d M" }}</div>
+        </div>
+        <div class="stat-card success">
+            <div class="label">Deposits Received</div>
+            <div class="value pos">₦{{ today_stats.deposits|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Expenses</div>
+            <div class="value">₦{{ today_stats.expenses|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card {% if exhausted_count %}alert{% endif %}">
+            <div class="label">Exhausted Students</div>
+            <div class="value {% if exhausted_count %}neg{% endif %}">{{ exhausted_count }}</div>
+            <div class="sub">need a top-up</div>
+        </div>
+    </div>
+
+    <!-- ===================== THIS WEEK ===================== -->
+    <h2 style="font-size:16px;color:#666;margin-bottom:12px;">This Week (from {{ monday|date:"d M" }})</h2>
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="label">Records This Week</div>
+            <div class="value">{{ week_stats.records }}</div>
+        </div>
+        <div class="stat-card success">
+            <div class="label">Deposits This Week</div>
+            <div class="value pos">₦{{ week_stats.deposits|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Expenses This Week</div>
+            <div class="value">₦{{ week_stats.expenses|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Students / Classes</div>
+            <div class="value">{{ student_count }} <span style="font-size:14px;color:#888;">/ {{ class_count }}</span></div>
+        </div>
+    </div>
+
+    <!-- ===================== EXHAUSTED STUDENTS ===================== -->
+    <div class="panel">
+        <h3>
+            <span><i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> Exhausted Students</span>
+            {% if exhausted_count %}
+                <a href="{% url 'finance:finance_summary' %}">View all ({{ exhausted_count }}) →</a>
+            {% endif %}
+        </h3>
+
+        {% if exhausted_list %}
+            <ul class="exhausted-list">
+                {% for row in exhausted_list %}
+                    <li>
+                        <span class="who">
+                            <strong>{{ row.names|title }}</strong>
+                            {% if row.student_class %}<span class="cls">{{ row.student_class }}</span>{% endif %}
+                        </span>
+                        <span class="amount">owes ₦{{ row.closing }}</span>
+                        {% if row.student_id %}
+                            <a href="{% url 'finance:finance_student_view' %}?student={{ row.student_id }}&session={{ row.session_id }}&term={{ row.term_id }}"
+                               style="color:rgb(70,118,239);text-decoration:none;font-size:13px;">
+                                View →
+                            </a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="exhausted-empty">
+                <i class="fas fa-check-circle" style="font-size:24px;"></i>
+                <p style="margin-top:8px;">No exhausted students right now. 🎉</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ===================== QUICK ACTIONS ===================== -->
+    <div class="panel">
+        <h3><i class="fas fa-bolt" style="color:rgb(70,118,239);"></i> Quick Actions</h3>
+        <div class="quick-actions">
+            <a href="{% url 'finance:finance_record_add' %}" class="action-btn primary">
+                <i class="fas fa-plus-circle"></i> Add Record
+            </a>
+            <a href="{% url 'finance:finance_summary' %}" class="action-btn">
+                <i class="fas fa-chart-bar"></i> Summary
+            </a>
+            <a href="{% url 'finance:finance_record_view' %}" class="action-btn">
+                <i class="fas fa-list"></i> All Records
+            </a>
+            <a href="{% url 'finance:finance_record_import' %}" class="action-btn">
+                <i class="fas fa-file-import"></i> Import
+            </a>
+            <a href="{% url 'finance:finance_record_export' %}" class="action-btn">
+                <i class="fas fa-file-export"></i> Export
+            </a>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

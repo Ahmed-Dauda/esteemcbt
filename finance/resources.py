@@ -1,79 +1,106 @@
-# Register your models here.
-from django.contrib import admin
-from .models import FinanceRecord
-from django.utils.html import format_html
-from import_export.widgets import ForeignKeyWidget
-from import_export import resources
-from .models import FinanceRecord
 from import_export import resources, fields
+from import_export.widgets import ForeignKeyWidget, DateWidget
+from django.contrib.auth import get_user_model
 
-from import_export import resources, fields
-from import_export.widgets import ForeignKeyWidget
-from .models import FinanceRecord, School, Session, Term
+from .models import FinanceRecord, Session, Term
+from quiz.models import School
+
+User = get_user_model()
+
+
+# ----------------------------------------------------------------------
+# Widget that scopes the lookup by the row's "school" value
+# ----------------------------------------------------------------------
+class SchoolScopedFKWidget(ForeignKeyWidget):
+    """
+    ForeignKeyWidget that adds a filter on `school__school_name`
+    using the value already present in the row.
+    """
+    def get_queryset(self, value, row, *args, **kwargs):
+        qs = super().get_queryset(value, row, *args, **kwargs)
+        school_name = row.get('school')
+        if school_name:
+            qs = qs.filter(school__school_name=school_name)
+        return qs
+
 
 class FinanceRecordResource(resources.ModelResource):
-    is_update = fields.Field(readonly=True)  # Tracks if the row is an update or new
-
-    # Fixing ForeignKey fields
+    student = fields.Field(
+        column_name='student',
+        attribute='student',
+        widget=ForeignKeyWidget(User, field='admission_no'),
+    )
     school = fields.Field(
         column_name='school',
         attribute='school',
-        widget=ForeignKeyWidget(School, 'school_name')  # Match based on school name
+        widget=ForeignKeyWidget(School, field='school_name'),
     )
     session = fields.Field(
-        column_name='session__name',
+        column_name='session',
         attribute='session',
-        widget=ForeignKeyWidget(Session, 'name')  # Match based on session name
+        widget=SchoolScopedFKWidget(Session, field='name'),   # 👈 scoped
     )
     term = fields.Field(
-        column_name='term__name',
+        column_name='term',
         attribute='term',
-        widget=ForeignKeyWidget(Term, 'name')  # Match based on term name
+        widget=SchoolScopedFKWidget(Term, field='name'),      # 👈 scoped
+    )
+    week_start = fields.Field(
+        column_name='week_start',
+        attribute='week_start',
+        widget=DateWidget(format='%Y-%m-%d'),
     )
 
     class Meta:
         model = FinanceRecord
-        fields = [
-            'sn', 'names', 'student_class', 'school',  # Use 'school' instead of 'school__school_name'
-            'session', 'term',  # Use 'session' and 'term' instead of 'session__name', 'term__name'
-            'initial_total_deposit', 'total_deposit',
-            'school_shop', 'caps', 'haircut', 'others', 
-            'total_expense', 'current_balance', 'balance_brought_forward', 'note', 'status'
-        ]
+        fields = (
+            'sn',
+            'student',
+            'names',
+            'student_class',
+            'school',
+            'session',
+            'term',
+            'week_start',
+            'initial_total_deposit',
+            'school_shop',
+            'caps',
+            'haircut',
+            'others',
+            'note',
+            'total_deposit',
+            'total_expense',
+            'balance_brought_forward',
+            'current_balance',
+            'status',
+        )
+        export_order = fields
         import_id_fields = ('sn',)
-        export_order = fields  # Ensure the order of fields during export
+        skip_unchanged = True
+        report_skipped = False
+  
+    # ------------------------------------------------------------------
+    # Turn off the save() cascade for the whole import — huge speedup
+    # ------------------------------------------------------------------
+    def before_import(self, dataset, using_transactions, dry_run, **kwargs):
+        FinanceRecord._skip_cascade = True
+
+    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
+        FinanceRecord._skip_cascade = False
 
     def before_import_row(self, row, **kwargs):
-        """Sets 'is_update' to True if the record exists, otherwise False."""
-        try:
-            # Check for an existing record with the given 'sn' (serial number)
-            FinanceRecord.objects.get(sn=row.get('sn'))
-            row['is_update'] = True
-        except FinanceRecord.DoesNotExist:
-            row['is_update'] = False
+        """Set school from the logged-in user, so the scoped widget can find terms."""
+        request = kwargs.get('request')
+        if request and getattr(request.user, 'school', None):
+            row['school'] = str(request.user.school)
 
-
-# class FinanceRecordResource(resources.ModelResource):
-#     is_update = fields.Field(readonly=True)  # Tracks if the row is an update or new
-
-#     class Meta:
-#         model = FinanceRecord
-#         fields = [
-#             'sn', 'names', 'student_class', 'school__school_name',
-#             'session__name', 'term__name', 'initial_total_deposit', 'total_deposit',
-#             'school_shop', 'caps', 'haircut', 'others', 
-#             'total_expense', 'current_balance', 'balance_brought_forward', 'note', 'status'
-#         ]
-#         import_id_fields = ('sn',)
-#         export_order = fields  # Ensure the order of fields during export
-
-#     def before_import_row(self, row, **kwargs):
-#         """Sets 'is_update' to True if the record exists, otherwise False."""
-#         try:
-#             # Check for an existing record with the given 'sn' (serial number)
-#             FinanceRecord.objects.get(sn=row.get('sn'))
-#             row['is_update'] = True
-#         except FinanceRecord.DoesNotExist:
-#             row['is_update'] = False
-
-
+    def before_save_instance(self, instance, using_transactions, dry_run):
+        """Auto-fill names + student_class from the student."""
+        if instance.student:
+            if not instance.names:
+                instance.names = (
+                    f"{instance.student.first_name or ''} "
+                    f"{instance.student.last_name or ''}"
+                ).strip()
+            if not instance.student_class or instance.student_class == 'NA':
+                instance.student_class = instance.student.student_class or 'NA'

@@ -3,7 +3,7 @@ name: Deploy to Staging (Development)
 on:
   push:
     branches:
-      - development
+      - main
 
 jobs:
   deploy:
@@ -59,7 +59,11 @@ jobs:
           server_port: 587
           username: ${{ secrets.EMAIL_USER }}
           password: ${{ secrets.EMAIL_PASSWORD }}
+<<<<<<< HEAD
+          subject: "✅ EsteemCBT Deploy Successful"
+=======
           subject: "✅ EsteemCBT Staging Deploy Successful"
+>>>>>>> 3559df677d6c45a5e283cb206a19aebd43cc1354
           to: codethinkersa@gmail.com
           from: ${{ secrets.EMAIL_USER }}
           body: |
@@ -81,7 +85,11 @@ jobs:
           server_port: 587
           username: ${{ secrets.EMAIL_USER }}
           password: ${{ secrets.EMAIL_PASSWORD }}
+<<<<<<< HEAD
+          subject: "❌ EsteemCBT Deploy FAILED - Action Required"
+=======
           subject: "❌ EsteemCBT Staging Deploy FAILED"
+>>>>>>> 3559df677d6c45a5e283cb206a19aebd43cc1354
           to: codethinkersa@gmail.com
           from: ${{ secrets.EMAIL_USER }}
           body: |

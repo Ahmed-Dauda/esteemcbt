@@ -3875,148 +3875,6 @@ from asgiref.sync import sync_to_async
 from django.db.models import Case, When
 
 
-#before deleting the score
-
-# @csrf_exempt
-# def start_exams_view(request: HttpRequest, pk: int) -> HttpResponse:
-#     if not request.user.is_authenticated:
-#         return redirect('account_login')
-
-#     return async_to_sync(_start_exam_async)(request, pk)
-
-
-# # ------------------------------------------------
-# # ASYNC CONTROLLER
-# # ------------------------------------------------
-# async def _start_exam_async(request, pk):
-#     user = request.user
-
-#     user_profile = await get_user_profile(user)
-#     course = await get_course(pk)
-
-#     # Early exit if already submitted
-#     result_exists = await check_result_exists(user_profile, course)
-#     if result_exists:
-#         return await async_redirect('student:view_result')
-
-#     # Only fetch question IDs (NOT objects)
-#     question_ids = await get_course_question_ids(course)
-
-#     # Get ordered question objects (1 query)
-#     questions = await get_or_create_shuffled_questions(
-#         user_profile,
-#         course,
-#         question_ids
-#     )
-
-#     show_count = course.show_questions or len(questions)
-#     questions = questions[:show_count]
-
-#     context = {
-#         'course': course,
-#         'questions': questions,
-#         'q_count': len(questions),
-#         'page_obj': questions,
-#         'quiz_already_submitted': False,
-#         'tab_limit': course.num_attemps,
-#     }
-
-#     response = await async_render(
-#         request,
-#         'student/dashboard/start_exams.html',
-#         context
-#     )
-#     if course.id:
-#         response.set_cookie('course_id', str(course.id))
-#     return response
-
-
-# # ------------------------------------------------
-# # ASYNC HELPERS
-# # ------------------------------------------------
-# @sync_to_async
-# def get_user_profile(user):
-#     """
-#     Safe for SimpleLazyObject
-#     Cached after first access
-#     """
-#     return user.profile
-
-# from django.db.models import F
-# async def get_course(pk):
-#     key = f"course_{pk}"
-#     course = cache.get(key)
-#     if not course:
-#         course = await Course.objects.select_related(
-#             'course_name', 'exam_type', 'session', 'term'
-#         ).aget(id=pk)
-#         cache.set(key, course, timeout=600)
-#     return course
-
-# @sync_to_async
-# def check_result_exists(profile, course):
-#     return Result.objects.filter(
-#         student=profile,
-#         exam=course,
-#         session=course.session,
-#         term=course.term,
-#         exam_type=course.exam_type,
-#     ).exists()
-
-
-# async def get_course_question_ids(course):
-#     question_ids_qs = Question.objects.filter(course=course).values_list('id', flat=True)
-#     # Option 1: async iterator
-#     question_ids = [q async for q in question_ids_qs]
-#     return question_ids
-
-
-# @sync_to_async
-# def get_or_create_shuffled_questions(student, course, question_ids):
-#     sessions = list(
-#         StudentExamSession.objects.filter(student=student, course=course)
-#         .order_by('-created')
-#     )
-
-#     if sessions:
-#         session = sessions[0]
-#         # Cleanup duplicates
-#         if len(sessions) > 1:
-#             StudentExamSession.objects.exclude(id=session.id).delete()
-#     else:
-#         session = StudentExamSession.objects.create(
-#             student=student,
-#             course=course,
-#             question_order=random.sample(question_ids, len(question_ids))
-#         )
-
-#     # Re-sync question order if questions changed
-#     if set(session.question_order) != set(question_ids):
-#         session.question_order = random.sample(question_ids, len(question_ids))
-#         session.save(update_fields=['question_order'])
-
-#     # Preserve question order
-#     preserved_order = Case(
-#         *[When(id=pk, then=pos) for pos, pk in enumerate(session.question_order)]
-#     )
-
-#     return list(
-#         Question.objects.filter(id__in=session.question_order)
-#         .order_by(preserved_order)
-#         .only(
-#             'id','marks','question','img_quiz','option1','option2','option3','option4'
-#         )
-#     )
-
-
-# # ------------------------------------------------
-# # ASYNC WRAPPERS
-# # ------------------------------------------------
-# async_render = sync_to_async(render, thread_sensitive=True)
-# async_redirect = sync_to_async(redirect, thread_sensitive=True)
-
-
-
 # In your views.py (replace the old _start_exam_async and helpers)
 
 import random
@@ -4040,47 +3898,6 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import ExamAttempt, ExamEventLog
 
-# def _start_exam_sync(request, pk):
-#     user = request.user
-
-#     # ── 1. Course (cached 10 min) ──────────────────────────────
-#     course = _get_course_cached(pk)
-#     if course is None:
-#         return redirect('student:take_exams')
-
-#     # ── 2. Attempt + questions in parallel ────────────────────
-#     import concurrent.futures
-#     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
-#         f_attempt   = ex.submit(_get_or_create_attempt, user, course)
-#         f_questions = ex.submit(_get_shuffled_questions_cached, user, course)
-
-#     attempt, created = f_attempt.result()
-#     questions        = f_questions.result()
-
-#     # ── 3. Log exam start only on creation (not every resume) ──
-#     if created:
-#         _log_event_async(user, course, 'exam_started', {'resume_code': attempt.resume_code})
-#     # Resume log removed from hot path — not worth 1 DB write per page load
-
-#     # in _start_exam_async, print how long template render takes
-
-
-#     context = {
-#         'course':                course,
-#         'questions':             questions,
-#         'q_count':               len(questions),
-#         'page_obj':              questions,
-#         'quiz_already_submitted': False,
-#         'tab_limit':             course.num_attemps,
-#         'attempt':               attempt,
-#         'attempt_id':            attempt.id,
-#     }
-
-#     response = render(request, 'student/dashboard/start_exams.html', context)
-#     response.set_cookie('course_id',  str(course.id),  httponly=True, samesite='Lax')
-#     response.set_cookie('attempt_id', str(attempt.id), httponly=True, samesite='Lax')
-#     return response
-
 
 # ------------------------------------------------------------
 # Main async controller
@@ -4091,195 +3908,6 @@ from django.db.models import Case, When
 from django.core.cache import cache
 
 # ── Entry point ───────────────────────────────────────────────
-
-# @csrf_exempt
-# def start_exams_view(request: HttpRequest, pk: int) -> HttpResponse:
-#     if not request.user.is_authenticated:
-#         return redirect('account_login')
-#     return _start_exam_sync(request, pk)
-
-# import time
-
-# def _start_exam_sync(request, pk):
-#     user = request.user
-#     t0 = time.time()
-
-#     course = _get_course_cached(pk)
-#     if course is None:
-#         return redirect('student:take_exams')
-#     print(f"[1] course fetch: {(time.time()-t0)*1000:.1f}ms")
-
-#     t1 = time.time()
-#     import concurrent.futures
-#     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
-#         f_attempt   = ex.submit(_get_or_create_attempt, user, course)
-#         f_questions = ex.submit(_get_shuffled_questions_cached, user, course)
-
-#     attempt, created = f_attempt.result()
-#     questions        = f_questions.result()
-#     print(f"[2] attempt+questions parallel: {(time.time()-t1)*1000:.1f}ms")
-
-#     if created:
-#         _log_event_async(user, course, 'exam_started', {'resume_code': attempt.resume_code})
-
-#     context = {
-#         'course':                 course,
-#         'questions':              questions,
-#         'q_count':                len(questions),
-#         'page_obj':               questions,
-#         'quiz_already_submitted': False,
-#         'tab_limit':              course.num_attemps,
-#         'attempt':                attempt,
-#         'attempt_id':             attempt.id,
-#     }
-
-#     t2 = time.time()
-#     response = render(request, 'student/dashboard/start_exams.html', context)
-#     print(f"[3] template render: {(time.time()-t2)*1000:.1f}ms")
-#     print(f"[TOTAL] {(time.time()-t0)*1000:.1f}ms")
-
-#     response.set_cookie('course_id',  str(course.id),  httponly=True, samesite='Lax')
-#     response.set_cookie('attempt_id', str(attempt.id), httponly=True, samesite='Lax')
-#     return response
-
-# # ── Helper 1: Course with cache ───────────────────────────────
-# def _get_course_cached(pk):
-#     key    = f'course:{pk}'
-#     course = cache.get(key)
-#     if course is None:
-#         course = (
-#             Course.objects
-#             .select_related('course_name', 'exam_type', 'session', 'term')
-#             .only(
-#                 'id', 'num_attemps', 'show_questions', 'duration_minutes',
-#                 'fullscreencounter', 'room_name',
-#                 'course_name__title', 'exam_type__name',
-#                 'session__name', 'term__name',
-#             )
-#             .filter(id=pk)
-#             .first()
-#         )
-#         if course:
-#             cache.set(key, course, 600)
-#     return course
-
-
-# # ── Helper 2: Attempt (atomic, race-safe) ─────────────────────
-# def _get_or_create_attempt(user, course):
-#     from django.db import transaction
-
-#     has_result = Result.objects.filter(
-#         student__user=user,
-#         exam=course,
-#     ).exists()
-
-#     with transaction.atomic():
-#         attempt = (
-#             ExamAttempt.objects
-#             .select_for_update(nowait=False)
-#             .filter(student=user, course=course, is_submitted=False)
-#             .first()
-#         )
-#         if attempt:
-#             return attempt, False
-
-#         # Clean orphaned submitted attempts only if no result exists
-#         if not has_result:
-#             ExamAttempt.objects.filter(
-#                 student=user, course=course, is_submitted=True
-#             ).delete()
-
-#         attempt = ExamAttempt.objects.create(
-#             student=user,
-#             course=course,
-#             is_submitted=False,
-#             remaining_seconds=course.duration_minutes * 60,
-#         )
-#         return attempt, True
-
-
-# # ── Helper 3: Shuffled questions (cached per user+course) ──────
-# def _get_shuffled_questions_cached(user, course):
-#     cache_key = f'questions:{course.id}:{user.id}'
-#     questions = cache.get(cache_key)
-#     if questions is not None:
-#         return questions
-
-#     try:
-#         profile = user.profile
-#     except Exception:
-#         profile = None
-
-#     if profile is None:
-#         return []
-
-#     # Get or create session
-#     session = (
-#         StudentExamSession.objects
-#         .filter(student=profile, course=course)
-#         .order_by('-created')
-#         .first()
-#     )
-
-#     # Fetch all question IDs once
-#     all_q_ids = list(
-#         Question.objects.filter(course=course).values_list('id', flat=True)
-#     )
-
-#     if not all_q_ids:
-#         return []
-
-#     if session and set(session.question_order) == set(all_q_ids):
-#         ordered_ids = session.question_order
-#     else:
-#         ordered_ids = random.sample(all_q_ids, len(all_q_ids))
-#         if session:
-#             session.question_order = ordered_ids
-#             session.save(update_fields=['question_order'])
-#         else:
-#             StudentExamSession.objects.create(
-#                 student=profile,
-#                 course=course,
-#                 question_order=ordered_ids,
-#             )
-
-#     # ── Key optimisation: use dict lookup instead of Case/When ─
-#     # Case/When with 100 questions = 100 WHEN clauses in SQL
-#     # Dict reorder = 1 query + Python sort (much faster)
-#     questions_qs = list(
-#         Question.objects
-#         .filter(id__in=ordered_ids)
-#         .only(
-#             'id', 'marks', 'question', 'img_quiz',
-#             'option1', 'option2', 'option3', 'option4',
-#         )
-#     )
-#     order_map = {qid: pos for pos, qid in enumerate(ordered_ids)}
-#     questions_qs.sort(key=lambda q: order_map.get(q.id, 9999))
-
-#     limit     = course.show_questions or len(questions_qs)
-#     questions = questions_qs[:limit]
-
-#     # Cache for 5 min — busted if question set changes
-#     cache.set(cache_key, questions, 300)
-#     return questions
-
-
-# # ── Helper 4: Fire-and-forget event log ───────────────────────
-# def _log_event_async(user, course, event_type, details):
-#     """Log in background thread — never blocks the response."""
-#     import threading
-#     def _write():
-#         try:
-#             ExamEventLog.objects.create(
-#                 student=user,
-#                 course=course,
-#                 event_type=event_type,
-#                 details=details,
-#             )
-#         except Exception:
-#             pass
-#     threading.Thread(target=_write, daemon=True).start()
 
 import time
 
@@ -4294,6 +3922,7 @@ from django.http import HttpRequest, HttpResponse
 # ──────────────────────────────────────────────────────────────
 # MAIN VIEW (no ThreadPoolExecutor)
 # ──────────────────────────────────────────────────────────────
+
 @csrf_exempt
 def start_exams_view(request: HttpRequest, pk: int) -> HttpResponse:
     if not request.user.is_authenticated:
@@ -4304,7 +3933,19 @@ def _start_exam_sync(request, pk):
     user = request.user
     course = _get_course_cached(pk)
     if course is None:
-        return redirect('student:take_exams')
+        return redirect('student:take_exam')
+
+    # ── Check if exam is assigned to this student ─────────────
+    is_assigned = CourseGrade.objects.filter(
+        students=user,
+        subjects=course,
+        is_active=True
+    ).exists()
+
+    if not is_assigned:
+        from django.contrib import messages
+        messages.error(request, "⛔ You are not assigned to this exam.")
+        return redirect('student:take-exam')    
 
     # Sequential calls – no executor
     attempt, created = _get_or_create_attempt(user, course)

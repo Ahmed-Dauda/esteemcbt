@@ -57,7 +57,11 @@ jobs:
           username: ${{ secrets.EMAIL_USER }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "✅ EsteemCBT Staging Deploy Successful"
+<<<<<<< HEAD
+          to: codethinkersa@gmail.com
+=======
           to: addatainsight@gmail.com
+>>>>>>> 3559df677d6c45a5e283cb206a19aebd43cc1354
           from: ${{ secrets.EMAIL_USER }}
           body: |
             EsteemCBT staging deployed successfully!
@@ -68,7 +72,11 @@ jobs:
 
             ✅ Test it at: https://staging.esteemlearningcenter.com
 
+<<<<<<< HEAD
+            When satisfied, merge staging → main-working to deploy to production.
+=======
             When satisfied, merge staging → development to deploy to production.
+>>>>>>> 3559df677d6c45a5e283cb206a19aebd43cc1354
 
       - name: Send failure email
         if: failure()
@@ -79,7 +87,11 @@ jobs:
           username: ${{ secrets.EMAIL_USER }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "❌ EsteemCBT Staging Deploy FAILED"
+<<<<<<< HEAD
+          to: codethinkersa@gmail.com
+=======
           to: addatainsight@gmail.com
+>>>>>>> 3559df677d6c45a5e283cb206a19aebd43cc1354
           from: ${{ secrets.EMAIL_USER }}
           body: |
             EsteemCBT staging deploy failed!
@@ -88,6 +100,10 @@ jobs:
             Time: ${{ github.event.head_commit.timestamp }}
             Message: ${{ github.event.head_commit.message }}
 
+<<<<<<< HEAD
+            Fix the issue before merging to main-working/production.
+=======
             Fix the issue before merging to development/production.
+>>>>>>> 3559df677d6c45a5e283cb206a19aebd43cc1354
 
             Check logs: https://github.com/Ahmed-Dauda/esteemcbt/actions

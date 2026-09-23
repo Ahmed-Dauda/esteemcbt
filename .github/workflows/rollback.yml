@@ -65,7 +65,7 @@ jobs:
           username: ${{ secrets.EMAIL_USER }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "✅ EsteemCBT Rollback Successful"
-          to: addatainsight@gmail.com
+          to: codethinkersa@gmail.com
           from: ${{ secrets.EMAIL_USER }}
           body: |
             EsteemCBT rolled back to stable (main-working) successfully!
@@ -89,7 +89,7 @@ jobs:
           username: ${{ secrets.EMAIL_USER }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "❌ EsteemCBT Rollback FAILED - Action Required"
-          to: addatainsight@gmail.com
+          to: codethinkersa@gmail.com
           from: ${{ secrets.EMAIL_USER }}
           body: |
             EsteemCBT rollback to stable encountered issues!

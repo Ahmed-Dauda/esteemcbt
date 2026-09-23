@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bulk Add — {{ class_filter }}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        body { font-family: Arial, sans-serif; background: #e7eaef; }
+        .wrap { max-width: 1300px; margin: 30px auto; }
+        .card { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.08); }
+
+        .header-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px; margin-bottom: 15px;
+        }
+        h2 { color: #2c3e50; margin: 0; }
+
+        .week-bar {
+            background: #f0f6ff; border: 1px solid #b6d4fe;
+            border-left: 5px solid rgb(70,118,239);
+            padding: 12px 18px; border-radius: 6px;
+            display: flex; align-items: center; gap: 15px;
+            flex-wrap: wrap; margin-bottom: 18px;
+        }
+        .week-bar label { font-weight: bold; margin: 0; }
+        .week-bar input[type="date"] {
+            padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px;
+        }
+
+        table {
+            width: 100%; border-collapse: collapse;
+            font-size: 13px; margin-top: 10px;
+        }
+        th, td { padding: 8px 10px; border: 1px solid #ddd; }
+        thead th {
+            background: rgb(70,118,239); color: white;
+            text-align: left; position: sticky; top: 0;
+        }
+        tbody tr:nth-child(even) { background: #f8f9fa; }
+        tbody tr:hover { background: #e1f5fe; }
+
+        input[type="number"] {
+            width: 90px; padding: 5px 8px;
+            border: 1px solid #ccc; border-radius: 4px;
+            text-align: right; font-variant-numeric: tabular-nums;
+        }
+        input[type="number"]:focus {
+            border-color: #007bff; outline: none;
+            background: #fffbe6;
+        }
+
+        .balance-neg { color: #c0392b; font-weight: bold; }
+        .balance-ok  { color: #27ae60; font-weight: bold; }
+        .last-week   { color: #888; font-size: 11px; }
+
+        .btn-save {
+            background: #28a745; color: white; border: none;
+            padding: 12px 30px; border-radius: 4px; font-size: 15px;
+            cursor: pointer;
+        }
+        .btn-save:hover { background: #218838; }
+
+        .btn-secondary {
+            background: #6c757d; color: white; text-decoration: none;
+            padding: 10px 20px; border-radius: 4px;
+        }
+
+        .sticky-actions {
+            position: sticky; bottom: 0;
+            background: #fff; padding: 15px;
+            border-top: 2px solid #ddd; text-align: center;
+            margin-top: 15px;
+        }
+
+        .row-has-activity { background: #fffbe6 !important; }
+    </style>
+</head>
+<body>
+
+<div class="wrap">
+    <div class="card">
+        <div class="header-bar">
+            <h2>
+                <i class="fas fa-list"></i>
+                Bulk Add — {{ class_filter }}
+                <small style="color:#888; font-size:14px;">
+                    {{ session.name }} · {{ term.name }}
+                </small>
+            </h2>
+            <a href="{% url 'finance:finance_summary' %}?session={{ session_id }}&term={{ term_id }}&class={{ class_filter }}"
+               class="btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Summary
+            </a>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div style="background:#d4edda;color:#155724;border:1px solid #c3e6cb;
+                            padding:12px 18px;border-radius:6px;margin-bottom:15px;">
+                    <i class="fas fa-check-circle"></i> {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" id="bulk-form">
+            {% csrf_token %}
+            <input type="hidden" name="session" value="{{ session_id }}">
+            <input type="hidden" name="term" value="{{ term_id }}">
+            <input type="hidden" name="class" value="{{ class_filter }}">
+
+            <div class="week-bar">
+                <label for="week_start"><i class="fas fa-calendar"></i> Week Start Date:</label>
+                <input type="date" name="week_start" id="week_start"
+                       value="{{ default_week_start|date:'Y-m-d' }}" required>
+                <span style="font-size:13px;color:#666;">
+                    Leave all inputs at 0 for students with no activity — they'll be skipped.
+                </span>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:30px;">#</th>
+                        <th>Student</th>
+                        <th style="text-align:right;">Current Balance</th>
+                        <th style="text-align:right;">Deposit</th>
+                        <th style="text-align:right;">School Shop</th>
+                        <th style="text-align:right;">Caps</th>
+                        <th style="text-align:right;">Haircut</th>
+                        <th style="text-align:right;">Others</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in student_rows %}
+                        <tr id="row-{{ row.student.id }}">
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <strong>{{ row.student.first_name }} {{ row.student.last_name }}</strong>
+                                {% if row.last_week %}
+                                    <div class="last-week">
+                                        last: {{ row.last_week|date:"d M Y" }}
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td style="text-align:right;">
+                                <span class="{% if row.balance < 0 %}balance-neg{% else %}balance-ok{% endif %}">
+                                    ₦{{ row.balance }}
+                                </span>
+                            </td>
+                            <td style="text-align:right;">
+                                <input type="number" step="0.1" min="0"
+                                       name="student_{{ row.student.id }}_deposit"
+                                       class="activity-input" value="0">
+                            </td>
+                            <td style="text-align:right;">
+                                <input type="number" step="0.1" min="0"
+                                       name="student_{{ row.student.id }}_shop"
+                                       class="activity-input" value="0">
+                            </td>
+                            <td style="text-align:right;">
+                                <input type="number" step="0.1" min="0"
+                                       name="student_{{ row.student.id }}_caps"
+                                       class="activity-input" value="0">
+                            </td>
+                            <td style="text-align:right;">
+                                <input type="number" step="0.1" min="0"
+                                       name="student_{{ row.student.id }}_haircut"
+                                       class="activity-input" value="0">
+                            </td>
+                            <td style="text-align:right;">
+                                <input type="number" step="0.1" min="0"
+                                       name="student_{{ row.student.id }}_others"
+                                       class="activity-input" value="0">
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="sticky-actions">
+                <button type="submit" class="btn-save"
+                        onclick="return confirm('Save all records with non-zero amounts?');">
+                    <i class="fas fa-save"></i> Save All
+                </button>
+                <a href="{% url 'finance:finance_summary' %}?session={{ session_id }}&term={{ term_id }}&class={{ class_filter }}"
+                   class="btn-secondary">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Highlight a row as soon as it has any non-zero value
+document.querySelectorAll('.activity-input').forEach(function(inp) {
+    inp.addEventListener('input', function() {
+        var row = this.closest('tr');
+        var hasActivity = Array.from(row.querySelectorAll('.activity-input'))
+            .some(function(i) { return parseFloat(i.value || 0) !== 0; });
+        row.classList.toggle('row-has-activity', hasActivity);
+    });
+});
+</script>
+
+</body>
+</html>

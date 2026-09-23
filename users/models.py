@@ -63,6 +63,7 @@ gender_choice = [
 ]
 
 
+
 class NewUser(AbstractBaseUser, PermissionsMixin):
     email           = models.EmailField(max_length=254, unique=True, db_index=True)
     username        = models.CharField(max_length=35, blank=True, db_index=True)
@@ -90,6 +91,7 @@ class NewUser(AbstractBaseUser, PermissionsMixin):
     is_superuser    = models.BooleanField(default=False)
     is_active       = models.BooleanField(default=True)
     is_principal    = models.BooleanField(default=False)
+    is_accountant   = models.BooleanField(default=False)
     last_login      = models.DateTimeField(null=True, blank=True)
     date_joined     = models.DateTimeField(auto_now_add=True, db_index=True)
 
