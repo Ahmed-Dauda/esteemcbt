@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import (class_statements_pdf, family_statement_pdf, finance_dashboard_view, finance_record_receipt_view, finance_record_view,
+from .views import (class_statements_pdf, family_statement_pdf, finance_dashboard_view, finance_record_bulk_delete_view, finance_record_receipt_view, finance_record_view,
                     FinanceRecordUpdateView,
                     FinanceRecordDeleteView, 
                     FinanceRecordCreateView,
@@ -11,6 +11,11 @@ from .views import (class_statements_pdf, family_statement_pdf, finance_dashboar
 app_name = 'finance'
  
 urlpatterns = [
+    path(
+    'records/bulk-delete/',
+    finance_record_bulk_delete_view,
+    name='finance_record_bulk_delete',
+),
     path('finance-records/class/pdf/', class_statements_pdf, name='class_statements_pdf'),
     path('record/<int:pk>/receipt/', finance_record_receipt_view, name='record_receipt'),
 path('dashboard/', finance_dashboard_view, name='finance_dashboard'),
