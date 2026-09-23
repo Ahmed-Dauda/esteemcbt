@@ -258,18 +258,18 @@ def onboarding_dashboard_view(request):
     }
     return render(request, 'teacher/dashboard/onboarding_dashboard.html', context)
 
-@cache_page(60 * 15)
+
 def teacher_logout_view(request):
 
     return render(request, 'teacher/dashboard/teacher_logout.html')
 
-@cache_page(60 * 15)
+
 def student_logout_view(request):
 
     return render(request, 'teacher/dashboard/student_logout.html')
 
 
-@cache_page(60 * 15)
+
 def teacher_login_view(request):
     teachers = Teacher.objects.all()
     # print('teachers:',teachers)
@@ -759,7 +759,7 @@ def logged_in_superuser_view(request):
 
 from users.models import Profile  # Import your models here
 from quiz.models import Course
-# @cache_page(60 * 15)
+
 
 @login_required(login_url='account_login')
 def student_dashboard_view(request):
@@ -2663,13 +2663,35 @@ from django.shortcuts import get_object_or_404, render
 def teacher_course_results_view(request, course_id):
     course = get_object_or_404(Course, id=course_id)
 
-    # AJAX bulk delete
-    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        selected_ids = request.POST.getlist('selected_results[]')
+    # Handle both AJAX and regular form submissions
+    if request.method == "POST":
+        # Check for AJAX request
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            selected_ids = request.POST.getlist('selected_results[]')
+        else:
+            # Regular form submission
+            selected_ids = request.POST.getlist('selected_results')
+        
         if selected_ids:
-            count = Result.objects.filter(id__in=selected_ids).delete()[0]
-            return JsonResponse({'status': 'success', 'deleted_count': count})
-        return JsonResponse({'status': 'error', 'message': 'No results selected.'})
+            try:
+                count = Result.objects.filter(id__in=selected_ids).delete()[0]
+                
+                # Return JSON for AJAX, redirect for regular form
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'status': 'success', 'deleted_count': count})
+                else:
+                    messages.success(request, f'Successfully deleted {count} result(s).')
+                    return redirect('teacher:teacher_course_results', course_id=course_id)
+            except Exception as e:
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'status': 'error', 'message': str(e)})
+                else:
+                    messages.error(request, f'Error deleting results: {str(e)}')
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': 'No results selected.'})
+            else:
+                messages.warning(request, 'No results selected for deletion.')
 
     results = (
         Result.objects
@@ -2685,6 +2707,8 @@ def teacher_course_results_view(request, course_id):
         'course': course,
         'results': results,
     })
+
+    
 
 import csv
 from django.http import HttpResponse
@@ -3070,26 +3094,6 @@ Merge the user's requested changes into the current params and return the full u
 #     return response
 
 
-
-# @login_required(login_url='teacher:teacher_login')
-# def teacher_course_results_view(request, course_id):
-#     """Display all student results for a given course, ordered alphabetically by name."""
-#     course = get_object_or_404(Course, id=course_id)
-
-#     results = (
-#         Result.objects
-#         .select_related('student', 'exam', 'term', 'session', 'exam_type')
-#         .filter(exam=course)
-#         .order_by(Lower('student__first_name').asc(nulls_last=True), Lower('student__last_name').asc(nulls_last=True))
-
-#     )
-#     for r in Result.objects.order_by(Lower('student__first_name'), Lower('student__last_name')):
-#         print(r.student.first_name, r.student.last_name)
-        
-#     return render(request, 'teacher/dashboard/teacher_results_detail.html', {
-#         'course': course,
-#         'results': results,
-#     })
 
 
 @login_required
@@ -3708,7 +3712,7 @@ from django.shortcuts import render
 from django.contrib import messages
 import csv
 
-# @cache_page(60 * 15)
+
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib import messages
@@ -3955,7 +3959,7 @@ def subject_questions_view(request, subject_id):
     return render(request, 'teacher/dashboard/subject_questions.html', context)
 
   
-# @cache_page(60 * 15)
+
 def view_questions(request):
     # Check if user is authenticated
     if not request.user.is_authenticated:

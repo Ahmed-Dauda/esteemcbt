@@ -22,6 +22,7 @@ admin.site.register(FrequentlyAskQuestions)
 # admin.site.register(Session)
 # admin.site.register(Term)
 
+
 @admin.register(Term)
 class TermAdmin(admin.ModelAdmin):
     list_display = ["name", "school", "order", "is_midterm"]
@@ -29,11 +30,30 @@ class TermAdmin(admin.ModelAdmin):
     list_filter = ["school", "is_midterm"]
     ordering = ["order"]
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        from django.core.cache import cache
+        cache.delete(f'fin_terms_{obj.school_id}')
+
+    def delete_model(self, request, obj):
+        from django.core.cache import cache
+        cache.delete(f'fin_terms_{obj.school_id}')
+        super().delete_model(request, obj)
+
 
 class SessionAdmin(admin.ModelAdmin):
+    list_display = ['name', 'school']
+    search_fields = ['name']
 
-    list_display = ['name','school']
-    search_fields = ['name']  # Add search field for course name
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        from django.core.cache import cache
+        cache.delete(f'fin_sessions_{obj.school_id}')
+
+    def delete_model(self, request, obj):
+        from django.core.cache import cache
+        cache.delete(f'fin_sessions_{obj.school_id}')
+        super().delete_model(request, obj)
 
 admin.site.register(Session, SessionAdmin)
 

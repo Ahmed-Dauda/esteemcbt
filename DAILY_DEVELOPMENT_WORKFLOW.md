@@ -17,6 +17,7 @@ Maintain these branches at all times:
 Always begin new work on the `staging` branch.
 
 ```bash
+git branch --show-current
 git checkout staging
 git pull origin staging
 ```
@@ -155,3 +156,6 @@ sudo -u postgres psql -p 5433 esteemcbt_staging < /tmp/prod_dump.sql
 * Only update `main-working` after production has been confirmed healthy.
 * Tag every stable production release.
 * Use `main-working` or a stable tag for rollback when necessary.
+
+# Username: addatainsight@gmail.com
+# Password: admin1234

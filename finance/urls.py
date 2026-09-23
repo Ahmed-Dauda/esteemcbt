@@ -1,19 +1,25 @@
 from django.urls import path
-from .views import (finance_record_view,
+from .views import (class_statements_pdf, family_statement_pdf, finance_dashboard_view, finance_record_receipt_view, finance_record_view,
                     FinanceRecordUpdateView,
                     FinanceRecordDeleteView, 
                     FinanceRecordCreateView,
                     finance_record_export_view,
-                    finance_record_import_view,
-              
+                    finance_record_import_view, finance_student_view, finance_summary_view, student_search_api, student_statement_pdf,
+                    finance_bulk_add_view,
                     )
 
 app_name = 'finance'
  
 urlpatterns = [
-    # path('finance/finance_record/import-preview/', finance_record_import_preview, name='finance_record_import_preview'),
-    # path('finance/finance_record/confirm_import/', confirm_import, name='confirm_import'),
-
+    path('finance-records/class/pdf/', class_statements_pdf, name='class_statements_pdf'),
+    path('record/<int:pk>/receipt/', finance_record_receipt_view, name='record_receipt'),
+path('dashboard/', finance_dashboard_view, name='finance_dashboard'),
+    path('bulk-add/', finance_bulk_add_view, name='finance_bulk_add'),
+    path('api/students/', student_search_api, name='student_search_api'),
+    path('finance-records/family/pdf/', family_statement_pdf, name='family_statement_pdf'),
+    path('finance-records/student/pdf/',  student_statement_pdf, name='student_statement_pdf'),
+    path('finance-records/student/',  finance_student_view,  name='finance_student_view'),
+path('finance-records/summary/', finance_summary_view, name='finance_summary'),
     path('finance_record/export/', finance_record_export_view, name='finance_record_export'),
     path('finance_record/import/', finance_record_import_view, name='finance_record_import'),
     path('finance_record/add/', FinanceRecordCreateView.as_view(), name='finance_record_add'),

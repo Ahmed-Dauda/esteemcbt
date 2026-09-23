@@ -31,9 +31,10 @@ journalctl -u esteemcbt-staging -n 20 --no-pager
 # ===========================
 
 # NAVIGATE TO PRODUCTION PROJECT
+MyServer2026!Coolify
 cd /var/www/esteemcbt
 source venv/bin/activate
-MyServer2026!Coolify
+
 
 # RESTART PRODUCTION SERVICES
 systemctl restart esteemcbt
@@ -45,7 +46,6 @@ systemctl status celery
 
 # CHECK PRODUCTION LOGS
 journalctl -u esteemcbt -n 20 --no-pager
-
 
 # ===========================
 # 4. CORE INFRASTRUCTURE CHECK
