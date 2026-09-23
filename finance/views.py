@@ -1,6 +1,10 @@
 # Create your views here.
 from .models import FinanceRecord, School, Session, Term
 import tablib
+from django.views.decorators.http import require_POST
+from urllib.parse import urlencode
+from django.db import transaction
+from urllib.parse import urlencode
 from django.http import FileResponse
 from .pdf import build_deposit_receipt_pdf, build_student_statement_pdf, build_family_statement_pdf, build_class_statements_pdf
 from datetime import date, timedelta
@@ -97,12 +101,114 @@ class AccountantRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 @login_required(login_url='teacher:teacher_login')
 def finance_record_export_view(request):
+    # ---- Filters (mirror finance_record_view) ----
+    session_filter = request.GET.get('session') or None
+    term_filter    = request.GET.get('term')    or None
+    class_filter   = request.GET.get('class')   or None
+    school_filter  = request.GET.get('school')  or None
+
+    # ---- Base queryset, scoped to the user's school if they have one ----
+    qs = FinanceRecord.objects.all()
+
+    user_school = getattr(request.user, 'school', None)
+    if user_school is not None:
+        qs = qs.filter(school=user_school)
+    elif school_filter:
+        qs = qs.filter(school_id=school_filter)
+
+    # ---- Apply the visible filters ----
+    if session_filter:
+        qs = qs.filter(session_id=session_filter)
+    if term_filter:
+        qs = qs.filter(term_id=term_filter)
+    if class_filter:
+        qs = qs.filter(student_class=class_filter)
+
+    # ---- Export only the filtered rows ----
     resource = FinanceRecordResource()
-    dataset = resource.export()
-    response = HttpResponse(dataset.xlsx, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="finance_records.xlsx"'
+    dataset = resource.export(qs)
+
+    # ---- Format (xlsx by default, csv optional) ----
+    fmt = (request.GET.get('format') or 'xlsx').lower()
+    if fmt == 'csv':
+        data = dataset.csv
+        content_type = 'text/csv'
+        filename = 'finance_records.csv'
+    else:
+        data = dataset.xlsx
+        content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        filename = 'finance_records.xlsx'
+
+    response = HttpResponse(data, content_type=content_type)
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
+
+from django.views.decorators.http import require_POST
+from django.contrib import messages
+
+
+@login_required(login_url='teacher:teacher_login')
+@require_POST
+def finance_record_bulk_delete_view(request):
+    """
+    Delete the specific records the user selected via checkboxes.
+    Only accepts POST. Only deletes records the user has access to.
+    """
+    # ---- Collect selected IDs (JS posts as `ids_csv`) ----
+    ids = request.POST.getlist('ids')
+
+    if not ids:
+        raw = request.POST.get('ids_csv', '')
+        ids = [x.strip() for x in raw.split(',') if x.strip()]
+
+    # ---- Preserve filters so the redirect lands back on the same view ----
+    post_school  = request.POST.get('school',  '')
+    post_session = request.POST.get('session', '')
+    post_term    = request.POST.get('term',    '')
+    post_class   = request.POST.get('class',   '')
+
+    back_url = reverse('finance:finance_record_view')
+    if any((post_school, post_session, post_term, post_class)):
+        back_url = f"{back_url}?{urlencode({chr(115)+chr(99)+chr(104)+chr(111)+chr(111)+chr(108): post_school, 'session': post_session, 'term': post_term, 'class': post_class})}"
+
+    if not ids:
+        messages.error(request, "No rows selected.")
+        return redirect(back_url)
+
+    # ---- Scope to the user's school — never trust client IDs ----
+    qs = FinanceRecord.objects.filter(sn__in=ids)
+
+    user_school = getattr(request.user, 'school', None)
+    if user_school is not None:
+        qs = qs.filter(school=user_school)
+
+    requested_count = len(ids)
+    count = qs.count()
+
+    if count == 0:
+        messages.warning(
+            request,
+            "No matching records found — they may have already been deleted "
+            "or belong to a different school.",
+        )
+        return redirect(back_url)
+
+    # ---- Perform the delete inside a transaction ----
+    with transaction.atomic():
+        qs.delete()
+
+    # ---- Feedback ----
+    if count < requested_count:
+        messages.warning(
+            request,
+            f"Deleted {count} record(s). "
+            f"{requested_count - count} were skipped (out of scope or already gone).",
+        )
+    else:
+        messages.success(request, f"Deleted {count} record(s).")
+
+    return redirect(back_url)
 
 
 @accountant_required
@@ -242,20 +348,21 @@ def _finance_records_datatable(request, base_qs):
     records_filtered = filtered.count()
 
     # ---- Ordering ----
-    # Indices match the <th> order in finance_record_list.html
+    # Indices match the <th> order in finance_record_list.html.
+    # NOTE: column 0 is the selection checkbox, so real data starts at index 1.
     ORDERABLE = {
-        '0':  'names',
-        '1':  'week_start',
-        '2':  'initial_total_deposit',
-        '3':  'total_deposit',
-        '4':  'school_shop',
-        '5':  'caps',
-        '6':  'haircut',
-        '7':  'others',
-        '8':  'total_expense',
-        '9':  'current_balance',
-        '10': 'balance_brought_forward',
-        # 11 (status), 12 (receipt), 13 (edit), 14 (delete) are not sortable
+        '1':  'names',
+        '2':  'week_start',
+        '3':  'initial_total_deposit',
+        '4':  'total_deposit',
+        '5':  'school_shop',
+        '6':  'caps',
+        '7':  'haircut',
+        '8':  'others',
+        '9':  'total_expense',
+        '10': 'current_balance',
+        '11': 'balance_brought_forward',
+        # 0 (checkbox), 12 (status), 13 (receipt), 14 (edit), 15 (delete) are not sortable
     }
     order_col = request.GET.get('order[0][column]')
     order_dir = (request.GET.get('order[0][dir]') or 'asc').lower()
@@ -316,6 +423,7 @@ def _finance_records_datatable(request, base_qs):
             receipt_html = '<span style="color:#ccc;">—</span>'
 
         data.append({
+            'id':                      r.pk,   # ← used by the checkbox column
             'names':                   escape(r.names.title()) if r.names else '',
             'week_start':              r.week_start.strftime('%d %b %Y') if r.week_start else '—',
             'initial_total_deposit':   str(r.initial_total_deposit or 0),
