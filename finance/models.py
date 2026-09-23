@@ -8,6 +8,7 @@ from quiz.models import School
 from sms.models import Session, Term
 
 
+
 class FinanceRecord(models.Model):
     STATUS_CHOICES = [
         ('exhausted', 'Exhausted'),
@@ -48,9 +49,8 @@ class FinanceRecord(models.Model):
 
     # ---- money in ----
     initial_total_deposit = models.DecimalField(max_digits=10, decimal_places=1, default=0)
-    total_deposit         = models.DecimalField(max_digits=10, decimal_places=1,
-                                                blank=True, null=True, db_index=True)
-
+    total_deposit  = models.DecimalField(max_digits=10, decimal_places=1,
+                                                default=0, blank=True, null=True, db_index=True)
     # ---- money out ----
     school_shop = models.DecimalField(max_digits=10, decimal_places=1, default=0, blank=True, null=True)
     caps        = models.DecimalField(max_digits=10, decimal_places=1, default=0, blank=True, null=True)
