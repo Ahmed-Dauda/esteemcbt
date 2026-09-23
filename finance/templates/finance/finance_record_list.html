@@ -170,6 +170,23 @@
     flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 14px;
+    align-items: center;
+}
+
+/* Selection count chip */
+#selection-count {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #EDF2FE;
+    color: #1B44AB;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+#selection-count.is-empty {
+    background: #F3F4F6;
+    color: #6B7280;
 }
 
 /* ---------- Table ---------- */
@@ -208,6 +225,27 @@
 .fin-page table#finance-records tbody tr:nth-child(even) { background: #FBFCFE; }
 .fin-page table#finance-records tbody tr:hover { background: var(--blue-soft); }
 .fin-page table#finance-records tbody tr:last-child td { border-bottom: none; }
+
+/* Highlight selected rows */
+.fin-page table#finance-records tbody tr.row-selected {
+    background: #E6EEFF !important;
+}
+
+/* Checkbox column */
+.fin-page table#finance-records th.col-select,
+.fin-page table#finance-records td.col-select {
+    width: 36px;
+    text-align: center;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+.fin-page table#finance-records td.col-select input[type="checkbox"],
+.fin-page table#finance-records th.col-select input[type="checkbox"] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--blue);
+}
 
 /* Right-align the money columns, centre the action columns */
 .fin-page table#finance-records td.num,
@@ -448,12 +486,34 @@
 
     <!-- Toolbar -->
     <div class="fin-toolbar">
-        <a href="{% url 'finance:finance_record_export' %}" class="btn btn-ghost">
+        <a href="{% url 'finance:finance_record_export' %}?school={{ school_filter|default_if_none:'' }}&session={{ session_filter|default_if_none:'' }}&term={{ term_filter|default_if_none:'' }}&class={{ class_filter|default_if_none:''|urlencode }}"
+           class="btn btn-ghost">
             <i class="fas fa-file-arrow-down"></i> Export
         </a>
         <a href="{% url 'finance:finance_record_import' %}" class="btn btn-ghost">
             <i class="fas fa-file-arrow-up"></i> Import
         </a>
+
+        <button type="button" id="select-all-page" class="btn btn-ghost">
+            <i class="fas fa-check-square"></i> Select page
+        </button>
+        <button type="button" id="clear-selection" class="btn btn-ghost">
+            <i class="fas fa-square"></i> Clear
+        </button>
+
+        <span id="selection-count" class="is-empty">0 selected</span>
+
+        <form id="bulk-delete-form"
+              method="post"
+              action="{% url 'finance:finance_record_bulk_delete' %}"
+              style="display:inline; margin-left:auto;"
+              onsubmit="return confirmBulkDelete(event);">
+            {% csrf_token %}
+            <input type="hidden" name="ids_csv" id="bulk-delete-ids">
+            <button type="submit" class="btn btn-ghost" style="color:#DC3545;border-color:#F5C2C7;">
+                <i class="fas fa-trash-can"></i> Delete selected
+            </button>
+        </form>
     </div>
 
     <!-- Table -->
@@ -462,6 +522,9 @@
             <table id="finance-records" class="display">
                 <thead>
                     <tr>
+                        <th class="col-select">
+                            <input type="checkbox" id="select-all-page-header" title="Select all on this page">
+                        </th>
                         <th>Name</th>
                         <th>Week</th>
                         <th class="num">Deposit</th>
@@ -486,6 +549,53 @@
 </div>
 
 <script>
+// ---------- Selection state (persists across DataTables pages) ----------
+var selectedIds = new Set();
+
+function updateSelectionUI() {
+    var $count = $('#selection-count');
+    $count.text(selectedIds.size + ' selected');
+    $count.toggleClass('is-empty', selectedIds.size === 0);
+    $('#bulk-delete-ids').val(Array.from(selectedIds).join(','));
+}
+
+function syncPageCheckboxes() {
+    var $boxes = $('input.row-select');
+
+    $boxes.each(function () {
+        var id = String($(this).data('id'));
+        var checked = selectedIds.has(id);
+        $(this).prop('checked', checked);
+        $(this).closest('tr').toggleClass('row-selected', checked);
+    });
+
+    var totalOnPage = $boxes.length;
+    var checkedOnPage = $boxes.filter(':checked').length;
+    var allChecked = totalOnPage > 0 && checkedOnPage === totalOnPage;
+
+    $('#select-all-page-header').prop('checked', allChecked);
+    if (allChecked && totalOnPage > 0) {
+        $('#select-all-page').addClass('btn-primary').removeClass('btn-ghost');
+    } else {
+        $('#select-all-page').removeClass('btn-primary').addClass('btn-ghost');
+    }
+}
+
+function togglePageSelection(checked) {
+    $('input.row-select').each(function () {
+        var id = String($(this).data('id'));
+        if (checked) {
+            selectedIds.add(id);
+        } else {
+            selectedIds.delete(id);
+        }
+        $(this).prop('checked', checked);
+        $(this).closest('tr').toggleClass('row-selected', checked);
+    });
+    updateSelectionUI();
+    syncPageCheckboxes();
+}
+
 $(document).ready(function () {
     // Preserve the current school/session/term/class filters on every AJAX call
     var currentFilters = window.location.search || '';
@@ -496,12 +606,21 @@ $(document).ready(function () {
         deferRender: true,
         pageLength: 25,
         lengthMenu: [10, 25, 50, 100, 250],
-        order: [[1, 'desc']],   // sort by Week descending by default
+        order: [[2, 'desc']],   // sort by Week descending (column shifted by 1 for checkbox)
         ajax: {
             url: "{% url 'finance:finance_record_view' %}" + currentFilters,
             type: 'GET'
         },
         columns: [
+            {
+                data: 'id',
+                orderable: false,
+                searchable: false,
+                className: 'col-select',
+                render: function (data, type, row) {
+                    return '<input type="checkbox" class="row-select" data-id="' + data + '">';
+                }
+            },
             { data: 'names' },
             { data: 'week_start' },
             { data: 'initial_total_deposit' },
@@ -519,8 +638,8 @@ $(document).ready(function () {
             { data: 'delete',  orderable: false, searchable: false }
         ],
         columnDefs: [
-            { targets: [2, 3, 4, 5, 6, 7, 8, 9, 10], className: 'num' },
-            { targets: [11, 12, 13, 14], className: 'act' }
+            { targets: [3, 4, 5, 6, 7, 8, 9, 10, 11], className: 'num' },
+            { targets: [12, 13, 14, 15], className: 'act' }
         ],
         language: {
             processing:  '<span class="dt-spinner"></span> Loading records…',
@@ -538,7 +657,71 @@ $(document).ready(function () {
                 next:     '<i class="fas fa-angle-right"></i>',
                 last:     '<i class="fas fa-angles-right"></i>'
             }
+        },
+        drawCallback: function () {
+            // Re-apply checkbox state whenever a new page is drawn
+            syncPageCheckboxes();
+            updateSelectionUI();
         }
     });
+
+    // -------- Row checkbox change --------
+    $('#finance-records tbody').on('change', 'input.row-select', function () {
+        var id = String($(this).data('id'));
+        if ($(this).is(':checked')) {
+            selectedIds.add(id);
+        } else {
+            selectedIds.delete(id);
+        }
+        $(this).closest('tr').toggleClass('row-selected', $(this).is(':checked'));
+        updateSelectionUI();
+        syncPageCheckboxes();
+    });
+
+    // -------- "Select page" button --------
+    $('#select-all-page').on('click', function () {
+        var totalOnPage = $('input.row-select').length;
+        var checkedOnPage = $('input.row-select').filter(':checked').length;
+        var allChecked = totalOnPage > 0 && checkedOnPage === totalOnPage;
+        togglePageSelection(!allChecked);
+    });
+
+    // -------- "Select all" header checkbox --------
+    $('#select-all-page-header').on('change', function () {
+        togglePageSelection($(this).is(':checked'));
+    });
+
+    // -------- "Clear" button --------
+    $('#clear-selection').on('click', function () {
+        selectedIds.clear();
+        $('input.row-select').prop('checked', false);
+        $('input.row-select').closest('tr').removeClass('row-selected');
+        $('#select-all-page-header').prop('checked', false);
+        $('#select-all-page').removeClass('btn-primary').addClass('btn-ghost');
+        updateSelectionUI();
+    });
+
+    updateSelectionUI();
 });
+
+// -------- Confirm before delete --------
+function confirmBulkDelete(event) {
+    if (selectedIds.size === 0) {
+        alert('No rows selected.');
+        event.preventDefault();
+        return false;
+    }
+
+    // Ensure hidden field is populated right before submit
+    $('#bulk-delete-ids').val(Array.from(selectedIds).join(','));
+
+    var msg = "Delete " + selectedIds.size + " selected record(s)?\n\n" +
+              "This cannot be undone.\n\n" +
+              "Continue?";
+    if (!confirm(msg)) {
+        event.preventDefault();
+        return false;
+    }
+    return true;
+}
 </script>
