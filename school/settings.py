@@ -423,6 +423,13 @@ USE_TZ = True
 
 # end of new security
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://esteemlearningcenter.com",
+    "https://www.esteemlearningcenter.com",
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 LOGIN_REDIRECT_URL = 'teacher:student-dashboard'
