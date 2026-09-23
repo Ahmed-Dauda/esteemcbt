@@ -15,78 +15,118 @@ from import_export import fields,resources
 from import_export.widgets import ForeignKeyWidget
 from import_export.admin import ImportExportModelAdmin, ExportActionMixin
 
+from django.contrib import admin
+from django.contrib.admin import SimpleListFilter
+from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin, ExportActionMixin
 
+from .models import NewUser
+
+
+# ----------------------------------------------------------------------
+# Import / Export resource
+# ----------------------------------------------------------------------
 class NewUserResource(resources.ModelResource):
     class Meta:
         model = NewUser
-        # fields = ('title',)
+        fields = (
+            'id', 'email', 'username', 'phone_number',
+            'first_name', 'last_name',
+            'student_class', 'school', 'countries', 'gender',
+            'is_staff', 'is_superuser', 'is_active',
+            'is_principal', 'is_accountant',
+            'last_login', 'date_joined',
+        )
+        export_order = fields
+        import_id_fields = ('email',)   # email is unique -> safe natural key
+        # pro_img is intentionally omitted (CloudinaryField, not import-friendly)
 
+
+# ----------------------------------------------------------------------
+# Custom role filter
+# ----------------------------------------------------------------------
+class RoleFilter(SimpleListFilter):
+    title = _('role')
+    parameter_name = 'role'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('principal',  _('Principals')),
+            ('accountant', _('Accountants')),
+            ('staff',      _('Staff')),
+            ('superuser',  _('Superusers')),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'principal':
+            return queryset.filter(is_principal=True)
+        if self.value() == 'accountant':
+            return queryset.filter(is_accountant=True)
+        if self.value() == 'staff':
+            return queryset.filter(is_staff=True)
+        if self.value() == 'superuser':
+            return queryset.filter(is_superuser=True)
+        return queryset
+
+
+# ----------------------------------------------------------------------
+# Admin
+# ----------------------------------------------------------------------
 class NewUserAdmin(ImportExportModelAdmin, ExportActionMixin):
     list_display = [
         'email', 'username', 'phone_number', 'first_name', 'last_name',
-        'student_class', 'school','pro_img','countries', 'is_staff', 'is_superuser',
-        'is_active', 'last_login', 'date_joined'
+        'student_class', 'school', 'avatar', 'countries',
+        'is_staff', 'is_superuser', 'is_active',
+        'is_principal', 'is_accountant',
+        'last_login', 'date_joined',
     ]
     list_filter = [
         'email', 'username', 'school', 'phone_number',
-        'first_name', 'last_login', 'student_class'
+        'first_name', 'last_login', 'student_class',
+        'is_staff', 'is_superuser', 'is_active',
+        'is_principal', 'is_accountant',
+        RoleFilter,
     ]
     search_fields = [
         'email',
         'username',
+        'first_name',
+        'last_name',
+        'admission_no',           # 👈 new — needed for autocomplete + search
         'school__school_name',
-        'student_class'
-    ]  # ✅ Removed 'title'
+        'student_class',
+    ]
     ordering = ['date_joined']
     autocomplete_fields = ['school']
     resource_class = NewUserResource
 
+    # Tick roles directly from the list page
+    list_editable = ('is_accountant', 'is_principal', 'is_active')
+
+    @admin.display(description='Photo')
+    def avatar(self, obj):
+        if obj.pro_img:
+            return format_html(
+                '<img src="{}" style="height:32px;width:32px;'
+                'border-radius:50%;object-fit:cover;" />',
+                obj.pro_img.url,
+            )
+        return '—'
+
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         return queryset.select_related('school')
-    
+
     def get_actions(self, request):
         actions = super().get_actions(request)
-        # The built-in “export_selected_objects” action is automatically available
+        # The built-in "export_selected_objects" action is automatically available
         return actions
+
 
 admin.site.register(NewUser, NewUserAdmin)
 
-# class NewUserResource(resources.ModelResource):
-#     class Meta:
-#         model = NewUser
-#         # fields = ('title',)
-
-# class NewUserAdmin(ImportExportModelAdmin):
-#     list_display = [
-#         'email', 'username', 'phone_number', 'first_name', 'last_name',
-#         'student_class', 'school', 'countries', 'is_staff', 'is_superuser',
-#         'is_active', 'last_login', 'date_joined'
-#     ]
-#     list_filter = [
-#         'email', 'username', 'school', 'phone_number',
-#         'first_name', 'last_login', 'student_class'
-#     ]
-#     search_fields = [
-#         'email',
-#         'username',
-#         'school__school_name',
-#         'student_class'
-#     ]  # ✅ Removed 'title'
-#     ordering = ['date_joined']
-#     autocomplete_fields = ['school']
-#     resource_class = NewUserResource
-
-#     def get_queryset(self, request):
-#         queryset = super().get_queryset(request)
-#         return queryset.select_related('school')
-    
-#     def get_actions(self, request):
-#         actions = super().get_actions(request)
-#         # The built-in “export_selected_objects” action is automatically available
-#         return actions
-
-# admin.site.register(NewUser, NewUserAdmin)
 
 
 
@@ -129,27 +169,5 @@ class ProfileAdmin(ImportExportModelAdmin):
         return queryset
 
 admin.site.register(Profile, ProfileAdmin)
-
-
-# class ProfileResource(resources.ModelResource):
-    
-#     courses = fields.Field(
-#         column_name= 'user',
-#         attribute='user',
-#         widget=ForeignKeyWidget(NewUser,'email') )
-    
-#     class Meta:
-#         model = Profile
-#         # fields = ('title',)
-               
-# class ProfileAdmin(ImportExportModelAdmin):
-#     list_display = ['id', 'user','username', 'first_name', 'last_name','gender', 'phone_number', 'countries','pro_img', 'bio', 'created','updated']
-#     list_filter =  ['user','username', 'first_name', 'last_name','gender' ]
-#     search_fields = ['user__email','user__first_name','user__last_name', 'username', 'gender']
-#     ordering = ['created']
-    
-#     resource_class = ProfileResource
-
-# admin.site.register(Profile, ProfileAdmin)
 
 

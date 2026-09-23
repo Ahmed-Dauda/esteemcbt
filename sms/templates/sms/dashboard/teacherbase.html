@@ -855,14 +855,23 @@
                 </a>
             </div>
 
+      {% if request.user.is_accountant or request.user.is_superuser %}
+        <div class="nav-item">
+            <a class="nav-link" href="{% url 'finance:finance_dashboard' %}">
+                <i class="fas fa-naira-sign"></i>
+                <span>Finance Dashboard</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a class="nav-link" href="{% url 'finance:finance_record_view' %}">
+                <i class="fas fa-list"></i>
+                <span>Weekly Records</span>
+            </a>
+        </div>
+    {% endif %}
+
             {% if request.user.is_authenticated %}
             {% if teacher_school|lower == user_school|lower %}
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'finance:finance_record_view' %}">
-                    <i class="fas fa-dollar-sign"></i>
-                    <span>Finance</span>
-                </a>
-            </div>
 
             <div class="nav-item">
                 <a class="nav-link" href="{% url 'academics:list_conducts' %}">

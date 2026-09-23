@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Finance summary</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   Finance summary — same token set as the finance records page.
+   ============================================================ */
+:root {
+    --blue:        #2255D4;
+    --blue-dark:   #1B44AB;
+    --blue-soft:   #EDF2FE;
+    --navy:        #1B2A4A;
+    --ink:         #1F2937;
+    --muted:       #6B7280;
+    --faint:       #9CA3AF;
+    --line:        #E4E8EF;
+    --line-soft:   #F1F3F6;
+    --surface:     #FFFFFF;
+    --canvas:      #F6F8FB;
+    --green:       #0F9D58;
+    --green-soft:  #E6F5EC;
+    --red:         #DC3545;
+    --red-deep:    #B02A37;
+    --red-soft:    #FDECEE;
+    --amber:       #B7791F;
+    --amber-soft:  #FDF4E3;
+    --violet:      #6741D9;
+    --violet-soft: #F1ECFD;
+    --radius:      12px;
+    --shadow:      0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.05);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: var(--canvas);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1200px; margin: 0 auto; padding: 32px 24px 56px; }
+
+/* ---------- Page header ---------- */
+.page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    color: var(--navy);
+}
+.page-title i {
+    display: grid;
+    place-items: center;
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--blue-soft);
+    color: var(--blue);
+    font-size: 16px;
+}
+.page-sub { margin: 6px 0 0 50px; font-size: 13px; color: var(--muted); }
+
+/* ---------- Buttons ---------- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 15px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+.btn-primary { background: var(--blue);   color: #fff; }
+.btn-primary:hover { background: var(--blue-dark); }
+.btn-success { background: var(--green);  color: #fff; }
+.btn-success:hover { background: #0C8247; }
+.btn-violet  { background: var(--violet); color: #fff; }
+.btn-violet:hover { background: #5A35C0; }
+.btn-ghost   { background: var(--surface); color: var(--ink); border-color: var(--line); }
+.btn-ghost:hover { background: var(--blue-soft); border-color: #C9D8FA; color: var(--blue-dark); }
+.btn-xs { padding: 6px 10px; font-size: 12px; border-radius: 7px; }
+.btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+/* ---------- Cards ---------- */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+.section { margin-bottom: 22px; }
+.section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--line);
+}
+.section-head h3 {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--navy);
+}
+.section-head h3 i { color: var(--blue); font-size: 14px; }
+.section-note { font-size: 12.5px; color: var(--faint); }
+.section-body { padding: 16px 18px; }
+
+/* ---------- Filters ---------- */
+.filters {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(160px, 1fr)) auto auto;
+    gap: 14px;
+    align-items: end;
+    padding: 16px 18px;
+}
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field label { font-size: 12px; font-weight: 600; color: var(--muted); }
+.field label i { color: var(--faint); margin-right: 4px; }
+select {
+    appearance: none;
+    width: 100%;
+    padding: 9px 32px 9px 12px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    background-color: #fff;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 15px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+}
+select:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(34,85,212,.12);
+}
+
+/* ---------- Stats ---------- */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+}
+.stat-card {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+}
+.stat-icon {
+    display: grid;
+    place-items: center;
+    width: 44px; height: 44px;
+    border-radius: 11px;
+    font-size: 17px;
+    flex-shrink: 0;
+}
+.icon-blue   { background: var(--blue-soft);   color: var(--blue); }
+.icon-green  { background: var(--green-soft);  color: var(--green); }
+.icon-red    { background: var(--red-soft);    color: var(--red); }
+.icon-amber  { background: var(--amber-soft);  color: var(--amber); }
+.stat-body { min-width: 0; flex: 1; }
+.stat-label { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 3px; }
+.stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    word-break: break-word;
+}
+.stat-value.negative { color: var(--red); }
+.stat-sub { font-size: 11.5px; color: var(--faint); margin-top: 3px; }
+
+/* ---------- Tables ---------- */
+.table-scroll { width: 100%; overflow-x: auto; }
+table.data {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+}
+table.data thead th {
+    padding: 11px 12px;
+    text-align: left;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    color: #EAF0FF;
+    background: var(--navy);
+    white-space: nowrap;
+}
+table.data thead th:first-child { border-top-left-radius: 8px; }
+table.data thead th:last-child  { border-top-right-radius: 8px; }
+table.data tbody td {
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+    vertical-align: middle;
+}
+table.data tbody tr:nth-child(even) { background: #FBFCFE; }
+table.data tbody tr:hover { background: var(--blue-soft); }
+table.data tbody tr:last-child td { border-bottom: none; }
+table.data td.num, table.data th.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.data td.act, table.data th.act { text-align: center; }
+td.negative, .negative { color: var(--red); }
+
+/* Light table used for the per-class breakdown */
+table.light {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+}
+table.light th {
+    padding: 9px 10px;
+    text-align: left;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+}
+table.light td { padding: 10px; border-bottom: 1px solid var(--line-soft); }
+table.light tbody tr:hover { background: var(--blue-soft); }
+table.light tbody tr:last-child td { border-bottom: none; }
+table.light th.num, table.light td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.class-link { color: var(--navy); text-decoration: none; font-weight: 600; }
+.class-link:hover { color: var(--blue); text-decoration: underline; }
+
+/* ---------- Pills ---------- */
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+.pill-ok    { background: var(--green-soft); color: var(--green); }
+.pill-out   { background: var(--red-soft);   color: var(--red); }
+.count-flag { color: var(--red-deep); font-weight: 700; }
+.count-zero { color: var(--green); }
+
+/* ---------- Alert panel ---------- */
+.alert-panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--red);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 22px;
+    overflow: hidden;
+}
+.alert-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: var(--red-soft);
+    color: #842029;
+    font-size: 14px;
+    font-weight: 700;
+}
+.alert-head i { color: var(--red); }
+.alert-list { list-style: none; margin: 0; padding: 0; }
+.alert-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 11px 18px;
+    border-bottom: 1px solid var(--line-soft);
+}
+.alert-list li:last-child { border-bottom: none; }
+.alert-list .who { flex: 1; min-width: 180px; font-size: 13px; }
+.alert-list .cls { font-size: 11.5px; color: var(--faint); margin-left: 8px; }
+.alert-list .amount {
+    color: var(--red-deep);
+    font-weight: 700;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    min-width: 110px;
+    text-align: right;
+}
+.view-link { color: var(--blue); text-decoration: none; font-size: 12.5px; font-weight: 500; }
+.view-link:hover { text-decoration: underline; }
+.alert-foot {
+    padding: 11px 18px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--muted);
+}
+
+/* ---------- Action panels ---------- */
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+}
+.action-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+.action-card h4 {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+}
+.action-card h4 .badge-icon {
+    display: grid;
+    place-items: center;
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+.badge-violet { background: var(--violet-soft); color: var(--violet); }
+.badge-green  { background: var(--green-soft);  color: var(--green); }
+.badge-blue   { background: var(--blue-soft);   color: var(--blue); }
+.action-card p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+.action-card .spacer { flex: 1; }
+.family-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.family-form select { min-width: 200px; flex: 1; }
+
+/* ---------- Empty state ---------- */
+.empty {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--muted);
+}
+.empty i { font-size: 28px; color: #C6CDDA; display: block; margin-bottom: 12px; }
+.empty strong { display: block; color: var(--ink); font-size: 14px; margin-bottom: 4px; }
+.empty span { font-size: 13px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 860px) {
+    .wrap { padding: 20px 14px 40px; }
+    .filters { grid-template-columns: 1fr 1fr; }
+    .filters .filter-actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+    .page-sub { margin-left: 0; }
+}
+@media (max-width: 520px) {
+    .filters { grid-template-columns: 1fr; }
+    .alert-list .amount { text-align: left; min-width: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+    <!-- ============== HEADER ============== -->
+    <div class="page-header">
+        <div>
+            <h2 class="page-title"><i class="fas fa-chart-column"></i> Finance summary</h2>
+            <p class="page-sub">Every student's deposits, expenses and balance for a session and term.</p>
+        </div>
+        <a href="{% url 'finance:finance_record_view' %}" class="btn btn-ghost">
+            <i class="fas fa-list-ul"></i> Weekly list
+        </a>
+    </div>
+
+    <!-- ============== FILTERS ============== -->
+    <form class="card filters section" method="get">
+        <div class="field">
+            <label for="session"><i class="fas fa-calendar-days"></i> Session</label>
+            <select name="session" id="session">
+                <option value="">Select session</option>
+                {% for s in sessions %}
+                    <option value="{{ s.id }}" {% if s.id|stringformat:"s" == session_filter %}selected{% endif %}>
+                        {{ s.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="term"><i class="fas fa-calendar-check"></i> Term</label>
+            <select name="term" id="term">
+                <option value="">Select term</option>
+                {% for t in terms %}
+                    <option value="{{ t.id }}" {% if t.id|stringformat:"s" == term_filter %}selected{% endif %}>
+                        {{ t.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="class"><i class="fas fa-chalkboard"></i> Class</label>
+            <select name="class" id="class">
+                <option value="">All classes</option>
+                {% for c in classes %}
+                    <option value="{{ c }}" {% if c == class_filter %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-filter"></i> Show summary
+            </button>
+        </div>
+        <div class="filter-actions">
+            <a href="{% url 'finance:finance_summary' %}" class="btn btn-ghost">
+                <i class="fas fa-rotate-left"></i> Clear
+            </a>
+        </div>
+    </form>
+
+    <!-- ============== STATS OVERVIEW ============== -->
+    {% if stats %}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon icon-blue"><i class="fas fa-users"></i></div>
+            <div class="stat-body">
+                <div class="stat-label">Students</div>
+                <div class="stat-value">{{ stats.total_students }}</div>
+                <div class="stat-sub">across {{ stats.total_classes }} class{{ stats.total_classes|pluralize:"es" }}</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon icon-green"><i class="fas fa-circle-check"></i></div>
+            <div class="stat-body">
+                <div class="stat-label">Available</div>
+                <div class="stat-value">{{ stats.available }}</div>
+                <div class="stat-sub">still have a balance</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon icon-red"><i class="fas fa-circle-exclamation"></i></div>
+            <div class="stat-body">
+                <div class="stat-label">Exhausted</div>
+                <div class="stat-value">{{ stats.exhausted }}</div>
+                <div class="stat-sub">need a top-up</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon icon-green"><i class="fas fa-arrow-down-to-line"></i></div>
+            <div class="stat-body">
+                <div class="stat-label">Deposits</div>
+                <div class="stat-value">₦{{ stats.total_deposits|floatformat:0 }}</div>
+                <div class="stat-sub">opening ₦{{ stats.total_opening|floatformat:0 }}</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon icon-amber"><i class="fas fa-arrow-up-from-bracket"></i></div>
+            <div class="stat-body">
+                <div class="stat-label">Expenses</div>
+                <div class="stat-value">₦{{ stats.total_expenses|floatformat:0 }}</div>
+                <div class="stat-sub">shop, caps, haircut, others</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon icon-blue"><i class="fas fa-wallet"></i></div>
+            <div class="stat-body">
+                <div class="stat-label">Net balance</div>
+                <div class="stat-value {% if stats.total_closing < 0 %}negative{% endif %}">
+                    ₦{{ stats.total_closing|floatformat:0 }}
+                </div>
+                <div class="stat-sub">total held in wallets</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ============== EXHAUSTED STUDENTS ============== -->
+    {% if exhausted %}
+    <div class="alert-panel">
+        <div class="alert-head">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>
+                {% if session_filter and term_filter %}
+                    {{ exhausted|length }} student{{ exhausted|length|pluralize }} exhausted this term
+                {% else %}
+                    {{ exhausted|length }} student{{ exhausted|length|pluralize }} need{{ exhausted|length|pluralize:"s," }} a top-up
+                {% endif %}
+                {% if class_filter %} — {{ class_filter }}{% endif %}
+            </span>
+        </div>
+
+        <ul class="alert-list">
+            {% for row in exhausted %}
+                <li>
+                    <span class="who">
+                        <strong>{{ row.names|title }}</strong>
+                        {% if row.student_class %}<span class="cls">{{ row.student_class }}</span>{% endif %}
+                        {% if not session_filter and row.session %}
+                            <span class="cls">{{ row.session }} · {{ row.term }}</span>
+                        {% endif %}
+                    </span>
+                    <span class="amount" title="Balance owed">
+                        {% if row.closing < 0 %}owes {% endif %}₦{{ row.closing }}
+                    </span>
+                    {% if row.student_id %}
+                        <a href="{% url 'finance:finance_student_view' %}?student={{ row.student_id }}&session={{ row.session_id }}&term={{ row.term_id }}"
+                           class="view-link">
+                            View statement <i class="fas fa-arrow-right"></i>
+                        </a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+
+        <div class="alert-foot">
+            <i class="fas fa-circle-info"></i>
+            Call these parents and ask them to top up.
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ============== PER-CLASS BREAKDOWN ============== -->
+    {% if class_stats %}
+    <div class="card section">
+        <div class="section-head">
+            <h3><i class="fas fa-layer-group"></i> Per-class breakdown</h3>
+            <span class="section-note">Select a class name to filter the table below.</span>
+        </div>
+        <div class="section-body">
+            <div class="table-scroll">
+                <table class="light">
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th class="num">Students</th>
+                            <th class="num">Exhausted</th>
+                            <th class="num">Deposits</th>
+                            <th class="num">Expenses</th>
+                            <th class="num">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cs in class_stats %}
+                        <tr>
+                            <td>
+                                <a class="class-link"
+                                   href="?session={{ session_filter }}&term={{ term_filter }}&class={{ cs.name|urlencode }}">
+                                    {{ cs.name }}
+                                </a>
+                            </td>
+                            <td class="num">{{ cs.students }}</td>
+                            <td class="num">
+                                {% if cs.exhausted %}
+                                    <span class="count-flag">{{ cs.exhausted }}</span>
+                                {% else %}
+                                    <span class="count-zero">0</span>
+                                {% endif %}
+                            </td>
+                            <td class="num">₦{{ cs.deposits|floatformat:0 }}</td>
+                            <td class="num">₦{{ cs.expenses|floatformat:0 }}</td>
+                            <td class="num {% if cs.closing < 0 %}negative{% endif %}">₦{{ cs.closing|floatformat:0 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ============== ACTION PANELS ============== -->
+    {% if families or class_filter and session_filter and term_filter %}
+    <div class="action-grid">
+
+        {% if class_filter and session_filter and term_filter %}
+        <div class="action-card">
+            <h4><span class="badge-icon badge-violet"><i class="fas fa-layer-group"></i></span> Bulk add</h4>
+            <p>Add one week's record for every student in <strong>{{ class_filter }}</strong> at once — useful on Monday mornings.</p>
+            <div class="spacer"></div>
+            <div>
+                <a href="{% url 'finance:finance_bulk_add' %}?session={{ session_filter }}&term={{ term_filter }}&class={{ class_filter }}"
+                   class="btn btn-violet">
+                    <i class="fas fa-plus"></i> Add next week
+                </a>
+            </div>
+        </div>
+
+        <div class="action-card">
+            <h4><span class="badge-icon badge-green"><i class="fas fa-file-pdf"></i></span> Class statements</h4>
+            <p>One PDF with every student's full statement in <strong>{{ class_filter }}</strong>, ready to print at end of term.</p>
+            <div class="spacer"></div>
+            <div>
+                <a href="{% url 'finance:class_statements_pdf' %}?session={{ session_filter }}&term={{ term_filter }}&class={{ class_filter }}"
+                   class="btn btn-success">
+                    <i class="fas fa-download"></i> Download class PDF
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if families %}
+        <div class="action-card">
+            <h4><span class="badge-icon badge-blue"><i class="fas fa-people-roof"></i></span> Family statement</h4>
+            <p>One PDF with all children of a family, each on their own page.</p>
+            <div class="spacer"></div>
+            <form method="get" action="{% url 'finance:family_statement_pdf' %}" class="family-form">
+                <input type="hidden" name="session" value="{{ session_filter }}">
+                <input type="hidden" name="term" value="{{ term_filter }}">
+                {% if class_filter %}<input type="hidden" name="class" value="{{ class_filter }}">{% endif %}
+                <select name="family" required aria-label="Family last name">
+                    <option value="">Select family (last name)</option>
+                    {% for f in families %}
+                        <option value="{{ f }}">{{ f }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-file-pdf"></i> Download
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+    </div>
+    {% endif %}
+
+    <!-- ============== SUMMARY TABLE ============== -->
+    <div class="card section">
+        <div class="section-head">
+            <h3><i class="fas fa-table-list"></i> Student totals</h3>
+            {% if rows %}<span class="section-note">{{ rows|length }} student{{ rows|length|pluralize }} shown</span>{% endif %}
+        </div>
+
+        {% if rows %}
+        <div class="table-scroll">
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th class="num">Opening (BBF)</th>
+                        <th class="num">Deposits</th>
+                        <th class="num">Expenses</th>
+                        <th class="num">Closing balance</th>
+                        <th class="num">Weeks</th>
+                        <th class="act">Status</th>
+                        <th class="act">Statement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        <td><strong>{{ row.names|title }}</strong></td>
+                        <td>{{ row.student_class }}</td>
+                        <td class="num {% if row.opening < 0 %}negative{% endif %}">{{ row.opening }}</td>
+                        <td class="num">{{ row.deposits }}</td>
+                        <td class="num">{{ row.expenses }}</td>
+                        <td class="num {% if row.closing < 0 %}negative{% endif %}">{{ row.closing }}</td>
+                        <td class="num">{{ row.weeks }}</td>
+                        <td class="act">
+                            {% if row.status == 'exhausted' %}
+                                <span class="pill pill-out"><i class="fas fa-circle-exclamation"></i> Exhausted</span>
+                            {% else %}
+                                <span class="pill pill-ok"><i class="fas fa-circle-check"></i> Available</span>
+                            {% endif %}
+                        </td>
+                        <td class="act">
+                            {% if row.student_id %}
+                                <a href="{% url 'finance:finance_student_view' %}?student={{ row.student_id }}&session={{ session_filter }}&term={{ term_filter }}"
+                                   class="btn btn-ghost btn-xs" title="View statement">
+                                    <i class="fas fa-file-lines"></i> View
+                                </a>
+                                <a href="{% url 'finance:finance_record_add' %}?student={{ row.student_id }}&session={{ session_filter }}&term={{ term_filter }}&next=1"
+                                   class="btn btn-success btn-xs" title="Add next week's record">
+                                    <i class="fas fa-plus"></i> Next
+                                </a>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% elif session_filter and term_filter %}
+            <div class="empty">
+                <i class="fas fa-folder-open"></i>
+                <strong>No records for this session and term</strong>
+                <span>Try another term, or add a record from the weekly list.</span>
+            </div>
+        {% else %}
+            <div class="empty">
+                <i class="fas fa-sliders"></i>
+                <strong>Choose a session and term</strong>
+                <span>Pick them above and select Show summary to load the totals.</span>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+</body>
+</html>

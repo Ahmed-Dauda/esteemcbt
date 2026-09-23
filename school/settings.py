@@ -265,13 +265,6 @@ from celery.schedules import crontab
 # CELERY_TASK_SERIALIZER = 'json'
 # CELERY_RESULT_BACKEND = CELERY_BROKER_URL  # Optional if you want result backend
 
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": os.environ.get("REDIS_URL"),
-#         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
-#     }
-# }
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -279,11 +272,21 @@ import os
 import ssl
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://host.docker.internal:6379/0")
+DEBUG_MODE = os.environ.get('DEBUG', 'False') == 'True'
 
+if DEBUG_MODE and not REDIS_URL.startswith("rediss://"):
+    # Local development — use memory cache, no Redis needed
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_BROKER_URL = "memory://"
+    CELERY_RESULT_BACKEND = "cache+memory://"
 
-# Detect SSL Redis
-if REDIS_URL.startswith("rediss://"):
-    # Configure Django-Redis SSL options
+elif REDIS_URL.startswith("rediss://"):
+    # Production SSL Redis
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
@@ -291,17 +294,16 @@ if REDIS_URL.startswith("rediss://"):
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
                 "CONNECTION_POOL_KWARGS": {
-                    "ssl_cert_reqs": ssl.CERT_NONE,  # Ignore self-signed cert
+                    "ssl_cert_reqs": ssl.CERT_NONE,
                 },
             },
         }
     }
-
     CELERY_BROKER_URL = REDIS_URL
     CELERY_RESULT_BACKEND = REDIS_URL
 
 else:
-    # Local non-SSL Redis
+    # Production non-SSL Redis
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
@@ -311,10 +313,8 @@ else:
             },
         }
     }
-
     CELERY_BROKER_URL = REDIS_URL
     CELERY_RESULT_BACKEND = REDIS_URL
-
 
 
 CSRF_COOKIE_SECURE=False

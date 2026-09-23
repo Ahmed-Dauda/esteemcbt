@@ -10,115 +10,127 @@
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
 
-<script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+<!-- Load face-api locally first, fallback to CDN -->
+<script>
+  if (!window.faceapi) {
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js';
+    script.async = true;
+    document.head.appendChild(script);
+  }
+</script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <style>
-/* ========== ORIGINAL STYLES ========== */
+/* ========== PROFESSIONAL EXAM HEADER STYLES ========== */
+:root {
+  --primary: #0f172a;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-400: #94a3b8;
+  --gray-600: #475569;
+  --gray-800: #1e293b;
+  --white: #ffffff;
+  --radius: 8px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Page Numbers */
 .page-number {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin: 0 2px;
-  border: 1px solid #ccc;
-  background-color: #fff;
+  width: 32px;
+  height: 32px;
+  margin: 3px;
+  border: 1px solid var(--gray-200);
+  background-color: var(--white);
   cursor: pointer;
   border-radius: 4px;
-  font-size: 12px;
-  line-height: 1;
-  flex-shrink: 0;
-  box-sizing: border-box;
-  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-600);
+  transition: all 0.15s ease;
 }
 
+.page-number:hover { background: var(--gray-100); border-color: var(--gray-400); }
+
 .page-number.answered {
-  background-color: green;
-  color: white;
-  border-color: green;
+  background-color: #059669;
+  color: var(--white);
+  border-color: #059669;
 }
 
 .page-number.active {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
+  background-color: #2563eb;
+  color: var(--white);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
 }
 
 #paginationBoxes {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 4px;
-  margin-top: 15px;
-  padding: 5px;
-  width: 100%;
+  gap: 2px;
+  margin: 20px 0;
+  padding: 10px;
 }
 
-div.quiz p { text-align: left; }
-.quiz p { text-align: left; }
-.quiz { width: 100%; display: flex; border: 1px solid #ccc; }
-.quiz > * { margin: 10px; overflow-x: hidden; }
-.quiz input[type="radio"] { transform: scale(1.5); margin-right: 10px; }
-.custom-container { background-color: green; color: white; display: inline-block; padding: 5px; margin: 5px; }
-.pagination-box { display: inline-block; width: 100px; height: 30px; border: 1px solid #ccc; text-align: center; line-height: 30px; margin-right: 5px; cursor: pointer; }
-.clicked { background-color: rgb(211, 247, 211); }
-.question-table { margin-top: 10px; padding-top: 80px; }
-
-.container { display: flex; justify-content: center; align-items: center; padding: 20px; }
-.quiz-container { margin: 20px; padding: 10px; background: white; border-radius: 8px; }
-.pagination-controls { text-align: center; margin: 20px 0; }
-
-#calculator button { width: 48px; height: 36px; margin: 2px; font-size: 14px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background-color: #fff; }
-#calculator button:hover { background-color: #e9ecef; }
-.exam-container { text-align: center; }
-#fullscreenPopup {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.95); color: #fff; display: none;
-  justify-content: center; align-items: center; flex-direction: column; z-index: 9999;
+/* Quiz */
+.quiz { 
+  width: 100%; 
+  display: flex; 
+  border: 1px solid var(--gray-200); 
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 8px;
+  background: var(--white);
+  transition: background 0.15s;
 }
-button:hover { background: #0b5ed7; }
-#network-status {
-  position: fixed; top: 0; left: 0; width: 100%;
-  padding: 10px; color: white; text-align: center;
-  font-weight: bold; z-index: 9999; display: none;
-}
-#network-status.offline { background-color: #d9534f; display: block; }
-#network-status.online  { background-color: #5cb85c; display: block; }
+.quiz:hover { background: var(--gray-50); }
+.quiz > * { margin: 0 10px; overflow-x: hidden; }
+.quiz input[type="radio"] { transform: scale(1.3); margin-right: 12px; cursor: pointer; accent-color: #2563eb; }
 
-/* ========== PROFESSIONAL EXAM HEADER STYLES ========== */
+/* ========== EXAM HEADER ========== */
 .exam-header-wrap {
   position: fixed;
   top: 0;
   width: 100%;
   z-index: 1000;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+  box-shadow: var(--shadow);
 }
 
 .exam-topbar {
-  background: #0f172a;
-  color: #94a3b8;
-  padding: 5px 20px;
+  background: var(--primary);
+  color: var(--gray-400);
+  padding: 6px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 12px;
   letter-spacing: 0.3px;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .exam-topbar .brand {
   font-weight: 600;
   font-size: 13px;
   color: #f1f5f9;
-  letter-spacing: 0.5px;
 }
 
 .exam-topbar .session-chips {
   display: flex;
-  gap: 14px;
+  gap: 16px;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -128,39 +140,41 @@ button:hover { background: #0b5ed7; }
 .net-indicator {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 11px;
-  color: #4ade80;
   font-weight: 500;
 }
 
 .net-dot {
-  width: 7px; height: 7px;
+  width: 8px; height: 8px;
   border-radius: 50%;
-  background: #4ade80;
-  animation: pulse-dot 2s infinite;
+  transition: background 0.3s;
 }
+
+.net-dot.online { background: var(--success); animation: pulse-dot 2s infinite; }
+.net-dot.offline { background: var(--danger); animation: none; }
 
 @keyframes pulse-dot {
   0%,100% { opacity: 1; }
-  50%      { opacity: 0.35; }
+  50% { opacity: 0.35; }
 }
 
 .exam-header-main {
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
   display: grid;
   grid-template-columns: 170px 1fr auto auto;
   align-items: stretch;
-  min-height: 88px;
+  min-height: 90px;
 }
 
 .cam-panel {
-  border-right: 1px solid #e2e8f0;
+  border-right: 1px solid var(--gray-200);
   padding: 10px 14px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  background: var(--gray-50);
 }
 
 .panel-label {
@@ -168,18 +182,18 @@ button:hover { background: #0b5ed7; }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #94a3b8;
-  margin-bottom: 3px;
+  color: var(--gray-400);
+  margin-bottom: 2px;
 }
 
 .cam-feed-box {
-  background: #0f172a;
+  background: var(--gray-800);
   border-radius: 6px;
   height: 54px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #1e293b;
+  border: 1px solid var(--gray-800);
   position: relative;
   overflow: hidden;
 }
@@ -187,16 +201,15 @@ button:hover { background: #0b5ed7; }
 .cam-live-dot {
   width: 7px; height: 7px;
   border-radius: 50%;
-  background: #4ade80;
+  background: var(--success);
   position: absolute;
   top: 6px; right: 6px;
   animation: pulse-dot 2s infinite;
 }
 
-.cam-feed-box svg { opacity: 0.25; }
 .cam-status-text {
   font-size: 10px;
-  color: #94a3b8;
+  color: var(--gray-400);
   text-align: center;
   margin-top: 2px;
 }
@@ -208,51 +221,39 @@ button:hover { background: #0b5ed7; }
   height: 54px;
 }
 
-.cam-iframe-wrap p {
-  position: absolute;
-  background: rgba(0,0,0,0.7);
-  color: white;
-  font-size: 9px;
-  padding: 1px 5px;
-  top: 0; left: 0;
-  z-index: 1;
-  margin: 0;
-}
-
 .info-panel {
   padding: 12px 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .student-name {
   font-size: 16px;
   font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.2px;
+  color: var(--primary);
 }
 
 .exam-subtitle {
   font-size: 13px;
-  color: #64748b;
+  color: var(--gray-600);
 }
 
 .exam-meta-chips {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
 .meta-chip {
   font-size: 11px;
   padding: 3px 10px;
   border-radius: 20px;
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  background: var(--gray-100);
+  color: var(--gray-600);
+  border: 1px solid var(--gray-200);
   font-weight: 500;
 }
 
@@ -261,9 +262,9 @@ button:hover { background: #0b5ed7; }
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 5px;
-  border-left: 1px solid #e2e8f0;
-  min-width: 190px;
+  gap: 6px;
+  border-left: 1px solid var(--gray-200);
+  min-width: 200px;
 }
 
 .viol-row {
@@ -275,25 +276,27 @@ button:hover { background: #0b5ed7; }
 
 .viol-label {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--gray-600);
   min-width: 80px;
+  font-weight: 500;
 }
 
 .viol-count {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   min-width: 32px;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
-.viol-count.ok     { color: #22c55e; }
-.viol-count.warn   { color: #f59e0b; }
-.viol-count.danger { color: #ef4444; }
+.viol-count.ok { color: var(--success); }
+.viol-count.warn { color: var(--warning); }
+.viol-count.danger { color: var(--danger); }
 
 .viol-bar-track {
   flex: 1;
   height: 4px;
-  background: #f1f5f9;
+  background: var(--gray-100);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -301,65 +304,164 @@ button:hover { background: #0b5ed7; }
 .viol-bar-fill {
   height: 100%;
   border-radius: 2px;
-  transition: width 0.4s ease;
+  transition: width 0.3s ease;
 }
 
-.viol-bar-fill.ok     { background: #22c55e; }
-.viol-bar-fill.warn   { background: #f59e0b; }
-.viol-bar-fill.danger { background: #ef4444; }
+.viol-bar-fill.ok { background: var(--success); }
+.viol-bar-fill.warn { background: var(--warning); }
+.viol-bar-fill.danger { background: var(--danger); }
 
 .timer-panel {
-  border-left: 1px solid #e2e8f0;
+  border-left: 1px solid var(--gray-200);
   padding: 12px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
   min-width: 130px;
-  background: #fafbfc;
+  background: var(--gray-50);
 }
 
-.timer-panel .panel-label { text-align: center; }
 #timer {
   font-size: 30px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--primary);
   letter-spacing: 2px;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  transition: color 0.3s;
 }
 
-#timer.timer-warn   { color: #f59e0b; }
-#timer.timer-danger { color: #ef4444; }
+#timer.timer-warn { color: var(--warning); }
+#timer.timer-danger { color: var(--danger); animation: blink 1s infinite; }
+
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
 
 .timer-badge {
   font-size: 10px;
-  color: #22c55e;
+  color: var(--success);
   font-weight: 600;
-  letter-spacing: 0.5px;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
+/* Submit Button */
 .submit-button {
-  background-color: #28a745;
-  max-height: 50px;
-  border-radius: 10px;
+  background: #059669;
   border: none;
   color: white;
   font-size: 16px;
-  padding: 10px 20px;
-  margin: 0 5px;
+  font-weight: 600;
+  padding: 12px 28px;
   cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  border-radius: var(--radius);
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
 }
 
-.submit-button:hover { background-color: #218838; }
-.submit-button:active {
-  background-color: #1e7e34;
-  transform: scale(0.98);
+.submit-button:hover { background: #047857; transform: translateY(-1px); }
+.submit-button:active { transform: scale(0.98); }
+.submit-button:disabled { 
+  opacity: 0.6; 
+  cursor: not-allowed;
+  background: var(--gray-400);
 }
+
+/* Fullscreen Popup */
+#fullscreenPopup {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(15, 23, 42, 0.98); color: #fff; display: none;
+  justify-content: center; align-items: center; flex-direction: column; z-index: 9999;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#fullscreenPopup h2 { font-size: 2rem; margin-bottom: 1rem; }
+#fullscreenPopup p { font-size: 1.1rem; margin-bottom: 1rem; }
+#fullscreenPopup button {
+  background: #fff; color: #0f172a; border: none;
+  padding: 0.75rem 1.5rem; font-size: 1rem;
+  border-radius: 6px; cursor: pointer; font-weight: 600;
+  transition: transform 0.15s;
+}
+#fullscreenPopup button:hover { transform: scale(1.05); }
+
+/* Network Status Bar */
+#network-status {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  z-index: 10000;
+  display: none;
+  transition: all 0.3s;
+}
+
+#network-status.offline {
+  background: var(--danger);
+  color: white;
+  display: block;
+  animation: slideDown 0.3s ease;
+}
+
+#network-status.online {
+  background: var(--success);
+  color: white;
+  display: block;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
+/* Calculator */
+#calculator {
+  position: fixed;
+  top: 100px;
+  right: 15px;
+  width: 260px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: none;
+  z-index: 9999;
+}
+
+#calculator button {
+  width: 48px;
+  height: 36px;
+  margin: 2px;
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  background: var(--white);
+  color: var(--gray-600);
+  transition: background 0.15s;
+}
+
+#calculator button:hover { background: var(--gray-100); }
+
+/* Offline Warning Overlay */
+#offlineOverlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7); z-index: 9998;
+  display: none; justify-content: center; align-items: center;
+  flex-direction: column; color: white; text-align: center;
+}
+
+#offlineOverlay.active { display: flex; }
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -367,37 +469,37 @@ button:hover { background: #0b5ed7; }
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto;
   }
-  .cam-panel     { grid-column: 1; grid-row: 1; }
-  .timer-panel   { grid-column: 2; grid-row: 1; border-left: 1px solid #e2e8f0; }
-  .info-panel    { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid #e2e8f0; }
+  .cam-panel { grid-column: 1; grid-row: 1; }
+  .timer-panel { grid-column: 2; grid-row: 1; border-left: 1px solid var(--gray-200); }
+  .info-panel { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid var(--gray-200); }
   .violations-panel { display: none; }
   .exam-topbar .session-chips { display: none; }
   
-  .question-table { margin-top: 0px; padding-top: 170px; }
-  .examinfo { color: red; display: none; }
-  .submit-button { width: 100%; margin: 0; }
-}
-
-@media (max-width: 767px) {
-  .sticky-top { position: static; top: 0; }
-  .alert { flex-direction: column; align-items: center; }
-  .alert div { width: 100%; }
+  .submit-button { width: 100%; }
 }
 </style>
 
 <input type="hidden" id="attemptId" value="{{ attempt.id }}">
 
+<!-- Offline Violation Queue (hidden) -->
+<div id="offlineViolations" style="display:none;" 
+     data-tab-switches="0" 
+     data-blurs="0" 
+     data-screenshots="0"
+     data-fullscreen-exits="0">
+</div>
+
 <!-- ========== PROFESSIONAL EXAM HEADER ========== -->
 <div class="exam-header-wrap">
   <div class="exam-topbar">
-    <div class="brand">ExamPortal &mdash; CBT System</div>
+    <div class="brand">ExamPortal — CBT System</div>
     <div class="session-chips">
       <div>Course: <span>{{ course.course_name }}</span></div>
       <div>Type: <span>{{ course.exam_type }}</span></div>
       <div>Session: <span>{{ course.session }}</span></div>
       <div>Term: <span>{{ course.term }}</span></div>
       <div class="net-indicator">
-        <div class="net-dot"></div>
+        <div class="net-dot online" id="netDot"></div>
         <span id="net-label">Connected</span>
       </div>
     </div>
@@ -409,7 +511,6 @@ button:hover { background: #0b5ed7; }
       <div class="panel-label">Proctoring</div>
       {% if course.room_name %}
         <div class="cam-iframe-wrap">
-          <p>Focus on Camera</p>
           <iframe allow="autoplay;camera;microphone;fullscreen;picture-in-picture;display-capture;midi;geolocation;gyroscope;"
             src="{{ course.room_name }}" width="100%" height="54" style="border:none;display:block;"></iframe>
         </div>
@@ -428,7 +529,7 @@ button:hover { background: #0b5ed7; }
     <!-- Student & exam info -->
     <div class="info-panel">
       <div class="student-name">{{ request.user.first_name|upper }} {{ request.user.last_name|upper }}</div>
-      <div class="exam-subtitle">{{ course.course_name }} &mdash; {{ course.exam_type }}</div>
+      <div class="exam-subtitle">{{ course.course_name }} — {{ course.exam_type }}</div>
       <div class="exam-meta-chips">
         <span class="meta-chip">{{ q_count }} Questions</span>
         <span class="meta-chip">{{ course.session }}</span>
@@ -471,58 +572,65 @@ button:hover { background: #0b5ed7; }
   </div>
 </div>
 
-<!-- Add padding to prevent content from hiding under fixed header -->
 <div style="padding-top: 100px;"></div>
 
-<form novalidate autocomplete="off" class="no-copy" id="quizf" action="/student/calculate_marks" onsubmit="return false;" enctype="multipart/form-data" method="POST">
+<form novalidate autocomplete="off" class="no-copy" id="quizf" onsubmit="return false;" method="POST">
   {% csrf_token %}
 
-  <!-- Client‑side question container -->
-  <div id="question-container" class="quiz-container" style="margin: 0px; padding-left: 40px; padding-right: 40px;"></div>
+  <!-- Question container -->
+  <div id="question-container" class="quiz-container" style="margin: 0px; padding: 0 40px;"></div>
 
   <!-- Pagination controls -->
-  <div class="pagination-controls">
-    <button id="prev-btn" class="btn btn-secondary" disabled>← Previous</button>
-    <span id="page-indicator" style="margin: 0 15px;">Question 1 of <span id="total-count"></span></span>
-    <button id="next-btn" class="btn btn-secondary">Next →</button>
+  <div class="pagination-controls" style="text-align: center; margin: 20px 0;">
+    <button id="prev-btn" class="btn btn-secondary" disabled style="padding: 8px 16px; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer;">← Previous</button>
+    <span id="page-indicator" style="margin: 0 15px; font-weight: 500;">Question 1 of <span id="total-count"></span></span>
+    <button id="next-btn" class="btn btn-secondary" style="padding: 8px 16px; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer;">Next →</button>
   </div>
 
-  <!-- Numbered pagination bar -->
+  <!-- Pagination boxes -->
   <div id="paginationBoxes" style="text-align: center; margin-top: 15px;" onclick="openFullscreen()"></div>
 </form>
 
-<div id="fullscreenPopup" style="display:none;justify-content:center;align-items:center;flex-direction:column;position:fixed;inset:0;background:#000;color:#fff;z-index:999999;font-family:Arial,sans-serif;text-align:center;">
-  <h2 style="font-size:2rem;margin-bottom:1rem;">⚠️ Exam Paused</h2>
-  <p id="fullscreenWarningText" style="font-size:1.2rem;margin-bottom:1rem;">You exited fullscreen. Please return to continue your exam.</p>
-  <p id="fullscreenCounterText" style="font-size:1rem;margin-bottom:2rem;color:yellow;">Fullscreen Strikes: 0</p>
-  <button onclick="returnToFullscreen()" style="background:#fff;color:#000;border:none;padding:0.75rem 1.5rem;font-size:1rem;border-radius:6px;cursor:pointer;font-weight:bold;">Re-enter Fullscreen</button>
+<div id="fullscreenPopup">
+  <h2>⚠️ Exam Paused</h2>
+  <p id="fullscreenWarningText">You exited fullscreen. Please return to continue.</p>
+  <p id="fullscreenCounterText" style="color: #fbbf24;">Fullscreen Strikes: 0</p>
+  <button onclick="returnToFullscreen()">Re-enter Fullscreen</button>
 </div>
 
-<div class="container buttonheight" style="display:flex;justify-content:center;align-items:center;padding:20px;">
+<div style="display:flex;justify-content:center;align-items:center;padding:20px;">
   <button class="submit-button" id="submit" type="button">Submit Exam</button>
 </div>
 
 <div id="network-status"></div>
 
-<button onclick="toggleCalculator()" style="position:fixed;top:10px;right:10px;z-index:9999;">Calculator</button>
-<div id="calculator" style="position:fixed;top:50px;right:10px;width:260px;background-color:#f8f9fa;border:1px solid #ccc;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.1);display:none;z-index:9999;">
-  <div id="calc-header" style="cursor:move;padding:4px 8px;background:#007bff;color:white;font-weight:bold;font-size:14px;border-radius:6px 6px 0 0;display:flex;justify-content:space-between;align-items:center;">
-    <span>Calc</span>
-    <button onclick="toggleCalculator()" style="background:none;border:none;color:white;font-size:14px;cursor:pointer;">✖</button>
+<!-- Offline Warning Modal -->
+<div id="offlineOverlay">
+  <div style="background: white; color: #0f172a; padding: 2rem; border-radius: 12px; max-width: 400px; text-align: center;">
+    <h3 style="color: #ef4444; margin-bottom: 1rem;">⚠️ No Internet Connection</h3>
+    <p style="margin-bottom: 1rem;">Your exam progress is saved locally. Please reconnect to continue.</p>
+    <p style="font-size: 0.875rem; color: #6b7280;">Do not close this page. Your answers are safe.</p>
+    <button onclick="document.getElementById('offlineOverlay').classList.remove('active')" 
+            style="margin-top: 1rem; padding: 8px 20px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">
+      I Understand
+    </button>
   </div>
-  <input type="text" id="calc-display" style="width:100%;font-size:16px;padding:6px;box-sizing:border-box;border:none;border-top:1px solid #ccc;border-bottom:1px solid #ccc;outline:none;" readonly>
+</div>
+
+<button onclick="toggleCalculator()" style="position:fixed;top:100px;right:15px;z-index:9999;padding:6px 12px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;">Calculator</button>
+
+<div id="calculator">
+  <div id="calc-header" style="cursor:move;padding:6px 10px;background:#2563eb;color:white;font-weight:600;font-size:13px;border-radius:6px 6px 0 0;display:flex;justify-content:space-between;align-items:center;">
+    <span>Calculator</span>
+    <button onclick="toggleCalculator()" style="background:none;border:none;color:white;font-size:16px;cursor:pointer;">✕</button>
+  </div>
+  <input type="text" id="calc-display" style="width:100%;font-size:16px;padding:8px;box-sizing:border-box;border:none;border-bottom:1px solid #e2e8f0;outline:none;" readonly>
   <div style="padding:6px;">
     <div><button onclick="appendCalc('7')">7</button><button onclick="appendCalc('8')">8</button><button onclick="appendCalc('9')">9</button><button onclick="appendCalc('/')">÷</button></div>
     <div><button onclick="appendCalc('4')">4</button><button onclick="appendCalc('5')">5</button><button onclick="appendCalc('6')">6</button><button onclick="appendCalc('*')">×</button></div>
     <div><button onclick="appendCalc('1')">1</button><button onclick="appendCalc('2')">2</button><button onclick="appendCalc('3')">3</button><button onclick="appendCalc('-')">−</button></div>
     <div><button onclick="appendCalc('0')">0</button><button onclick="appendCalc('.')">.</button><button onclick="calculate()">=</button><button onclick="appendCalc('+')">+</button></div>
-    <div><button onclick="clearCalc()">C</button><button onclick="appendCalc('(')">(</button><button onclick="appendCalc(')')">)</button><button onclick="toggleScientific()">Sci</button></div>
-    <div id="scientific" style="display:none;margin-top:6px;">
-      <button onclick="appendCalc('Math.sqrt(')">√</button><button onclick="appendCalc('Math.pow(')">xʸ</button>
-      <button onclick="appendCalc('Math.sin(')">sin</button><button onclick="appendCalc('Math.cos(')">cos</button>
-      <button onclick="appendCalc('Math.tan(')">tan</button><button onclick="appendCalc('Math.log(')">log</button>
-      <button onclick="appendCalc('Math.PI')">π</button><button onclick="appendCalc('Math.E')">e</button>
-    </div>
+    <div><button onclick="clearCalc()">C</button><button onclick="appendCalc('(')">(</button><button onclick="appendCalc(')')">)</button></div>
   </div>
 </div>
 
@@ -532,7 +640,7 @@ const COURSE_ID          = {{ course.id }};
 const ATTEMPT_ID         = {{ attempt.id }};
 const SERVER_REMAINING   = {{ attempt.remaining_seconds }};
 const TAB_LIMIT          = {{ tab_limit }};
-const STUDENT_NAME       = "{{ request.user.first_name|upper }} {{ request.user.last_name|upper }}";
+const BLUR_LIMIT         = {{ course.num_attemps }};
 const FULLSCREEN_COUNTER = Number({{ course.fullscreencounter|default:"3" }});
 const QUESTIONS_JSON     = {{ questions_json|safe }};
 
@@ -541,30 +649,43 @@ const LS = {
   started:    `quizStartedForCourse_${COURSE_ID}`,
   answers:    `quizAnswers_${COURSE_ID}`,
   fullscreen: 'examFullscreen',
+  violations: `offlineViolations_${ATTEMPT_ID}`,
 };
 
 const URLS = {
-  calculateMarks:    "{% url 'student:calculate_marks' %}",
-  updateAnswer:      "{% url 'student:update_answer' %}",
-  recordTabSwitch:   "{% url 'student:record_tab_switch' %}",
-  recordScreenshot:  "{% url 'student:record_screenshot' %}",
-  recordBlur:        "{% url 'student:record_blur' %}",
-  autoSave:          "{% url 'student:auto_save_exam' %}",
-  heartbeat:         "{% url 'student:exam_heartbeat' attempt_id=attempt.id %}",
-  getSavedAnswers:   "{% url 'student:get_saved_answers' attempt_id=attempt.id %}",
-  getViolations:     "{% url 'student:get_violation_counts' attempt_id=attempt.id %}",
-  viewResult:        "{% url 'student:view_result' %}",
+  calculateMarks:   "{% url 'student:calculate_marks' %}",
+  updateAnswer:     "{% url 'student:update_answer' %}",
+  recordTabSwitch:  "{% url 'student:record_tab_switch' %}",
+  recordScreenshot: "{% url 'student:record_screenshot' %}",
+  recordBlur:       "{% url 'student:record_blur' %}",
+  autoSave:         "{% url 'student:auto_save_exam' %}",
+  heartbeat:        "{% url 'student:exam_heartbeat' attempt_id=attempt.id %}",
+  getSavedAnswers:  "{% url 'student:get_saved_answers' attempt_id=attempt.id %}",
+  getViolations:    "{% url 'student:get_violation_counts' attempt_id=attempt.id %}",
+  syncViolations:   "{% url 'student:sync_offline_violations' %}",
+  viewResult:       "{% url 'student:view_result' %}",
 };
 
 // ==================== STATE ====================
 let heartbeatInterval;
 let autoSaveInterval;
 let answerSaveTimer;
+let violationSyncTimer;
 let isManuallySubmitting = false;
 let examAlreadySubmitted = false;
 let currentIndex = 0;
 let answers = JSON.parse(localStorage.getItem(LS.answers)) || {};
+let isOffline = !navigator.onLine;
 const TOTAL_QS = QUESTIONS_JSON.length;
+
+// Offline violation queue
+let offlineQueue = JSON.parse(localStorage.getItem(LS.violations)) || {
+  tabSwitches: 0,
+  blurs: 0,
+  screenshots: 0,
+  fullscreenExits: 0,
+  lastSync: null
+};
 
 // ==================== UTILITIES ====================
 function getCookie(name) {
@@ -578,6 +699,12 @@ function post(url, body) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
     body: JSON.stringify(body),
+  }).catch(err => {
+    // Queue failed requests when offline
+    if (!navigator.onLine) {
+      queueFailedRequest(url, body);
+    }
+    throw err;
   });
 }
 
@@ -586,118 +713,161 @@ function setEl(id, val) {
   if (el) el.textContent = val;
 }
 
-// ==================== VIOLATION BAR HELPER ====================
-const LIMIT = {{ course.num_attemps }};
+// ==================== OFFLINE VIOLATION QUEUE ====================
+function queueOfflineViolation(type) {
+  offlineQueue[type]++;
+  offlineQueue.lastSync = new Date().toISOString();
+  localStorage.setItem(LS.violations, JSON.stringify(offlineQueue));
+  
+  // Update local display
+  updateLocalViolationDisplay();
+  
+  // Check if offline violations exceed limit
+  if (offlineQueue.tabSwitches >= TAB_LIMIT || 
+      offlineQueue.blurs >= BLUR_LIMIT || 
+      offlineQueue.screenshots >= BLUR_LIMIT ||
+      offlineQueue.fullscreenExits >= FULLSCREEN_COUNTER) {
+    alert('⚠️ You have exceeded the violation limit. Your exam will be submitted when you reconnect.');
+    if (!examAlreadySubmitted) {
+      offlineQueue.shouldSubmit = true;
+      localStorage.setItem(LS.violations, JSON.stringify(offlineQueue));
+    }
+  }
+}
 
-function colorClass(count) {
-  const pct = count / LIMIT;
-  if (pct >= 1)    return 'danger';
-  if (pct >= 0.5)  return 'warn';
+function updateLocalViolationDisplay() {
+  setEl('tabCount', offlineQueue.tabSwitches);
+  setEl('blurCountDisplay', offlineQueue.blurs);
+  setEl('screenshotCountDisplay', offlineQueue.screenshots);
+  updateViolBars();
+}
+
+function syncOfflineViolations() {
+  if (!navigator.onLine || Object.values(offlineQueue).filter(v => typeof v === 'number' && v > 0).length === 0) return;
+  
+  post(URLS.syncViolations, {
+    attempt_id: ATTEMPT_ID,
+    violations: {
+      tab_switches: offlineQueue.tabSwitches,
+      blurs: offlineQueue.blurs,
+      screenshots: offlineQueue.screenshots,
+      fullscreen_exits: offlineQueue.fullscreenExits,
+    }
+  }).then(r => r.json())
+    .then(data => {
+      if (data.synced) {
+        // Reset offline queue after successful sync
+        offlineQueue = { tabSwitches: 0, blurs: 0, screenshots: 0, fullscreenExits: 0, lastSync: new Date().toISOString() };
+        localStorage.setItem(LS.violations, JSON.stringify(offlineQueue));
+        
+        // Update display with server counts
+        setEl('tabCount', data.tab_switch_count);
+        setEl('blurCountDisplay', data.blur_count);
+        setEl('screenshotCountDisplay', data.screenshot_count);
+        updateViolBars();
+        
+        // Check if server says we should submit
+        if (data.should_submit && !examAlreadySubmitted && offlineQueue.shouldSubmit) {
+          doSubmit('violation_limit');
+        }
+        offlineQueue.shouldSubmit = false;
+        localStorage.setItem(LS.violations, JSON.stringify(offlineQueue));
+      }
+    })
+    .catch(console.warn);
+}
+
+// ==================== VIOLATION BAR HELPER ====================
+function colorClass(count, limit) {
+  const pct = count / limit;
+  if (pct >= 1) return 'danger';
+  if (pct >= 0.5) return 'warn';
   return 'ok';
 }
 
-function updateBar(barId, countId, count) {
+function updateBar(barId, countId, count, limit) {
   const bar   = document.getElementById(barId);
   const label = document.getElementById(countId);
   if (!bar || !label) return;
-  const pct   = Math.min((count / LIMIT) * 100, 100);
-  const cls   = colorClass(count);
+  const pct = Math.min((count / limit) * 100, 100);
+  const cls = colorClass(count, limit);
   bar.style.width = pct + '%';
-  bar.className   = 'viol-bar-fill ' + cls;
-  label.className = 'viol-count '    + cls;
+  bar.className = 'viol-bar-fill ' + cls;
+  label.className = 'viol-count ' + cls;
 }
 
 window.updateViolBars = function () {
-  const blur       = parseInt(document.getElementById('blurCountDisplay')?.textContent) || 0;
-  const tab        = parseInt(document.getElementById('tabCount')?.textContent) || 0;
-  const screenshot = parseInt(document.getElementById('screenshotCountDisplay')?.textContent) || 0;
-  updateBar('blurBar', 'blurCountDisplay', blur);
-  updateBar('tabBar', 'tabCount', tab);
-  updateBar('screenshotBar', 'screenshotCountDisplay', screenshot);
+  const blur = parseInt(document.getElementById('blurCountDisplay')?.textContent) || 0;
+  const tab  = parseInt(document.getElementById('tabCount')?.textContent) || 0;
+  const ss   = parseInt(document.getElementById('screenshotCountDisplay')?.textContent) || 0;
+  updateBar('blurBar', 'blurCountDisplay', blur, BLUR_LIMIT);
+  updateBar('tabBar', 'tabCount', tab, TAB_LIMIT);
+  updateBar('screenshotBar', 'screenshotCountDisplay', ss, BLUR_LIMIT);
 };
 
-// ==================== RENDER CURRENT QUESTION ====================
+// ==================== RENDER QUESTIONS ====================
 function escapeHtml(str) {
   if (!str) return '';
-  return str.replace(/[&<>]/g, function(m) {
-    if (m === '&') return '&amp;';
-    if (m === '<') return '&lt;';
-    if (m === '>') return '&gt;';
-    return m;
-  });
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 function renderQuestion() {
   const q = QUESTIONS_JSON[currentIndex];
   if (!q) return;
 
-  const imgHtml = q.img ? `<div class="text-center"><img src="${q.img}" width="40%" height="250px" alt=""></div><br>` : '';
+  const imgHtml = q.img ? `<div style="text-align:center;margin-bottom:12px;"><img src="${q.img}" style="max-width:100%;max-height:250px;" alt=""></div>` : '';
   const optionsHtml = q.options.map((opt, idx) => {
     if (!opt) return '';
     const optValue = `Option${idx+1}`;
     const checked = (answers[q.id] === optValue) ? 'checked' : '';
     return `<div class="quiz">
-              <div class="radio-container">
-                <input class="radio-button" type="radio" name="q${q.id}" value="${optValue}" id="opt${idx+1}_${q.id}" ${checked}>
-                <label for="opt${idx+1}_${q.id}">${escapeHtml(opt)}</label>
-              </div>
+              <input class="radio-button" type="radio" name="q${q.id}" value="${optValue}" id="opt${idx+1}_${q.id}" ${checked}>
+              <label for="opt${idx+1}_${q.id}" style="cursor:pointer;">${escapeHtml(opt)}</label>
             </div>`;
   }).join('');
 
-  const html = `
+  document.getElementById('question-container').innerHTML = `
     ${imgHtml}
-    <label style="font-size: 18px;">${escapeHtml(q.text)}</label>
-    <h6 style="text-align: right;">[marks ${q.marks}]</h6>
+    <label style="font-size:16px;font-weight:600;display:block;margin-bottom:12px;">${escapeHtml(q.text)}</label>
+    <div style="text-align:right;color:#6b7280;font-size:13px;margin-bottom:8px;">[${q.marks} marks]</div>
     ${optionsHtml}
   `;
-  const container = document.getElementById('question-container');
-  if (container) container.innerHTML = html;
 
-  const pageIndicator = document.getElementById('page-indicator');
-  if (pageIndicator) pageIndicator.innerHTML = `Question ${currentIndex+1} of ${TOTAL_QS}`;
-  const totalCountSpan = document.getElementById('total-count');
-  if (totalCountSpan) totalCountSpan.innerText = TOTAL_QS;
-  const prevBtn = document.getElementById('prev-btn');
-  if (prevBtn) prevBtn.disabled = (currentIndex === 0);
-  const nextBtn = document.getElementById('next-btn');
-  if (nextBtn) nextBtn.disabled = (currentIndex === TOTAL_QS-1);
+  document.getElementById('page-indicator').innerHTML = `Question ${currentIndex+1} of ${TOTAL_QS}`;
+  document.getElementById('total-count').innerText = TOTAL_QS;
+  document.getElementById('prev-btn').disabled = (currentIndex === 0);
+  document.getElementById('next-btn').disabled = (currentIndex === TOTAL_QS-1);
 
   renderPaginationNumbers();
 }
 
 function renderPaginationNumbers() {
   const container = document.getElementById('paginationBoxes');
-  if (!container) return;
-
-  if (TOTAL_QS <= 1) {
-    container.innerHTML = '';
-    return;
-  }
+  if (!container || TOTAL_QS <= 1) { if (container) container.innerHTML = ''; return; }
 
   let html = '';
   for (let i = 1; i <= TOTAL_QS; i++) {
-    const questionObj = QUESTIONS_JSON[i - 1];
-    const isAnswered  = answers[questionObj.id] !== undefined && answers[questionObj.id] !== null;
-    const activeClass   = (i === currentIndex + 1) ? 'active' : '';
-    const answeredClass = isAnswered ? 'answered' : '';
-    html += `<span class="page-number ${activeClass} ${answeredClass}" data-page="${i}">${i}</span>`;
+    const q = QUESTIONS_JSON[i-1];
+    const isAnswered = answers[q.id] !== undefined && answers[q.id] !== null;
+    const active = (i === currentIndex+1) ? 'active' : '';
+    const answered = isAnswered ? 'answered' : '';
+    html += `<span class="page-number ${active} ${answered}" data-page="${i}">${i}</span>`;
   }
   container.innerHTML = html;
 
-  document.querySelectorAll('#paginationBoxes .page-number').forEach(el => {
-    el.removeEventListener('click', pageNumberClickHandler);
-    el.addEventListener('click', pageNumberClickHandler);
+  container.querySelectorAll('.page-number').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const page = parseInt(this.dataset.page, 10);
+      if (!isNaN(page) && page !== currentIndex+1) {
+        currentIndex = page-1;
+        renderQuestion();
+        attachAnswerListener();
+      }
+    });
   });
-}
-
-function pageNumberClickHandler(e) {
-  e.stopPropagation();
-  const page = parseInt(e.currentTarget.getAttribute('data-page'), 10);
-  if (!isNaN(page) && page !== currentIndex + 1) {
-    currentIndex = page - 1;
-    renderQuestion();
-    attachAnswerListener();
-  }
 }
 
 // ==================== ANSWER SAVE ====================
@@ -712,12 +882,14 @@ function onAnswerChange(e) {
 
   clearTimeout(answerSaveTimer);
   answerSaveTimer = setTimeout(() => {
-    post(URLS.updateAnswer, {
-      attempt_id: ATTEMPT_ID,
-      question_id: qid,
-      selected_value: val,
-    }).catch(err => console.error('Save failed', err));
-  }, 800);
+    if (navigator.onLine) {
+      post(URLS.updateAnswer, {
+        attempt_id: ATTEMPT_ID,
+        question_id: qid,
+        selected_value: val,
+      }).catch(err => console.warn('Answer save failed (will retry)'));
+    }
+  }, 500);
 }
 
 function attachAnswerListener() {
@@ -727,27 +899,19 @@ function attachAnswerListener() {
   container.addEventListener('change', onAnswerChange);
 }
 
-// ==================== PAGINATION BUTTONS ====================
+// ==================== PAGINATION ====================
 document.getElementById('prev-btn')?.addEventListener('click', () => {
-  if (currentIndex > 0) {
-    currentIndex--;
-    renderQuestion();
-    attachAnswerListener();
-  }
+  if (currentIndex > 0) { currentIndex--; renderQuestion(); attachAnswerListener(); }
 });
 document.getElementById('next-btn')?.addEventListener('click', () => {
-  if (currentIndex < TOTAL_QS-1) {
-    currentIndex++;
-    renderQuestion();
-    attachAnswerListener();
-  }
+  if (currentIndex < TOTAL_QS-1) { currentIndex++; renderQuestion(); attachAnswerListener(); }
 });
 
 // ==================== TIMER ====================
 function initTimer() {
   const timerEl = document.getElementById('timer');
   const localVal = parseInt(localStorage.getItem(LS.timer));
-  let remaining = (!localVal || SERVER_REMAINING < localVal - 10) ? SERVER_REMAINING : localVal;
+  let remaining = (!localVal || SERVER_REMAINING < localVal-10) ? SERVER_REMAINING : localVal;
   localStorage.setItem(LS.timer, remaining);
   if (window.timerInterval) clearInterval(window.timerInterval);
 
@@ -759,17 +923,9 @@ function initTimer() {
       doSubmit('timeout');
       return;
     }
-    const m = Math.floor(remaining / 60);
-    const s = remaining % 60;
+    const m = Math.floor(remaining/60), s = remaining%60;
     timerEl.innerHTML = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-    
-    // Timer color warning
-    if (remaining < 300) {
-      timerEl.className = 'timer-danger';
-    } else if (remaining < 600) {
-      timerEl.className = 'timer-warn';
-    }
-    
+    timerEl.className = remaining < 300 ? 'timer-danger' : remaining < 600 ? 'timer-warn' : '';
     remaining--;
     localStorage.setItem(LS.timer, remaining);
   }, 1000);
@@ -783,111 +939,152 @@ function doSubmit(reason) {
   clearInterval(window.timerInterval);
   clearInterval(heartbeatInterval);
   clearInterval(autoSaveInterval);
+  clearInterval(violationSyncTimer);
   clearTimeout(answerSaveTimer);
 
   const finalAnswers = JSON.parse(localStorage.getItem(LS.answers)) || {};
   finalAnswers['submissionReason'] = reason;
   finalAnswers['attempt_id'] = ATTEMPT_ID;
+  finalAnswers['offline_violations'] = offlineQueue;
 
-  $.ajax({
-    type: 'POST',
-    url: URLS.calculateMarks,
-    contentType: 'application/json',
-    headers: { 'X-CSRFToken': CSRF },
-    data: JSON.stringify(finalAnswers),
-    success: function (response) {
-      Object.values(LS).forEach(k => localStorage.removeItem(k));
-      const messages = {
-        timeout:         "Time's up! Your exam has been submitted.",
-        tabswitch:       "Exam submitted due to tab switching limit.",
-        fullscreen:      "Exam submitted due to fullscreen violations.",
-        screenshot:      "Exam submitted due to screenshot attempts.",
-        violation_limit: "Exam submitted due to repeated violations.",
-      };
-      alert(messages[reason] || "Quiz submitted successfully!");
-      window.location.href = response.redirect_url || URLS.viewResult;
-    },
-    error: function (xhr) {
-      examAlreadySubmitted = false;
-      alert("Submission failed: " + (xhr.responseJSON?.error || "Please try again."));
-    }
-  });
+  // Disable submit button
+  const submitBtn = document.getElementById('submit');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting...'; }
+
+  // Try online submission first
+  if (navigator.onLine) {
+    $.ajax({
+      type: 'POST',
+      url: URLS.calculateMarks,
+      contentType: 'application/json',
+      headers: { 'X-CSRFToken': CSRF },
+      data: JSON.stringify(finalAnswers),
+      success: function(response) {
+        Object.values(LS).forEach(k => localStorage.removeItem(k));
+        const messages = {
+          timeout: "Time's up! Your exam has been submitted.",
+          tabswitch: "Exam submitted due to tab switching limit.",
+          fullscreen: "Exam submitted due to fullscreen violations.",
+          screenshot: "Exam submitted due to screenshot attempts.",
+          violation_limit: "Exam submitted due to repeated violations.",
+          manual: "Exam submitted successfully!",
+        };
+        alert(messages[reason] || "Quiz submitted successfully!");
+        window.location.href = response.redirect_url || URLS.viewResult;
+      },
+      error: function(xhr) {
+        examAlreadySubmitted = false;
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Exam'; }
+        alert("Submission failed: " + (xhr.responseJSON?.error || "Please check your connection and try again."));
+      }
+    });
+  } else {
+    // Offline submission - store and wait for reconnect
+    localStorage.setItem('pendingSubmission', JSON.stringify(finalAnswers));
+    alert("⚠️ You are offline. Your exam answers have been saved locally. Please reconnect to submit.");
+    
+    // Show offline overlay
+    document.getElementById('offlineOverlay').classList.add('active');
+    
+    // Set up retry on reconnect
+    window.addEventListener('online', function retrySubmit() {
+      window.removeEventListener('online', retrySubmit);
+      const pending = JSON.parse(localStorage.getItem('pendingSubmission'));
+      if (pending) {
+        document.getElementById('offlineOverlay').classList.remove('active');
+        $.ajax({
+          type: 'POST',
+          url: URLS.calculateMarks,
+          contentType: 'application/json',
+          headers: { 'X-CSRFToken': CSRF },
+          data: JSON.stringify(pending),
+          success: function(response) {
+            Object.values(LS).forEach(k => localStorage.removeItem(k));
+            localStorage.removeItem('pendingSubmission');
+            alert("Exam submitted successfully!");
+            window.location.href = response.redirect_url || URLS.viewResult;
+          },
+          error: function() {
+            examAlreadySubmitted = false;
+            alert("Submission still failed. Please don't close this page and try again.");
+          }
+        });
+      }
+    });
+    
+    examAlreadySubmitted = true; // Prevent double submission
+  }
 }
 
-document.getElementById('submit').addEventListener('click', function () {
-  if (!confirm("Are you sure you want to submit the quiz?")) return;
+document.getElementById('submit').addEventListener('click', function() {
+  if (!confirm("Are you sure you want to submit the exam?")) return;
   isManuallySubmitting = true;
   doSubmit('manual');
 });
 
-// ==================== VIOLATION HANDLERS ====================
-document.addEventListener("visibilitychange", function () {
-  if (!document.hidden || examAlreadySubmitted || isManuallySubmitting) return;
-  post(URLS.recordTabSwitch, { attempt_id: ATTEMPT_ID })
-    .then(r => r.json())
-    .then(data => {
-      setEl('tabCount', data.count);
-      updateViolBars();
-      if (data.should_submit && !examAlreadySubmitted) {
-        setTimeout(() => { alert('Exam submitted: tab switching limit reached.'); doSubmit('tabswitch'); }, 300);
-      }
-    })
-    .catch(err => console.warn('Tab switch record failed', err));
+// ==================== VIOLATION HANDLERS (OFFLINE-RESILIENT) ====================
+function recordViolation(type, serverUrl, body) {
+  // Always count locally
+  queueOfflineViolation(type);
+  
+  // Try to send to server if online
+  if (navigator.onLine) {
+    post(serverUrl, body)
+      .then(r => r.json())
+      .then(data => {
+        // Update with server count (more authoritative)
+        if (type === 'tabSwitches') setEl('tabCount', data.count);
+        if (type === 'blurs') setEl('blurCountDisplay', data.count);
+        if (type === 'screenshots') setEl('screenshotCountDisplay', data.count);
+        updateViolBars();
+        
+        if (data.should_submit && !examAlreadySubmitted) {
+          setTimeout(() => {
+            alert(`⚠️ Violation limit reached. Exam submitted.`);
+            doSubmit('violation_limit');
+          }, 300);
+        }
+      })
+      .catch(err => console.warn(`Failed to record ${type} on server, queued locally`));
+  } else {
+    // Check local limits
+    if ((type === 'tabSwitches' && offlineQueue.tabSwitches >= TAB_LIMIT) ||
+        (type === 'blurs' && offlineQueue.blurs >= BLUR_LIMIT) ||
+        (type === 'screenshots' && offlineQueue.screenshots >= BLUR_LIMIT)) {
+      alert(`⚠️ You've reached the ${type} limit. Your exam will be submitted when you reconnect.`);
+      offlineQueue.shouldSubmit = true;
+      localStorage.setItem(LS.violations, JSON.stringify(offlineQueue));
+    }
+  }
+}
+
+// Tab switch detection
+document.addEventListener("visibilitychange", function() {
+  if (document.hidden && !examAlreadySubmitted && !isManuallySubmitting) {
+    recordViolation('tabSwitches', URLS.recordTabSwitch, { attempt_id: ATTEMPT_ID });
+  }
 });
 
-document.addEventListener('keyup', function (e) {
-  if (e.key !== 'PrintScreen' && e.code !== 'PrintScreen') return;
-  if (examAlreadySubmitted || isManuallySubmitting) return;
-  if (navigator.clipboard?.writeText) navigator.clipboard.writeText('').catch(() => {});
-  post(URLS.recordScreenshot, { attempt_id: ATTEMPT_ID })
-    .then(r => r.json())
-    .then(data => {
-      setEl('screenshotCountDisplay', data.count);
-      updateViolBars();
-      if (data.should_submit && !examAlreadySubmitted) {
-        alert(`❌ ${data.count}/${data.limit} screenshot attempts. Exam submitted.`);
-        doSubmit('screenshot');
-        return;
-      }
-      alert(`⚠️ Screenshot ${data.count}/${data.limit}. ${data.limit - data.count} remaining.`);
-    })
-    .catch(err => console.warn('Screenshot record failed', err));
+// Screenshot detection
+document.addEventListener('keyup', function(e) {
+  if ((e.key === 'PrintScreen' || e.code === 'PrintScreen') && !examAlreadySubmitted && !isManuallySubmitting) {
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText('').catch(() => {});
+    recordViolation('screenshots', URLS.recordScreenshot, { attempt_id: ATTEMPT_ID });
+  }
 });
 
-window.addEventListener('blur', () => {
-  if (examAlreadySubmitted || isManuallySubmitting) return;
-  post(URLS.recordBlur, { attempt_id: ATTEMPT_ID })
-    .then(r => r.json())
-    .then(data => {
-      setEl('blurCountDisplay', data.count);
-      updateViolBars();
-      if (data.should_submit && !examAlreadySubmitted) {
-        alert(`Exam submitted: window blur (${data.count}/${data.limit})`);
-        doSubmit('tabswitch');
-      }
-    })
-    .catch(err => console.warn('Blur record failed', err));
+// Window blur detection
+window.addEventListener('blur', function() {
+  if (!examAlreadySubmitted && !isManuallySubmitting) {
+    recordViolation('blurs', URLS.recordBlur, { attempt_id: ATTEMPT_ID });
+  }
 });
 
 // ==================== FULLSCREEN ====================
 const elem = document.documentElement;
 let fullscreenExitCount = 0;
-let flashInterval = null;
 let skipFirstFullscreenExit = true;
 let isReturningToFullscreen = false;
-
-function updateFullscreenCounter() {
-  const el = document.getElementById("fullscreenCounterText");
-  if (!el) return;
-  el.innerText = `You exited Fullscreen: ${fullscreenExitCount} / ${FULLSCREEN_COUNTER} times. Limit: ${FULLSCREEN_COUNTER}.`;
-  if (fullscreenExitCount === FULLSCREEN_COUNTER) {
-    if (!flashInterval) flashInterval = setInterval(() => {
-      el.style.color = el.style.color === "yellow" ? "red" : "yellow";
-    }, 500);
-  } else {
-    clearInterval(flashInterval); flashInterval = null; el.style.color = "yellow";
-  }
-}
 
 function openFullscreen() {
   isReturningToFullscreen = true;
@@ -901,16 +1098,6 @@ function returnToFullscreen() {
   document.getElementById("fullscreenPopup").style.display = "none";
 }
 
-function registerFullscreenStrike() {
-  if (fullscreenExitCount >= FULLSCREEN_COUNTER) return;
-  fullscreenExitCount++;
-  updateFullscreenCounter();
-  if (fullscreenExitCount >= FULLSCREEN_COUNTER) {
-    alert(`❌ You exited fullscreen ${fullscreenExitCount} times. Exam submitted.`);
-    doSubmit('fullscreen');
-  }
-}
-
 document.addEventListener("fullscreenchange", () => {
   if (isReturningToFullscreen || document.fullscreenElement) return;
   if (skipFirstFullscreenExit) {
@@ -918,38 +1105,55 @@ document.addEventListener("fullscreenchange", () => {
     document.getElementById("fullscreenPopup").style.display = "flex";
     return;
   }
-  registerFullscreenStrike();
-  if (fullscreenExitCount < FULLSCREEN_COUNTER) {
+  fullscreenExitCount++;
+  queueOfflineViolation('fullscreenExits');
+  
+  const counterEl = document.getElementById("fullscreenCounterText");
+  if (counterEl) counterEl.innerText = `Fullscreen Strikes: ${fullscreenExitCount} / ${FULLSCREEN_COUNTER}`;
+  
+  if (fullscreenExitCount >= FULLSCREEN_COUNTER) {
+    alert(`❌ You exited fullscreen ${fullscreenExitCount} times. Exam submitted.`);
+    doSubmit('fullscreen');
+  } else {
     document.getElementById("fullscreenPopup").style.display = "flex";
   }
 });
 
 document.addEventListener('click', (e) => {
-  if (e.target && e.target.classList && e.target.classList.contains('radio-button')) {
-    openFullscreen();
-  }
+  if (e.target?.classList?.contains('radio-button')) openFullscreen();
 });
-updateFullscreenCounter();
 
 // ==================== NETWORK STATUS ====================
-const networkStatusEl = document.getElementById('network-status');
 function updateNetworkStatus() {
   const netLabel = document.getElementById('net-label');
-  const netDot = document.querySelector('.net-dot');
+  const netDot = document.getElementById('netDot');
+  const statusEl = document.getElementById('network-status');
+  const overlay = document.getElementById('offlineOverlay');
   
   if (navigator.onLine) {
-    networkStatusEl.textContent = "Back online! Your exam is syncing...";
-    networkStatusEl.className = 'online';
+    isOffline = false;
+    statusEl.textContent = "✅ Back online! Syncing data...";
+    statusEl.className = 'online';
     if (netLabel) netLabel.textContent = 'Connected';
-    if (netDot) netDot.style.background = '#4ade80';
-    setTimeout(() => { networkStatusEl.style.display = 'none'; }, 3000);
+    if (netDot) { netDot.className = 'net-dot online'; netDot.style.background = ''; }
+    
+    // Sync offline violations
+    syncOfflineViolations();
+    
+    // Hide overlay
+    if (overlay) overlay.classList.remove('active');
+    
+    setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
   } else {
-    networkStatusEl.textContent = "You are offline. Wait for internet before submitting.";
-    networkStatusEl.className = 'offline';
+    isOffline = true;
+    statusEl.textContent = "⚠️ You are offline. Your progress is saved locally.";
+    statusEl.className = 'offline';
+    statusEl.style.display = 'block';
     if (netLabel) netLabel.textContent = 'Offline';
-    if (netDot) netDot.style.background = '#f87171';
+    if (netDot) { netDot.className = 'net-dot offline'; netDot.style.background = ''; }
   }
 }
+
 updateNetworkStatus();
 window.addEventListener('online', updateNetworkStatus);
 window.addEventListener('offline', updateNetworkStatus);
@@ -957,39 +1161,27 @@ window.addEventListener('offline', updateNetworkStatus);
 // ==================== HEARTBEAT ====================
 function startHeartbeat() {
   heartbeatInterval = setInterval(() => {
+    if (!navigator.onLine) return; // Skip heartbeat when offline
     const remaining = parseInt(localStorage.getItem(LS.timer)) || 0;
     fetch(`${URLS.heartbeat}?remaining=${remaining}`)
       .then(r => r.json())
-      .then(data => { if (data.remaining <= 0) { clearInterval(heartbeatInterval); doSubmit('timeout'); } })
-      .catch(err => console.warn('Heartbeat failed', err));
+      .then(data => {
+        if (data.remaining <= 0) { clearInterval(heartbeatInterval); doSubmit('timeout'); }
+      })
+      .catch(() => {}); // Silently fail when offline
   }, 30000);
 }
 
 // ==================== AUTO SAVE ====================
 function autoSaveToServer() {
-  const answers = {};
-  document.querySelectorAll('input[type=radio]:checked').forEach(i => { answers[i.name] = i.value; });
-  if (!Object.keys(answers).length) return;
-  post(URLS.autoSave, { attempt_id: ATTEMPT_ID, answers })
-    .catch(err => console.warn('Auto-save failed', err));
-}
-
-// ==================== FETCH VIOLATIONS ====================
-function fetchViolationCounts() {
-  fetch(URLS.getViolations)
-    .then(r => r.json())
-    .then(data => {
-      setEl('tabCount', data.tab_switch_count);
-      setEl('blurCountDisplay', data.blur_count);
-      setEl('screenshotCountDisplay', data.screenshot_count);
-      updateViolBars();
-      if (!examAlreadySubmitted && (
-        data.tab_switch_count >= data.limit ||
-        data.blur_count >= data.limit ||
-        data.screenshot_count >= data.limit
-      )) doSubmit('violation_limit');
-    })
-    .catch(console.warn);
+  if (!navigator.onLine) return; // Skip when offline
+  const currentAnswers = {};
+  document.querySelectorAll('input[type=radio]:checked').forEach(i => {
+    currentAnswers[i.name] = i.value;
+  });
+  if (!Object.keys(currentAnswers).length) return;
+  post(URLS.autoSave, { attempt_id: ATTEMPT_ID, answers: currentAnswers })
+    .catch(() => {}); // Silently fail
 }
 
 // ==================== RESTORE SAVED ANSWERS ====================
@@ -997,29 +1189,25 @@ function mergeAndRender() {
   renderQuestion();
   attachAnswerListener();
 
-  fetch(URLS.getSavedAnswers)
-    .then(r => r.json())
-    .then(data => {
-      if (data.answers && Object.keys(data.answers).length > 0) {
-        let changed = false;
-        for (const [qid, val] of Object.entries(data.answers)) {
-          if (answers[qid] !== val) {
-            answers[qid] = val;
-            changed = true;
+  if (navigator.onLine) {
+    fetch(URLS.getSavedAnswers)
+      .then(r => r.json())
+      .then(data => {
+        if (data.answers && Object.keys(data.answers).length > 0) {
+          let changed = false;
+          for (const [qid, val] of Object.entries(data.answers)) {
+            if (answers[qid] !== val) { answers[qid] = val; changed = true; }
           }
-        }
-        if (changed) {
-          localStorage.setItem(LS.answers, JSON.stringify(answers));
-          const currentQ = QUESTIONS_JSON[currentIndex];
-          if (currentQ && data.answers[currentQ.id]) {
+          if (changed) {
+            localStorage.setItem(LS.answers, JSON.stringify(answers));
             renderQuestion();
             attachAnswerListener();
+            renderPaginationNumbers();
           }
-          renderPaginationNumbers();
         }
-      }
-    })
-    .catch(err => console.warn('Could not restore server answers:', err));
+      })
+      .catch(() => {}); // Silently fail
+  }
 }
 
 // ==================== CALCULATOR ====================
@@ -1031,58 +1219,80 @@ function appendCalc(v) { document.getElementById('calc-display').value += v; }
 function clearCalc() { document.getElementById('calc-display').value = ''; }
 function calculate() {
   const d = document.getElementById('calc-display');
-  try { d.value = eval(d.value); } catch { d.value = 'Error'; }
-}
-function toggleScientific() {
-  const s = document.getElementById('scientific');
-  s.style.display = s.style.display === 'none' ? 'block' : 'none';
+  try { d.value = Function('"use strict";return (' + d.value + ')')(); } catch { d.value = 'Error'; }
 }
 
-dragElement(document.getElementById("calculator"));
-function dragElement(elmnt) {
-  const header = document.getElementById("calc-header");
-  let pos1=0, pos2=0, pos3=0, pos4=0;
-  if (header) header.onmousedown = function(e) {
-    e.preventDefault();
-    pos3 = e.clientX; pos4 = e.clientY;
-    document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
-    document.onmousemove = function(e) {
-      e.preventDefault();
-      pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
-      pos3 = e.clientX; pos4 = e.clientY;
-      elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-      elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-    };
-  };
-}
-
-// ==================== PREVENT CHEATING ====================
+// ==================== ANTI-CHEATING ====================
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('keydown', e => {
-  if (e.ctrlKey && ['p','s','PrintScreen'].includes(e.key)) e.preventDefault();
+  // Block common shortcuts
+  if (e.ctrlKey && ['p','s','u','c','v'].includes(e.key)) e.preventDefault();
+  if (e.ctrlKey && e.shiftKey && ['i','j','c'].includes(e.key)) e.preventDefault();
+  if (e.key === 'F12') e.preventDefault();
+  
+  // Block PrintScreen more aggressively
+  if (e.key === 'PrintScreen' || e.code === 'PrintScreen') {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }
 });
 
+// Prevent drag and drop
+document.addEventListener('dragstart', e => e.preventDefault());
+document.addEventListener('drop', e => e.preventDefault());
+
 // ==================== BOOT ====================
-$(document).ready(function () {
+$(document).ready(function() {
   if (!localStorage.getItem(LS.started)) {
     localStorage.removeItem(LS.answers);
+    localStorage.removeItem(LS.violations);
     localStorage.setItem(LS.started, 'true');
   }
-  const stored = JSON.parse(localStorage.getItem(LS.answers)) || {};
-  answers = { ...answers, ...stored };
+  
+  // Restore offline violations
+  const stored = JSON.parse(localStorage.getItem(LS.violations));
+  if (stored) offlineQueue = stored;
+  
+  const storedAnswers = JSON.parse(localStorage.getItem(LS.answers)) || {};
+  answers = { ...answers, ...storedAnswers };
 
   initTimer();
   startHeartbeat();
   autoSaveInterval = setInterval(autoSaveToServer, 30000);
-  fetchViolationCounts();
+  violationSyncTimer = setInterval(syncOfflineViolations, 10000);
+  
+  // Fetch server violations if online
+  if (navigator.onLine) {
+    fetch(URLS.getViolations)
+      .then(r => r.json())
+      .then(data => {
+        setEl('tabCount', data.tab_switch_count || offlineQueue.tabSwitches);
+        setEl('blurCountDisplay', data.blur_count || offlineQueue.blurs);
+        setEl('screenshotCountDisplay', data.screenshot_count || offlineQueue.screenshots);
+        updateViolBars();
+        if (!examAlreadySubmitted && data.should_submit) doSubmit('violation_limit');
+      })
+      .catch(() => {
+        // Use offline counts
+        updateLocalViolationDisplay();
+      });
+  } else {
+    updateLocalViolationDisplay();
+  }
+  
   mergeAndRender();
   
   // Set up violation bar observers
-  ['blurCountDisplay', 'tabCount', 'screenshotCountDisplay'].forEach(function (id) {
+  ['blurCountDisplay', 'tabCount', 'screenshotCountDisplay'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    new MutationObserver(window.updateViolBars).observe(el, { childList: true, subtree: true, characterData: true });
+    new MutationObserver(window.updateViolBars).observe(el, {
+      childList: true, subtree: true, characterData: true
+    });
   });
+  
+  updateViolBars();
 });
 </script>
 

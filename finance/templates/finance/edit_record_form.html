@@ -3,194 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Record</title>
+    <title>Edit Finance Record</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap4-theme@1.0.0/dist/select2-bootstrap4.min.css">
 
-    <!-- Custom CSS -->
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #e7eaef;
-            margin: 0;
-            padding: 0;
-        }
+        body { font-family: Arial, sans-serif; background-color: #e7eaef; margin: 0; padding: 0; }
+        .container { margin-top: 50px; background-color: rgb(70, 118, 239); padding-bottom: 30px; }
+        form { background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        .form-row { margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-control { padding: 10px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
+        .form-control:focus { border-color: #007bff; outline: none; }
+        .form-group label { font-weight: bold; }
+        .btn-primary { background-color: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary:hover { background-color: #0056b3; }
+        .form-group textarea { height: 60px; }
+        .success-banner { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 6px; padding: 12px 18px; margin-top: 15px; margin-bottom: 15px; }
+        .help-text { font-size: 12px; color: #666; margin-top: 3px; }
+        .select2-container .select2-selection--single { height: 42px; padding: 6px 8px; }
+        .select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered { line-height: 28px; }
+        .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow { height: 40px; }
 
-        .container {
-            margin-top: 50px;
-            background-color: rgb(70, 118, 239);
-            
-        }
-
-        form {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-
-        .form-row {
-            margin-bottom: 15px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-control {
-            padding: 10px;
-            font-size: 14px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .form-control:focus {
-            border-color: #007bff;
-            outline: none;
-        }
-
-        .form-group label {
-            font-weight: bold;
-        }
-
-        .btn-primary {
-            background-color: #007bff;
-            color: #fff;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-
-        .form-row .col-md-2, .form-row .col-md-1 {
-            margin-bottom: 10px;
-        }
-
-        .col-md-4 {
-            margin-bottom: 20px;
-        }
-     
-    .form-group textarea {
-        height: 30px;  /* Adjust to desired height */
-    }
-
+        .audit-info {
+    background: #f8f9fa;
+    border: 1px solid #e1e4e8;
+    border-left: 3px solid #adb5bd;
+    color: #6c757d;
+    font-size: 12px;
+    padding: 8px 14px;
+    border-radius: 4px;
+    margin-bottom: 18px;
+    line-height: 1.5;
+}
+.audit-info i { margin-right: 5px; }
+.audit-info strong { color: #495057; }
     </style>
 </head>
 <body>
-
-<div class="container" style="width: 95%;">
+{% if messages %}
+    {% for message in messages %}
+        <div class="success-banner">
+            <i class="fas fa-check-circle"></i> {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+<div class="container">
     <h2 class="text-center" style="color: white;">Edit Finance Record</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="success-banner">
+                <i class="fas fa-check-circle"></i> {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if form.instance.pk %}
+<div class="audit-info">
+    <i class="fas fa-history"></i>
+    {% if form.instance.created_by %}
+        Created by <strong>{{ form.instance.created_by.username|default:form.instance.created_by }}</strong>
+        {% if form.instance.created_at %}on {{ form.instance.created_at|date:"d M Y, H:i" }}{% endif %}
+    {% else %}
+        Created (author unknown)
+    {% endif %}
+    {% if form.instance.updated_by and form.instance.updated_by != form.instance.created_by %}
+        <br>
+        Last edited by <strong>{{ form.instance.updated_by }}</strong>
+        {% if form.instance.updated_at %}on {{ form.instance.updated_at|date:"d M Y, H:i" }}{% endif %}
+    {% elif form.instance.updated_at and form.instance.created_at and form.instance.updated_at|date:"Y-m-d H:i" != form.instance.created_at|date:"Y-m-d H:i" %}
+        <br>
+        Last edited on {{ form.instance.updated_at|date:"d M Y, H:i" }}
+    {% endif %}
+</div>
+{% endif %}
+
     <form method="post">
         {% csrf_token %}
+
         
-        <!-- First Row: Names, Class, Deposit Fields -->
+
+        <!-- ===================== ROW 1: Student ===================== -->
         <div class="form-row">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="form-group">
-                    <label for="names">Names</label>
-                    {{ form.names }}
+                    <label for="id_student">Student</label>
+                    <select name="student" id="id_student" class="form-control"></select>
+                    <div class="help-text">Type a name, admission number, or username.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== ROW 2: Scope + Week ===================== -->
+        <div class="form-row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>School</label>
+                    <input type="text" class="form-control" value="{{ user_school }}" readonly>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="form-group">
-                    <label for="student_class">Class</label>
-                    {{ form.student_class }}
+                    <label for="session">Session</label>
+                    {{ form.session }}
                 </div>
             </div>
-            <div class="col-md-5">
+            <div class="col-md-3">
                 <div class="form-group">
-                    <label for="initial_total_deposit">Initial Total Deposit</label>
-                    {{ form.initial_total_deposit }}
+                    <label for="term">Term</label>
+                    {{ form.term }}
                 </div>
             </div>
-
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="week_start">Week Start Date</label>
+                    {{ form.week_start }}
+                    <div class="help-text">Pick the Monday (or first day) of this week.</div>
+                </div>
+            </div>
         </div>
 
-                <!-- second Row: Names, Class, Deposit Fields -->
-                <div class="form-row">
-          
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="school">School</label>
-                            {{ form.school }}
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label for="session">Session</label>
-                            {{ form.session }}
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label for="term">Term</label>
-                            {{ form.term }}
-                        </div>
-                    </div>
-                    <div class="col-md-5">
-                        <div class="form-group">
-                            <label for="school_shop">School Shop</label>
-                            {{ form.school_shop }}
-                        </div>
-                    </div>
-                </div>
-        
-
-        <!-- Third Row: Expenses and Notes -->
+        <!-- ===================== ROW 3: Deposits ===================== -->
         <div class="form-row">
-         
-            <div class="col-md-2">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="initial_total_deposit">Deposit This Week</label>
+                    {{ form.initial_total_deposit }}
+                    <div class="help-text">Amount the parent paid this week. Leave 0 if no payment.</div>
+                </div>
+            </div>
+            <div class="col-md-8"></div>
+        </div>
+
+        <!-- ===================== ROW 4: Expenses ===================== -->
+        <h5 style="margin-top: 10px; margin-bottom: 15px; color: #2c3e50;">Weekly Expenses</h5>
+        <div class="form-row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="school_shop">School Shop</label>
+                    {{ form.school_shop }}
+                </div>
+            </div>
+            <div class="col-md-3">
                 <div class="form-group">
                     <label for="caps">Caps</label>
                     {{ form.caps }}
                 </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <div class="form-group">
                     <label for="haircut">Haircut</label>
                     {{ form.haircut }}
                 </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <div class="form-group">
                     <label for="others">Others</label>
                     {{ form.others }}
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="form-group" style="height: 100px;">
+        </div>
+
+        <!-- ===================== ROW 5: Note ===================== -->
+        <div class="form-row">
+            <div class="col-12">
+                <div class="form-group">
                     <label for="note">Note</label>
                     {{ form.note }}
                 </div>
             </div>
         </div>
 
-        <!-- Submit Button -->
+        <!-- ===================== Submit ===================== -->
         <div class="form-row">
             <div class="col-12 text-center">
-                <button type="submit" class="btn btn-primary">Save</button>
-                <a href="{% url 'finance:finance_record_view' %}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{% url 'finance:finance_record_view' %}"
+                   style="background-color: rgb(70, 118, 239); color: white;"
+                   class="btn">Back to List</a>
             </div>
         </div>
     </form>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    var $student = $('#id_student');
+    var initialId = "{{ form.student.value|default:'' }}";
+
+    $student.select2({
+        theme: 'bootstrap4',
+        width: '100%',
+        placeholder: 'Search student…',
+        allowClear: true,
+        minimumInputLength: 2,
+        ajax: {
+            url: "{% url 'finance:student_search_api' %}",
+            dataType: 'json',
+            delay: 250,
+            data: function (params) { return { q: params.term || '' }; },
+            processResults: function (data) { return { results: data.results }; },
+            cache: true
+        }
+    });
+
+    if (initialId) {
+        $.ajax({
+            url: "{% url 'finance:student_search_api' %}",
+            data: { id: initialId },
+            dataType: 'json'
+        }).done(function(data) {
+            if (data.results && data.results.length) {
+                var s = data.results[0];
+                var option = new Option(s.text, s.id, true, true);
+                $student.append(option).trigger('change');
+            }
+        });
+    }
+});
+</script>
 
 </body>
 </html>
-
-
-
-<!-- <h2></h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Save Changes</button>
-    <a href="{% url 'finance:finance_record_view' %}" class="btn btn-secondary">Cancel</a>
-</form> -->
