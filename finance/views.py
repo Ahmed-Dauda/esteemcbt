@@ -1606,11 +1606,12 @@ def family_statement_pdf(request):
                         filename=filename, content_type='application/pdf')
 
 
+
 @accountant_required
 def finance_dashboard_view(request):
     """
     Landing page for the accounts department.
-    Single-page overview: today's activity, exhausted students, quick actions.
+    Today + This Week + fallback to the most recent week that has data.
     """
     user_school = request.user.school
     if user_school is None:
@@ -1619,29 +1620,55 @@ def finance_dashboard_view(request):
             'today':       date.today(),
         })
 
-    today = date.today()
+    today  = date.today()
     monday = today - timedelta(days=today.weekday())
+    sunday = monday + timedelta(days=6)
+
+    base = FinanceRecord.objects.filter(school=user_school)
 
     # --------------------------------------------------------------
-    # Today's activity — single aggregate query
+    # TODAY — records physically created today (uses created_at)
     # --------------------------------------------------------------
-    today_stats = (FinanceRecord.objects
-                   .filter(school=user_school,
-                           week_start=today)  # or use created-date if you track it
-                   .aggregate(
-                       records   = Count('sn'),
-                       deposits  = Coalesce(Sum('initial_total_deposit'), Decimal('0')),
-                       expenses  = Coalesce(Sum('total_expense'), Decimal('0')),
-                   ))
-
-    # If you'd rather show "records saved today regardless of week_start",
-    # we'd need a created_at field. For now we use week_start.
+    today_qs = base.filter(created_at__date=today)
+    today_stats = today_qs.aggregate(
+        records  = Count('sn'),
+        deposits = Coalesce(Sum('initial_total_deposit'), Decimal('0')),
+        expenses = Coalesce(Sum('total_expense'), Decimal('0')),
+    )
 
     # --------------------------------------------------------------
-    # Exhausted students — top 5 by debt (most negative first)
+    # CURRENT WEEK — Monday..Sunday (by week_start)
     # --------------------------------------------------------------
-    latest_ids = (FinanceRecord.objects
-                  .filter(school=user_school, student__isnull=False)
+    week_qs = base.filter(week_start__gte=monday, week_start__lte=sunday)
+    week_stats = week_qs.aggregate(
+        records  = Count('sn'),
+        deposits = Coalesce(Sum('initial_total_deposit'), Decimal('0')),
+        expenses = Coalesce(Sum('total_expense'), Decimal('0')),
+    )
+
+    # --------------------------------------------------------------
+    # FALLBACK — if this week is empty, show most recent week with data
+    # --------------------------------------------------------------
+    fallback_used = False
+    display_week  = monday
+    if week_stats['records'] == 0:
+        latest_week = (base.order_by('-week_start')
+                       .values_list('week_start', flat=True)
+                       .first())
+        if latest_week:
+            fallback_used = True
+            display_week  = latest_week
+            week_qs = base.filter(week_start=latest_week)
+            week_stats = week_qs.aggregate(
+                records  = Count('sn'),
+                deposits = Coalesce(Sum('initial_total_deposit'), Decimal('0')),
+                expenses = Coalesce(Sum('total_expense'), Decimal('0')),
+            )
+
+    # --------------------------------------------------------------
+    # Exhausted students — top 5 by debt
+    # --------------------------------------------------------------
+    latest_ids = (base.filter(student__isnull=False)
                   .values('student_id')
                   .annotate(latest_sn=Max('sn'))
                   .values_list('latest_sn', flat=True))
@@ -1665,61 +1692,37 @@ def finance_dashboard_view(request):
                        .count())
 
     # --------------------------------------------------------------
-    # Current term snapshot
+    # Current session/term snapshot
     # --------------------------------------------------------------
-    latest_record = (FinanceRecord.objects
-                     .filter(school=user_school)
-                     .order_by('-sn')
-                     .select_related('session', 'term')
-                     .first())
-
+    latest_record = base.order_by('-sn').select_related('session', 'term').first()
     current_session = latest_record.session if latest_record else None
     current_term    = latest_record.term    if latest_record else None
 
+    # --------------------------------------------------------------
     # Students / classes count
+    # --------------------------------------------------------------
     from django.contrib.auth import get_user_model
     User = get_user_model()
 
-    student_count = (User.objects
-                     .filter(school=user_school)
-                     .exclude(student_class__isnull=True)
-                     .exclude(student_class='')
-                     .exclude(student_class='NA')
-                     .count())
+    student_qs = (User.objects
+                  .filter(school=user_school)
+                  .exclude(student_class__isnull=True)
+                  .exclude(student_class='')
+                  .exclude(student_class='NA'))
 
-    class_count = (User.objects
-                   .filter(school=user_school)
-                   .exclude(student_class__isnull=True)
-                   .exclude(student_class='')
-                   .exclude(student_class='NA')
-                   .values('student_class')
-                   .distinct()
-                   .count())
-
-    # --------------------------------------------------------------
-    # Week-at-a-glance: entries created for the current week
-    # --------------------------------------------------------------
-    week_stats = (FinanceRecord.objects
-                  .filter(school=user_school,
-                          week_start__gte=monday,
-                          week_start__lt=monday + timedelta(days=7))
-                  .aggregate(
-                      records  = Count('sn'),
-                      deposits = Coalesce(Sum('initial_total_deposit'), Decimal('0')),
-                      expenses = Coalesce(Sum('total_expense'), Decimal('0')),
-                  ))
+    student_count = student_qs.count()
+    class_count   = student_qs.values('student_class').distinct().count()
 
     context = {
         'user_school':      user_school,
         'today':            today,
         'monday':           monday,
-
+        'display_week':     display_week,
+        'fallback_used':    fallback_used,
         'today_stats':      today_stats,
         'week_stats':       week_stats,
-
         'exhausted_list':   exhausted_list,
         'exhausted_count':  exhausted_count,
-
         'current_session':  current_session,
         'current_term':     current_term,
         'student_count':    student_count,
@@ -1727,6 +1730,7 @@ def finance_dashboard_view(request):
     }
     return render(request, 'finance/dashboard.html', context)
 
+    
 
 @accountant_required
 def finance_record_receipt_view(request, pk):

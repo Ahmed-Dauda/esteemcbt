@@ -1,5 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'sms/dashboard/teacherbase.html' %}
+{% block content %}
+
 <head>
     <meta charset="UTF-8">
     <title>Finance Dashboard</title>
@@ -184,7 +185,21 @@
     </div>
 
     <!-- ===================== THIS WEEK ===================== -->
-    <h2 style="font-size:16px;color:#666;margin-bottom:12px;">This Week (from {{ monday|date:"d M" }})</h2>
+   {% if fallback_used %}
+    <div style="background:#fff3cd;border-left:4px solid #ffc107;padding:12px 16px;
+                border-radius:6px;margin-bottom:16px;color:#856404;font-size:14px;">
+        <i class="fas fa-info-circle"></i>
+        No records for this week ({{ monday|date:"d M Y" }}).
+        Showing the most recent week on file — <strong>{{ display_week|date:"d M Y" }}</strong>.
+    </div>
+    <h2 style="font-size:16px;color:#666;margin-bottom:12px;">
+        Week of {{ display_week|date:"d M Y" }}
+    </h2>
+{% else %}
+    <h2 style="font-size:16px;color:#666;margin-bottom:12px;">
+        This Week (from {{ monday|date:"d M" }})
+    </h2>
+{% endif %}
     <div class="stat-grid">
         <div class="stat-card">
             <div class="label">Records This Week</div>
@@ -263,5 +278,4 @@
 
 </div>
 
-</body>
-</html>
+{% endblock %}
