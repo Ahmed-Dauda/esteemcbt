@@ -99,6 +99,7 @@ class AccountantRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
         return super().handle_no_permission()
 
 
+
 @login_required(login_url='teacher:teacher_login')
 def finance_record_export_view(request):
     # ---- Filters (mirror finance_record_view) ----
@@ -211,71 +212,235 @@ def finance_record_bulk_delete_view(request):
     return redirect(back_url)
 
 
+
+from django.contrib.auth import get_user_model
+from collections import Counter
+
+import os
+import uuid
+import tempfile
+from datetime import datetime, timedelta
+import tablib
+from django.contrib.auth import get_user_model
+from collections import Counter
+
+
+import os
+import uuid
+import tempfile
+from datetime import datetime, timedelta
+from collections import Counter
+import tablib
+from django.contrib.auth import get_user_model
+from finance.resources import FinanceRecordResource
+
+
+IMPORT_TMP_DIR = os.path.join(tempfile.gettempdir(), 'finance_imports')
+os.makedirs(IMPORT_TMP_DIR, exist_ok=True)
+IMPORT_TTL = timedelta(minutes=30)
+
+
+def _stale_cleanup():
+    """Delete temp import files older than TTL. Best-effort, never raises."""
+    try:
+        now = datetime.now()
+        for name in os.listdir(IMPORT_TMP_DIR):
+            path = os.path.join(IMPORT_TMP_DIR, name)
+            try:
+                if now - datetime.fromtimestamp(os.path.getmtime(path)) > IMPORT_TTL:
+                    os.remove(path)
+            except OSError:
+                pass
+    except OSError:
+        pass
+
+
 @accountant_required
 def finance_record_import_view(request):
     user_school = request.user.school
     if user_school is None:
         return HttpResponse("No school assigned to your account.", status=403)
 
-    if request.method == 'POST':
-        form = UploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            resource = FinanceRecordResource()
-            dataset = tablib.Dataset()
-            new_records = request.FILES['file'].read()
+    User = get_user_model()
 
-            try:
-                dataset.load(new_records, format='xlsx')
-            except Exception as e:
-                return render(request, 'finance/import_records.html', {
-                    'form': form,
-                    'errors': [('File error', str(e))],
-                })
+    # ================================================================
+    # CONFIRM stage — reuse the stashed file
+    # ================================================================
+    if request.method == 'POST' and request.POST.get('confirm_import') == '1':
+        stash = request.session.get('finance_import_stash') or {}
+        file_path = stash.get('path')
+        uploaded_at = stash.get('at')
 
-            # ---------- Dry run ----------
-            result = resource.import_data(
-                dataset,
-                dry_run=True,
-                raise_errors=False,
-                request=request,
-            )
-
-            has_problems = (
-                result.has_errors()
-                or result.has_validation_errors()
-            )
-
-            if has_problems:
-                return render(request, 'finance/import_records.html', {
-                    'form': form,
-                    'errors': result.row_errors(),
-                    'validation_errors': result.invalid_rows,
-                })
-
-            # ---------- Real import ----------
-            result = resource.import_data(
-                dataset,
-                dry_run=False,
-                raise_errors=True,
-                request=request,
-            )
-
-            # 👇 Stay on this page — show success, reset the form
-            messages.success(
-                request,
-                f"Imported {result.total_rows} finance record(s)."
-            )
-            form = UploadFileForm()
+        valid = (
+            file_path
+            and os.path.exists(file_path)
+            and uploaded_at
+            and datetime.fromisoformat(uploaded_at) + IMPORT_TTL > datetime.now()
+        )
+        if not valid:
+            request.session.pop('finance_import_stash', None)
             return render(request, 'finance/import_records.html', {
-                'form': form,
-                'imported_count': result.total_rows,
+                'form': UploadFileForm(),
+                'errors': [('Session expired',
+                            "The upload session expired. Please upload the file again.")],
             })
 
-    else:
-        form = UploadFileForm()
+        try:
+            with open(file_path, 'rb') as fh:
+                dataset = tablib.Dataset()
+                dataset.load(fh.read(), format='xlsx')
+        except Exception as e:
+            return render(request, 'finance/import_records.html', {
+                'form': UploadFileForm(),
+                'errors': [('File error', str(e))],
+            })
 
-    return render(request, 'finance/import_records.html', {'form': form})
+        resource = FinanceRecordResource()
+        result = resource.import_data(
+            dataset, dry_run=False, raise_errors=True, request=request,
+        )
 
+        created = sum(1 for r in result.rows if r.import_type == 'new')
+        updated = sum(1 for r in result.rows if r.import_type == 'update')
+
+        try:
+            os.remove(file_path)
+        except OSError:
+            pass
+        request.session.pop('finance_import_stash', None)
+
+        messages.success(
+            request,
+            f"Import complete — {created} created, {updated} updated."
+        )
+        return render(request, 'finance/import_records.html', {
+            'form': UploadFileForm(),
+            'imported_count': created + updated,
+            'created_count': created,
+            'updated_count': updated,
+        })
+
+    # ================================================================
+    # PREVIEW stage — validate the uploaded file
+    # ================================================================
+    if request.method == 'POST':
+        _stale_cleanup()
+        form = UploadFileForm(request.POST, request.FILES)
+
+        if not form.is_valid() or 'file' not in request.FILES:
+            return render(request, 'finance/import_records.html', {
+                'form': form,
+                'errors': [('Form', 'A file is required.')],
+            })
+
+        # ---- Save to temp, stash in session ----
+        upload = request.FILES['file']
+        stashed_path = os.path.join(IMPORT_TMP_DIR, f"{uuid.uuid4().hex}.xlsx")
+        with open(stashed_path, 'wb') as fh:
+            for chunk in upload.chunks():
+                fh.write(chunk)
+
+        request.session['finance_import_stash'] = {
+            'path': stashed_path,
+            'at': datetime.now().isoformat(),
+            'name': upload.name,
+        }
+
+        # ---- Parse ----
+        try:
+            with open(stashed_path, 'rb') as fh:
+                dataset = tablib.Dataset()
+                dataset.load(fh.read(), format='xlsx')
+        except Exception as e:
+            return render(request, 'finance/import_records.html', {
+                'form': form,
+                'errors': [('File error', str(e))],
+            })
+
+        # ---- Dry-run — natural-key fallback already ran in before_import_row,
+        #      so result.rows has accurate new/update flags ----
+        resource = FinanceRecordResource()
+        result = resource.import_data(
+            dataset, dry_run=True, raise_errors=False, request=request,
+        )
+
+        if result.has_errors() or result.has_validation_errors():
+            return render(request, 'finance/import_records.html', {
+                'form': form,
+                'errors': result.row_errors(),
+                'validation_errors': result.invalid_rows,
+            })
+
+        # ---- Counts from the dry-run's per-row flags ----
+        created_count = sum(1 for r in result.rows if r.import_type == 'new')
+        updated_count = sum(1 for r in result.rows if r.import_type == 'update')
+
+        # ---- Cross-school sn check (only for rows that carried an explicit sn) ----
+        cross_school = []
+        for i, row in enumerate(dataset.dict, start=1):
+            sn = row.get('sn')
+            if sn in (None, '', 'None'):
+                continue
+            try:
+                sn_int = int(str(sn).strip())
+            except (ValueError, TypeError):
+                continue
+            rec = FinanceRecord.objects.filter(sn=sn_int).first()
+            if rec and rec.school_id != user_school.id:
+                cross_school.append((i, sn_int, str(rec.school)))
+
+        # ---- New users that will be created ----
+        file_usernames = {
+            str(r.get('username', '')).strip()
+            for r in dataset.dict if r.get('username')
+        }
+        existing_usernames = set(
+            User.objects
+            .filter(school=user_school, username__in=file_usernames)
+            .values_list('username', flat=True)
+        )
+        new_usernames = sorted(file_usernames - existing_usernames)
+
+        global_conflicts = sorted(
+            User.objects
+            .filter(username__in=file_usernames)
+            .exclude(school=user_school)
+            .values_list('username', flat=True)
+        )
+
+        return render(request, 'finance/import_records.html', {
+            'form': form,
+            'preview_ready': True,
+            'preview_new_rows': created_count,
+            'preview_update_rows': updated_count,
+            'preview_new_users': new_usernames,
+            'preview_cross_school': cross_school,
+            'preview_global_conflicts': global_conflicts,
+            'can_import': not cross_school and not global_conflicts,
+            'preview_filename': upload.name,
+        })
+
+    # ================================================================
+    # GET — fresh upload form
+    # ================================================================
+    _stale_cleanup()
+    request.session.pop('finance_import_stash', None)
+    return render(request, 'finance/import_records.html',
+                  {'form': UploadFileForm()})
+
+
+
+
+def _load_dataset_from_upload(request, form):
+    """Return a tablib Dataset or an error string."""
+    import tablib
+    try:
+        raw = request.FILES['file'].read()
+        ds = tablib.Dataset()
+        ds.load(raw, format='xlsx')
+        return ds
+    except Exception as e:
+        return str(e)
       
 
      
