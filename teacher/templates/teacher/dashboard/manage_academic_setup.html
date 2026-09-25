@@ -1,79 +1,312 @@
 {% extends 'sms/dashboard/teacherbase.html' %}
 {% block content %}
-<div class="container mt-4">
-  <h3>Manage Academic Setup</h3>
-  <div class="grid grid-cols-3 gap-4 mt-3">
+<style>
+  :root {
+    --as-primary: #4f46e5;
+    --as-primary-dark: #4338ca;
+    --as-success: #16a34a;
+    --as-danger: #dc2626;
+    --as-info: #0ea5e9;
+    --as-border: #e5e7eb;
+    --as-bg: #f8fafc;
+    --as-text-muted: #6b7280;
+  }
+
+  .as-wrapper {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 3rem;
+  }
+
+  .as-header {
+    margin-bottom: 1.75rem;
+  }
+
+  .as-header h3 {
+    font-weight: 700;
+    font-size: 1.6rem;
+    color: #111827;
+    margin: 0;
+  }
+
+  .as-header p {
+    color: var(--as-text-muted);
+    margin-top: 0.35rem;
+    font-size: 0.925rem;
+  }
+
+  .as-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+
+  @media (max-width: 992px) {
+    .as-grid { grid-template-columns: 1fr; }
+  }
+
+  .as-card {
+    background: #fff;
+    border: 1px solid var(--as-border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+
+  .as-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.15rem;
+  }
+
+  .as-card-subtitle {
+    font-size: 0.8rem;
+    color: var(--as-text-muted);
+    margin-bottom: 1.1rem;
+  }
+
+  .as-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+  }
+
+  .as-empty {
+    color: var(--as-text-muted);
+    font-size: 0.875rem;
+    font-style: italic;
+    padding: 0.5rem 0;
+  }
+
+  .as-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 9px;
+    background: var(--as-bg);
+    border: 1px solid transparent;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .as-item:hover {
+    border-color: var(--as-border);
+    background: #f1f5f9;
+  }
+
+  .as-item-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #1f2937;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .as-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+  }
+
+  .as-actions a {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .as-link-edit { color: var(--as-info); }
+  .as-link-edit:hover { color: #0284c7; text-decoration: underline; }
+
+  .as-link-delete { color: var(--as-danger); }
+  .as-link-delete:hover { color: #b91c1c; text-decoration: underline; }
+
+  /* Midterm toggle pill */
+  .as-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .as-toggle.is-on {
+    background: #dcfce7;
+    color: var(--as-success);
+    border-color: #bbf7d0;
+  }
+
+  .as-toggle.is-off {
+    background: #f1f5f9;
+    color: var(--as-text-muted);
+    border-color: var(--as-border);
+  }
+
+  .as-toggle:hover {
+    filter: brightness(0.97);
+  }
+
+  .as-toggle .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* Add form */
+  .as-form {
+    border-top: 1px dashed var(--as-border);
+    padding-top: 1rem;
+    margin-top: auto;
+  }
+
+  .as-form p { margin-bottom: 0.6rem; }
+
+  .as-form input,
+  .as-form select,
+  .as-form textarea {
+    width: 100%;
+    border: 1px solid var(--as-border);
+    border-radius: 8px;
+    padding: 0.5rem 0.7rem;
+    font-size: 0.875rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .as-form input:focus,
+  .as-form select:focus,
+  .as-form textarea:focus {
+    outline: none;
+    border-color: var(--as-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+  }
+
+  .as-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--as-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .as-btn:hover { background: var(--as-primary-dark); }
+</style>
+
+<div class="as-wrapper">
+  <div class="as-header">
+    <h3>Manage Academic Setup</h3>
+    <p>Configure sessions, terms, and exam types used across the school system.</p>
+  </div>
+
+  <div class="as-grid">
 
     <!-- Sessions -->
-    <div class="card p-3 shadow-sm">
-      <h5>Sessions. Eg - 2023-2024, 2024-2025</h5>
-      <ul>
+    <div class="as-card">
+      <div class="as-card-title">Sessions</div>
+      <div class="as-card-subtitle">e.g. 2023-2024, 2024-2025</div>
+
+      <ul class="as-list">
         {% for session in sessions %}
-          <li>
-            {{ session.name }}
-            <a href="{% url 'teacher:edit_session' session.id %}" class="text-info ms-2">Edit</a>
-            <a href="{% url 'teacher:delete_session' session.id %}" class="text-danger ms-1">Delete</a>
+          <li class="as-item">
+            <span class="as-item-name">{{ session.name }}</span>
+            <span class="as-actions">
+              <a href="{% url 'teacher:edit_session' session.id %}" class="as-link-edit">Edit</a>
+              <a href="{% url 'teacher:delete_session' session.id %}" class="as-link-delete">Delete</a>
+            </span>
           </li>
         {% empty %}
-          <li>No sessions yet.</li>
+          <li class="as-empty">No sessions yet.</li>
         {% endfor %}
       </ul>
-      <form method="post" class="mt-2">
+
+      <form method="post" class="as-form">
         {% csrf_token %}
         {{ session_form.as_p }}
-        <button name="add_session" class="btn btn-primary btn-sm">Add Session</button>
+        <button name="add_session" class="as-btn">+ Add Session</button>
       </form>
     </div>
 
     <!-- Terms -->
-    <div class="card p-3 shadow-sm">
-      <h5>Terms. Eg - FIRST, SECOND, THIRD</h5>
-      <ul class="list-unstyled">
+    <div class="as-card">
+      <div class="as-card-title">Terms</div>
+      <div class="as-card-subtitle">e.g. FIRST, SECOND, THIRD</div>
+
+      <ul class="as-list">
         {% for term in terms %}
-          <li class="d-flex align-items-center gap-2 mb-2">
-            <span>{{ term.name }}</span>
-
-            <a data-term-id="{{ term.id }}"
-               data-midterm="{{ term.is_midterm|lower }}"
-               onclick="toggleMidterm(this)"
-               class="btn btn-sm {% if term.is_midterm %}btn-success{% else %}btn-outline-secondary{% endif %} toggle-btn"
-               style="cursor:pointer;"
-               title="Click to toggle midterm status">
-              {% if term.is_midterm %}✅ Midterm{% else %}⬜ Not Midterm{% endif %}
-            </a>
-
-            <a href="{% url 'teacher:edit_term' term.id %}" class="text-info ms-1">Edit</a>
-            <a href="{% url 'teacher:delete_term' term.id %}" class="text-danger ms-1">Delete</a>
+          <li class="as-item">
+            <span class="as-item-name">{{ term.name }}</span>
+            <span class="as-actions">
+              <a data-term-id="{{ term.id }}"
+                 data-midterm="{{ term.is_midterm|lower }}"
+                 onclick="toggleMidterm(this)"
+                 class="as-toggle {% if term.is_midterm %}is-on{% else %}is-off{% endif %} toggle-btn"
+                 title="Click to toggle midterm status">
+                <span class="dot"></span>
+                {% if term.is_midterm %}Midterm{% else %}Not midterm{% endif %}
+              </a>
+              <a href="{% url 'teacher:edit_term' term.id %}" class="as-link-edit">Edit</a>
+              <a href="{% url 'teacher:delete_term' term.id %}" class="as-link-delete">Delete</a>
+            </span>
           </li>
         {% empty %}
-          <li>No terms yet.</li>
+          <li class="as-empty">No terms yet.</li>
         {% endfor %}
       </ul>
-      <form method="post" class="mt-2">
+
+      <form method="post" class="as-form">
         {% csrf_token %}
         {{ term_form.as_p }}
-        <button name="add_term" class="btn btn-primary btn-sm">Add Term</button>
+        <button name="add_term" class="as-btn">+ Add Term</button>
       </form>
     </div>
 
     <!-- Exam Types -->
-    <div class="card p-3 shadow-sm">
-      <h5>Exam Types. Eg-Exam, CA, MID-TERM</h5>
-      <ul>
+    <div class="as-card">
+      <div class="as-card-title">Exam Types</div>
+      <div class="as-card-subtitle">e.g. Exam, CA, MID-TERM</div>
+
+      <ul class="as-list">
         {% for exam_type in exam_types %}
-          <li>
-            {{ exam_type.name }}
-            <a href="{% url 'teacher:edit_exam_type' exam_type.id %}" class="text-info ms-2">Edit</a>
-            <a href="{% url 'teacher:delete_exam_type' exam_type.id %}" class="text-danger ms-1">Delete</a>
+          <li class="as-item">
+            <span class="as-item-name">{{ exam_type.name }}</span>
+            <span class="as-actions">
+              <a href="{% url 'teacher:edit_exam_type' exam_type.id %}" class="as-link-edit">Edit</a>
+              <a href="{% url 'teacher:delete_exam_type' exam_type.id %}" class="as-link-delete">Delete</a>
+            </span>
           </li>
         {% empty %}
-          <li>No exam types yet.</li>
+          <li class="as-empty">No exam types yet.</li>
         {% endfor %}
       </ul>
-      <form method="post" class="mt-2">
+
+      <form method="post" class="as-form">
         {% csrf_token %}
         {{ exam_type_form.as_p }}
-        <button name="add_exam_type" class="btn btn-primary btn-sm">Add Exam Type</button>
+        <button name="add_exam_type" class="as-btn">+ Add Exam Type</button>
       </form>
     </div>
 
@@ -83,9 +316,9 @@
 <script>
 function toggleMidterm(btn) {
     const termId = btn.dataset.termId;
+    const originalHTML = btn.innerHTML;
 
-    // Show loading state
-    btn.textContent = '⏳ Saving...';
+    btn.innerHTML = '<span class="dot"></span> Saving...';
     btn.style.pointerEvents = 'none';
 
     fetch(`/teacher/toggle-term-midterm/${termId}/`, {
@@ -98,18 +331,18 @@ function toggleMidterm(btn) {
     .then(res => res.json())
     .then(data => {
         if (data.is_midterm) {
-            btn.className   = 'btn btn-sm btn-success toggle-btn';
-            btn.textContent = '✅ Midterm';
+            btn.className = 'as-toggle is-on toggle-btn';
+            btn.innerHTML = '<span class="dot"></span> Midterm';
             btn.dataset.midterm = 'true';
         } else {
-            btn.className   = 'btn btn-sm btn-outline-secondary toggle-btn';
-            btn.textContent = '⬜ Not Midterm';
+            btn.className = 'as-toggle is-off toggle-btn';
+            btn.innerHTML = '<span class="dot"></span> Not midterm';
             btn.dataset.midterm = 'false';
         }
         btn.style.pointerEvents = 'auto';
     })
     .catch(() => {
-        btn.textContent = '❌ Error';
+        btn.innerHTML = '<span class="dot"></span> Error';
         btn.style.pointerEvents = 'auto';
     });
 }

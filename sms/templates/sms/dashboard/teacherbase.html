@@ -544,125 +544,118 @@
         }
 
         /* Mobile Responsive */
-        /* Mobile Responsive - FIXED */
-@media (max-width: 768px) {
-    :root {
-        --sidebar-width: 0px;
-    }
+        @media (max-width: 768px) {
+            :root {
+                --sidebar-width: 0px;
+            }
 
-    /* ✅ Default state: hidden off-screen */
-    .sidebar {
-        transform: translateX(-100%) !important;
-        box-shadow: none;
-        width: 280px; /* ✅ Fixed width on mobile */
-    }
+            .sidebar {
+                transform: translateX(-100%) !important;
+                box-shadow: none;
+                width: 280px;
+            }
 
-    /* ✅ When active: fully visible with all content */
-    .sidebar.active {
-        transform: translateX(0) !important;
-        box-shadow: var(--shadow-xl) !important;
-    }
-    
-    /* ✅ Force ALL content visible when active */
-    .sidebar.active * {
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
-    
-    .sidebar.active .sidebar-header {
-        opacity: 1 !important;
-        pointer-events: all !important;
-        display: block !important;
-    }
-    
-    .sidebar.active .sidebar-brand {
-        display: flex !important;
-    }
-    
-    .sidebar.active .nav-section {
-        display: block !important;
-        opacity: 1 !important;
-    }
-    
-    .sidebar.active .nav-section-title {
-        display: block !important;
-        opacity: 1 !important;
-    }
-    
-    .sidebar.active .nav-item {
-        display: block !important;
-        opacity: 1 !important;
-    }
-    
-    .sidebar.active .nav-link {
-        display: flex !important;
-        opacity: 1 !important;
-        color: rgba(255, 255, 255, 0.85) !important;
-    }
-    
-    .sidebar.active .nav-link i {
-        display: inline-block !important;
-    }
-    
-    .sidebar.active .nav-link span {
-        display: inline-block !important;
-    }
+            .sidebar.active {
+                transform: translateX(0) !important;
+                box-shadow: var(--shadow-xl) !important;
+            }
+            
+            .sidebar.active * {
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+            
+            .sidebar.active .sidebar-header {
+                opacity: 1 !important;
+                pointer-events: all !important;
+                display: block !important;
+            }
+            
+            .sidebar.active .sidebar-brand {
+                display: flex !important;
+            }
+            
+            .sidebar.active .nav-section {
+                display: block !important;
+                opacity: 1 !important;
+            }
+            
+            .sidebar.active .nav-section-title {
+                display: block !important;
+                opacity: 1 !important;
+            }
+            
+            .sidebar.active .nav-item {
+                display: block !important;
+                opacity: 1 !important;
+            }
+            
+            .sidebar.active .nav-link {
+                display: flex !important;
+                opacity: 1 !important;
+                color: rgba(255, 255, 255, 0.85) !important;
+            }
+            
+            .sidebar.active .nav-link i {
+                display: inline-block !important;
+            }
+            
+            .sidebar.active .nav-link span {
+                display: inline-block !important;
+            }
 
-    /* ✅ Remove desktop toggle behavior on mobile */
-    .sidebar.toggled {
-        transform: translateX(-100%) !important;
-    }
-    
-    .sidebar.active.toggled {
-        transform: translateX(0) !important;
-    }
+            .sidebar.toggled {
+                transform: translateX(-100%) !important;
+            }
+            
+            .sidebar.active.toggled {
+                transform: translateX(0) !important;
+            }
 
-    .main-wrapper {
-        margin-left: 0 !important;
-    }
+            .main-wrapper {
+                margin-left: 0 !important;
+            }
 
-    .topbar {
-        left: 0 !important;
-    }
+            .topbar {
+                left: 0 !important;
+            }
 
-    .mobile-toggle {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-    }
+            .mobile-toggle {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+            }
 
-    .search-bar {
-        display: none !important;
-    }
+            .search-bar {
+                display: none !important;
+            }
 
-    .content {
-        padding: calc(var(--topbar-height) + 1rem) 1rem 1rem;
-    }
+            .content {
+                padding: calc(var(--topbar-height) + 1rem) 1rem 1rem;
+            }
 
-    .page-title {
-        font-size: 1.5rem;
-    }
-    
-    /* ✅ Ensure overlay is above content but below sidebar */
-    .sidebar-overlay {
-        z-index: 1040 !important;
-    }
-    
-    .sidebar {
-        z-index: 1050 !important;
-    }
-}
+            .page-title {
+                font-size: 1.5rem;
+            }
+            
+            .sidebar-overlay {
+                z-index: 1040 !important;
+            }
+            
+            .sidebar {
+                z-index: 1050 !important;
+            }
+        }
 
-/* ✅ Tablet size - treat as mobile */
-@media (max-width: 820px) {
-    .sidebar {
-        width: 280px;
-    }
-    
-    .sidebar.active {
-        transform: translateX(0) !important;
-    }
-}
+        @media (max-width: 820px) {
+            .sidebar {
+                width: 280px;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0) !important;
+            }
+        }
 
         /* Stagger animations for nav items */
         .nav-item {
@@ -698,189 +691,266 @@
         </div>
 
         <div class="nav-section">
-            {% if request.user.is_authenticated and request.user.is_superuser and request.user.is_staff %}
-            <div class="nav-section-title">Administration</div>
-            
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:onboarding_dashboard' %}">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    <span>Onboarding</span>
-                </a>
-            </div>
 
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'portal:subscription_list' %}">
-                    <i class="fas fa-credit-card"></i>
-                    <span>Subscription</span>
-                </a>
-            </div>
-            {% endif %}
+            {# ======================================================= #}
+            {# FINANCE-ONLY MODE                                       #}
+            {# Shown when user is BOTH accountant AND superuser.      #}
+            {# ======================================================= #}
+            {% if request.user.is_authenticated and request.user.is_accountant and request.user.is_superuser %}
 
-            {% if request.user.is_authenticated and request.user.is_superuser %}
-            {% if teacher_school|lower == user_school|lower %}
-            <div class="nav-section-title">Management</div>
-            
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
-                    <i class="fas fa-home"></i>
-                    <span>Home</span>
-                </a>
-            </div>
+                <div class="nav-section-title">Finance</div>
 
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:create_course_view' %}">
-                    <i class="fas fa-book"></i>
-                    <span>Add Subject</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'portal:enter_select' %}">
-                    <i class="fas fa-keyboard"></i>
-                    <span>Input Scores</span>
-                </a>
-            </div>
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'finance:finance_dashboard' %}">
+                        <i class="fas fa-naira-sign"></i>
+                        <span>Finance Dashboard</span>
+                    </a>
+                </div>
 
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'portal:principal_dashboard' %}">
-                    <i class="fas fa-user-tie"></i>
-                    <span>Principal Comments</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'portal:form_teacher_dashboard' %}">
-                    <i class="fas fa-chalkboard"></i>
-                    <span>Class Teacher</span>
-                </a>
-            </div>
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'finance:finance_record_view' %}">
+                        <i class="fas fa-list"></i>
+                        <span>Weekly Records</span>
+                    </a>
+                </div>
 
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'portal:class_report_list' %}">
-                    <i class="fas fa-file-alt"></i>
-                    <span>All Report Cards</span>
-                </a>
-            </div>
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'finance:finance_summary' %}">
+                        <i class="fas fa-chart-column"></i>
+                        <span>Finance Summary</span>
+                    </a>
+                </div>
 
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'portal:report_card_list' %}">
-                    <i class="fas fa-clipboard-list"></i>
-                    <span>Student Report Cards</span>
-                </a>
-            </div>
+                <hr class="sidebar-divider">
 
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:student_lists' %}">
-                    <i class="fas fa-user-graduate"></i>
-                    <span>Manage Students</span>
-                </a>
-            </div>
+                <div class="nav-section-title">Actions</div>
 
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:manage_exam' %}">
-                    <i class="fas fa-tasks"></i>
-                    <span>Manage Exams</span>
-                </a>
-            </div>
-             <div class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:teacher_subjects' %}">
-                    <i class="fas fa-question-circle"></i>
-                    <span>Manage Questions</span>
-                </a>
-            </div>
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'finance:finance_record_add' %}">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Add Record</span>
+                    </a>
+                </div>
 
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:teacher_list' %}">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    <span>Manage Teachers</span>
-                </a>
-            </div>
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'finance:finance_record_import' %}">
+                        <i class="fas fa-file-arrow-up"></i>
+                        <span>Import Records</span>
+                    </a>
+                </div>
 
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'quiz:edit_school' %}">
-                    <i class="fas fa-cog"></i>
-                    <span>Edit Profile</span>
-                </a>
-            </div>
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'finance:finance_record_export' %}">
+                        <i class="fas fa-file-arrow-down"></i>
+                        <span>Export Records</span>
+                    </a>
+                </div>
 
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:examiner_results_list' %}">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Manage Results</span>
-                </a>
-            </div>
-
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:exam_list' %}">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Result Statistics</span>
-                </a>
-            </div>
-            {% endif %}
             {% else %}
-            
-            <div class="nav-section-title">Teacher Portal</div>
-            
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
-                    <i class="fas fa-home"></i>
-                    <span>Home</span>
-                </a>
-            </div>
 
-        
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'portal:enter_select' %}">
-                    <i class="fas fa-keyboard"></i>
-                    <span>Input Scores</span>
-                </a>
-            </div>
+                {# ======================================================= #}
+                {# FULL NAVIGATION — original content, unchanged          #}
+                {# ======================================================= #}
 
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'portal:form_teacher_dashboard' %}">
-                    <i class="fas fa-chalkboard"></i>
-                    <span>Class Teacher</span>
-                </a>
-            </div>
+                {% if request.user.is_authenticated and request.user.is_superuser and request.user.is_staff %}
+                <div class="nav-section-title">Administration</div>
+                
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher:onboarding_dashboard' %}">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <span>Onboarding</span>
+                    </a>
+                </div>
 
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:teacher_subjects' %}">
-                    <i class="fas fa-question-circle"></i>
-                    <span>Manage Questions</span>
-                </a>
-            </div>
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'portal:subscription_list' %}">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Subscription</span>
+                    </a>
+                </div>
+                {% endif %}
 
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'teacher:teacher_results' %}">
-                    <i class="fas fa-poll"></i>
-                    <span>Manage Results</span>
-                </a>
-            </div>
+                {% if request.user.is_authenticated and request.user.is_superuser %}
+                {% if teacher_school|lower == user_school|lower %}
+                <div class="nav-section-title">Management</div>
 
-      {% if request.user.is_accountant or request.user.is_superuser %}
-        <div class="nav-item">
-            <a class="nav-link" href="{% url 'finance:finance_dashboard' %}">
-                <i class="fas fa-naira-sign"></i>
-                <span>Finance Dashboard</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a class="nav-link" href="{% url 'finance:finance_record_view' %}">
-                <i class="fas fa-list"></i>
-                <span>Weekly Records</span>
-            </a>
-        </div>
-    {% endif %}
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
+                        <i class="fas fa-home"></i>
+                        <span>Home</span>
+                    </a>
+                </div>
 
-            {% if request.user.is_authenticated %}
-            {% if teacher_school|lower == user_school|lower %}
+                {% if request.user.is_accountant or request.user.is_superuser %}
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'finance:finance_dashboard' %}">
+                        <i class="fas fa-naira-sign"></i>
+                        <span>Finance Dashboard</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'finance:finance_record_view' %}">
+                        <i class="fas fa-list"></i>
+                        <span>Weekly Records</span>
+                    </a>
+                </div>
+                {% endif %}
 
-            <div class="nav-item">
-                <a class="nav-link" href="{% url 'academics:list_conducts' %}">
-                    <i class="fas fa-clipboard-check"></i>
-                    <span>Manage Conduct</span>
-                </a>
-            </div>
-            {% endif %}
-            {% endif %}
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher:create_course_view' %}">
+                        <i class="fas fa-book"></i>
+                        <span>Add Subject</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'portal:enter_select' %}">
+                        <i class="fas fa-keyboard"></i>
+                        <span>Input Scores</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'portal:principal_dashboard' %}">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Principal Comments</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'portal:form_teacher_dashboard' %}">
+                        <i class="fas fa-chalkboard"></i>
+                        <span>Class Teacher</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'portal:class_report_list' %}">
+                        <i class="fas fa-file-alt"></i>
+                        <span>All Report Cards</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'portal:report_card_list' %}">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Student Report Cards</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher:student_lists' %}">
+                        <i class="fas fa-user-graduate"></i>
+                        <span>Manage Students</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher:manage_exam' %}">
+                        <i class="fas fa-tasks"></i>
+                        <span>Manage Exams</span>
+                    </a>
+                </div>
+                 <div class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher:teacher_subjects' %}">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Manage Questions</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher:teacher_list' %}">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <span>Manage Teachers</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'quiz:edit_school' %}">
+                        <i class="fas fa-cog"></i>
+                        <span>Edit Profile</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher:examiner_results_list' %}">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Manage Results</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher:exam_list' %}">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Result Statistics</span>
+                    </a>
+                </div>
+                {% endif %}
+                {% else %}
+                
+                <div class="nav-section-title">Teacher Portal</div>
+                
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher:teacher-dashboard' %}">
+                        <i class="fas fa-home"></i>
+                        <span>Home</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'portal:enter_select' %}">
+                        <i class="fas fa-keyboard"></i>
+                        <span>Input Scores</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'portal:form_teacher_dashboard' %}">
+                        <i class="fas fa-chalkboard"></i>
+                        <span>Class Teacher</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher:teacher_subjects' %}">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Manage Questions</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher:teacher_results' %}">
+                        <i class="fas fa-poll"></i>
+                        <span>Manage Results</span>
+                    </a>
+                </div>
+
+                {% if request.user.is_accountant or request.user.is_superuser %}
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'finance:finance_dashboard' %}">
+                        <i class="fas fa-naira-sign"></i>
+                        <span>Finance Dashboard</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'finance:finance_record_view' %}">
+                        <i class="fas fa-list"></i>
+                        <span>Weekly Records</span>
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if request.user.is_authenticated %}
+                {% if teacher_school|lower == user_school|lower %}
+
+                <div class="nav-item">
+                    <a class="nav-link" href="{% url 'academics:list_conducts' %}">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span>Manage Conduct</span>
+                    </a>
+                </div>
+                {% endif %}
+                {% endif %}
+                {% endif %}
+
             {% endif %}
         </div>
     </nav>
@@ -893,14 +963,7 @@
         <!-- Topbar -->
         <header class="topbar">
             <div class="topbar-left">
-                <button class="mobile-toggle" id="sidebarToggleTop">
-                    <i class="fa fa-bars"></i>
-                </button>
-
-                <div class="search-bar">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search for anything...">
-                </div>
+              
             </div>
 
             <div class="topbar-right">
@@ -967,7 +1030,7 @@
         
         // ✅ Check if mobile (including tablets)
         function isMobile() {
-            return window.innerWidth <= 820; // ✅ Increased from 768
+            return window.innerWidth <= 820;
         }
         
         // ✅ Mobile sidebar toggle
@@ -977,16 +1040,13 @@
             console.log('toggleMobileSidebar called, isActive:', isActive);
             
             if (isActive) {
-                // Close sidebar
                 sidebar.classList.remove('active');
                 overlay.classList.remove('active');
                 console.log('📱 Mobile sidebar CLOSED');
             } else {
-                // Open sidebar
                 sidebar.classList.add('active');
                 overlay.classList.add('active');
                 
-                // ✅ Force visibility (backup)
                 setTimeout(() => {
                     sidebar.style.transform = 'translateX(0)';
                     sidebar.style.visibility = 'visible';
@@ -1006,13 +1066,10 @@
                 console.log('sidebarToggle clicked, isMobile:', isMobile());
                 
                 if (isMobile()) {
-                    // On mobile, toggle the mobile sidebar
                     toggleMobileSidebar();
                 } else {
-                    // Desktop only
                     sidebar.classList.toggle('toggled');
                     
-                    // Change icon
                     if (sidebar.classList.contains('toggled')) {
                         toggleIcon.className = 'fas fa-chevron-right';
                         console.log('🖥️ Desktop sidebar collapsed');
@@ -1033,10 +1090,8 @@
                 console.log('sidebarToggleTop clicked, isMobile:', isMobile());
                 
                 if (isMobile()) {
-                    // Mobile
                     toggleMobileSidebar();
                 } else {
-                    // Desktop when collapsed
                     sidebar.classList.toggle('toggled');
                     console.log('🖥️ Desktop sidebar toggled from topbar');
                 }
@@ -1096,7 +1151,6 @@
             resizeTimer = setTimeout(function() {
                 console.log('Window resized to:', window.innerWidth);
                 
-                // If resized from mobile to desktop, clean up mobile classes
                 if (!isMobile()) {
                     sidebar.classList.remove('active');
                     overlay.classList.remove('active');
@@ -1108,6 +1162,6 @@
         
         console.log('✅ Navigation initialized successfully');
     });
-</script>
+    </script>
 </body>
 </html>

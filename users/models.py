@@ -64,6 +64,7 @@ gender_choice = [
 
 
 
+
 class NewUser(AbstractBaseUser, PermissionsMixin):
     email           = models.EmailField(max_length=254, unique=True, db_index=True)
     username        = models.CharField(max_length=35, blank=True, db_index=True)
