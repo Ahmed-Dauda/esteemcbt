@@ -187,8 +187,18 @@ class FinanceRecordResource(resources.ModelResource):
     def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
         FinanceRecord._skip_cascade = False
 
-    # fff
+    # ------------------------------------------------------------------
     def before_import_row(self, row, **kwargs):
+        from datetime import datetime as _dt, date as _date
+
+        # ---- Normalize header keys IN PLACE (do NOT rebind row) ----
+        for k in list(row.keys()):
+            cleaned = str(k).strip().lower()
+            if k != cleaned:
+                row[cleaned] = row.pop(k)
+
+        row_number = kwargs.get('row_number', '?')
+
         # ---- Normalize sn ----
         sn_val = row.get('sn')
         if sn_val in (None, '', 'None'):
@@ -205,42 +215,61 @@ class FinanceRecordResource(resources.ModelResource):
         if importer_school:
             row['school'] = importer_school.school_name
 
-        # ---- Whitespace cleanup ----
+        # ---- Whitespace cleanup on text values ----
         for f in ('session', 'term', 'username', 'names', 'student_class'):
             if row.get(f):
                 row[f] = str(row[f]).strip()
 
-        # ---- Natural-key fallback: no sn + matching existing record → update path ----
+        # ---- Reject rows with no names AND no username ----
+        names    = (row.get('names') or '').strip()
+        username = (row.get('username') or '').strip()
+        if not names and not username:
+            raise ValueError(
+                f"Row {row_number}: no 'names' and no 'username'. "
+                f"Values: names={row.get('names')!r}, username={row.get('username')!r}"
+            )
+
+        # ---- Natural-key fallback ----
         if not row.get('sn') and importer_school:
-            username   = (row.get('username') or '').strip()
-            week       = row.get('week_start')
-            sess_name  = (row.get('session') or '').strip()
-            term_name  = (row.get('term') or '').strip()
+            week      = row.get('week_start')
+            sess_name = (row.get('session') or '').strip()
+            term_name = (row.get('term') or '').strip()
 
             if username and week and sess_name and term_name:
-                student = User.objects.filter(
-                    school=importer_school,
-                    username=username,
-                ).first()
-                session = Session.objects.filter(
-                    school=importer_school,
-                    name__iexact=sess_name,
-                ).first()
-                term = Term.objects.filter(
-                    school=importer_school,
-                    name__iexact=term_name,
-                ).first()
+                student = (
+                    User.objects.filter(school=importer_school, username=username).first()
+                    or User.objects.filter(username=username).first()
+                )
+                session = (
+                    Session.objects.filter(school=importer_school, name__iexact=sess_name).first()
+                    or Session.objects.filter(name__iexact=sess_name).first()
+                )
+                term = (
+                    Term.objects.filter(school=importer_school, name__iexact=term_name).first()
+                    or Term.objects.filter(name__iexact=term_name).first()
+                )
 
-                # Normalize week_start — it may arrive as string or date
-                from datetime import datetime as _dt
-                week_dt = week
-                if isinstance(week, str):
-                    for fmt in ('%Y-%m-%d', '%d %b %Y', '%d/%m/%Y'):
+                # Normalize week_start to a date
+                week_dt = None
+                if isinstance(week, _dt):
+                    week_dt = week.date()
+                elif isinstance(week, _date):
+                    week_dt = week
+                elif isinstance(week, str):
+                    for fmt in ('%Y-%m-%d', '%d %b %Y', '%d/%m/%Y',
+                                '%Y/%m/%d', '%d-%m-%Y', '%m/%d/%Y'):
                         try:
                             week_dt = _dt.strptime(week.strip(), fmt).date()
                             break
                         except ValueError:
                             continue
+
+                logger.info(
+                    "Fallback: user=%r week=%r(type %s) session=%r term=%r "
+                    "| student=%s session=%s term=%s",
+                    username, week, type(week).__name__, sess_name, term_name,
+                    student, session, term,
+                )
 
                 if student and session and term and week_dt:
                     existing = FinanceRecord.objects.filter(
@@ -250,18 +279,33 @@ class FinanceRecordResource(resources.ModelResource):
                         term=term,
                     ).first()
                     if existing:
-                        row['sn'] = existing.sn   # ← forces update path
+                        row['sn'] = existing.sn
+                        logger.info("Fallback MATCH sn=%s — updating", existing.sn)
+                    else:
+                        logger.info(
+                            "Fallback: no match for student=%s week=%s session=%s term=%s",
+                            student, week_dt, session, term,
+                        )
                         
+                    # ------------------------------------------------------------------
     def before_save_instance(self, instance, using_transactions, dry_run):
-        if instance.student:
-            if not instance.names:
-                instance.names = (
+        # ---- names is NOT NULL — never let it be None/empty ----
+        if not instance.names:
+            if instance.student:
+                full = (
                     f"{instance.student.first_name or ''} "
                     f"{instance.student.last_name or ''}"
                 ).strip()
-            if not instance.student_class or instance.student_class == 'NA':
-                instance.student_class = instance.student.student_class or 'NA'
+                instance.names = full or instance.student.username or 'Unknown'
+            else:
+                instance.names = 'Unknown'
 
+        # ---- student_class defaults ----
+        if not instance.student_class or instance.student_class == 'NA':
+            if instance.student and instance.student.student_class:
+                instance.student_class = instance.student.student_class
+            else:
+                instance.student_class = 'NA'
 
 
 # class FinanceRecordResource(resources.ModelResource):

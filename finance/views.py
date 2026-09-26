@@ -255,6 +255,34 @@ def _stale_cleanup():
         pass
 
 
+
+def _drop_ghost_rows(dataset):
+    """
+    Excel often marks rows as 'used' even when they're visually empty.
+    Strip any row where every cell is empty/None, so django-import-export
+    doesn't try to process them.
+    """
+    def _is_empty(v):
+        if v is None:
+            return True
+        s = str(v).strip()
+        return s == '' or s.lower() == 'none'
+
+    clean_rows = [
+        row for row in dataset.dict
+        if not all(_is_empty(v) for v in row.values())
+    ]
+
+    if len(clean_rows) == len(dataset.dict):
+        return dataset   # nothing to strip
+
+    clean_ds = tablib.Dataset()
+    clean_ds.headers = dataset.headers
+    for row in clean_rows:
+        clean_ds.append([row.get(h) for h in dataset.headers])
+    return clean_ds
+
+
 @accountant_required
 def finance_record_import_view(request):
     user_school = request.user.school
@@ -294,6 +322,9 @@ def finance_record_import_view(request):
                 'form': UploadFileForm(),
                 'errors': [('File error', str(e))],
             })
+
+        # ---- Strip empty/ghost rows ----
+        dataset = _drop_ghost_rows(dataset)
 
         resource = FinanceRecordResource()
         result = resource.import_data(
@@ -356,6 +387,9 @@ def finance_record_import_view(request):
                 'form': form,
                 'errors': [('File error', str(e))],
             })
+
+        # ---- Strip empty/ghost rows ----
+        dataset = _drop_ghost_rows(dataset)
 
         # ---- Dry-run — natural-key fallback already ran in before_import_row,
         #      so result.rows has accurate new/update flags ----
