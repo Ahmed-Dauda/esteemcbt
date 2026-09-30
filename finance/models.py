@@ -157,14 +157,6 @@ class FinanceRecord(models.Model):
 
         # ============================================================
         # FAST PATH — bulk import
-        # ------------------------------------------------------------
-        # During import, FinanceRecord._skip_cascade is True and the
-        # resource's before_save_instance has already set:
-        #     balance_brought_forward, total_deposit,
-        #     current_balance, status
-        #
-        # Trust those values — do NOT overwrite them by recomputing
-        # from previous rows.
         # ============================================================
         if self._skip_cascade:
             super().save(*args, force_insert=force_insert, **kwargs)
@@ -174,6 +166,27 @@ class FinanceRecord(models.Model):
         # NORMAL PATH — manual add/edit or cascade-triggered save
         # ============================================================
 
+        # ---- Preserve existing BBF when editing an existing row ----
+        # If the DB already had a non-zero BBF and the incoming value is
+        # blank/0, treat the existing value as authoritative. This stops
+        # an edit of unrelated fields (caps, shop, etc.) from wiping the
+        # carry-forward balance.
+        existing_bbf = None
+        if self.pk and not force_insert:
+            existing_bbf = (
+                FinanceRecord.objects
+                .filter(pk=self.pk)
+                .values_list('balance_brought_forward', flat=True)
+                .first()
+            )
+
+        if (existing_bbf is not None
+            and self._d(existing_bbf) != 0
+            and self._d(self.balance_brought_forward) == 0):
+            # Incoming BBF is empty/0 → adopt the stored value
+            self.balance_brought_forward = existing_bbf
+            self._trust_manual_bbf = True
+
         # 1) First save to get a pk
         super().save(*args, force_insert=force_insert, **kwargs)
 
@@ -181,10 +194,7 @@ class FinanceRecord(models.Model):
         if not all([self.student_id, self.school_id, self.session_id, self.term_id]):
             return
 
-        # 3) Determine BBF — respect a manual override ONLY when the
-        #    accountant entered a non-zero value.
-        #
-        #    Blank or 0 means "auto-compute from the previous row."
+        # 3) Determine BBF — respect manual override if present
         manual_bbf = (
             getattr(self, '_trust_manual_bbf', False)
             and self.balance_brought_forward is not None
@@ -218,6 +228,7 @@ class FinanceRecord(models.Model):
 
         # 6) Re-cascade later rows
         self._recompute_following()
+
 
     def _recompute_following(self):
         """Walk forward through all later rows for this student+session and
