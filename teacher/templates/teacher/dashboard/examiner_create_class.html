@@ -4,15 +4,70 @@
 {% block title %}Create Class{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-<h4>Create Classes base on arms, Eg: JS1A, JS1B,JS2A, JS2B,JS3A, JS3B etc</h4>
-    <h4 class="mb-3">Create New Class</h4>
+<div class="container mt-4" style="max-width: 900px;">
+    <h4 class="mb-1">Create a Class</h4>
+    <p class="text-muted mb-3">
+        Type any class name — <code>JSS1A</code>, <code>SS2B</code>,
+        <code>Grade 4 Blue</code> — whatever fits your school.
+    </p>
 
     <form method="post">
         {% csrf_token %}
-        {{ form|crispy }}
-        <button type="submit" class="btn btn-success mt-2">Save Class</button>
-        <a href="{% url 'teacher:examiner_class_list' %}" class="btn btn-secondary mt-2">Cancel</a>
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="mb-3">
+            <label class="form-label" for="{{ form.name.id_for_label }}">
+                Class name <span class="text-danger">*</span>
+            </label>
+            {{ form.name }}
+
+            {# Datalist of existing classes — helps consistency, doesn't restrict #}
+            <datalist id="existing-classes">
+                {% for cls in existing_classes %}
+                    <option value="{{ cls }}"></option>
+                {% endfor %}
+            </datalist>
+
+            <small class="text-muted">
+                Start typing — suggestions from your existing classes appear.
+            </small>
+            {{ form.name.errors }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Students</label>
+            <div style="max-height:280px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;padding:10px;">
+                {{ form.students }}
+            </div>
+            <small class="text-muted">
+                Selected students will have their <code>student_class</code> set
+                to this class name.
+            </small>
+            {{ form.students.errors }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">
+                Subjects <span class="text-muted">(optional)</span>
+            </label>
+            <div style="max-height:220px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;padding:10px;">
+                {{ form.subjects }}
+            </div>
+            {{ form.subjects.errors }}
+        </div>
+
+        <div class="mb-3 form-check">
+            {{ form.is_active }}
+            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                Active
+            </label>
+        </div>
+
+        <button type="submit" class="btn btn-success">Save Class</button>
+        <a href="{% url 'teacher:examiner_class_list' %}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
 {% endblock %}

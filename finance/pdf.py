@@ -569,6 +569,9 @@ def build_class_statements_pdf(
     h_foot  = ParagraphStyle('c_foot',  parent=styles['Normal'],
                              fontSize=8, textColor=colors.HexColor('#888'),
                              alignment=1)
+    h_note  = ParagraphStyle('c_note',  parent=styles['Normal'],
+                             fontSize=10, textColor=colors.HexColor('#888'),
+                             alignment=1)
 
     story = []
 
@@ -601,13 +604,14 @@ def build_class_statements_pdf(
 
     for entry in students_data:
         recs = entry.get('records') or []
-        if not recs:
-            continue
 
-        opening  = float(recs[0].balance_brought_forward or 0)
-        closing  = float(recs[-1].current_balance or 0)
-        deposits = sum(float(x.initial_total_deposit or 0) for x in recs)
-        expenses = sum(float(x.total_expense or 0) for x in recs)
+        if recs:
+            opening  = float(recs[0].balance_brought_forward or 0)
+            closing  = float(recs[-1].current_balance or 0)
+            deposits = sum(float(x.initial_total_deposit or 0) for x in recs)
+            expenses = sum(float(x.total_expense or 0) for x in recs)
+        else:
+            opening = closing = deposits = expenses = 0.0
 
         grand_open  += opening
         grand_dep   += deposits
@@ -688,66 +692,88 @@ def build_class_statements_pdf(
         story.append(meta_tbl)
         story.append(Spacer(1, 12))
 
-        # ---- Ledger table ----
-        header = ["Week", "BBF", "Deposit", "Cum. Dep.",
-                  "Shop", "Caps", "Haircut", "Others",
-                  "Total Exp", "Balance", "Status"]
-        data = [header]
+        # ---- Ledger table OR "no activity" note ----
+        if recs:
+            header = ["Week", "BBF", "Deposit", "Cum. Dep.",
+                      "Shop", "Caps", "Haircut", "Others",
+                      "Total Exp", "Balance", "Status"]
+            data = [header]
 
-        total_dep = total_exp = 0.0
-        for rec in recs:
-            total_dep += float(rec.initial_total_deposit or 0)
-            total_exp += float(rec.total_expense or 0)
-            week = rec.week_start.strftime("%d %b %y") if rec.week_start else "—"
-            data.append([
-                week,
-                f"{float(rec.balance_brought_forward or 0):,.1f}",
-                f"{float(rec.initial_total_deposit or 0):,.1f}",
-                f"{float(rec.total_deposit or 0):,.1f}",
-                f"{float(rec.school_shop or 0):,.1f}",
-                f"{float(rec.caps or 0):,.1f}",
-                f"{float(rec.haircut or 0):,.1f}",
-                f"{float(rec.others or 0):,.1f}",
-                f"{float(rec.total_expense or 0):,.1f}",
-                f"{float(rec.current_balance or 0):,.1f}",
-                "Exhausted" if rec.status == 'exhausted' else "Available",
-            ])
+            total_dep = total_exp = 0.0
+            for rec in recs:
+                total_dep += float(rec.initial_total_deposit or 0)
+                total_exp += float(rec.total_expense or 0)
+                week = rec.week_start.strftime("%d %b %y") if rec.week_start else "—"
+                data.append([
+                    week,
+                    f"{float(rec.balance_brought_forward or 0):,.1f}",
+                    f"{float(rec.initial_total_deposit or 0):,.1f}",
+                    f"{float(rec.total_deposit or 0):,.1f}",
+                    f"{float(rec.school_shop or 0):,.1f}",
+                    f"{float(rec.caps or 0):,.1f}",
+                    f"{float(rec.haircut or 0):,.1f}",
+                    f"{float(rec.others or 0):,.1f}",
+                    f"{float(rec.total_expense or 0):,.1f}",
+                    f"{float(rec.current_balance or 0):,.1f}",
+                    "Exhausted" if rec.status == 'exhausted' else "Available",
+                ])
 
-        closing = float(recs[-1].current_balance or 0) if recs else 0.0
-        data.append(["TOTAL", "", f"{total_dep:,.1f}", "", "", "", "", "",
-                     f"{total_exp:,.1f}", f"{closing:,.1f}", ""])
+            closing = float(recs[-1].current_balance or 0)
+            data.append(["TOTAL", "", f"{total_dep:,.1f}", "", "", "", "", "",
+                         f"{total_exp:,.1f}", f"{closing:,.1f}", ""])
 
-        col_widths = [1.7 * cm, 1.5 * cm, 1.6 * cm, 1.7 * cm,
-                      1.4 * cm, 1.3 * cm, 1.5 * cm, 1.4 * cm,
-                      1.6 * cm, 1.7 * cm, 2.1 * cm]
-        tbl = Table(data, colWidths=col_widths, repeatRows=1)
-        tbl.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), BRAND),
-            ('TEXTCOLOR',  (0, 0), (-1, 0), colors.white),
-            ('FONTNAME',   (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE',   (0, 0), (-1, 0), 8),
-            ('FONTSIZE',   (0, 1), (-1, -1), 8),
-            ('GRID',       (0, 0), (-1, -1), 0.35, colors.grey),
-            ('ALIGN',      (1, 1), (-2, -1), 'RIGHT'),
-            ('VALIGN',     (0, 0), (-1, -1), 'MIDDLE'),
-            *[('BACKGROUND', (0, i), (-1, i), LIGHT)
-              for i in range(2, len(data), 2)],
-            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#dfe6f5')),
-            ('FONTNAME',   (0, -1), (-1, -1), 'Helvetica-Bold'),
-        ]))
-        story.append(tbl)
+            col_widths = [1.7 * cm, 1.5 * cm, 1.6 * cm, 1.7 * cm,
+                          1.4 * cm, 1.3 * cm, 1.5 * cm, 1.4 * cm,
+                          1.6 * cm, 1.7 * cm, 2.1 * cm]
+            tbl = Table(data, colWidths=col_widths, repeatRows=1)
+            tbl.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), BRAND),
+                ('TEXTCOLOR',  (0, 0), (-1, 0), colors.white),
+                ('FONTNAME',   (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE',   (0, 0), (-1, 0), 8),
+                ('FONTSIZE',   (0, 1), (-1, -1), 8),
+                ('GRID',       (0, 0), (-1, -1), 0.35, colors.grey),
+                ('ALIGN',      (1, 1), (-2, -1), 'RIGHT'),
+                ('VALIGN',     (0, 0), (-1, -1), 'MIDDLE'),
+                *[('BACKGROUND', (0, i), (-1, i), LIGHT)
+                  for i in range(2, len(data), 2)],
+                ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#dfe6f5')),
+                ('FONTNAME',   (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ]))
+            story.append(tbl)
+        else:
+            # No records for this student this session/term
+            note_tbl = Table(
+                [[Paragraph(
+                    "No transactions were recorded for this student "
+                    "during this session and term.",
+                    h_note,
+                )]],
+                colWidths=[18 * cm],
+            )
+            note_tbl.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f8f9fa')),
+                ('BOX',        (0, 0), (-1, -1), 0.4, colors.grey),
+                ('TOPPADDING',    (0, 0), (-1, -1), 24),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 24),
+            ]))
+            story.append(note_tbl)
+
         story.append(Spacer(1, 10))
 
         # ---- Summary box at bottom of each page ----
-        opening_line = (
-            f"<b>Opening:</b> ₦{float(recs[0].balance_brought_forward or 0):,.1f}"
-            if recs else "<b>Opening:</b> ₦0"
-        )
+        if recs:
+            opening_val = float(recs[0].balance_brought_forward or 0)
+            closing_val = float(recs[-1].current_balance or 0)
+        else:
+            opening_val = closing_val = 0.0
+            total_dep = total_exp = 0.0
+
         summary_data = [[
-            Paragraph(opening_line, h_meta),
-            Paragraph(f"<b>Total Deposits:</b> ₦{total_dep:,.1f}", h_meta),
-            Paragraph(f"<b>Total Expenses:</b> ₦{total_exp:,.1f}", h_meta),
-            Paragraph(f"<b>Closing Balance:</b> ₦{closing:,.1f}", h_meta),
+            Paragraph(f"<b>Opening:</b> NGN {opening_val:,.1f}", h_meta),
+            Paragraph(f"<b>Total Deposits:</b> NGN {total_dep:,.1f}", h_meta),
+            Paragraph(f"<b>Total Expenses:</b> NGN {total_exp:,.1f}", h_meta),
+            Paragraph(f"<b>Closing Balance:</b> NGN {closing_val:,.1f}", h_meta),
         ]]
         summary_tbl = Table(summary_data,
                             colWidths=[4.5 * cm, 4.5 * cm, 4.5 * cm, 4.5 * cm])

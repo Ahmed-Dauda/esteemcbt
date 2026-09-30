@@ -8,16 +8,20 @@ from quiz.models import School
 from sms.models import Session, Term
 
 
-
 class FinanceRecord(models.Model):
     STATUS_CHOICES = [
         ('exhausted', 'Exhausted'),
         ('remaining', 'Remaining'),
     ]
 
-    # Class-level flag: when True, save() skips the forward re-cascade.
-    # Set to True during bulk import, False afterwards.
+    # Class-level flag: when True, save() trusts the values already computed
+    # on the instance (set by the import resource's before_save_instance)
+    # and skips the recompute-from-previous-rows logic.
     _skip_cascade = False
+    # When True, save() trusts instance.balance_brought_forward instead of
+    # overwriting it from the previous row. Set by the edit form only when
+    # the accountant entered a non-zero value.
+    _trust_manual_bbf = False
 
     # ---- identity ----
     sn            = models.AutoField(primary_key=True)
@@ -65,6 +69,7 @@ class FinanceRecord(models.Model):
     note                    = models.TextField(blank=True, null=True)
     status                  = models.CharField(max_length=10, choices=STATUS_CHOICES,
                                                default='remaining', db_index=True)
+
     # ---- audit trail ----
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -82,20 +87,17 @@ class FinanceRecord(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
-    
+
     class Meta:
         ordering = ['names', 'session', 'term__order', 'week_start', 'sn']
         indexes = [
-        # existing
-        models.Index(fields=['school', 'session', 'term', 'names']),
-        models.Index(fields=['student', 'session', 'term']),
-        models.Index(fields=['school', 'week_start']),
-
-        # ADD THESE
-        models.Index(fields=['school', 'status']),               # exhausted alert
-        models.Index(fields=['school', 'session', 'term', 'week_start']),  # summary
-        models.Index(fields=['-sn']),                            # latest lookup
-    ]
+            models.Index(fields=['school', 'session', 'term', 'names']),
+            models.Index(fields=['student', 'session', 'term']),
+            models.Index(fields=['school', 'week_start']),
+            models.Index(fields=['school', 'status']),
+            models.Index(fields=['school', 'session', 'term', 'week_start']),
+            models.Index(fields=['-sn']),
+        ]
 
     # ------------------------------------------------------------------
     # Helpers
@@ -140,7 +142,7 @@ class FinanceRecord(models.Model):
     # Save
     # ------------------------------------------------------------------
     def save(self, *args, **kwargs):
-        # Capture force_insert so it doesn't get applied to the SECOND save
+        # Capture force_insert so it isn't applied to later super().save() calls
         force_insert = kwargs.pop('force_insert', False)
 
         # ---- Force-assign sn when creating a new row ----
@@ -148,84 +150,73 @@ class FinanceRecord(models.Model):
             max_sn = FinanceRecord.objects.aggregate(m=Max('sn'))['m'] or 0
             self.sn = max_sn + 1
 
-        # 1) expense from raw fields
+        # ---- Always recompute expense from raw fields (cheap, always correct) ----
         self.initial_total_deposit = self._d(self.initial_total_deposit)
         self.total_expense         = self.compute_expense()
 
-        # 2) FIRST save — insert only if we were told to force_insert,
-        #    otherwise a normal save (which will UPDATE if pk is set)
-        if force_insert:
-            super().save(*args, force_insert=True, **kwargs)
-        else:
-            super().save(*args, **kwargs)
+        # ============================================================
+        # FAST PATH — bulk import
+        # ------------------------------------------------------------
+        # During import, FinanceRecord._skip_cascade is True and the
+        # resource's before_save_instance has already set:
+        #     balance_brought_forward, total_deposit,
+        #     current_balance, status
+        #
+        # Trust those values — do NOT overwrite them by recomputing
+        # from previous rows.
+        # ============================================================
+        if self._skip_cascade:
+            super().save(*args, force_insert=force_insert, **kwargs)
+            return
 
-        # 3) if scope is incomplete, skip the ledger math
+        # ============================================================
+        # NORMAL PATH — manual add/edit or cascade-triggered save
+        # ============================================================
+
+        # 1) First save to get a pk
+        super().save(*args, force_insert=force_insert, **kwargs)
+
+        # 2) Skip ledger math if scope is incomplete
         if not all([self.student_id, self.school_id, self.session_id, self.term_id]):
             return
 
-        # 4) find the previous row in the SAME term
-        prev_qs = self._siblings_in_session().exclude(pk=self.pk)
-        if self.week_start:
-            prev = prev_qs.filter(term_id=self.term_id,
-                                  week_start__lte=self.week_start).last()
-        else:
-            prev = prev_qs.filter(term_id=self.term_id, sn__lt=self.sn).last()
+        # 3) Determine BBF — respect a manual override ONLY when the
+        #    accountant entered a non-zero value.
+        #
+        #    Blank or 0 means "auto-compute from the previous row."
+        manual_bbf = (
+            getattr(self, '_trust_manual_bbf', False)
+            and self.balance_brought_forward is not None
+            and self._d(self.balance_brought_forward) != 0
+        )
 
-        # 5) if none, carry forward from previous term (any earlier session)
-        if prev is None:
-            prev_term_row = self._previous_term_record()
-            self.balance_brought_forward = (
-                prev_term_row.current_balance if prev_term_row else Decimal('0')
-            )
-        else:
-            self.balance_brought_forward = prev.current_balance
+        if not manual_bbf:
+            prev_qs = self._siblings_in_session().exclude(pk=self.pk)
+            if self.week_start:
+                prev = prev_qs.filter(
+                    term_id=self.term_id, week_start__lte=self.week_start
+                ).last()
+            else:
+                prev = prev_qs.filter(term_id=self.term_id, sn__lt=self.sn).last()
 
-        # 6) totals
+            if prev is None:
+                prev_term_row = self._previous_term_record()
+                self.balance_brought_forward = (
+                    prev_term_row.current_balance if prev_term_row else Decimal('0')
+                )
+            else:
+                self.balance_brought_forward = prev.current_balance
+
+        # 4) Totals
         self.total_deposit   = self.initial_total_deposit + self._d(self.balance_brought_forward)
         self.current_balance = self.total_deposit - self.total_expense
         self.status          = 'exhausted' if self.current_balance <= 0 else 'remaining'
 
-        # 7) SECOND save — plain UPDATE (no force_insert)
+        # 5) Second save with computed values
         super().save(*args, **kwargs)
 
-        # 8) re-cascade everything after this row — unless we're bulk-importing
-        if not self._skip_cascade:
-            self._recompute_following()
-
-        # 2) save once to get a pk (needed to exclude self later)
-        super().save(*args, **kwargs)
-
-        # 3) if scope is incomplete, skip the ledger math
-        if not all([self.student_id, self.school_id, self.session_id, self.term_id]):
-            return
-
-        # 4) find the previous row in the SAME term
-        prev_qs = self._siblings_in_session().exclude(pk=self.pk)
-        if self.week_start:
-            prev = prev_qs.filter(term_id=self.term_id,
-                                  week_start__lte=self.week_start).last()
-        else:
-            prev = prev_qs.filter(term_id=self.term_id, sn__lt=self.sn).last()
-
-        # 5) if none, carry forward from previous term (any earlier session)
-        if prev is None:
-            prev_term_row = self._previous_term_record()
-            self.balance_brought_forward = (
-                prev_term_row.current_balance if prev_term_row else Decimal('0')
-            )
-        else:
-            self.balance_brought_forward = prev.current_balance
-
-        # 6) totals
-        self.total_deposit   = self.initial_total_deposit + self._d(self.balance_brought_forward)
-        self.current_balance = self.total_deposit - self.total_expense
-        self.status          = 'exhausted' if self.current_balance <= 0 else 'remaining'
-
-        super().save(*args, **kwargs)
-
-        # 7) re-cascade everything after this row — unless we're bulk-importing
-        if not self._skip_cascade:
-            self._recompute_following()
+        # 6) Re-cascade later rows
+        self._recompute_following()
 
     def _recompute_following(self):
         """Walk forward through all later rows for this student+session and
@@ -265,4 +256,3 @@ class FinanceRecord(models.Model):
 
     def __str__(self):
         return f"{self.names} — {self.term} (wk {self.week_start})"
-    

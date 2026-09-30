@@ -73,20 +73,43 @@ class Course(models.Model):
 
 from django.core.exceptions import ValidationError
 
+
 class CourseGrade(models.Model):
-    schools = models.ForeignKey("quiz.School", on_delete=models.SET_NULL, related_name='coursegrade', blank=True, null=True, db_index=True)
+    schools = models.ForeignKey(
+        "quiz.School",
+        on_delete=models.SET_NULL,
+        related_name='coursegrade',
+        blank=True, null=True, db_index=True,
+    )
     name = models.CharField(max_length=140, blank=True, null=True, db_index=True)
 
-    # NEW: Session and Term
-    session = models.ForeignKey('sms.Session', on_delete=models.SET_NULL, null=True, blank=True)
-    term = models.ForeignKey('sms.Term', on_delete=models.SET_NULL, null=True, blank=True)
+    # Session and Term
+    session = models.ForeignKey(
+        'sms.Session',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+    )
+    term = models.ForeignKey(
+        'sms.Term',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+    )
 
-    students = models.ManyToManyField(NewUser, related_name='course_grades', blank=True)
-    subjects = models.ManyToManyField(Course, related_name='course_grade')
+    # Both optional — a class can be created as an empty shell first
+    students = models.ManyToManyField(
+        NewUser,
+        related_name='course_grades',
+        blank=True,
+    )
+    subjects = models.ManyToManyField(
+        Course,
+        related_name='course_grade',
+        blank=True,          # ← ADDED
+    )
     form_teacher = models.ManyToManyField(
-    'teacher.Teacher',
-    blank=True,
-    related_name='form_teacher_classes',
+        'teacher.Teacher',
+        blank=True,
+        related_name='form_teacher_classes',
     )
     is_active = models.BooleanField(default=True, db_index=True)
     id = models.AutoField(primary_key=True)
@@ -97,7 +120,7 @@ class CourseGrade(models.Model):
 
     def __str__(self):
         return self.name if self.name else 'Unnamed Class'
-
+    
 
 
 class School(models.Model):

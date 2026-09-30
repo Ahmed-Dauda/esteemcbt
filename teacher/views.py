@@ -376,27 +376,49 @@ def examiner_class_list_view(request):
     return render(request, 'teacher/dashboard/examiner_class_list.html', {'classes': classes})
 
 
+
 @login_required(login_url='teacher:teacher_login')
 def examiner_create_class_view(request):
-    user = request.user
+    user   = request.user
     school = getattr(user, 'school', None)
 
     if request.method == 'POST':
         form = ExaminerCreateClassForm(request.POST, user_school=school)
+
         if form.is_valid():
             new_class = form.save(commit=False)
-            new_class.schools = school
+
+            # ---- Set the school FK ----
+            # Try 'school' first (singular), fall back to 'schools' if that's
+            # the actual field name. One of these must match your model.
+            if hasattr(new_class, 'school'):
+                new_class.school = school
+            elif hasattr(new_class, 'schools'):
+                new_class.schools = school
+
             new_class.save()
             form.save_m2m()
-            messages.success(request, "Class created successfully!")
+
+            # ---- Sync student_class on every selected student ----
+            for student in new_class.students.all():
+                if student.student_class != new_class.name:
+                    student.student_class = new_class.name
+                    student.save(update_fields=['student_class'])
+
+            messages.success(
+                request,
+                f"Class “{new_class.name}” created — "
+                f"{new_class.students.count()} student(s) updated."
+            )
             return redirect('teacher:examiner_class_list')
+
     else:
         form = ExaminerCreateClassForm(user_school=school)
 
     return render(
         request,
         'teacher/dashboard/examiner_create_class.html',
-        {'form': form}
+        {'form': form},
     )
 
 

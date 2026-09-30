@@ -197,6 +197,39 @@ class FinanceRecordResource(resources.ModelResource):
             if k != cleaned:
                 row[cleaned] = row.pop(k)
 
+        # ---- Alias common header variants to the model's field names ----
+        aliases = {
+            # BBF variants
+            'bbf':                 'balance_brought_forward',
+            'b_b_f':               'balance_brought_forward',
+            'balance_b_f':         'balance_brought_forward',
+            'balance_b/f':         'balance_brought_forward',
+            'balance_bf':          'balance_brought_forward',
+            'previous_balance':    'balance_brought_forward',
+            'prev_balance':        'balance_brought_forward',
+            'opening_balance':     'balance_brought_forward',
+            'brought_forward':     'balance_brought_forward',
+            'balance_c_f':         'balance_brought_forward',
+            # Deposit variants
+            'deposit':             'initial_total_deposit',
+            'new_deposit':         'initial_total_deposit',
+            'deposit_amount':      'initial_total_deposit',
+            # Expense variants
+            'shop':                'school_shop',
+            'schoolshop':          'school_shop',
+            'hair_cut':            'haircut',
+            'other':               'others',
+            'notes':               'note',
+            # Student variants
+            'student':             'username',
+            'student_name':        'names',
+            'class':               'student_class',
+            'week':                'week_start',
+        }
+        for src, dest in aliases.items():
+            if src in row and dest not in row:
+                row[dest] = row.pop(src)
+
         row_number = kwargs.get('row_number', '?')
 
         # ---- Normalize sn ----
@@ -228,6 +261,9 @@ class FinanceRecordResource(resources.ModelResource):
                 f"Row {row_number}: no 'names' and no 'username'. "
                 f"Values: names={row.get('names')!r}, username={row.get('username')!r}"
             )
+
+        # ---- Debug log: what keys did we actually receive? ----
+        logger.info("Import row %s keys: %s", row_number, sorted(row.keys()))
 
         # ---- Natural-key fallback ----
         if not row.get('sn') and importer_school:
@@ -286,9 +322,12 @@ class FinanceRecordResource(resources.ModelResource):
                             "Fallback: no match for student=%s week=%s session=%s term=%s",
                             student, week_dt, session, term,
                         )
+
                         
-                    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def before_save_instance(self, instance, using_transactions, dry_run):
+        from decimal import Decimal
+
         # ---- names is NOT NULL — never let it be None/empty ----
         if not instance.names:
             if instance.student:
@@ -306,6 +345,58 @@ class FinanceRecordResource(resources.ModelResource):
                 instance.student_class = instance.student.student_class
             else:
                 instance.student_class = 'NA'
+
+        # ---- Safe Decimal coercion ----
+        def _d(v):
+            if v in (None, '', 'None'):
+                return Decimal('0')
+            try:
+                return Decimal(str(v))
+            except Exception:
+                return Decimal('0')
+
+        deposit = _d(instance.initial_total_deposit)
+        bbf     = _d(instance.balance_brought_forward)
+
+        # ---- Safety net #1: BBF typed into current_balance column ----
+        provided_current = _d(instance.current_balance)
+        if bbf == 0 and provided_current != 0:
+            bbf = provided_current
+            instance.balance_brought_forward = provided_current
+
+        # ---- Cascade: if BBF is still zero, pull it from the previous
+        #      record for the same student+session (chronologically earlier).
+        #      This is what makes the sequence continue across imports. ----
+        if (
+            bbf == 0
+            and instance.student_id
+            and instance.session_id
+            and instance.week_start
+        ):
+            prev = (
+                FinanceRecord.objects
+                .filter(
+                    student_id=instance.student_id,
+                    session_id=instance.session_id,
+                    week_start__lt=instance.week_start,
+                )
+                .exclude(pk=instance.pk)
+                .order_by('-week_start', '-sn')
+                .first()
+            )
+            if prev is not None:
+                bbf = _d(prev.current_balance)
+                instance.balance_brought_forward = bbf
+
+        # ---- Auto-compute derived fields ----
+        instance.total_deposit   = deposit + bbf
+        instance.total_expense   = (
+            _d(instance.school_shop) + _d(instance.caps)
+            + _d(instance.haircut)  + _d(instance.others)
+        )
+        instance.current_balance = instance.total_deposit - instance.total_expense
+        instance.status          = 'exhausted' if instance.current_balance <= 0 else 'remaining'
+
 
 
 # class FinanceRecordResource(resources.ModelResource):

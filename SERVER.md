@@ -35,6 +35,8 @@ MyServer2026!Coolify
 cd /var/www/esteemcbt
 source venv/bin/activate
 
+#  TO REFLECT CHANGES OF LOCAL MACHINE U NEED TO
+git pull origin main
 
 # RESTART PRODUCTION SERVICES
 systemctl restart esteemcbt

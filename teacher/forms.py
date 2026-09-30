@@ -38,11 +38,20 @@ class CoursesForm(forms.ModelForm):
             self.fields['exam_type'].queryset = ExamType.objects.filter(school__id=school.id)
 
 
+
 class ExaminerCreateClassForm(forms.ModelForm):
     class Meta:
         model = CourseGrade
         fields = ['name', 'students', 'subjects', 'is_active']
         widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g. JSS1A, SS2B, Grade 4 Blue …',
+                'autocomplete': 'off',
+                'list': 'existing-classes',
+                'required': 'required',
+                'maxlength': '50',
+            }),
             'students': forms.CheckboxSelectMultiple(),
             'subjects': forms.CheckboxSelectMultiple(),
         }
@@ -50,16 +59,67 @@ class ExaminerCreateClassForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         user_school = kwargs.pop('user_school', None)
         super().__init__(*args, **kwargs)
+        self._user_school = user_school
 
         if user_school:
-            self.fields['students'].queryset = NewUser.objects.filter(
-                school=user_school
-            ).order_by('first_name', 'last_name')
+            self.fields['students'].queryset = (
+                NewUser.objects
+                .filter(school=user_school)
+                .order_by('student_class', 'first_name', 'last_name')
+            )
+            self.fields['subjects'].queryset = (
+                Course.objects
+                .filter(schools=user_school)
+                .select_related('course_name', 'session', 'term', 'exam_type')
+                .order_by('course_name__title')
+            )
 
-            self.fields['subjects'].queryset = Course.objects.filter(
-                schools=user_school
-            ).select_related('course_name', 'session', 'term', 'exam_type').order_by('course_name__title')
-            
+            # Nicer labels: "student2 tanko — JSS1"
+            self.fields['students'].label_from_instance = lambda u: (
+                (f"{u.first_name or ''} {u.last_name or ''}".strip() or u.username)
+                + (f"  —  {u.student_class}" if u.student_class else "")
+            )
+
+        # Both optional — allow creating an empty class shell first,
+        # assign students and subjects later via the edit screen.
+        self.fields['students'].required = False
+        self.fields['subjects'].required = False
+
+    def clean_name(self):
+        name = (self.cleaned_data.get('name') or '').strip()
+        if not name:
+            raise forms.ValidationError("Class name is required.")
+        if len(name) > 50:
+            raise forms.ValidationError("Class name is too long (max 50 chars).")
+
+        # Reject accidental school-name inclusion
+        if self._user_school:
+            school_str = str(self._user_school)
+            if school_str.lower() in name.lower():
+                raise forms.ValidationError(
+                    f"Class name shouldn't include the school name ({school_str}). "
+                    f"Try just “{name.replace(school_str, '').strip()}”."
+                )
+
+        # Uniqueness within this school
+        if self._user_school:
+            qs = CourseGrade.objects.filter(name__iexact=name)
+            if hasattr(CourseGrade, 'school'):
+                qs = qs.filter(school=self._user_school)
+            elif hasattr(CourseGrade, 'schools'):
+                qs = qs.filter(schools=self._user_school)
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise forms.ValidationError(f"A class named “{name}” already exists.")
+
+        return name
+
+    def save(self, commit=True):
+        instance = super().save(commit=commit)
+        return instance
+    
+                        
 
 # class ExaminerCreateClassForm(forms.ModelForm):
 #     class Meta:

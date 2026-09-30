@@ -417,7 +417,7 @@
         </div>
         <div class="fin-header-actions">
             <a href="{% url 'finance:finance_summary' %}" class="btn btn-ghost">
-                <i class="fas fa-chart-column"></i> Summary
+                <i class="fas fa-chart-column"></i> Summary22
             </a>
             <a href="{% url 'finance:finance_record_add' %}" class="btn btn-success">
                 <i class="fas fa-plus"></i> Add record
@@ -609,7 +609,7 @@ $(document).ready(function () {
         deferRender: true,
         pageLength: 25,
         lengthMenu: [10, 25, 50, 100, 250],
-        order: [[2, 'desc']],   // sort by Week descending (column shifted by 1 for checkbox)
+        order: [[2, 'asc']],   // sort by Week ascending — oldest first, chronological
         ajax: {
             url: "{% url 'finance:finance_record_view' %}" + currentFilters,
             type: 'GET'

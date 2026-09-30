@@ -7,7 +7,6 @@ from django import forms
 class UploadFileForm(forms.Form):
     file = forms.FileField()
 
-
 class FinanceRecordForm(forms.ModelForm):
     student = forms.ModelChoiceField(
         queryset=NewUser.objects.none(),
@@ -21,6 +20,7 @@ class FinanceRecordForm(forms.ModelForm):
         fields = [
             'student',
             'initial_total_deposit',
+            'balance_brought_forward',     # ← NEW: allow BBF edit
             'session',
             'term',
             'week_start',
@@ -34,9 +34,10 @@ class FinanceRecordForm(forms.ModelForm):
             ),
         }
 
-    # 👇 NEW: mobile-friendly number inputs
+    # 👇 mobile-friendly number inputs
     NUMERIC_FIELDS = [
         'initial_total_deposit',
+        'balance_brought_forward',     # ← NEW
         'school_shop', 'caps', 'haircut', 'others',
     ]
 
@@ -49,12 +50,14 @@ class FinanceRecordForm(forms.ModelForm):
             if name in self.fields:
                 self.fields[name].widget.attrs.update({
                     'class':       'form-control money-input',
-                    'inputmode':   'decimal',   # numeric keypad on mobile
+                    'inputmode':   'decimal',
                     'step':        '0.1',
-                    'min':         '0',
+                    # BBF can be negative (student owes), so no min=0 on it
                     'autocomplete': 'off',
                     'placeholder': '0',
                 })
+                if name != 'balance_brought_forward':
+                    self.fields[name].widget.attrs['min'] = '0'
 
         # Bigger tap target for selects
         for name in ('session', 'term'):
@@ -73,3 +76,19 @@ class FinanceRecordForm(forms.ModelForm):
         if not student:
             raise forms.ValidationError("Please select a student.")
         return student
+
+    # ttt
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        # Only trust the BBF value if the user explicitly provided a
+        # non-zero number. Blank / 0 means "auto-compute from previous row."
+        bbf = self.cleaned_data.get('balance_brought_forward')
+        if bbf is not None and bbf != 0:
+            instance._trust_manual_bbf = True
+
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
+    
