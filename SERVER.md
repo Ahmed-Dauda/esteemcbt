@@ -36,7 +36,9 @@ cd /var/www/esteemcbt
 source venv/bin/activate
 
 #  TO REFLECT CHANGES OF LOCAL MACHINE U NEED TO
-git pull origin main
+cd /var/www/esteemcbt
+git fetch origin && git reset --hard origin/main
+/var/www/esteemcbt/venv/bin/python manage.py migrate finance
 
 # RESTART PRODUCTION SERVICES
 systemctl restart esteemcbt

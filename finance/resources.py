@@ -242,9 +242,23 @@ class FinanceRecordResource(resources.ModelResource):
             except (ValueError, TypeError):
                 row.pop('sn', None)
 
-        # ---- Force importer's school ----
+        # ---- Multi-tenant guard: file's school must match importer's school ----
         request = kwargs.get('request')
         importer_school = getattr(request.user, 'school', None) if request else None
+
+        file_school_name = (row.get('school') or '').strip()
+
+        if importer_school and file_school_name:
+            if file_school_name.lower() != importer_school.school_name.lower():
+                raise ValueError(
+                    f"Row {row_number}: The file says this record belongs to "
+                    f"'{file_school_name}', but you are logged in as "
+                    f"'{importer_school.school_name}'. "
+                    f"Log in with the account for '{file_school_name}', or "
+                    f"change the 'school' column in the file to match."
+                )
+
+        # Force importer's school (a no-op now that we've validated they match)
         if importer_school:
             row['school'] = importer_school.school_name
 
@@ -322,7 +336,7 @@ class FinanceRecordResource(resources.ModelResource):
                             "Fallback: no match for student=%s week=%s session=%s term=%s",
                             student, week_dt, session, term,
                         )
-
+                        
                         
     # ------------------------------------------------------------------
     def before_save_instance(self, instance, using_transactions, dry_run):
