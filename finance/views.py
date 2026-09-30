@@ -1824,53 +1824,106 @@ def finance_record_receipt_view(request, pk):
                         filename=filename, content_type='application/pdf')
 
 
+
 @accountant_required
 def class_statements_pdf(request):
     """
     One PDF for an entire class:
-      GET /finance/records/class/pdf/?session=X&term=Y&class=JSS2A
+      GET /finance/finance-records/class/pdf/?session=X&term=Y&class=JSS2A
+
+    Students are sourced from FinanceRecord.student_class — NOT from User.student_class
+    or CourseGrade.students. This means the PDF reflects whatever class was
+    recorded on each finance row at entry time, and it naturally includes only
+    students who actually have transactions.
     """
+    from django.contrib.auth import get_user_model
+
     user_school = request.user.school
     if user_school is None:
         raise PermissionDenied("No school assigned.")
 
     session_id   = request.GET.get('session')
     term_id      = request.GET.get('term')
-    class_filter = request.GET.get('class')
+    class_filter = (request.GET.get('class') or '').strip()
 
     if not (session_id and term_id and class_filter):
-        raise PermissionDenied("Missing session, term, or class.")
+        messages.warning(request, "Missing session, term, or class.")
+        return redirect(reverse('finance:finance_summary'))
 
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-
-    students = (User.objects
-                .filter(school=user_school, student_class=class_filter)
-                .order_by('first_name', 'last_name'))
-
-    students_data = []
-    for s in students:
-        records = list(
-            FinanceRecord.objects
-            .filter(school=user_school,
-                    student_id=s.id,
-                    session_id=session_id,
-                    term_id=term_id)
-            .select_related('session', 'term')
-            .order_by('week_start', 'sn')
+    # ---- Pull every finance record for this school/session/term,
+    #      whose stored student_class matches the requested class.
+    #      Tolerant match: strips spaces, uppercases.
+    all_records = (
+        FinanceRecord.objects
+        .filter(
+            school=user_school,
+            session_id=session_id,
+            term_id=term_id,
+            student__isnull=False,
         )
-        if not records:
-            continue
+        .select_related('student', 'session', 'term')
+        .order_by('week_start', 'sn')
+    )
+
+    normalized = class_filter.replace(' ', '').upper()
+
+    # Filter in Python using the record's own student_class
+    class_records = [
+        r for r in all_records
+        if (r.student_class or '').replace(' ', '').upper() == normalized
+    ]
+
+    # ---- No records at all for this class ----
+    if not class_records:
+        # What classes DO have records this session/term?
+        available = (
+            all_records
+            .values_list('student_class', flat=True)
+            .distinct()
+        )
+        avail_list = ', '.join(
+            sorted({(c or '—') for c in available})
+        ) or '(none)'
+
+        messages.warning(
+            request,
+            f"No finance records found for class “{class_filter}” "
+            f"in this session and term. Classes with records: {avail_list}."
+        )
+        return redirect(
+            f"{reverse('finance:finance_summary')}"
+            f"?session={session_id}&term={term_id}&class={class_filter}"
+        )
+
+
+    # ---- Group records by student ----
+    grouped = {}   # student_id -> {'records': [FinanceRecord, ...]}
+    for r in class_records:
+        key = r.student_id
+        if key not in grouped:
+            grouped[key] = []
+        grouped[key].append(r)
+
+    # ---- Build students_data ----
+    students_data = []
+    for student_id, recs in grouped.items():
+        # Use the record's own name & class — that's the ledger truth
+        display_name  = (recs[0].names or '').strip() or 'Student'
+        display_class = (recs[0].student_class or '').strip() or '—'
+
+        # Admission number still comes from the User (ledger doesn't store it)
+        s = recs[0].student
+        admission_no = (s.admission_no if s else None) or '—'
 
         students_data.append({
-            'student_name':  f"{s.first_name or ''} {s.last_name or ''}".strip() or 'Student',
-            'student_class': s.student_class or '—',
-            'admission_no':  s.admission_no or '—',
-            'records':       records,
+            'student_name':  display_name,
+            'student_class': display_class,
+            'admission_no':  admission_no,
+            'records':       recs,
         })
 
-    if not students_data:
-        raise PermissionDenied("No records found for this class.")
+    # Sort by name for stable order
+    students_data.sort(key=lambda x: (x['student_name'] or '').lower())
 
     session_obj = Session.objects.filter(pk=session_id).first()
     term_obj    = Term.objects.filter(pk=term_id).first()
@@ -1885,5 +1938,7 @@ def class_statements_pdf(request):
 
     safe_class = class_filter.replace(' ', '_').replace(',', '').replace('/', '-')
     filename   = f"class_{safe_class}_{session_id}_{term_id}.pdf"
-    return FileResponse(buf, as_attachment=True,
-                        filename=filename, content_type='application/pdf')
+    return FileResponse(
+        buf, as_attachment=True,
+        filename=filename, content_type='application/pdf',
+    )
