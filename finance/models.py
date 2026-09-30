@@ -8,6 +8,7 @@ from quiz.models import School
 from sms.models import Session, Term
 
 
+
 class FinanceRecord(models.Model):
     STATUS_CHOICES = [
         ('exhausted', 'Exhausted'),
