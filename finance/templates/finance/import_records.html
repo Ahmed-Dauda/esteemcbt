@@ -237,8 +237,15 @@
                 <div class="alert alert-danger">
                     <strong>Error(s) occurred:</strong>
                     <ul>
-                        {% for row, error in errors %}
-                            <li>Error on row {{ row }}: {{ error }}</li>
+                        {% for row_num, row_errors in errors %}
+                            <li>
+                                <b>Row {{ row_num }}:</b>
+                                <ul style="margin-top:4px;">
+                                    {% for err in row_errors %}
+                                        <li><code>{{ err.error }}</code></li>
+                                    {% endfor %}
+                                </ul>
+                            </li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -249,7 +256,16 @@
                     <strong>Validation errors:</strong>
                     <ul>
                         {% for ve in validation_errors %}
-                            <li>Row {{ ve.number }}: {{ ve.error_dict }}</li>
+                            <li>
+                                <b>Row {{ ve.number }}:</b>
+                                <ul style="margin-top:4px;">
+                                    {% for field, field_errors in ve.error_dict.items %}
+                                        <li><code>{{ field }}</code>:
+                                            {% for e in field_errors %}{{ e.message }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </li>
                         {% endfor %}
                     </ul>
                 </div>
