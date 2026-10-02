@@ -340,27 +340,45 @@ class FinanceRecordResource(resources.ModelResource):
                         
     # ------------------------------------------------------------------
     def before_save_instance(self, instance, using_transactions, dry_run):
+        """
+        Prepare a FinanceRecord for saving during an import.
+
+        Runs BEFORE the model's save() is called (which will short-circuit
+        to the fast path because _skip_cascade=True). So everything the
+        record needs — names, student_class, balance_brought_forward,
+        total_deposit, current_balance, status — must be computed here.
+        """
         from decimal import Decimal
 
-        # ---- names is NOT NULL — never let it be None/empty ----
+        # ------------------------------------------------------------------
+        # 1. names — must never be None or empty (NOT NULL column)
+        # ------------------------------------------------------------------
         if not instance.names:
             if instance.student:
                 full = (
                     f"{instance.student.first_name or ''} "
                     f"{instance.student.last_name or ''}"
                 ).strip()
-                instance.names = full or instance.student.username or 'Unknown'
+                instance.names = (
+                    full
+                    or instance.student.username
+                    or 'Unknown'
+                )
             else:
                 instance.names = 'Unknown'
 
-        # ---- student_class defaults ----
+        # ------------------------------------------------------------------
+        # 2. student_class — fall back to the linked user's class
+        # ------------------------------------------------------------------
         if not instance.student_class or instance.student_class == 'NA':
             if instance.student and instance.student.student_class:
                 instance.student_class = instance.student.student_class
             else:
                 instance.student_class = 'NA'
 
-        # ---- Safe Decimal coercion ----
+        # ------------------------------------------------------------------
+        # 3. Safe Decimal coercion helper
+        # ------------------------------------------------------------------
         def _d(v):
             if v in (None, '', 'None'):
                 return Decimal('0')
@@ -372,41 +390,90 @@ class FinanceRecordResource(resources.ModelResource):
         deposit = _d(instance.initial_total_deposit)
         bbf     = _d(instance.balance_brought_forward)
 
-        # ---- Safety net #1: BBF typed into current_balance column ----
+        # ------------------------------------------------------------------
+        # 4. Safety net: BBF typed into the current_balance column by mistake
+        # ------------------------------------------------------------------
         provided_current = _d(instance.current_balance)
         if bbf == 0 and provided_current != 0:
             bbf = provided_current
             instance.balance_brought_forward = provided_current
 
-        # ---- Cascade: if BBF is still zero, pull it from the previous
-        #      record for the same student+session (chronologically earlier).
-        #      This is what makes the sequence continue across imports. ----
+        # ------------------------------------------------------------------
+        # 5. Cascade BBF from the previous record when the file left it blank
+        # ------------------------------------------------------------------
+        #    (a) Same session, earlier week
+        #    (b) If none, any earlier term within the same session
+        #    (c) If none, the last record in any earlier session
+        #    All scoped to the record's school so cross-tenant leakage
+        #    can't happen.
+        # ------------------------------------------------------------------
         if (
             bbf == 0
             and instance.student_id
+            and instance.school_id
             and instance.session_id
             and instance.week_start
         ):
-            prev = (
-                FinanceRecord.objects
-                .filter(
-                    student_id=instance.student_id,
-                    session_id=instance.session_id,
-                    week_start__lt=instance.week_start,
+            prev = None
+
+            # (a) Same session, earlier week (or same week, earlier sn)
+            if instance.term_id:
+                prev = (
+                    FinanceRecord.objects
+                    .filter(
+                        school_id=instance.school_id,
+                        student_id=instance.student_id,
+                        session_id=instance.session_id,
+                    )
+                    .exclude(pk=instance.pk)
+                    .filter(week_start__lt=instance.week_start)
+                    .order_by('-week_start', '-sn')
+                    .first()
                 )
-                .exclude(pk=instance.pk)
-                .order_by('-week_start', '-sn')
-                .first()
-            )
+
+            # (b) Same session, any earlier term (week_start may be missing
+            #     or out of order across terms)
+            if prev is None and instance.term_id and hasattr(instance.term, 'order'):
+                prev = (
+                    FinanceRecord.objects
+                    .filter(
+                        school_id=instance.school_id,
+                        student_id=instance.student_id,
+                        session_id=instance.session_id,
+                    )
+                    .exclude(pk=instance.pk)
+                    .filter(term__order__lt=instance.term.order)
+                    .order_by('-term__order', '-week_start', '-sn')
+                    .first()
+                )
+
+            # (c) Earlier session — carry forward the closing balance
+            if prev is None:
+                prev = (
+                    FinanceRecord.objects
+                    .filter(
+                        school_id=instance.school_id,
+                        student_id=instance.student_id,
+                        session_id__lt=instance.session_id,
+                    )
+                    .exclude(pk=instance.pk)
+                    .order_by('-session_id', '-term__order', '-week_start', '-sn')
+                    .first()
+                )
+
             if prev is not None:
                 bbf = _d(prev.current_balance)
                 instance.balance_brought_forward = bbf
 
-        # ---- Auto-compute derived fields ----
-        instance.total_deposit   = deposit + bbf
-        instance.total_expense   = (
-            _d(instance.school_shop) + _d(instance.caps)
-            + _d(instance.haircut)  + _d(instance.others)
+        # ------------------------------------------------------------------
+        # 6. Auto-compute derived fields
+        # ------------------------------------------------------------------
+        instance.total_deposit = deposit + bbf
+        instance.total_expense = (
+            _d(instance.school_shop)
+            + _d(instance.caps)
+            + _d(instance.haircut)
+            + _d(instance.others)
         )
         instance.current_balance = instance.total_deposit - instance.total_expense
         instance.status          = 'exhausted' if instance.current_balance <= 0 else 'remaining'

@@ -846,11 +846,17 @@ class FinanceRecordUpdateView(AccountantRequiredMixin, UpdateView):
 
 
 
+
 @accountant_required
 def finance_bulk_add_view(request):
     """
     Bulk-add one week's records for an entire class.
     Optimized: O(1) queries regardless of class size.
+
+    Students are found by matching student_class, first against the User
+    table, then falling back to Users who have existing finance records
+    for this session/term with the same class (handles cases where the
+    User.student_class field is out of sync with the ledger rows).
     """
     user_school = request.user.school
     if user_school is None:
@@ -864,18 +870,62 @@ def finance_bulk_add_view(request):
         messages.error(request, "Please pick a session, term, and class first.")
         return redirect('finance:finance_summary')
 
-    # ---- 1 query: students in this class ----
+    # ==================================================================
+    # Find students in this class (tolerant match + finance-record fallback)
+    # ==================================================================
     from django.contrib.auth import get_user_model
+    from django.db.models.functions import Replace, Upper
+    from django.db.models import Value
+
     User = get_user_model()
-    students = list(
+    normalized = (class_filter or '').replace(' ', '').upper()
+
+    # --- Step 1: direct User match, tolerant to case/whitespace ---
+    student_qs = (
         User.objects
-        .filter(school=user_school, student_class=class_filter)
+        .filter(school=user_school)
+        .exclude(student_class__isnull=True)
+        .exclude(student_class='')
+        .annotate(
+            _cls_norm=Upper(Replace('student_class', Value(' '), Value('')))
+        )
+        .filter(_cls_norm=normalized)
         .only('id', 'first_name', 'last_name', 'student_class')
         .order_by('first_name', 'last_name')
     )
 
+    # --- Step 2: if no Users match, look at finance records for this class ---
+    if not student_qs.exists():
+        record_student_ids = list(
+            FinanceRecord.objects
+            .filter(
+                school=user_school,
+                session_id=session_id,
+                term_id=term_id,
+                student__isnull=False,
+            )
+            .annotate(
+                _cls_norm=Upper(Replace('student_class', Value(' '), Value('')))
+            )
+            .filter(_cls_norm=normalized)
+            .values_list('student_id', flat=True)
+            .distinct()
+        )
+        if record_student_ids:
+            student_qs = (
+                User.objects
+                .filter(id__in=record_student_ids)
+                .only('id', 'first_name', 'last_name', 'student_class')
+                .order_by('first_name', 'last_name')
+            )
+
+    students = list(student_qs)
+
     if not students:
-        messages.warning(request, f"No students found in class {class_filter}.")
+        messages.warning(
+            request,
+            f"No students found in class “{class_filter}” for this session and term."
+        )
         return redirect('finance:finance_summary')
 
     student_ids = [s.id for s in students]
@@ -997,8 +1047,8 @@ def finance_bulk_add_view(request):
                 balance_brought_forward = bbf,
                 current_balance       = current_balance,
                 status                = status,
-                created_by            = request.user,   # 👈 add
-                updated_by            = request.user,   # 👈 add
+                created_by            = request.user,
+                updated_by            = request.user,
             ))
 
         # ---- 1 batched INSERT (not N) ----
