@@ -3918,7 +3918,8 @@ from django.core.cache import cache
 from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpRequest, HttpResponse
-
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 # ──────────────────────────────────────────────────────────────
 # MAIN VIEW (no ThreadPoolExecutor)
 # ──────────────────────────────────────────────────────────────
@@ -3988,6 +3989,66 @@ def _start_exam_sync(request, pk):
     response.set_cookie('course_id', str(course.id), httponly=True, samesite='Lax')
     response.set_cookie('attempt_id', str(attempt.id), httponly=True, samesite='Lax')
     return response
+
+
+# ──────────────────────────────────────────────────────────────
+# Offline violation sync endpoint
+# Called by start_exams.html JS (line ~665) when the client
+# comes back online. Returns whether the exam should auto-submit.
+# ──────────────────────────────────────────────────────────────
+@require_POST
+def sync_offline_violations(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"ok": False, "error": "auth"}, status=403)
+
+    try:
+        payload = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "invalid json"}, status=400)
+
+    tab_switches     = int(payload.get("tab_switches", 0) or 0)
+    blurs            = int(payload.get("blurs", 0) or 0)
+    screenshots      = int(payload.get("screenshots", 0) or 0)
+    fullscreen_exits = int(payload.get("fullscreen_exits", 0) or 0)
+
+    # Thresholds – must match the JS constants in start_exams.html
+    TAB_LIMIT        = 3
+    BLUR_LIMIT       = 3
+    FULLSCREEN_LIMIT = 3
+
+    should_submit = (
+        tab_switches     >= TAB_LIMIT
+        or blurs         >= BLUR_LIMIT
+        or screenshots   >= BLUR_LIMIT
+        or fullscreen_exits >= FULLSCREEN_LIMIT
+    )
+
+    # Optional: persist live counters against the student's active attempt.
+    # The template also sends `offline_violations` inside the final submit
+    # payload (line ~948), so this is only needed for real-time tracking.
+    try:
+        attempt_id = request.COOKIES.get("attempt_id")
+        if attempt_id:
+            from django.utils import timezone
+            _log_event(
+                request.user,
+                None,
+                "offline_violations_sync",
+                {
+                    "attempt_id": attempt_id,
+                    "tab_switches": tab_switches,
+                    "blurs": blurs,
+                    "screenshots": screenshots,
+                    "fullscreen_exits": fullscreen_exits,
+                    "should_submit": should_submit,
+                    "at": timezone.now().isoformat(),
+                },
+            )
+    except Exception:
+        # Never let logging break the response
+        pass
+
+    return JsonResponse({"ok": True, "should_submit": should_submit})
 
 # ──────────────────────────────────────────────────────────────
 # HELPER 1: Course cache

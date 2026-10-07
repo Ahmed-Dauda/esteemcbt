@@ -7,6 +7,8 @@ from django.urls import re_path
 app_name = 'student'
 
 urlpatterns = [
+    path('start-exam/<pk>/', views.start_exams_view, name='start-exam'),
+    path('sync-offline-violations/', views.sync_offline_violations, name='sync_offline_violations'),
     # student/urls.py
     path('record-blur/', views.record_blur, name='record_blur'),
     path('record-screenshot/', views.record_screenshot, name='record_screenshot'),
