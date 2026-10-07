@@ -64,7 +64,6 @@ gender_choice = [
 
 
 
-
 class NewUser(AbstractBaseUser, PermissionsMixin):
     email           = models.EmailField(max_length=254, unique=True, db_index=True)
     username        = models.CharField(max_length=35, blank=True, db_index=True)
@@ -101,8 +100,15 @@ class NewUser(AbstractBaseUser, PermissionsMixin):
 
     objects         = CustomUserManager()
 
+    @property
+    def display_name(self):
+        """Human-friendly name for UIs, admin dropdowns and PDFs.
+        Falls back through: first+last → username → email → 'Unknown'."""
+        full = f"{self.first_name or ''} {self.last_name or ''}".strip()
+        return full or self.username or self.email or 'Unknown'
+
     def __str__(self):
-        return f'({self.first_name}, {self.last_name}, {self.student_class})'
+        return self.display_name
 
     class Meta:
         db_table = 'auth_user'
@@ -113,6 +119,7 @@ class NewUser(AbstractBaseUser, PermissionsMixin):
             models.Index(fields=['first_name', 'last_name']),         # search by name
         ]
 
+        
 
 class Profile(models.Model):
 

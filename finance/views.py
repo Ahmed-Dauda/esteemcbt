@@ -847,6 +847,7 @@ class FinanceRecordUpdateView(AccountantRequiredMixin, UpdateView):
 
 
 
+
 @accountant_required
 def finance_bulk_add_view(request):
     """
@@ -1026,13 +1027,17 @@ def finance_bulk_add_view(request):
             total_deposit   = deposit + bbf
             current_balance = total_deposit - total_expense
             status          = 'exhausted' if current_balance <= 0 else 'remaining'
-            full_name       = f"{s.first_name or ''} {s.last_name or ''}".strip()
+            full_name = (
+                f"{s.first_name or ''} {s.last_name or ''}".strip()
+                or s.username
+                or 'Unknown'
+            )
 
             to_create.append(FinanceRecord(
                 sn                    = next_sn,
                 student               = s,
                 names                 = full_name,
-                student_class         = s.student_class or class_filter,
+                student_class         = class_filter,   # ← always the class we're adding to
                 school                = user_school,
                 session_id            = session_id,
                 term_id               = term_id,

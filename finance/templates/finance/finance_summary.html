@@ -410,7 +410,8 @@ table.light th.num, table.light td.num { text-align: right; font-variant-numeric
             <h2 class="page-title"><i class="fas fa-chart-column"></i> Finance summary</h2>
             <p class="page-sub">Every student's deposits, expenses and balance for a session and term.</p>
         </div>
-        <a href="{% url 'finance:finance_record_view' %}" class="btn btn-ghost">
+        <a href="{% url 'finance:finance_record_view' %}{% if session_filter and term_filter %}?session={{ session_filter }}&term={{ term_filter }}{% if class_filter %}&class={{ class_filter }}{% endif %}{% endif %}"
+           class="btn btn-ghost">
             <i class="fas fa-list-ul"></i> Weekly list
         </a>
     </div>
@@ -587,6 +588,7 @@ table.light th.num, table.light td.num { text-align: right; font-variant-numeric
                             <th class="num">Deposits</th>
                             <th class="num">Expenses</th>
                             <th class="num">Balance</th>
+                            <th class="act">Records</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -609,6 +611,12 @@ table.light th.num, table.light td.num { text-align: right; font-variant-numeric
                             <td class="num">₦{{ cs.deposits|floatformat:0 }}</td>
                             <td class="num">₦{{ cs.expenses|floatformat:0 }}</td>
                             <td class="num {% if cs.closing < 0 %}negative{% endif %}">₦{{ cs.closing|floatformat:0 }}</td>
+                            <td class="num">
+                                <a href="{% url 'finance:finance_record_view' %}?session={{ session_filter }}&term={{ term_filter }}&class={{ cs.name|urlencode }}"
+                                   class="btn btn-ghost btn-xs" title="View records for {{ cs.name }}">
+                                    <i class="fas fa-list-ul"></i> View
+                                </a>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

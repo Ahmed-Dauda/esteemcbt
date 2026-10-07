@@ -4,6 +4,7 @@ from . import views
 app_name = 'portal'
 
 urlpatterns = [
+     
     path(
     'student/<int:student_id>/ai-analysis/<int:session_id>/<int:term_id>/',
     views.student_ai_analysis_ajax,

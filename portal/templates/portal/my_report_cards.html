@@ -29,15 +29,8 @@
     margin-bottom: 25px;
 }
 
-.page-title {
-    font-size: 2rem;
-    font-weight: 700;
-}
-
-.page-subtitle {
-    opacity: 0.9;
-    font-size: 0.95rem;
-}
+.page-title { font-size: 2rem; font-weight: 700; }
+.page-subtitle { opacity: 0.9; font-size: 0.95rem; }
 
 /* STATS */
 .report-stats {
@@ -46,23 +39,9 @@
     gap: 15px;
     margin-bottom: 25px;
 }
-
-.stat-card {
-    background: white;
-    padding: 18px;
-    border-radius: 12px;
-    text-align: center;
-}
-
-.stat-card-title {
-    font-size: 0.75rem;
-    color: #777;
-}
-
-.stat-card-value {
-    font-size: 1.4rem;
-    font-weight: bold;
-}
+.stat-card { background: white; padding: 18px; border-radius: 12px; text-align: center; }
+.stat-card-title { font-size: 0.75rem; color: #777; }
+.stat-card-value { font-size: 1.4rem; font-weight: bold; }
 
 /* GRID */
 .reports-grid {
@@ -78,10 +57,7 @@
     overflow: hidden;
     transition: 0.3s;
 }
-
-.report-card:hover {
-    transform: translateY(-5px);
-}
+.report-card:hover { transform: translateY(-5px); }
 
 /* CARD HEADER */
 .report-card-header {
@@ -90,22 +66,9 @@
     padding: 20px;
     position: relative;
 }
-
-.report-class {
-    font-size: 1.2rem;
-    font-weight: bold;
-}
-
-.report-school {
-    font-size: 0.8rem;
-    opacity: 0.9;
-}
-
-.report-period {
-    font-size: 0.85rem;
-    margin-top: 5px;
-    opacity: 0.85;
-}
+.report-class { font-size: 1.2rem; font-weight: bold; }
+.report-school { font-size: 0.8rem; opacity: 0.9; }
+.report-period { font-size: 0.85rem; margin-top: 5px; opacity: 0.85; }
 
 .badge-status {
     position: absolute;
@@ -116,11 +79,10 @@
     font-size: 0.7rem;
     border-radius: 20px;
 }
+.badge-status.is-locked { background: #6c757d; }
 
 /* BODY */
-.report-card-body {
-    padding: 20px;
-}
+.report-card-body { padding: 20px; }
 
 .report-stats-grid {
     display: grid;
@@ -128,29 +90,20 @@
     gap: 10px;
     margin-bottom: 15px;
 }
-
 .report-stat-item {
     background: #f8f9fa;
     padding: 10px;
     border-radius: 10px;
     text-align: center;
 }
-
-.report-stat-label {
-    font-size: 0.7rem;
-    color: #777;
-}
-
-.report-stat-value {
-    font-size: 1.2rem;
-    font-weight: bold;
-}
+.report-stat-label { font-size: 0.7rem; color: #777; }
+.report-stat-value { font-size: 1.2rem; font-weight: bold; }
 
 /* COLORS */
 .excellent { color: var(--success); }
-.good { color: var(--info); }
-.average { color: var(--warning); }
-.poor { color: var(--danger); }
+.good      { color: var(--info); }
+.average   { color: var(--warning); }
+.poor      { color: var(--danger); }
 
 /* GRADE BADGE */
 .grade-badge {
@@ -163,12 +116,9 @@
 }
 
 /* BUTTONS */
-.report-card-actions {
-    display: flex;
-    gap: 10px;
-}
+.report-card-actions { display: flex; gap: 10px; }
 
-.btn-view, .btn-download {
+.btn-view, .btn-download, .btn-locked {
     flex: 1;
     padding: 10px;
     border-radius: 8px;
@@ -178,181 +128,219 @@
     text-decoration: none;
 }
 
-.btn-view {
-    border: 2px solid #667eea;
-    color: #667eea;
-}
-
-.btn-view:hover {
-    background: #667eea;
-    color: white;
-}
+.btn-view { border: 2px solid #667eea; color: #667eea; }
+.btn-view:hover { background: #667eea; color: white; }
 
 .btn-download {
     background: linear-gradient(135deg, #11998e, #38ef7d);
     color: white;
 }
+.btn-download:hover { color: white; }
+
+.btn-locked {
+    background: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+    border: none;
+}
 
 /* EMPTY */
-.empty-state {
-    text-align: center;
-    padding: 50px;
-    background: white;
-    border-radius: 15px;
-}
+.empty-state { text-align: center; padding: 50px; background: white; border-radius: 15px; }
 
 /* LOADING */
 .loading-spinner {
-    width: 15px;
-    height: 15px;
+    width: 15px; height: 15px;
     border: 2px solid #fff;
     border-top: transparent;
     border-radius: 50%;
     display: inline-block;
     animation: spin 1s linear infinite;
 }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
+/* TOAST */
+#rc-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: #212529;
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+    transition: transform .35s ease;
+    z-index: 9999;
+    max-width: 90vw;
 }
+#rc-toast.show { transform: translateX(-50%) translateY(0); }
 </style>
 
 <div class="report-cards-page">
 <div class="container">
 
-```
-<!-- HEADER -->
-<div class="page-header">
-    <div class="page-title">📄 My Report Cards</div>
-    <div class="page-subtitle">
-        {{ request.user.get_full_name|default:request.user.username }}
-    </div>
-</div>
-
-<!-- STATS -->
-<div class="report-stats">
-    <div class="stat-card">
-        <div class="stat-card-title">Reports</div>
-        <div class="stat-card-value">{{ reports|length }}</div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-card-title">Sessions</div>
-        <div class="stat-card-value">{{ sessions_count }}</div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-card-title">Status</div>
-        <div class="stat-card-value">Active</div>
-    </div>
-</div>
-
-{% if reports %}
-<div class="reports-grid">
-
-    {% for report in reports %}
-    <div class="report-card">
-
-        <!-- HEADER -->
-        <div class="report-card-header">
-            <div class="report-class">{{ report.result_class }}</div>
-
-            <div class="report-school">
-                {{ request.user.school.name }}
-            </div>
-
-            <div class="report-period">
-                {{ report.session }} • {{ report.term }}
-            </div>
-
-            <span class="badge-status">Ready</span>
+    <!-- HEADER -->
+    <div class="page-header">
+        <div class="page-title">📄 My Report Cards</div>
+        <div class="page-subtitle">
+            {{ request.user.display_name|default:request.user.username }}
         </div>
+    </div>
 
-        <!-- BODY -->
-        <div class="report-card-body">
+    <!-- STATS -->
+    <div class="report-stats">
+        <div class="stat-card">
+            <div class="stat-card-title">Reports</div>
+            <div class="stat-card-value">{{ reports|length }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-title">Sessions</div>
+            <div class="stat-card-value">{{ sessions_count }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-title">Status</div>
+            <div class="stat-card-value">Active</div>
+        </div>
+    </div>
 
-            <div class="report-stats-grid">
-                <div class="report-stat-item">
-                    <div class="report-stat-label">Subjects</div>
-                    <div class="report-stat-value">
-                        {{ report.total_subjects }}
-                    </div>
+    {% if reports %}
+    <div class="reports-grid">
+
+        {% for report in reports %}
+        <div class="report-card">
+
+            <!-- HEADER -->
+            <div class="report-card-header">
+                <div class="report-class">{{ report.result_class }}</div>
+                <div class="report-school">
+                    {{ request.user.school.school_name }}
+                </div>
+                <div class="report-period">
+                    {{ report.session }} • {{ report.term }}
                 </div>
 
-                <div class="report-stat-item">
-                    <div class="report-stat-label">Average</div>
-                    <div class="report-stat-value
-                    {% if report.avg_score %}
-                        {% if report.avg_score >= 70 %}excellent
-                        {% elif report.avg_score >= 60 %}good
-                        {% elif report.avg_score >= 50 %}average
-                        {% else %}poor
-                        {% endif %}
-                    {% endif %}
-                    ">
+                {% if report.can_view %}
+                    <span class="badge-status">Ready</span>
+                {% else %}
+                    <span class="badge-status is-locked">🔒 Locked</span>
+                {% endif %}
+            </div>
+
+            <!-- BODY -->
+            <div class="report-card-body">
+
+                <div class="report-stats-grid">
+                    <div class="report-stat-item">
+                        <div class="report-stat-label">Subjects</div>
+                        <div class="report-stat-value">
+                            {{ report.total_subjects }}
+                        </div>
+                    </div>
+
+                    <div class="report-stat-item">
+                        <div class="report-stat-label">Average</div>
+                        <div class="report-stat-value
                         {% if report.avg_score %}
-                            {{ report.avg_score }}%
-                        {% else %}
-                            <span style="font-size:0.75rem;color:#999;">
-                                Awaiting results
-                            </span>
+                            {% if report.avg_score >= 70 %}excellent
+                            {% elif report.avg_score >= 60 %}good
+                            {% elif report.avg_score >= 50 %}average
+                            {% else %}poor
+                            {% endif %}
+                        {% endif %}
+                        ">
+                            {% if report.avg_score %}
+                                {{ report.avg_score }}%
+                            {% else %}
+                                <span style="font-size:0.75rem;color:#999;">
+                                    Awaiting results
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        {% if report.avg_score %}
+                            {% if report.avg_score >= 70 %}
+                                <span class="grade-badge" style="background:#28a745;">A - Excellent</span>
+                            {% elif report.avg_score >= 60 %}
+                                <span class="grade-badge" style="background:#17a2b8;">B - Good</span>
+                            {% elif report.avg_score >= 50 %}
+                                <span class="grade-badge" style="background:#ffc107;color:#000;">C - Average</span>
+                            {% else %}
+                                <span class="grade-badge" style="background:#dc3545;">F - Needs Work</span>
+                            {% endif %}
                         {% endif %}
                     </div>
+                </div>
 
-                    <!-- GRADE -->
-                    {% if report.avg_score %}
-                        {% if report.avg_score >= 70 %}
-                            <span class="grade-badge" style="background:#28a745;">A - Excellent</span>
-                        {% elif report.avg_score >= 60 %}
-                            <span class="grade-badge" style="background:#17a2b8;">B - Good</span>
-                        {% elif report.avg_score >= 50 %}
-                            <span class="grade-badge" style="background:#ffc107;color:#000;">C - Average</span>
-                        {% else %}
-                            <span class="grade-badge" style="background:#dc3545;">F - Needs Work</span>
-                        {% endif %}
+                <!-- ACTIONS -->
+                <div class="report-card-actions">
+                    {% if report.can_view %}
+                        <a href="{% url 'portal:view_report_card' report.student.id report.session.id report.term.id %}?class={{ report.result_class }}"
+                           class="btn-view">
+                            👁 View
+                        </a>
+
+                        <a href="{% url 'portal:download_term_report_pdf' report.student.id report.session.id report.term.id %}"
+                           class="btn-download download-btn">
+                            ⬇ PDF
+                        </a>
+                    {% else %}
+                        <button type="button"
+                                class="btn-locked locked-btn"
+                                data-reason="{{ report.lock_reason|escapejs }}">
+                            🔒 Locked
+                        </button>
                     {% endif %}
                 </div>
+
             </div>
-
-            <!-- ACTIONS -->
-            <div class="report-card-actions">
-                <a href="{% url 'portal:view_report_card' report.student.id report.session.id report.term.id %}?class={{ report.result_class }}"
-                   class="btn-view">
-                    👁 View
-                </a>
-
-                <a href="{% url 'portal:download_term_report_pdf' report.student.id report.session.id report.term.id %}"
-                   class="btn-download download-btn">
-                    ⬇ PDF
-                </a>
-            </div>
-
         </div>
+        {% endfor %}
+
     </div>
-    {% endfor %}
+    {% else %}
 
-</div>
-{% else %}
+    <!-- EMPTY -->
+    <div class="empty-state">
+        <h3>No Report Cards Yet</h3>
+        <p>Your academic reports will appear here once available.</p>
+    </div>
 
-<!-- EMPTY -->
-<div class="empty-state">
-    <h3>No Report Cards Yet</h3>
-    <p>Your academic reports will appear here once available.</p>
-</div>
-
-{% endif %}
-```
+    {% endif %}
 
 </div>
 </div>
+
+<!-- TOAST -->
+<div id="rc-toast"></div>
 
 <script>
-document.querySelectorAll('.download-btn').forEach(btn => {
-    btn.addEventListener('click', function () {
-        this.innerHTML = '<span class="loading-spinner"></span>';
-        this.style.pointerEvents = 'none';
+(function () {
+    const toast = document.getElementById('rc-toast');
+    let hideTimer;
+
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => toast.classList.remove('show'), 3600);
+    }
+
+    // Locked cards — click shows the reason
+    document.querySelectorAll('.locked-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            showToast(this.dataset.reason || 'This report card is locked.');
+        });
     });
-});
+
+    // Download spinner (only for unlocked cards)
+    document.querySelectorAll('.download-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            this.innerHTML = '<span class="loading-spinner"></span>';
+            this.style.pointerEvents = 'none';
+        });
+    });
+})();
 </script>
 
 {% endblock %}

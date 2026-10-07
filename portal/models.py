@@ -211,122 +211,75 @@ class StudentBehaviorRecord(models.Model):
 
 
 
-
-# from django.db import models
-# from django.utils import timezone
-# from decimal import Decimal
-# from quiz.models import School
-# from sms.models import Courses, Session, Term
-# from users.models import NewUser
+# at bottom of portal/models.py
+from django.conf import settings
+from sms.models import Session, Term
+from quiz.models import School
+# NewUser already imported at top
 
 
-# class Result_Portal(models.Model):
-#     student = models.ForeignKey(
-#         NewUser, on_delete=models.CASCADE, related_name="results", db_index=True
-#     )
-#     subject = models.ForeignKey(
-#         Courses, on_delete=models.CASCADE, db_index=True
-#     )
-#     schools = models.ForeignKey(
-#         School, on_delete=models.SET_NULL, related_name='portalschool',
-#         blank=True, null=True, db_index=True
-#     )
+class ReportCardRelease(models.Model):
+    school = models.ForeignKey(
+        School, on_delete=models.CASCADE,
+        related_name='report_card_releases', db_index=True,
+    )
+    session = models.ForeignKey(Session, on_delete=models.CASCADE,
+                                related_name='report_card_releases')
+    term = models.ForeignKey(Term, on_delete=models.CASCADE,
+                             related_name='report_card_releases')
+    student_class = models.CharField(max_length=254, blank=True, default='', db_index=True)
+    is_released = models.BooleanField(default=False)
+    released_by = models.ForeignKey(
+        NewUser, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='report_releases_made',
+    )
+    released_at = models.DateTimeField(null=True, blank=True)
+    note = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-#     result_class = models.CharField(max_length=300, blank=True, null=True, db_index=True)
-#     term = models.ForeignKey(Term, on_delete=models.CASCADE, db_index=True)
-#     session = models.ForeignKey(Session, on_delete=models.CASCADE, db_index=True)
+    class Meta:
+        db_table = 'portal_reportcard_release'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['school', 'session', 'term', 'student_class'],
+                name='uniq_release_per_school_session_term_class',
+            )
+        ]
+        indexes = [models.Index(fields=['school', 'session', 'term'])]
 
-#     # --- Score Fields ---
-#     ca_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
-#     midterm_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
-#     exam_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
-#     total_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, editable=False)
-#     created_at = models.DateTimeField(default=timezone.now)
+    def __str__(self):
+        scope = self.student_class or 'ALL CLASSES'
+        state = 'OPEN' if self.is_released else 'LOCKED'
+        return f"{self.school} | {self.session} | {self.term} | {scope} [{state}]"
 
-#     class Meta:
-#         indexes = [
-#             models.Index(fields=['student', 'term', 'session']),
-#             models.Index(fields=['student', 'subject', 'term', 'session']),
-#             models.Index(fields=['result_class', 'session', 'term']),
-#             models.Index(fields=['subject', 'session', 'term']),
-#         ]
-#         unique_together = ('student', 'subject', 'term', 'session')
-#         ordering = ['subject__title']
 
-#     def __str__(self):
-#         return f"{self.student.username} - {self.subject.title} ({self.term.name}, {self.session.name})"
+class ReportCardAccess(models.Model):
+    REASON_CHOICES = (
+        ('paid', 'Fees paid'),
+        ('manual', 'Manual override'),
+        ('scholarship', 'Scholarship / Staff ward'),
+        ('other', 'Other'),
+    )
 
-#     # --- Properties to get max marks from school ---
-#     @property
-#     def MAX_CA(self):
-#         return self.schools.max_ca_score if self.schools and self.schools.max_ca_score is not None else Decimal('10.00')
+    student = models.ForeignKey(NewUser, on_delete=models.CASCADE,
+                                related_name='report_card_access', db_index=True)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    term = models.ForeignKey(Term, on_delete=models.CASCADE)
+    is_unlocked = models.BooleanField(default=False)
+    reason = models.CharField(max_length=20, choices=REASON_CHOICES, default='manual')
+    unlocked_by = models.ForeignKey(
+        NewUser, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='report_unlocks_made',
+    )
+    unlocked_at = models.DateTimeField(null=True, blank=True)
+    note = models.CharField(max_length=255, blank=True)
 
-#     @property
-#     def MAX_MIDTERM(self):
-#         return self.schools.max_midterm_score if self.schools and self.schools.max_midterm_score is not None else Decimal('30.00')
+    class Meta:
+        db_table = 'portal_reportcard_access'
+        unique_together = ('student', 'session', 'term')
+        indexes = [models.Index(fields=['session', 'term', 'is_unlocked'])]
 
-#     @property
-#     def MAX_EXAM(self):
-#         return self.schools.max_exam_score if self.schools and self.schools.max_exam_score is not None else Decimal('60.00')
-
-#     def save(self, *args, **kwargs):
-#         """Compute normalized total_score out of 100 based on school max values."""
-#         ca = float(self.ca_score or 0)
-#         mid = float(self.midterm_score or 0)
-#         exam = float(self.exam_score or 0)
-
-#         total_raw = 0
-#         total_max = 0
-
-#         if ca > 0:
-#             total_raw += ca
-#             total_max += float(self.MAX_CA)
-#         if mid > 0:
-#             total_raw += mid
-#             total_max += float(self.MAX_MIDTERM)
-#         if exam > 0:
-#             total_raw += exam
-#             total_max += float(self.MAX_EXAM)
-
-#         if total_max > 0:
-#             normalized_total = (total_raw / total_max) * 100
-#             self.total_score = Decimal(normalized_total).quantize(Decimal('0.01'))
-#         else:
-#             self.total_score = Decimal('0.00')
-
-#         super().save(*args, **kwargs)
-
-#     # --- Grade Calculation ---
-#     @property
-#     def grade_letter(self):
-#         """Return the grade letter based on normalized total_score (out of 100)."""
-#         if self.total_score is None:
-#             return None
-#         score = float(self.total_score)
-#         if score >= 70:
-#             return 'A'
-#         elif score >= 60:
-#             return 'B'
-#         elif score >= 50:
-#             return 'C'
-#         elif score >= 45:
-#             return 'D'
-#         elif score >= 40:
-#             return 'E'
-#         return 'F'
-
-#     @property
-#     def remark(self):
-#         """Return remark corresponding to the grade letter."""
-#         letter = self.grade_letter
-#         if letter is None:
-#             return None
-#         return {
-#             'A': 'Excellent',
-#             'B': 'Very Good',
-#             'C': 'Good',
-#             'D': 'Fair',
-#             'E': 'Pass',
-#             'F': 'Fail',
-#         }.get(letter, 'N/A')
-
+    def __str__(self):
+        return f"{self.student} | {self.session} {self.term} | {'OPEN' if self.is_unlocked else 'LOCKED'}"
+    

@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .ctrl-page { background:#f5f7fa; min-height:100vh; padding:30px 15px; }
+  .ctrl-header {
+      background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      color:#fff; border-radius:16px; padding:24px 28px; margin-bottom:24px;
+  }
+  .ctrl-header h3 { margin:0; font-weight:700; }
+  .ctrl-header p  { margin:4px 0 0; opacity:.9; font-size:.9rem; }
+  .ctrl-card { background:#fff; border-radius:14px; overflow:hidden;
+               box-shadow:0 2px 12px rgba(0,0,0,.05); margin-bottom:22px; }
+  .ctrl-card-header {
+      padding:14px 20px; font-weight:600; font-size:1rem;
+      border-bottom:1px solid #eef0f4; display:flex; justify-content:space-between;
+      align-items:center;
+  }
+  .scope-name { font-weight:700; color:#333; }
+  .btn-unlock {
+      background: linear-gradient(135deg,#11998e,#38ef7d); color:#fff;
+      border:none; padding:6px 14px; border-radius:8px; font-size:.82rem;
+      font-weight:600;
+  }
+  .btn-lock {
+      background:#fff; color:#dc3545; border:1.5px solid #dc3545;
+      padding:6px 14px; border-radius:8px; font-size:.82rem; font-weight:600;
+  }
+  .btn-unlock:disabled, .btn-lock:disabled { opacity:.5; cursor:not-allowed; }
+  .badge-open { background:#d4edda; color:#155724; padding:4px 10px;
+                border-radius:20px; font-size:.72rem; font-weight:700; }
+  .badge-lock { background:#e2e3e5; color:#41464b; padding:4px 10px;
+                border-radius:20px; font-size:.72rem; font-weight:700; }
+  .badge-ind  { background:#cfe2ff; color:#084298; padding:4px 10px;
+                border-radius:20px; font-size:.72rem; font-weight:700; }
+  .sub-warning {
+      background:#fff3cd; color:#856404; padding:12px 16px; border-radius:10px;
+      margin-bottom:18px; font-size:.9rem;
+  }
+  .filter-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+  .filter-bar select, .filter-bar button {
+      padding:9px 14px; border-radius:9px; border:1px solid #dfe3e8;
+      background:#fff; font-size:.88rem;
+  }
+  .filter-bar button {
+      background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border:none; font-weight:600;
+  }
+</style>
+
+<div class="ctrl-page">
+<div class="container">
+
+  <div class="ctrl-header">
+      <h3>🔐 Report Card Release Control</h3>
+      <p>{{ request.user.school.school_name }} · {{ request.user.display_name }}</p>
+  </div>
+
+  {% if messages %}
+    {% for m in messages %}
+      <div class="alert alert-{{ m.tags|default:'info' }}">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% if not sub_ok %}
+    <div class="sub-warning">
+      ⚠️ <strong>{{ sub_reason }}</strong>
+    </div>
+  {% endif %}
+
+  <!-- FILTERS -->
+  <form method="get" class="filter-bar">
+      <select name="session" onchange="this.form.submit()">
+          {% for s in sessions %}
+            <option value="{{ s.pk }}" {% if session and s.pk == session.pk %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+      </select>
+      <select name="term" onchange="this.form.submit()">
+          {% for t in terms %}
+            <option value="{{ t.pk }}" {% if term and t.pk == term.pk %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+      </select>
+      <select name="class" onchange="this.form.submit()">
+          <option value="">— pick a class for individual control —</option>
+          {% for row in class_rows %}{% if row.value %}
+            <option value="{{ row.value }}" {% if row.value == sel_class %}selected{% endif %}>{{ row.value }}</option>
+          {% endif %}{% endfor %}
+      </select>
+      <button type="submit">Apply</button>
+  </form>
+
+  {% if session and term %}
+
+  <!-- BULK RELEASE -->
+  <div class="ctrl-card">
+      <div class="ctrl-card-header">
+          <span>Bulk Release — by class / whole school</span>
+          <span style="font-size:.8rem;color:#777;">{{ session }} · {{ term }}</span>
+      </div>
+      <table class="table table-hover mb-0 align-middle">
+          <thead class="table-light">
+              <tr>
+                  <th>Scope</th>
+                  <th>Students</th>
+                  <th>Status</th>
+                  <th class="text-end pe-4">Action</th>
+              </tr>
+          </thead>
+          <tbody>
+          {% for row in class_rows %}
+              <tr>
+                  <td class="scope-name">{{ row.label }}</td>
+                  <td>{{ row.count }}</td>
+                  <td>
+                      {% if row.is_open %}
+                        <span class="badge-open">OPEN</span>
+                      {% else %}
+                        <span class="badge-lock">LOCKED</span>
+                      {% endif %}
+                  </td>
+                  <td class="text-end pe-4">
+                      <form method="post" action="{% url 'portal:toggle_class_release' %}" class="d-inline">
+                          {% csrf_token %}
+                          <input type="hidden" name="session" value="{{ session.pk }}">
+                          <input type="hidden" name="term" value="{{ term.pk }}">
+                          <input type="hidden" name="student_class" value="{{ row.value }}">
+                          <input type="hidden" name="next" value="{{ request.path }}">
+                          {% if row.is_open %}
+                              <input type="hidden" name="state" value="lock">
+                              <button class="btn-lock">🔒 Lock</button>
+                          {% else %}
+                              <input type="hidden" name="state" value="open">
+                              <button class="btn-unlock" {% if not sub_ok %}disabled title="{{ sub_reason }}"{% endif %}>
+                                  🔓 Unlock
+                              </button>
+                          {% endif %}
+                      </form>
+                  </td>
+              </tr>
+          {% endfor %}
+          </tbody>
+      </table>
+  </div>
+
+  <!-- INDIVIDUAL CONTROL -->
+  {% if sel_class %}
+  <div class="ctrl-card">
+      <div class="ctrl-card-header">
+          <span>Individual Students — {{ sel_class }}</span>
+          <span style="font-size:.8rem;color:#777;">Override the class switch for one student</span>
+      </div>
+      <table class="table table-hover mb-0 align-middle">
+          <thead class="table-light">
+              <tr>
+                  <th>Student</th>
+                  <th>Admission No</th>
+                  <th>Status</th>
+                  <th class="text-end pe-4">Action</th>
+              </tr>
+          </thead>
+          <tbody>
+          {% for s in students %}
+              <tr>
+                  <td>{{ s.obj.display_name }}</td>
+                  <td>{{ s.obj.admission_no|default:"—" }}</td>
+                  <td>
+                      {% if s.individually_open %}
+                          <span class="badge-ind">OPEN (individual)</span>
+                      {% elif s.class_open %}
+                          <span class="badge-open">OPEN (class release)</span>
+                      {% else %}
+                          <span class="badge-lock">LOCKED</span>
+                      {% endif %}
+                  </td>
+                  <td class="text-end pe-4">
+                      {% if s.class_open %}
+                          <span class="text-muted small">Managed by class release</span>
+                      {% else %}
+                          <form method="post" action="{% url 'portal:toggle_student_access' %}" class="d-inline">
+                              {% csrf_token %}
+                              <input type="hidden" name="student_id" value="{{ s.obj.pk }}">
+                              <input type="hidden" name="session" value="{{ session.pk }}">
+                              <input type="hidden" name="term" value="{{ term.pk }}">
+                              <input type="hidden" name="next" value="{{ request.path }}">
+                              {% if s.individually_open %}
+                                  <input type="hidden" name="state" value="lock">
+                                  <button class="btn-lock">🔒 Lock</button>
+                              {% else %}
+                                  <input type="hidden" name="state" value="open">
+                                  <input type="hidden" name="reason" value="paid">
+                                  <button class="btn-unlock" {% if not sub_ok %}disabled title="{{ sub_reason }}"{% endif %}>
+                                      🔓 Unlock (paid)
+                                  </button>
+                              {% endif %}
+                          </form>
+                      {% endif %}
+                  </td>
+              </tr>
+          {% empty %}
+              <tr><td colspan="4" class="text-center text-muted py-4">No students in this class.</td></tr>
+          {% endfor %}
+          </tbody>
+      </table>
+  </div>
+  {% endif %}
+
+  {% endif %}
+
+</div>
+</div>
+{% endblock %}

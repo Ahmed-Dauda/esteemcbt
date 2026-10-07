@@ -137,7 +137,7 @@
                         <tr id="row-{{ row.student.id }}">
                             <td>{{ forloop.counter }}</td>
                             <td>
-                                <strong>{{ row.student.first_name }} {{ row.student.last_name }}</strong>
+                                <strong>{{ row.student.display_name }}</strong>
                                 {% if row.last_week %}
                                     <div class="last-week">
                                         last: {{ row.last_week|date:"d M Y" }}
