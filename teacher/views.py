@@ -1903,50 +1903,60 @@ def assign_form_teachers(request, class_id):
 
 
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+
+from users.models import NewUser
+from quiz.models import CourseGrade
+
 
 @login_required(login_url='teacher:teacher_login')
 def student_lists_view(request):
-    students = NewUser.objects.filter(
-        is_staff=False, 
-        is_superuser=False, 
-        school=request.user.school
-    )
-    
-    # All active classes in this school
-    all_classes = CourseGrade.objects.filter(schools=request.user.school, is_active=True).order_by('name')
+    school = request.user.school
 
+    # ── Inline move (single student) ────────────────────────
+    # (Only needed if some other page actually posts here. If not,
+    #  delete this whole block — the template uses bulk_action_students.)
     if request.method == 'POST':
-        student_id = request.POST.get('student_id')
-        new_class_id = request.POST.get('new_class_id')
+        student_id   = (request.POST.get('student_id')   or '').strip()
+        new_class_id = (request.POST.get('new_class_id') or '').strip()
 
         if student_id and new_class_id:
-            student = get_object_or_404(NewUser, id=student_id)
-            new_class = get_object_or_404(CourseGrade, id=new_class_id)
+            student   = get_object_or_404(NewUser, id=student_id, school=school)
+            new_class = get_object_or_404(CourseGrade, id=new_class_id, schools=school)
 
-            # Check if the target class already has students
-            if new_class.students.exists():
-                messages.error(request, f"Cannot move {student.first_name} to {new_class.name}. Class is not empty.")
-            else:
-                # Remove from old classes
-                old_classes = CourseGrade.objects.filter(students=student)
-                for c in old_classes:
-                    c.students.remove(student)
-
-                # Add to new class
+            with transaction.atomic():
+                for old in CourseGrade.objects.filter(students=student).exclude(pk=new_class.pk):
+                    old.students.remove(student)
                 new_class.students.add(student)
                 student.student_class = new_class.name
-                student.save()
+                student.save(update_fields=['student_class'])
 
-                messages.success(request, f"{student.first_name} moved to {new_class.name}")
+            messages.success(request, f"{student.display_name} moved to {new_class.name}.")
 
-            return redirect('teacher:student_lists')
+        return redirect('teacher:student_lists')
 
-    context = {
-        'students': students,
+    # ── List page ───────────────────────────────────────────
+    students = (
+        NewUser.objects
+        .filter(is_staff=False, is_superuser=False, school=school)
+        .order_by('first_name', 'last_name')
+    )
+
+    all_classes = (
+        CourseGrade.objects
+        .filter(schools=school, is_active=True)
+        .order_by('name')
+    )
+
+    return render(request, 'teacher/dashboard/student_lists.html', {
+        'students':    students,
         'all_classes': all_classes,
-    }
-    return render(request, 'teacher/dashboard/student_lists.html', context)
+    })
 
+    
 
 
 

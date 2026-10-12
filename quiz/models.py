@@ -120,7 +120,20 @@ class CourseGrade(models.Model):
 
     def __str__(self):
         return self.name if self.name else 'Unnamed Class'
-    
+
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+@receiver(post_save, sender=CourseGrade)
+def sync_students_class_label(sender, instance, **kwargs):
+    """
+    Keep NewUser.student_class (the denormalized string) in sync
+    with CourseGrade.name whenever a class is renamed.
+    """
+    if instance.name:
+        instance.students.update(student_class=instance.name)
 
 
 class School(models.Model):
