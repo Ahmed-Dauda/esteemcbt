@@ -178,6 +178,7 @@
     </div>
     <div class="sl-actions">
       <a href="{% url 'teacher:examiner_class_list' %}" class="sl-btn">Create classes</a>
+      {# If 'quiz:move_group' no longer exists, delete the next line — otherwise the page will 500. #}
       <a href="{% url 'quiz:move_group' %}" class="sl-btn">Promote students</a>
       <a href="{% url 'users:schoolstudentview' %}" class="sl-btn sl-btn-primary">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -237,53 +238,55 @@
             </thead>
             <tbody>
               {% for student in students %}
-              <tr data-username="{{ student.username }}"
-                  data-name="{{ student.display_name }}"
-                  data-email="{{ student.email }}"
-                  data-class="{{ student.student_class|default:'' }}"
-                  data-gender="{{ student.gender|default:'' }}"
-                  data-search="{{ student.display_name|lower }} {{ student.username|lower }} {{ student.email|lower }} {{ student.student_class|default:''|lower }} {{ student.gender|default:''|lower }}">
-                <td class="sl-check">
-                  <input type="checkbox" name="selected_students" value="{{ student.id }}" aria-label="Select {{ student.display_name }}">
-                </td>
-                <td>
-                  <div class="sl-person">
-                    <div class="sl-avatar">
-                      {% if student.pro_img %}
-                        <img src="{{ student.pro_img.url }}" alt="">
-                      {% else %}
-                        {{ student.first_name|default:student.username|default:"?"|slice:":1"|upper }}{{ student.last_name|default:""|slice:":1"|upper }}
-                      {% endif %}
+                {% with cg=student.course_grades.first %}
+                <tr data-username="{{ student.username }}"
+                    data-name="{{ student.display_name }}"
+                    data-email="{{ student.email }}"
+                    data-class="{% if cg %}{{ cg.name }}{% endif %}"
+                    data-gender="{{ student.gender|default:'' }}"
+                    data-search="{{ student.display_name|lower }} {{ student.username|lower }} {{ student.email|lower }} {% if cg %}{{ cg.name|lower }}{% endif %} {{ student.gender|default:''|lower }}">
+                  <td class="sl-check">
+                    <input type="checkbox" name="selected_students" value="{{ student.id }}" aria-label="Select {{ student.display_name }}">
+                  </td>
+                  <td>
+                    <div class="sl-person">
+                      <div class="sl-avatar">
+                        {% if student.pro_img %}
+                          <img src="{{ student.pro_img.url }}" alt="">
+                        {% else %}
+                          {{ student.first_name|default:student.username|default:"?"|slice:":1"|upper }}{{ student.last_name|default:""|slice:":1"|upper }}
+                        {% endif %}
+                      </div>
+                      <div>
+                        <div class="sl-name">{{ student.display_name }}</div>
+                        {% if student.username %}<div class="sl-user">@{{ student.username }}</div>{% endif %}
+                      </div>
                     </div>
-                    <div>
-                      <div class="sl-name">{{ student.display_name }}</div>
-                      {% if student.username %}<div class="sl-user">@{{ student.username }}</div>{% endif %}
+                  </td>
+                  <td class="sl-email">{{ student.email }}</td>
+                  <td>
+                    {% if cg %}
+                      <span class="sl-pill">{{ cg.name }}</span>
+                    {% else %}
+                      <span class="sl-none">Not assigned</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ student.gender|default:"—" }}</td>
+                  <td>
+                    <div class="sl-row-actions">
+                      <a class="sl-link" href="{% url 'teacher:edit_student' student.id %}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                        Edit
+                      </a>
+                      <button type="button" class="sl-icon-btn"
+                              onclick="deleteStudent('{% url 'teacher:delete_student' student.id %}', '{{ student.display_name|escapejs }}')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+                        Delete
+                      </button>
                     </div>
-                  </div>
-                </td>
-                <td class="sl-email">{{ student.email }}</td>
-                <td>
-                  {% if student.student_class %}
-                    <span class="sl-pill">{{ student.student_class }}</span>
-                  {% else %}
-                    <span class="sl-none">Not assigned</span>
-                  {% endif %}
-                </td>
-                <td>{{ student.gender|default:"—" }}</td>
-                <td>
-                  <div class="sl-row-actions">
-                    <a class="sl-link" href="{% url 'teacher:edit_student' student.id %}">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                      Edit
-                    </a>
-                    <button type="button" class="sl-icon-btn"
-                            onclick="deleteStudent('{% url 'teacher:delete_student' student.id %}', '{{ student.display_name|escapejs }}')">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                </tr>
+                {% endwith %}
               {% endfor %}
             </tbody>
           </table>
@@ -316,7 +319,7 @@
       </select>
 
       <button type="submit" name="bulk_move" id="bulkMoveBtn" class="sl-btn sl-btn-light">Move students</button>
-            <button type="button" id="bulkDeleteBtn" class="sl-btn sl-btn-danger">Delete students</button>
+      <button type="button" id="bulkDeleteBtn" class="sl-btn sl-btn-danger">Delete students</button>
       <button type="button" id="clearSelection" class="sl-btn sl-btn-clear">Clear</button>
     </div>
   </form>
@@ -532,8 +535,9 @@ function exportToPDF() {
     margin: { left: 40, right: 40 },
   });
 
-  const filename = (classFilter.value || "all_classes").replace(/\s+/g, "_").toLowerCase() + "_students.pdf";
-  doc.save(filename);
+  // Sanitized filename — safe for class names with (), /, spaces, etc.
+  const safeClass = (classFilter.value || "all_classes").replace(/[^\w\-]+/g, "_").toLowerCase();
+  doc.save(`${safeClass}_students.pdf`);
 
   const status = document.getElementById("exportStatus");
   status.textContent = `PDF saved (${students.length} students)`;
