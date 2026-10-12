@@ -38,7 +38,6 @@ class CoursesForm(forms.ModelForm):
             self.fields['exam_type'].queryset = ExamType.objects.filter(school__id=school.id)
 
 
-
 class ExaminerCreateClassForm(forms.ModelForm):
     class Meta:
         model = CourseGrade
@@ -92,15 +91,6 @@ class ExaminerCreateClassForm(forms.ModelForm):
         if len(name) > 50:
             raise forms.ValidationError("Class name is too long (max 50 chars).")
 
-        # Reject accidental school-name inclusion
-        if self._user_school:
-            school_str = str(self._user_school)
-            if school_str.lower() in name.lower():
-                raise forms.ValidationError(
-                    f"Class name shouldn't include the school name ({school_str}). "
-                    f"Try just “{name.replace(school_str, '').strip()}”."
-                )
-
         # Uniqueness within this school
         if self._user_school:
             qs = CourseGrade.objects.filter(name__iexact=name)
@@ -117,8 +107,7 @@ class ExaminerCreateClassForm(forms.ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=commit)
-        return instance
-    
+        return instance    
                         
 
 # class ExaminerCreateClassForm(forms.ModelForm):

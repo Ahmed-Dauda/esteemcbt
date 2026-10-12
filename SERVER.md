@@ -36,9 +36,21 @@ cd /var/www/esteemcbt
 source venv/bin/activate
 
 #  TO REFLECT CHANGES OF LOCAL MACHINE U NEED TO
-cd /var/www/esteemcbt
-git fetch origin && git reset --hard origin/main
-/var/www/esteemcbt/venv/bin/python manage.py migrate finance
+# See what changed
+git status
+git fetch origin
+git log --oneline HEAD..origin/main
+# Pull the update
+git pull origin main
+# If using gunicorn via systemd
+systemctl restart esteemcbt
+# or whatever your service is called, e.g.:
+# systemctl restart gunicorn
+# If using supervisor
+supervisorctl restart esteemcbt
+# If using nginx + uwsgi
+systemctl restart uwsgi
+
 
 # RESTART PRODUCTION SERVICES
 systemctl restart esteemcbt
