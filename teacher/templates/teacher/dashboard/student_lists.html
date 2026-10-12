@@ -80,7 +80,7 @@
   /* Table card */
   .sl-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
   .sl-scroll { overflow-x: auto; }
-  .sl-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 760px; }
+  .sl-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 720px; }
   .sl-table th {
     text-align: left; font-weight: 600; font-size: 13px; color: var(--muted);
     background: var(--wash); padding: 11px 16px; border-bottom: 1px solid var(--line); white-space: nowrap;
@@ -92,7 +92,6 @@
   .sl-table tr[hidden] { display: none; }
   .sl-check { width: 44px; padding-right: 0 !important; }
   .sl-check input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; vertical-align: middle; }
-  .sl-id { color: var(--muted); font-variant-numeric: tabular-nums; }
 
   .sl-person { display: flex; align-items: center; gap: 12px; min-width: 200px; }
   .sl-avatar {
@@ -151,7 +150,6 @@
     .sl-title { font-size: 24px; }
     .sl-search { max-width: none; }
     .sl-toolbar .sl-select { width: 100%; }
-    .sl-hide-sm { display: none; }
     .sl-table { min-width: 620px; }
   }
 
@@ -230,7 +228,6 @@
             <thead>
               <tr>
                 <th class="sl-check"><input type="checkbox" id="selectAll" aria-label="Select all visible students"></th>
-                <th class="sl-hide-sm">ID</th>
                 <th>Student</th>
                 <th>Email</th>
                 <th>Class</th>
@@ -249,7 +246,6 @@
                 <td class="sl-check">
                   <input type="checkbox" name="selected_students" value="{{ student.id }}" aria-label="Select {{ student.display_name }}">
                 </td>
-                <td class="sl-id sl-hide-sm">{{ student.id }}</td>
                 <td>
                   <div class="sl-person">
                     <div class="sl-avatar">
