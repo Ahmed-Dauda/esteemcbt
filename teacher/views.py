@@ -1901,6 +1901,8 @@ def assign_form_teachers(request, class_id):
     })
 
 
+
+
 @login_required(login_url='teacher:teacher_login')
 def student_lists_view(request):
     students = NewUser.objects.filter(
@@ -1944,25 +1946,79 @@ def student_lists_view(request):
     }
     return render(request, 'teacher/dashboard/student_lists.html', context)
 
+
+
+
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+
 def bulk_move_students(request):
-    if request.method == 'POST':
-        selected_ids = request.POST.getlist('selected_students')
-        new_class_id = request.POST.get('new_class_id')
+    if request.method != 'POST':
+        return redirect('teacher:student_lists')
 
-        if selected_ids and new_class_id:
-            new_class = CourseGrade.objects.get(id=new_class_id)
-            students = NewUser.objects.filter(
-                id__in=selected_ids,
-                school=request.user.school,
-            )
-            for s in students:
-                s.student_class = new_class.name
-                s.save()
-            messages.success(request, f"{len(selected_ids)} student(s) moved to {new_class.name}.")
-        else:
-            messages.warning(request, "Please select at least one student and a destination class.")
+    selected_ids = request.POST.getlist('selected_students')
+    new_class_id = request.POST.get('new_class_id')
 
+    if not (selected_ids and new_class_id):
+        messages.warning(request, "Please select at least one student and a destination class.")
+        return redirect('teacher:student_lists')
+
+    # The destination class must belong to the teacher's school
+    new_class = get_object_or_404(
+        CourseGrade,
+        id=new_class_id,
+        schools=request.user.school,
+    )
+
+    students = list(
+        NewUser.objects.filter(id__in=selected_ids, school=request.user.school)
+    )
+
+    with transaction.atomic():
+        # 1. Remove the students from their previous class(es) in this school
+        old_classes = (
+            CourseGrade.objects
+            .filter(schools=request.user.school, students__in=students)
+            .exclude(id=new_class.id)
+            .distinct()
+        )
+        for old_class in old_classes:
+            old_class.students.remove(*students)
+
+        # 2. Add them to the new class
+        new_class.students.add(*students)
+
+        # 3. Keep the NewUser.student_class text field in sync
+        NewUser.objects.filter(id__in=[s.id for s in students]).update(
+            student_class=new_class.name
+        )
+
+    messages.success(request, f"{len(students)} student(s) moved to {new_class.name}.")
     return redirect('teacher:student_lists')
+
+
+# def bulk_move_students(request):
+#     if request.method == 'POST':
+#         selected_ids = request.POST.getlist('selected_students')
+#         new_class_id = request.POST.get('new_class_id')
+
+#         if selected_ids and new_class_id:
+#             new_class = CourseGrade.objects.get(id=new_class_id)
+#             students = NewUser.objects.filter(
+#                 id__in=selected_ids,
+#                 school=request.user.school,
+#             )
+#             for s in students:
+#                 s.student_class = new_class.name
+#                 s.save()
+#             messages.success(request, f"{len(selected_ids)} student(s) moved to {new_class.name}.")
+#         else:
+#             messages.warning(request, "Please select at least one student and a destination class.")
+
+#     return redirect('teacher:student_lists')
+
+
 
 @login_required(login_url='teacher:teacher_login')
 def bulk_action_students(request):
@@ -2058,12 +2114,40 @@ def edit_student(request, student_id):
     return render(request, 'teacher/dashboard/edit_student.html', context)
 
 
-def delete_student(request, student_id):
-    student = get_object_or_404(NewUser, id=student_id)
-    student.delete()
-    messages.success(request, "Student deleted successfully.")
-    return redirect('teacher:student_lists')
 
+
+import logging
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.db.models import ProtectedError
+from django.shortcuts import get_object_or_404, redirect
+from django.views.decorators.http import require_POST
+
+
+logger = logging.getLogger(__name__)
+
+@login_required
+@require_POST
+def delete_student(request, student_id):
+    # Only students from the teacher's own school
+    student = get_object_or_404(NewUser, id=student_id, school=request.user.school)
+    name = student.display_name
+
+    try:
+        with transaction.atomic():
+            student.delete()
+        messages.success(request, f"{name} was deleted.")
+    except ProtectedError:
+        messages.error(
+            request,
+            f"{name} has linked records (such as exam results) and can't be deleted."
+        )
+    except Exception:
+        logger.exception("Failed to delete student %s", student_id)
+        messages.error(request, "Something went wrong while deleting this student.")
+
+    return redirect('teacher:student_lists')
 
 
 @login_required(login_url='teacher:teacher_login')

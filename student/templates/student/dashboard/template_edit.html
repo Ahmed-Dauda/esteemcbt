@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ title }}</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+         background:#f4f6f8; color:#1f2937; }
+  header { background:#1a6a3a; color:#fff; padding:16px 24px; }
+  header h1 { margin:0; font-size:20px; }
+  .wrap { max-width:960px; margin:24px auto; padding:0 16px; }
+  .card { background:#fff; border-radius:6px; padding:22px 26px; margin-bottom:18px;
+          box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .msg { padding:10px 14px; border-radius:4px; margin-bottom:10px; font-size:14px; }
+  .msg.success { background:#e6f4ea; color:#0f5132; border-left:4px solid #1a6a3a; }
+  .msg.error   { background:#fdecea; color:#842029; border-left:4px solid #c00; }
+  .msg.warning { background:#fff3cd; color:#664d03; border-left:4px solid #b45309; }
+  h2 { font-size:15px; margin:24px 0 12px; color:#1a6a3a;
+       text-transform:uppercase; letter-spacing:.5px; }
+  .info { background:#f8fafc; padding:14px 16px; border-radius:6px; font-size:13.5px;
+          line-height:1.6; margin-bottom:20px; border-left:3px solid #1a6a3a; }
+  .info b { color:#1a6a3a; }
+  .field { margin-bottom:14px; }
+  .field label { display:block; font-weight:600; font-size:13px; margin-bottom:5px; }
+  .field .hint { font-weight:400; color:#6b7280; font-size:12px; margin-left:6px;
+                 display:block; margin-top:3px; }
+  .field input, .field textarea {
+    width:100%; padding:9px 12px; border:1px solid #cbd5e1; border-radius:4px;
+    font-size:14px; font-family:inherit; background:#fff;
+  }
+  .field textarea { resize:vertical; min-height:60px;
+                    font-family:Consolas,Menlo,monospace; font-size:13px; }
+  .field input:focus, .field textarea:focus {
+    outline:none; border-color:#1a6a3a; box-shadow:0 0 0 3px rgba(26,106,58,.15);
+  }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:20px; align-items:center; }
+  .btn { display:inline-block; padding:10px 18px; border-radius:4px; text-decoration:none;
+         font-weight:600; font-size:14px; cursor:pointer; border:0; font-family:inherit; }
+  .btn.primary { background:#1a6a3a; color:#fff; }
+  .btn.secondary { background:#2b6cb0; color:#fff; }
+  .btn.ghost { background:#fff; color:#1a6a3a; border:1px solid #1a6a3a; }
+  .btn:hover { filter:brightness(1.08); }
+  .vars { font-family:Consolas,Menlo,monospace; font-size:11.5px;
+          background:#fef3c7; color:#92400e; padding:1px 5px; border-radius:3px;
+          margin-right:3px; display:inline-block; margin-bottom:4px; }
+  .badge { display:inline-block; font-size:11px; font-weight:600; padding:2px 8px;
+           border-radius:10px; margin-left:8px; vertical-align:middle; }
+  .badge.default { background:#e7f1ff; color:#0a4b93; }
+  .badge.custom  { background:#e6f4ea; color:#0f5132; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap" style="padding:0;">
+    <h1>🧩 Letter Template</h1>
+    <div style="opacity:.85;font-size:13px;margin-top:4px;">
+      Shared constants for every admission letter — {{ school.school_name }}
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  {% if messages %}
+    {% for m in messages %}
+      <div class="msg {{ m.tags }}">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="card">
+    <div class="info">
+      Everything here applies to <b>every</b> admission letter for this school.
+      Fields show the value that will actually be used — if a field is blank in the DB,
+      its built-in default is filled in for you. Change anything and save to make it explicit.
+      <br><br>
+      <b>Badges</b>:
+      <span class="badge default">using built-in default</span> means the field falls back
+      to the code-level default until you change it.
+      <span class="badge custom">custom value</span> means it's saved to the DB.
+      <br><br>
+      <b>Available variables</b> — use these inside any text field:<br>
+      <span class="vars">{student_name}</span>
+      <span class="vars">{class_label}</span>
+      <span class="vars">{session_name}</span>
+      <span class="vars">{letterhead}</span>
+      <span class="vars">{deposit_words}</span>
+      <span class="vars">{deposit_display}</span>
+      <span class="vars">{bank_name}</span>
+      <span class="vars">{bank_branch_hint}</span>
+      <span class="vars">{bank_account}</span>
+      <span class="vars">{bank_account_name}</span>
+      <span class="vars">{payment_deadline}</span>
+      <span class="vars">{acceptance_deadline}</span>
+      <span class="vars">{resume_date}</span>
+      <span class="vars">{acceptance_email_1}</span>
+      <span class="vars">{acceptance_email_2}</span>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="msg error">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <h2>Letterhead</h2>
+      <div class="field">
+        <label>School name (shown in large text at the top)</label>
+        {{ form.school_display_name }}
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Motto</label>
+          {{ form.school_motto }}
+        </div>
+        <div class="field">
+          <label>Address</label>
+          {{ form.school_address }}
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Resume date</label>
+          {{ form.school_next_term_date }}
+          <span class="hint">Used as "the child resume for the session on …"</span>
+        </div>
+        <div class="field">
+          <label>Principal name</label>
+          {{ form.principal_name }}
+        </div>
+      </div>
+
+      <h2>Body — Intro / Deposit / Notes</h2>
+
+      <div class="field">
+        <label>
+          Intro paragraph
+          {% if blank_fields.intro_template %}
+            <span class="badge default">using built-in default</span>
+          {% else %}
+            <span class="badge custom">custom value</span>
+          {% endif %}
+        </label>
+        {{ form.intro_template }}
+      </div>
+
+      <div class="field">
+        <label>
+          Deposit paragraph
+          {% if blank_fields.deposit_paragraph_template %}
+            <span class="badge default">using built-in default</span>
+          {% else %}
+            <span class="badge custom">custom value</span>
+          {% endif %}
+        </label>
+        {{ form.deposit_paragraph_template }}
+      </div>
+
+      <div class="field">
+        <label>
+          Numbered notes
+          {% if blank_fields.notes_template %}
+            <span class="badge default">using built-in default</span>
+          {% else %}
+            <span class="badge custom">custom value</span>
+          {% endif %}
+          <span class="hint">one per line — each non-blank line becomes a numbered item</span>
+        </label>
+        {{ form.notes_template }}
+      </div>
+
+      <div class="field">
+        <label>
+          Extra paragraph
+          {% if blank_fields.extra_paragraph %}
+            <span class="badge default">using built-in default</span>
+          {% else %}
+            <span class="badge custom">custom value</span>
+          {% endif %}
+          <span class="hint">printed above "Please note:" — leave blank for none</span>
+        </label>
+        {{ form.extra_paragraph }}
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>
+            Closing line
+            {% if blank_fields.closing_line %}
+              <span class="badge default">using built-in default</span>
+            {% else %}
+              <span class="badge custom">custom value</span>
+            {% endif %}
+          </label>
+          {{ form.closing_line }}
+        </div>
+        <div class="field">
+          <label>
+            Signature title
+            {% if blank_fields.signature_title %}
+              <span class="badge default">using built-in default</span>
+            {% else %}
+              <span class="badge custom">custom value</span>
+            {% endif %}
+          </label>
+          {{ form.signature_title }}
+        </div>
+      </div>
+
+      <h2>Deposit / Bank</h2>
+      <div class="row">
+        <div class="field">
+          <label>
+            Deposit amount (words)
+            {% if blank_fields.deposit_amount_words %}
+              <span class="badge default">using built-in default</span>
+            {% else %}
+              <span class="badge custom">custom value</span>
+            {% endif %}
+          </label>
+          {{ form.deposit_amount_words }}
+        </div>
+        <div class="field">
+          <label>
+            Deposit amount (display)
+            {% if blank_fields.deposit_amount_display %}
+              <span class="badge default">using built-in default</span>
+            {% else %}
+              <span class="badge custom">custom value</span>
+            {% endif %}
+          </label>
+          {{ form.deposit_amount_display }}
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>
+            Bank name
+            {% if blank_fields.bank_name %}
+              <span class="badge default">using built-in default</span>
+            {% else %}
+              <span class="badge custom">custom value</span>
+            {% endif %}
+          </label>
+          {{ form.bank_name }}
+        </div>
+        <div class="field">
+          <label>
+            Bank branch hint
+            {% if blank_fields.bank_branch_hint %}
+              <span class="badge default">using built-in default</span>
+            {% else %}
+              <span class="badge custom">custom value</span>
+            {% endif %}
+            <span class="hint">e.g. "any branch of"</span>
+          </label>
+          {{ form.bank_branch_hint }}
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>
+            Account number
+            {% if blank_fields.bank_account %}
+              <span class="badge default">using built-in default</span>
+            {% else %}
+              <span class="badge custom">custom value</span>
+            {% endif %}
+          </label>
+          {{ form.bank_account }}
+        </div>
+        <div class="field">
+          <label>
+            Account name
+            {% if blank_fields.bank_account_name %}
+              <span class="badge default">using built-in default</span>
+            {% else %}
+              <span class="badge custom">custom value</span>
+            {% endif %}
+          </label>
+          {{ form.bank_account_name }}
+        </div>
+      </div>
+
+      <h2>Acceptance Emails</h2>
+      <div class="row">
+        <div class="field">
+          <label>
+            Primary email
+            {% if blank_fields.acceptance_email_1 %}
+              <span class="badge default">using built-in default</span>
+            {% else %}
+              <span class="badge custom">custom value</span>
+            {% endif %}
+          </label>
+          {{ form.acceptance_email_1 }}
+        </div>
+        <div class="field">
+          <label>
+            Secondary email
+            {% if blank_fields.acceptance_email_2 %}
+              <span class="badge default">using built-in default</span>
+            {% else %}
+              <span class="badge custom">custom value</span>
+            {% endif %}
+          </label>
+          {{ form.acceptance_email_2 }}
+        </div>
+      </div>
+
+      <h2>Date Windows</h2>
+      <div class="row">
+        <div class="field">
+          <label>Payment window (days after letter date)</label>
+          {{ form.payment_window_days }}
+        </div>
+        <div class="field">
+          <label>Acceptance window (days after payment deadline)</label>
+          {{ form.acceptance_window_days }}
+        </div>
+      </div>
+
+      <h2>Letterhead line (used in body text)</h2>
+      <div class="field">
+        <label>
+          School line in body
+          {% if blank_fields.letterhead_school_line %}
+            <span class="badge default">using built-in default</span>
+          {% else %}
+            <span class="badge custom">custom value</span>
+          {% endif %}
+          <span class="hint">e.g. "Esteem Learning Center, The Boys' College"</span>
+        </label>
+        {{ form.letterhead_school_line }}
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn primary">💾 Save template</button>
+        <button type="submit" name="regenerate_all" value="1"
+                class="btn secondary"
+                onclick="return confirm('Save and regenerate EVERY existing admission letter? This may take a moment.');">
+          🔄 Save &amp; regenerate all letters
+        </button>
+        <a href="{% url 'student:admission_letters_list' %}" class="btn ghost">← Back to letters</a>
+      </div>
+    </form>
+  </div>
+
+</div>
+</body>
+</html>

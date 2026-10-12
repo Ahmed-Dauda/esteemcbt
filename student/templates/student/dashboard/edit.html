@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ title }}</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+         background:#f4f6f8; color:#1f2937; }
+  header { background:#1a6a3a; color:#fff; padding:16px 24px; }
+  header h1 { margin:0; font-size:20px; }
+  .wrap { max-width:960px; margin:24px auto; padding:0 16px; }
+  .card { background:#fff; border-radius:6px; padding:22px 26px; margin-bottom:18px;
+          box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .msg { padding:10px 14px; border-radius:4px; margin-bottom:10px; font-size:14px; }
+  .msg.success { background:#e6f4ea; color:#0f5132; border-left:4px solid #1a6a3a; }
+  .msg.error   { background:#fdecea; color:#842029; border-left:4px solid #c00; }
+  .msg.warning { background:#fff3cd; color:#664d03; border-left:4px solid #b45309; }
+  h2 { font-size:15px; margin:24px 0 12px; color:#1a6a3a;
+       text-transform:uppercase; letter-spacing:.5px; }
+  .info { background:#f8fafc; padding:14px 16px; border-radius:6px; font-size:13.5px;
+          line-height:1.6; margin-bottom:20px; border-left:3px solid #1a6a3a; }
+  .info b { color:#1a6a3a; }
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-weight:600; font-size:13px; margin-bottom:5px; }
+  .field .hint { font-weight:400; color:#6b7280; font-size:12px;
+                 display:block; margin-top:4px; }
+  .field input, .field textarea {
+    width:100%; padding:9px 12px; border:1px solid #cbd5e1; border-radius:4px;
+    font-size:14px; font-family:inherit; background:#fff;
+  }
+  .field textarea {
+    resize:vertical; min-height:80px;
+    font-family:Consolas,Menlo,monospace; font-size:13px; line-height:1.55;
+  }
+  .field input:focus, .field textarea:focus {
+    outline:none; border-color:#1a6a3a; box-shadow:0 0 0 3px rgba(26,106,58,.15);
+  }
+  .field.ro input, .field.ro textarea, .ro-display {
+    background:#f8fafc; border-style:dashed; color:#374151; cursor:not-allowed;
+  }
+  .ro-display {
+    padding:9px 12px; border:1px dashed #cbd5e1; border-radius:4px; font-size:14px;
+  }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:20px; align-items:center; }
+  .btn { display:inline-block; padding:10px 18px; border-radius:4px; text-decoration:none;
+         font-weight:600; font-size:14px; cursor:pointer; border:0; font-family:inherit; }
+  .btn.primary { background:#1a6a3a; color:#fff; }
+  .btn.secondary { background:#2b6cb0; color:#fff; }
+  .btn.ghost { background:#fff; color:#1a6a3a; border:1px solid #1a6a3a; }
+  .btn:hover { filter:brightness(1.08); }
+  .badge { display:inline-block; font-size:11px; font-weight:600; padding:2px 8px;
+           border-radius:10px; margin-left:6px; vertical-align:middle; }
+  .badge.using { background:#e6f4ea; color:#0f5132; }
+  .badge.overriding { background:#fff3cd; color:#664d03; }
+  .topbar { display:flex; justify-content:space-between; align-items:center;
+            flex-wrap:wrap; gap:10px; }
+  .topbar .who { font-size:13px; opacity:.9; }
+  .errlist { color:#c00; font-size:13px; margin:4px 0 0 0; padding-left:18px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap topbar" style="padding:0;">
+    <div>
+      <h1>✏️ Edit Admission Letter</h1>
+      <div class="who">{{ profile }} — {{ letter.class_offered }}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <a href="{% url 'student:admission_letter_regenerate_and_open' profile.id %}"
+         target="_blank" class="btn secondary">📄 View current PDF</a>
+
+      <a href="{% url 'student:admission_letter_template_edit' %}" class="btn ghost">
+        🧩 Edit Letter Template
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  {% if messages %}
+    {% for m in messages %}
+      <div class="msg {{ m.tags }}">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="card">
+    <div class="info">
+      Every field below is editable. Fields showing a <span class="badge using">using template</span>
+      badge fall back to the school's Letter Template and update automatically.
+      Change one character to make it a <span class="badge overriding">one-off override</span>
+      for this student only.
+      {% if template_updated %}
+        <br><br>
+        <span style="color:#0a4b93;font-size:12.5px;">
+          Template last updated: <b>{{ template_updated|date:"j M Y, H:i" }}</b> ·
+          <a href="{% url 'student:admission_letter_template_edit' %}">edit template</a>
+        </span>
+      {% endif %}
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+           {% if form.non_field_errors %}
+        <div class="msg error">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      {% if form.errors %}
+        <div class="msg error" style="background:#fdecea;">
+          <b>⚠ The form could not be saved. Fix these fields:</b>
+          <ul style="margin:8px 0 0 20px;font-size:13px;">
+          {% for field_name, errors in form.errors.items %}
+            <li>
+              <b>{{ field_name }}</b>:
+              {% for e in errors %}{{ e }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            </li>
+          {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <h2>Dates</h2>
+      <div class="row">
+        <div class="field">
+          <label>Letter date</label>
+          {{ form.letter_date }}
+        </div>
+        <div class="field">
+          <label>Payment deadline</label>
+          {{ form.payment_deadline }}
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Acceptance deadline</label>
+          {{ form.acceptance_deadline }}
+        </div>
+        <div class="field ro">
+          <label>Resume date <span class="hint">comes from the Letter Template</span></label>
+          <div class="ro-display">
+            {% if active_resume_display %}{{ active_resume_display }}{% else %}(not set){% endif %}
+          </div>
+          <span class="hint">
+            <a href="{% url 'student:admission_letter_template_edit' %}">Edit in Letter Template →</a>
+          </span>
+        </div>
+      </div>
+
+      <h2>Student &amp; Salutation</h2>
+      <div class="field">
+        <label>
+          Student name
+          {% if letter.override_student_name %}
+            <span class="badge overriding">overriding</span>
+          {% else %}
+            <span class="badge using">using {{ profile.user.display_name|default:"profile" }}</span>
+          {% endif %}
+        </label>
+        {{ form.override_student_name }}
+        <span class="hint">default = the student's name from their user account</span>
+      </div>
+      <div class="field">
+        <label>
+          Guardian salutation
+          {% if letter.override_guardian_name %}
+            <span class="badge overriding">overriding</span>
+          {% else %}
+            <span class="badge using">using profile</span>
+          {% endif %}
+        </label>
+        {{ form.override_guardian_name }}
+      </div>
+      <div class="field">
+        <label>
+          Guardian address
+          {% if letter.override_guardian_address %}
+            <span class="badge overriding">overriding</span>
+          {% else %}
+            <span class="badge using">using profile</span>
+          {% endif %}
+        </label>
+        {{ form.override_guardian_address }}
+        <span class="hint">blank = omit the address line entirely</span>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Principal name</label>
+          {{ form.override_principal_name }}
+        </div>
+        <div class="field">
+          <label>Deposit amount (display)</label>
+          {{ form.override_deposit_display }}
+        </div>
+      </div>
+      <div class="field">
+        <label>Deposit amount (words)</label>
+        {{ form.override_deposit_words }}
+      </div>
+
+      <h2>Body Paragraphs</h2>
+      <div class="info" style="font-size:12.5px;">
+        The textareas below are pre-filled with the school's
+        <a href="{% url 'student:admission_letter_template_edit' %}">Letter Template</a>.
+        Edit any paragraph here to override it <b>for this student only</b>.
+        Leave it as-is to keep using the shared template.
+      </div>
+
+      <div class="field">
+        <label>
+          Intro paragraph
+          {% if letter.override_intro %}
+            <span class="badge overriding">overriding this student</span>
+          {% else %}
+            <span class="badge using">using template</span>
+          {% endif %}
+        </label>
+        {{ form.override_intro }}
+      </div>
+      <div class="field">
+        <label>
+          Deposit paragraph
+          {% if letter.override_deposit_para %}
+            <span class="badge overriding">overriding this student</span>
+          {% else %}
+            <span class="badge using">using template</span>
+          {% endif %}
+        </label>
+        {{ form.override_deposit_para }}
+      </div>
+      <div class="field">
+        <label>
+          Numbered notes <span class="hint">one per line — each non-blank line becomes a numbered item</span>
+          {% if letter.override_notes_text %}
+            <span class="badge overriding">overriding this student</span>
+          {% else %}
+            <span class="badge using">using template</span>
+          {% endif %}
+        </label>
+        {{ form.override_notes_text }}
+      </div>
+      <div class="field">
+        <label>
+          Extra paragraph <span class="hint">printed above "Please note:"</span>
+          {% if letter.extra_note %}
+            <span class="badge overriding">overriding this student</span>
+          {% else %}
+            <span class="badge using">using template</span>
+          {% endif %}
+        </label>
+        {{ form.extra_note }}
+      </div>
+
+      <h2>Closing <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400;">(from Letter Template)</span></h2>
+      <div class="row">
+        <div class="field ro">
+          <label>Closing line</label>
+          <div class="ro-display">{{ active_closing }}</div>
+        </div>
+        <div class="field ro">
+          <label>Signature title</label>
+          <div class="ro-display">{{ active_sigtitle }}</div>
+        </div>
+      </div>
+
+            <div class="actions">
+        <button type="submit" class="btn primary">💾 Save changes</button>
+        <a href="{% url 'student:admission_letter_regenerate_and_open' profile.id %}"
+           target="_blank" class="btn secondary">📄 View current PDF</a>
+        <a href="{% url 'student:admission_letters_list' %}" class="btn ghost">← Back to list</a>
+      </div>
+    </form>
+  </div>
+
+</div>
+</body>
+</html>

@@ -119,7 +119,7 @@ class NewUser(AbstractBaseUser, PermissionsMixin):
             models.Index(fields=['first_name', 'last_name']),         # search by name
         ]
 
-        
+
 
 class Profile(models.Model):
 
@@ -140,6 +140,11 @@ class Profile(models.Model):
     countries = models.CharField(max_length=225, blank=True, null=True, db_index=True)
     pro_img = models.CharField(max_length=225, blank=True, null=True)
     bio = models.TextField(max_length=600, blank=True, null=True)
+    guardian_title   = models.CharField(max_length=50, blank=True, null=True)
+    guardian_name    = models.CharField(max_length=255, blank=True, null=True)
+    guardian_address = models.TextField(blank=True, null=True)
+    guardian_email   = models.EmailField(blank=True, null=True)
+
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True, db_index=True)
     updated = models.DateTimeField(auto_now=True, blank=True, null=True, db_index=True)
 

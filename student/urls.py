@@ -1,12 +1,35 @@
 from django.urls import path
 from . import views
 # from sms.views import update_referrer_mentor
-
+from . import views_admission
 from django.urls import re_path
 
 app_name = 'student'
 
 urlpatterns = [
+    
+    path('admission-letters/regenerate/<int:profile_id>/',
+     views_admission.regenerate_letter_and_open,
+     name='admission_letter_regenerate_and_open'),
+
+    path('admission-letters/template/',
+     views_admission.edit_letter_template,
+     name='admission_letter_template_edit'),
+
+    path('admission-letters/edit/<int:profile_id>/',
+     views_admission.edit_letter,
+     name='admission_letter_edit'),
+    path('admission-letters/',
+     views_admission.admission_letters_list,
+     name='admission_letters_list'),
+
+path('admission-letters/generate/<int:profile_id>/',
+     views_admission.generate_letter,
+     name='admission_letter_generate'),
+
+path('admission-letters/generate-all/',
+     views_admission.generate_all_letters,
+     name='admission_letters_generate_all'),
     path('start-exam/<pk>/', views.start_exams_view, name='start-exam'),
     path('sync-offline-violations/', views.sync_offline_violations, name='sync_offline_violations'),
     # student/urls.py
@@ -25,9 +48,6 @@ urlpatterns = [
     path('student-login/', views.student_login_view, name='student-login'),
     path('exams-conducted-statistics/', views.exams_conducted_statistics_view, name='exams_conducted_statistics'),
     path('download-statistics/', views.download_statistics_view, name='download_statistics'),
-    # path('badge-list/', views.badge_list_view, name='badge_list_view'),
-    # path('badge-details/<str:session>/<str:term>/',  views.badge_details_view, name='badge_details_view'),
-    # path('badge-pdf/<str:session>/<str:term>/', views.badge_pdf_view, name='badge_pdf_view'),
 
     # path('award-badges/<str:session>/<str:term>/', views.award_student_badges, name='award_student_badges'),
     path('leaderboard/<str:session>/<str:term>/', views.leaderboard, name='leaderboard'),

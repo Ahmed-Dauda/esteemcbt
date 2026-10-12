@@ -4,118 +4,348 @@
 
 {% block content %}
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background: #f0f0f0; }
-    button { padding: 6px 12px; cursor: pointer; border: none; border-radius: 4px; }
-    .btn-danger { background-color: red; color: white; }
-    .btn-success { background-color: green; color: white; }
-    .btn-export-pdf { background-color: #c0392b; color: white; }
-    select { padding: 4px; }
-    .msg { color: green; margin-bottom: 10px; }
-    #searchInput { margin-bottom: 10px; padding: 6px; width: 250px; border: 1px solid #aaa; border-radius: 4px; }
-    #classFilter { margin-bottom: 10px; padding: 6px; border: 1px solid #aaa; border-radius: 4px; min-width: 200px; }
-    .checkbox-col { width: 40px; text-align: center; }
-    .top-buttons { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; padding-top: 15px; }
-    .filter-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
-    .export-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-    form.inline { display: inline; }
-    #exportStatus { font-size: 13px; color: #555; }
+  /* Everything is scoped to .sl-page so it can't leak into the base template */
+  .sl-page {
+    --ink: #1c2530;
+    --muted: #667286;
+    --line: #e3e8ee;
+    --surface: #ffffff;
+    --wash: #f5f7fa;
+    --accent: #0f766e;
+    --accent-dark: #0b5c56;
+    --accent-tint: #e4f3f1;
+    --danger: #b42318;
+    --danger-tint: #fdeceb;
+    --warn: #8a5a00;
+    --warn-tint: #fff4dc;
+
+    font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+    line-height: 1.5;
+  }
+  .sl-page *, .sl-page *::before, .sl-page *::after { box-sizing: border-box; }
+
+  /* Header */
+  .sl-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .sl-back { display: inline-block; font-size: 13px; color: var(--muted); text-decoration: none; margin-bottom: 6px; }
+  .sl-back:hover { color: var(--accent); }
+  .sl-title { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin: 0; line-height: 1.2; }
+  .sl-sub { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
+  .sl-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Buttons */
+  .sl-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 16px; font: inherit; font-size: 14px; font-weight: 600;
+    border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    text-decoration: none; cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+  }
+  .sl-btn:hover { background: var(--wash); border-color: #cfd6df; color: var(--ink); }
+  .sl-btn svg { width: 16px; height: 16px; flex: none; }
+  .sl-btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .sl-btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); color: #fff; }
+  .sl-btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .sl-btn-danger:hover { background: #8f1c12; border-color: #8f1c12; color: #fff; }
+  .sl-page :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Alerts */
+  .sl-alerts { display: grid; gap: 8px; margin-bottom: 16px; }
+  .sl-alert { padding: 10px 14px; border-radius: 8px; font-size: 14px; border: 1px solid; }
+  .sl-success, .sl-info { background: var(--accent-tint); border-color: #b9dfda; color: var(--accent-dark); }
+  .sl-warning { background: var(--warn-tint); border-color: #f1d9a0; color: var(--warn); }
+  .sl-error, .sl-danger { background: var(--danger-tint); border-color: #f4c3bf; color: var(--danger); }
+
+  /* Toolbar */
+  .sl-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  .sl-search { position: relative; flex: 1 1 260px; max-width: 360px; }
+  .sl-search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--muted); pointer-events: none; }
+  .sl-input, .sl-select {
+    width: 100%; font: inherit; font-size: 14px; color: var(--ink);
+    padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+  }
+  .sl-search .sl-input { padding-left: 36px; }
+  .sl-input:focus, .sl-select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+  .sl-toolbar .sl-select { width: auto; min-width: 200px; }
+  .sl-spacer { flex: 1; }
+  #exportStatus { font-size: 13px; color: var(--accent-dark); }
+
+  /* Table card */
+  .sl-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .sl-scroll { overflow-x: auto; }
+  .sl-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 760px; }
+  .sl-table th {
+    text-align: left; font-weight: 600; font-size: 13px; color: var(--muted);
+    background: var(--wash); padding: 11px 16px; border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  .sl-table td { padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .sl-table tbody tr:last-child td { border-bottom: 0; }
+  .sl-table tbody tr:hover { background: #fafbfc; }
+  .sl-table tbody tr.is-selected { background: var(--accent-tint); }
+  .sl-table tr[hidden] { display: none; }
+  .sl-check { width: 44px; padding-right: 0 !important; }
+  .sl-check input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; vertical-align: middle; }
+  .sl-id { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .sl-person { display: flex; align-items: center; gap: 12px; min-width: 200px; }
+  .sl-avatar {
+    flex: none; width: 38px; height: 38px; border-radius: 50%; overflow: hidden;
+    display: grid; place-items: center; background: var(--accent-tint); color: var(--accent-dark);
+    font-weight: 700; font-size: 14px; border: 1px solid #cfe8e4;
+  }
+  .sl-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .sl-name { font-weight: 600; line-height: 1.3; }
+  .sl-user { font-size: 12.5px; color: var(--muted); }
+  .sl-email { color: var(--muted); }
+
+  .sl-pill { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--accent-tint); color: var(--accent-dark); font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .sl-none { color: #a3adbb; }
+
+  .sl-row-actions { display: flex; align-items: center; gap: 4px; justify-content: flex-end; white-space: nowrap; }
+  .sl-link, .sl-icon-btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 6px;
+    font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); background: none; border: 0; text-decoration: none; cursor: pointer;
+  }
+  .sl-link:hover { background: var(--wash); color: var(--accent); }
+  .sl-icon-btn { color: var(--danger); }
+  .sl-icon-btn:hover { background: var(--danger-tint); }
+  .sl-link svg, .sl-icon-btn svg { width: 15px; height: 15px; }
+
+  /* Empty states */
+  .sl-empty { text-align: center; padding: 48px 16px; color: var(--muted); }
+  .sl-empty strong { display: block; color: var(--ink); font-size: 16px; margin-bottom: 4px; }
+  .sl-empty .sl-btn { margin-top: 16px; }
+  #noResults { display: none; }
+
+  .sl-foot { padding: 10px 16px; border-top: 1px solid var(--line); background: var(--wash); font-size: 13px; color: var(--muted); }
+
+  /* Selection bar: appears only when students are ticked */
+  .sl-bar {
+    position: sticky; bottom: 16px; margin-top: 16px; z-index: 20;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 12px 16px; border-radius: 12px;
+    background: var(--ink); color: #fff; box-shadow: 0 8px 24px rgba(20, 30, 45, .25);
+  }
+  .sl-bar[hidden] { display: none; }
+  .sl-bar-count { font-weight: 600; font-size: 14px; margin-right: auto; }
+  .sl-bar .sl-select { width: auto; min-width: 200px; background: #fff; }
+  .sl-bar .sl-select.is-invalid { outline: 2px solid #ff8a80; }
+  .sl-bar .sl-btn-light { background: #fff; border-color: #fff; color: var(--ink); }
+  .sl-bar .sl-btn-light:hover { background: var(--accent-tint); border-color: var(--accent-tint); }
+  .sl-bar .sl-btn-clear { background: transparent; border-color: #44505f; color: #d6dce4; }
+  .sl-bar .sl-btn-clear:hover { background: #2a3544; color: #fff; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .sl-bar:not([hidden]) { animation: sl-rise .18s ease-out; }
+    @keyframes sl-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  }
+
+  @media (max-width: 640px) {
+    .sl-title { font-size: 24px; }
+    .sl-search { max-width: none; }
+    .sl-toolbar .sl-select { width: 100%; }
+    .sl-hide-sm { display: none; }
+    .sl-table { min-width: 620px; }
+  }
+
+    /* Confirm dialog */
+  .sl-modal { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: rgba(20, 30, 45, .55); }
+  .sl-modal[hidden] { display: none; }
+  .sl-modal-box { background: var(--surface); border-radius: 12px; width: 100%; max-width: 440px; padding: 22px; box-shadow: 0 16px 48px rgba(20, 30, 45, .3); }
+  .sl-modal-title { font-size: 18px; font-weight: 700; margin: 0 0 6px; }
+  .sl-modal-msg { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
+  .sl-modal-list { margin: 0 0 14px; padding: 8px 12px 8px 28px; max-height: 140px; overflow: auto; background: var(--wash); border-radius: 8px; font-size: 13.5px; }
+  .sl-modal-list:empty { display: none; }
+  #confirmTypeWrap { margin-bottom: 14px; font-size: 14px; }
+  #confirmTypeWrap label { display: block; margin-bottom: 6px; }
+  .sl-modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+  .sl-btn[disabled] { opacity: .5; cursor: not-allowed; }
 </style>
 
-<h2>Student Lists</h2>
+<div class="sl-page">
 
-<!-- Filter bar -->
-<div class="filter-bar">
-  <input type="text" id="searchInput" placeholder="Search students...">
-
-  <select id="classFilter">
-    <option value="">-- All Classes --</option>
-    {% for c in all_classes %}
-      <option value="{{ c.name }}">{{ c.name }}</option>
-    {% endfor %}
-  </select>
-</div>
-
-<!-- Export bar -->
-<div class="export-bar">
-  <span style="font-weight:bold;">Export visible students:</span>
-  <button class="btn-export-pdf" onclick="exportToPDF()">⬇ Export PDF</button>
-  <span id="exportStatus"></span>
-</div>
-
-{% if messages %}
-  <div class="msg">
-    {% for message in messages %}
-      <p>{{ message }}</p>
-    {% endfor %}
+  <!-- Header -->
+  <div class="sl-head">
+    <div>
+      <a class="sl-back" href="{% url 'teacher:examiner_dashboard' %}">&larr; Back to assigned exams</a>
+      <h1 class="sl-title">Students</h1>
+      <p class="sl-sub">{{ students|length }} student{{ students|length|pluralize }} in your school</p>
+    </div>
+    <div class="sl-actions">
+      <a href="{% url 'teacher:examiner_class_list' %}" class="sl-btn">Create classes</a>
+      <a href="{% url 'quiz:move_group' %}" class="sl-btn">Promote students</a>
+      <a href="{% url 'users:schoolstudentview' %}" class="sl-btn sl-btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Add students
+      </a>
+    </div>
   </div>
-{% endif %}
 
-<!-- Top buttons -->
-<div class="top-buttons">
-  <a href="{% url 'quiz:move_group' %}"><button class="btn-success">Promote Students</button></a>
-  <a href="{% url 'users:schoolstudentview' %}"><button class="btn-success">Add Students</button></a>
-  <a href="{% url 'teacher:examiner_dashboard' %}"><button class="btn-success">Back to Assigned Exams</button></a>
-</div>
+  <!-- Messages -->
+  {% if messages %}
+    <div class="sl-alerts" role="status">
+      {% for message in messages %}
+        <div class="sl-alert sl-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
 
-<!-- Bulk Move Form -->
-<form id="studentsForm" method="POST" action="{% url 'teacher:bulk_action_students' %}">
-  {% csrf_token %}
-  <div style="margin: 15px 0;">
-    <select name="bulk_new_class_id" required>
-      <option value="">-- Select Class to Move --</option>
+  <!-- Toolbar -->
+  <div class="sl-toolbar">
+    <div class="sl-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="text" id="searchInput" class="sl-input" placeholder="Search by name, email or username" aria-label="Search students" autocomplete="off">
+    </div>
+
+    <select id="classFilter" class="sl-select" aria-label="Filter by class">
+      <option value="">All classes</option>
       {% for c in all_classes %}
-        <option value="{{ c.id }}">{{ c.name }}</option>
+        <option value="{{ c.name }}">{{ c.name }}</option>
       {% endfor %}
     </select>
-    <button type="submit" name="bulk_move" class="btn-success">Move Selected</button>
-    <button type="submit" name="bulk_delete" class="btn-danger" onclick="return confirm('Delete selected students?')">Delete Selected</button>
+
+    <span class="sl-spacer"></span>
+    <span id="exportStatus" role="status"></span>
+    <button type="button" class="sl-btn" onclick="exportToPDF()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg>
+      Export PDF
+    </button>
   </div>
 
-  <table id="studentsTable">
-    <thead>
-      <tr>
-        <th class="checkbox-col"><input type="checkbox" id="selectAll"></th>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Current Class</th>
-        <th>Gender</th>
-        <th>Image</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for student in students %}
-      <tr data-username="{{ student.username }}">
-        <td class="checkbox-col"><input type="checkbox" name="selected_students" value="{{ student.id }}"></td>
-        <td>{{ student.id }}</td>
-        <td class="searchable">{{ student.first_name }} {{ student.last_name }}</td>
-        <td class="searchable">{{ student.email }}</td>
-        <td class="searchable student-class">{{ student.student_class|default:"—" }}</td>
-        <td class="searchable">{{ student.gender }}</td>
-        <td>
-          {% if student.pro_img %}
-            <img src="{{ student.pro_img.url }}" width="40" height="40"
-                 style="border-radius: 50%; object-fit: cover; border: 1px solid #ccc;">
-          {% else %}
-            <span style="color: #aaa; font-size: 12px;">No photo</span>
-          {% endif %}
-        </td>
-        <td>
-          <a href="{% url 'teacher:edit_student' student.id %}">Edit</a> |
-          <form method="POST" action="{% url 'teacher:delete_student' student.id %}" class="inline">
-            {% csrf_token %}
-            <button type="submit" class="btn-danger">Delete</button>
-          </form>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</form>
+  <!-- Bulk form -->
+  <form id="studentsForm" method="POST" action="{% url 'teacher:bulk_action_students' %}">
+    {% csrf_token %}
+
+    <div class="sl-card">
+      {% if students %}
+        <div class="sl-scroll">
+          <table class="sl-table" id="studentsTable">
+            <thead>
+              <tr>
+                <th class="sl-check"><input type="checkbox" id="selectAll" aria-label="Select all visible students"></th>
+                <th class="sl-hide-sm">ID</th>
+                <th>Student</th>
+                <th>Email</th>
+                <th>Class</th>
+                <th>Gender</th>
+                <th><span class="sr-only" style="position:absolute;left:-9999px;">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for student in students %}
+              <tr data-username="{{ student.username }}"
+                  data-name="{{ student.display_name }}"
+                  data-email="{{ student.email }}"
+                  data-class="{{ student.student_class|default:'' }}"
+                  data-gender="{{ student.gender|default:'' }}"
+                  data-search="{{ student.display_name|lower }} {{ student.username|lower }} {{ student.email|lower }} {{ student.student_class|default:''|lower }} {{ student.gender|default:''|lower }}">
+                <td class="sl-check">
+                  <input type="checkbox" name="selected_students" value="{{ student.id }}" aria-label="Select {{ student.display_name }}">
+                </td>
+                <td class="sl-id sl-hide-sm">{{ student.id }}</td>
+                <td>
+                  <div class="sl-person">
+                    <div class="sl-avatar">
+                      {% if student.pro_img %}
+                        <img src="{{ student.pro_img.url }}" alt="">
+                      {% else %}
+                        {{ student.first_name|default:student.username|default:"?"|slice:":1"|upper }}{{ student.last_name|default:""|slice:":1"|upper }}
+                      {% endif %}
+                    </div>
+                    <div>
+                      <div class="sl-name">{{ student.display_name }}</div>
+                      {% if student.username %}<div class="sl-user">@{{ student.username }}</div>{% endif %}
+                    </div>
+                  </div>
+                </td>
+                <td class="sl-email">{{ student.email }}</td>
+                <td>
+                  {% if student.student_class %}
+                    <span class="sl-pill">{{ student.student_class }}</span>
+                  {% else %}
+                    <span class="sl-none">Not assigned</span>
+                  {% endif %}
+                </td>
+                <td>{{ student.gender|default:"—" }}</td>
+                <td>
+                  <div class="sl-row-actions">
+                    <a class="sl-link" href="{% url 'teacher:edit_student' student.id %}">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                      Edit
+                    </a>
+                    <button type="button" class="sl-icon-btn"
+                            onclick="deleteStudent('{% url 'teacher:delete_student' student.id %}', '{{ student.display_name|escapejs }}')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div id="noResults" class="sl-empty">
+          <strong>No students match your filters</strong>
+          Try a different search or choose another class.
+        </div>
+
+        <div class="sl-foot" id="resultCount" aria-live="polite"></div>
+      {% else %}
+        <div class="sl-empty">
+          <strong>No students yet</strong>
+          Add students to see them here and organise them into classes.
+          <div><a href="{% url 'users:schoolstudentview' %}" class="sl-btn sl-btn-primary">Add students</a></div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Appears when one or more students are ticked -->
+    <div class="sl-bar" id="selectionBar" hidden>
+      <span class="sl-bar-count"><span id="selectedCount">0</span> selected</span>
+
+      <select name="bulk_new_class_id" id="bulkClass" class="sl-select" aria-label="Class to move students into">
+        <option value="">Move to class…</option>
+        {% for c in all_classes %}
+          <option value="{{ c.id }}">{{ c.name }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" name="bulk_move" id="bulkMoveBtn" class="sl-btn sl-btn-light">Move students</button>
+            <button type="button" id="bulkDeleteBtn" class="sl-btn sl-btn-danger">Delete students</button>
+      <button type="button" id="clearSelection" class="sl-btn sl-btn-clear">Clear</button>
+    </div>
+  </form>
+
+  <!-- Confirm dialog (used by every delete) -->
+  <div class="sl-modal" id="confirmModal" hidden role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="sl-modal-box">
+      <h2 class="sl-modal-title" id="confirmTitle">Delete?</h2>
+      <p class="sl-modal-msg" id="confirmMsg"></p>
+      <ul class="sl-modal-list" id="confirmList"></ul>
+      <div id="confirmTypeWrap" hidden>
+        <label for="confirmType">Type <strong>DELETE</strong> to confirm</label>
+        <input type="text" id="confirmType" class="sl-input" autocomplete="off">
+      </div>
+      <div class="sl-modal-actions">
+        <button type="button" class="sl-btn" id="confirmCancel">Cancel</button>
+        <button type="button" class="sl-btn sl-btn-danger" id="confirmOk">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Single-delete form (kept outside the bulk form, since forms can't be nested) -->
+  <form id="singleDeleteForm" method="POST" style="display:none;">{% csrf_token %}</form>
+
+</div>
 
 <!-- jsPDF + autoTable -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -124,64 +354,158 @@
 <script>
 const searchInput = document.getElementById("searchInput");
 const classFilter = document.getElementById("classFilter");
-const table = document.getElementById("studentsTable");
-const rows = table.getElementsByTagName("tr");
-const selectAll = document.getElementById("selectAll");
+const table       = document.getElementById("studentsTable");
+const selectAll   = document.getElementById("selectAll");
+const bar         = document.getElementById("selectionBar");
+const selectedCountEl = document.getElementById("selectedCount");
+const bulkClass   = document.getElementById("bulkClass");
+const noResults   = document.getElementById("noResults");
+const resultCount = document.getElementById("resultCount");
 
-// Filter logic (search + class)
+const rows = table ? Array.from(table.tBodies[0].rows) : [];
+const rowBox = row => row.querySelector("input[name='selected_students']");
+
 function applyFilters() {
-  const searchVal = searchInput.value.toLowerCase();
-  const classVal  = classFilter.value.toLowerCase();
+  if (!table) return;
+  const q   = searchInput.value.trim().toLowerCase();
+  const cls = classFilter.value.trim().toLowerCase();
+  let shown = 0;
 
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    const searchables = row.querySelectorAll(".searchable");
-    const classCell   = row.querySelector(".student-class");
-
-    const classMatch = !classVal || (classCell && classCell.textContent.trim().toLowerCase() === classVal);
-    let searchMatch  = !searchVal;
-
-    if (!searchMatch) {
-      searchables.forEach(cell => {
-        if (cell.textContent.toLowerCase().includes(searchVal)) searchMatch = true;
-      });
-    }
-
+  rows.forEach(row => {
+    const classMatch  = !cls || (row.dataset.class || "").trim().toLowerCase() === cls;
+    const searchMatch = !q || row.dataset.search.includes(q);
     const visible = classMatch && searchMatch;
-    row.style.display = visible ? "" : "none";
-    if (!visible) {
-      const cb = row.querySelector("input[type='checkbox']");
-      if (cb) cb.checked = false;
-    }
-  }
+    row.hidden = !visible;
+    if (visible) shown++;
+    else rowBox(row).checked = false;   // never act on students you can't see
+  });
+
+  table.parentElement.style.display = shown ? "" : "none";
+  noResults.style.display = shown ? "none" : "block";
+  resultCount.textContent = `Showing ${shown} of ${rows.length} student${rows.length === 1 ? "" : "s"}`;
+  updateSelection();
 }
 
-searchInput.addEventListener("keyup", applyFilters);
-classFilter.addEventListener("change", applyFilters);
+function updateSelection() {
+  if (!table) return;
+  const visibleRows = rows.filter(r => !r.hidden);
+  const checkedAll  = rows.filter(r => rowBox(r).checked);
+  const checkedVis  = visibleRows.filter(r => rowBox(r).checked);
 
-// Select/Deselect visible rows only
-selectAll.addEventListener("change", function () {
-  const visibleCheckboxes = table.querySelectorAll("tbody tr:not([style*='display: none']) input[type='checkbox']");
-  visibleCheckboxes.forEach(cb => cb.checked = selectAll.checked);
+  rows.forEach(r => r.classList.toggle("is-selected", rowBox(r).checked));
+
+  selectedCountEl.textContent = checkedAll.length;
+  bar.hidden = checkedAll.length === 0;
+
+  selectAll.checked = visibleRows.length > 0 && checkedVis.length === visibleRows.length;
+  selectAll.indeterminate = checkedVis.length > 0 && checkedVis.length < visibleRows.length;
+}
+
+if (table) {
+  searchInput.addEventListener("input", applyFilters);
+  classFilter.addEventListener("change", applyFilters);
+
+  selectAll.addEventListener("change", () => {
+    rows.filter(r => !r.hidden).forEach(r => rowBox(r).checked = selectAll.checked);
+    updateSelection();
+  });
+  rows.forEach(r => rowBox(r).addEventListener("change", updateSelection));
+
+  document.getElementById("clearSelection").addEventListener("click", () => {
+    rows.forEach(r => rowBox(r).checked = false);
+    updateSelection();
+  });
+
+  // A destination class is only needed for "Move", not for "Delete"
+  document.getElementById("bulkMoveBtn").addEventListener("click", e => {
+    if (!bulkClass.value) {
+      e.preventDefault();
+      bulkClass.classList.add("is-invalid");
+      bulkClass.focus();
+    }
+  });
+  bulkClass.addEventListener("change", () => bulkClass.classList.remove("is-invalid"));
+
+  applyFilters();
+}
+
+// Delete a single student
+// ── Confirm dialog ──────────────────────────────────────────
+const modal       = document.getElementById("confirmModal");
+const confirmOk   = document.getElementById("confirmOk");
+const typeWrap    = document.getElementById("confirmTypeWrap");
+const typeInput   = document.getElementById("confirmType");
+let onConfirm = null;
+
+function openConfirm({ title, message, names = [], requireTyping = false, onOk }) {
+  document.getElementById("confirmTitle").textContent = title;
+  document.getElementById("confirmMsg").textContent = message;
+
+  const list = document.getElementById("confirmList");
+  list.innerHTML = "";
+  names.forEach(n => { const li = document.createElement("li"); li.textContent = n; list.appendChild(li); });
+
+  typeWrap.hidden = !requireTyping;
+  typeInput.value = "";
+  confirmOk.disabled = requireTyping;
+  onConfirm = onOk;
+  modal.hidden = false;
+  (requireTyping ? typeInput : confirmOk).focus();
+}
+function closeConfirm() { modal.hidden = true; onConfirm = null; }
+
+typeInput.addEventListener("input", () => {
+  confirmOk.disabled = typeInput.value.trim() !== "DELETE";
+});
+confirmOk.addEventListener("click", () => { const fn = onConfirm; closeConfirm(); if (fn) fn(); });
+document.getElementById("confirmCancel").addEventListener("click", closeConfirm);
+modal.addEventListener("click", e => { if (e.target === modal) closeConfirm(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !modal.hidden) closeConfirm(); });
+
+// ── Single delete ───────────────────────────────────────────
+function deleteStudent(url, name) {
+  openConfirm({
+    title: "Delete student?",
+    message: "This permanently deletes the student and cannot be undone.",
+    names: [name],
+    onOk: () => {
+      const form = document.getElementById("singleDeleteForm");
+      form.action = url;
+      form.submit();
+    }
+  });
+}
+
+// ── Bulk delete ─────────────────────────────────────────────
+document.getElementById("bulkDeleteBtn").addEventListener("click", () => {
+  const chosen = rows.filter(r => rowBox(r).checked);
+  if (!chosen.length) return;
+  openConfirm({
+    title: `Delete ${chosen.length} student${chosen.length === 1 ? "" : "s"}?`,
+    message: "This permanently deletes the selected students and cannot be undone.",
+    names: chosen.map(r => r.dataset.name),
+    requireTyping: chosen.length > 5 || chosen.length === rows.length,
+    onOk: () => {
+      const form = document.getElementById("studentsForm");
+      const flag = document.createElement("input");
+      flag.type = "hidden"; flag.name = "bulk_delete"; flag.value = "1";
+      form.appendChild(flag);
+      form.submit();
+    }
+  });
 });
 
-// Collect visible student rows
+// Collect visible students for the PDF
 function getVisibleStudentData() {
-  const data = [];
-  table.querySelectorAll("tbody tr").forEach(row => {
-    if (row.style.display === "none") return;
-    const cells = row.querySelectorAll("td");
-    data.push({
-      username: row.getAttribute("data-username") || "—",
-      name:     cells[2].textContent.trim(),  // col 2
-      email:    cells[3].textContent.trim(),  // col 3
-      cls:      cells[4].textContent.trim(),  // col 4
-      gender:   cells[5].textContent.trim(),  // col 5
-    });
-  });
-  return data;
+  return rows.filter(r => !r.hidden).map(r => ({
+    username: r.dataset.username || "—",
+    name:     r.dataset.name,
+    email:    r.dataset.email,
+    cls:      r.dataset.class || "—",
+    gender:   r.dataset.gender || "—",
+  }));
 }
-// PDF Export
+
 function exportToPDF() {
   const students = getVisibleStudentData();
   if (!students.length) { alert("No visible students to export."); return; }
@@ -189,36 +513,34 @@ function exportToPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
   const title = classFilter.value ? `Student List — ${classFilter.value}` : "Student List — All Classes";
-const schoolName = "{{ request.user.school.school_name }}";  // or however you access school
+  const schoolName = "{{ request.user.school.school_name|escapejs }}";
 
-doc.setFontSize(16);
-doc.setTextColor(30, 30, 30);
-doc.text(schoolName, 40, 28);          // school name on top
+  doc.setFontSize(16);
+  doc.setTextColor(30, 30, 30);
+  doc.text(schoolName, 40, 28);
 
-doc.setFontSize(13);
-doc.text(title, 40, 48);               // class below it
+  doc.setFontSize(13);
+  doc.text(title, 40, 48);
 
-doc.setFontSize(10);
-doc.setTextColor(100);
-doc.text(`Generated: ${new Date().toLocaleDateString()}`, 40, 64);
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 40, 64);
 
-
-doc.autoTable({
-  startY: 76,
-  head: [["#", "Name", "Username", "Email", "Class", "Gender"]],
-  body: students.map((s, i) => [i + 1, s.name, s.username, s.email, s.cls, s.gender]),
-  styles: { fontSize: 9, cellPadding: 5 },
-  headStyles: { fillColor: [44, 130, 201], textColor: 255, fontStyle: "bold" },
-  alternateRowStyles: { fillColor: [245, 249, 255] },
-  margin: { left: 40, right: 40 },
-});
-
+  doc.autoTable({
+    startY: 76,
+    head: [["#", "Name", "Username", "Email", "Class", "Gender"]],
+    body: students.map((s, i) => [i + 1, s.name, s.username, s.email, s.cls, s.gender]),
+    styles: { fontSize: 9, cellPadding: 5 },
+    headStyles: { fillColor: [15, 118, 110], textColor: 255, fontStyle: "bold" },
+    alternateRowStyles: { fillColor: [245, 249, 249] },
+    margin: { left: 40, right: 40 },
+  });
 
   const filename = (classFilter.value || "all_classes").replace(/\s+/g, "_").toLowerCase() + "_students.pdf";
   doc.save(filename);
 
   const status = document.getElementById("exportStatus");
-  status.textContent = `✅ PDF saved (${students.length} students)`;
+  status.textContent = `PDF saved (${students.length} students)`;
   setTimeout(() => status.textContent = "", 3000);
 }
 </script>

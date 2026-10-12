@@ -1,0 +1,113 @@
+
+
+{% block content %}
+<h1 style="margin-bottom:12px;">🎓 Admission Letter Dashboard</h1>
+
+{% if messages %}
+  <ul class="messagelist">
+    {% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}
+  </ul>
+{% endif %}
+
+{% if not has_school %}
+  <div style="padding:12px;background:#fff3cd;border-left:4px solid #b45309;margin-bottom:16px;">
+    ⚠ School <b>{{ 'Esteem Boys College' }}</b> not found in DB. Set
+    <code>LETTER_ISSUING_SCHOOL</code> correctly, or create the School row.
+  </div>
+{% endif %}
+
+<div style="margin-bottom:20px;">
+  <a href="{{ generate_all_url }}"
+     style="padding:10px 18px;background:#1a6a3a;color:#fff;text-decoration:none;
+            border-radius:4px;font-weight:bold;display:inline-block;">
+    ⚡ Generate all missing letters
+  </a>
+</div>
+
+<h2>✅ Passing students ({{ rows|length }})</h2>
+
+<table style="width:100%;border-collapse:collapse;font-size:13px;">
+  <thead>
+    <tr style="background:#1a6a3a;color:#fff;">
+      <th style="padding:8px;text-align:left;">ID</th>
+      <th style="padding:8px;text-align:left;">Student</th>
+      <th style="padding:8px;text-align:left;">Class</th>
+      <th style="padding:8px;text-align:right;">Avg</th>
+      <th style="padding:8px;text-align:right;">Pass</th>
+      <th style="padding:8px;text-align:center;">Guardian</th>
+      <th style="padding:8px;text-align:center;">Letter</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for row in rows %}
+    <tr style="border-bottom:1px solid #eee;">
+      <td style="padding:8px;">{{ row.profile.id }}</td>
+      <td style="padding:8px;"><b>{{ row.profile }}</b></td>
+      <td style="padding:8px;">{{ row.class_label }}</td>
+      <td style="padding:8px;text-align:right;">{{ row.avg }}%</td>
+      <td style="padding:8px;text-align:right;">{{ row.threshold }}%</td>
+      <td style="padding:8px;text-align:center;">
+        {% if row.has_guardian %}✓{% else %}
+          <span style="color:#c00;">missing</span>
+        {% endif %}
+      </td>
+      <td style="padding:8px;text-align:center;">
+        {% if row.has_letter %}
+          <a href="{{ row.letter.pdf_file.url }}" target="_blank"
+             style="padding:6px 12px;background:#1a6a3a;color:#fff;
+                    text-decoration:none;border-radius:3px;font-weight:bold;">
+            📄 Open PDF
+          </a>
+        {% elif row.has_guardian and has_school %}
+          <a href="{{ row.generate_url }}"
+             style="padding:6px 12px;background:#2b6cb0;color:#fff;
+                    text-decoration:none;border-radius:3px;font-weight:bold;">
+            ⚙ Generate & open
+          </a>
+        {% else %}
+          <span style="color:#888;">add guardian first</span>
+        {% endif %}
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7" style="padding:20px;text-align:center;color:#888;">
+      No passing students found for session {{ '2025-2026' }}.
+    </td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% if failed %}
+<h2 style="margin-top:30px;color:#c00;">❌ Failed ({{ failed|length }})</h2>
+<table style="width:100%;border-collapse:collapse;font-size:13px;">
+  <thead><tr style="background:#f5f5f5;">
+    <th style="padding:8px;text-align:left;">ID</th>
+    <th style="padding:8px;text-align:left;">Student</th>
+    <th style="padding:8px;text-align:left;">Class</th>
+    <th style="padding:8px;text-align:right;">Avg</th>
+    <th style="padding:8px;text-align:right;">Pass</th>
+  </tr></thead>
+  <tbody>
+  {% for profile, class_key, avg, thr in failed %}
+    <tr style="border-bottom:1px solid #eee;">
+      <td style="padding:8px;">{{ profile.id }}</td>
+      <td style="padding:8px;">{{ profile }}</td>
+      <td style="padding:8px;">{{ class_key }}</td>
+      <td style="padding:8px;text-align:right;">{{ avg }}%</td>
+      <td style="padding:8px;text-align:right;">{{ thr }}%</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if missing %}
+<h2 style="margin-top:30px;color:#b45309;">⚠ Missing subject results ({{ missing|length }})</h2>
+<ul style="font-size:13px;">
+{% for profile, class_key, subs in missing %}
+  <li>id={{ profile.id }} <b>{{ profile }}</b> [{{ class_key }}] missing {{ subs }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% endblock %}

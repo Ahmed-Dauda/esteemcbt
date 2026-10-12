@@ -189,6 +189,8 @@ class School(models.Model):
     show_form_teacher_comment = models.BooleanField(default=True)
     show_principal_comment    = models.BooleanField(default=True)
     show_position       = models.BooleanField(default=True)
+    principal_name = models.CharField(max_length=255, blank=True, null=True,
+                                      default='Abubakar Ilani')
 
 
     def __str__(self):

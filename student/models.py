@@ -423,3 +423,229 @@ class AdvertisementImage(models.Model):
 
     def __str__(self):
         return f"Image {self.id}"
+
+
+class AdmissionLetter(models.Model):
+    student  = models.ForeignKey('users.Profile', on_delete=models.CASCADE,
+                                 related_name='admission_letters')
+    school   = models.ForeignKey('quiz.School', on_delete=models.CASCADE,
+                                 related_name='admission_letters')
+    session  = models.ForeignKey('sms.Session', on_delete=models.SET_NULL,
+                                 null=True, blank=True, related_name='admission_letters')
+
+    class_offered   = models.CharField(max_length=20)
+    subject_scores  = models.JSONField(default=dict)
+    average_score   = models.DecimalField(max_digits=5, decimal_places=2)
+    pass_threshold  = models.DecimalField(max_digits=5, decimal_places=2)
+
+    deposit_amount   = models.DecimalField(max_digits=12, decimal_places=2, default=750000)
+    payment_deadline = models.DateField(null=True, blank=True)
+        # ── Editable overrides (blank = fall back to auto-generated value) ──
+    letter_date          = models.DateField(null=True, blank=True)
+    payment_deadline     = models.DateField(null=True, blank=True)
+    resume_date          = models.DateField(null=True, blank=True)
+
+    override_student_name   = models.CharField(max_length=255, blank=True, default='')
+    override_guardian_name  = models.CharField(max_length=255, blank=True, default='')
+    override_guardian_address = models.TextField(blank=True, default='')
+    override_principal_name = models.CharField(max_length=255, blank=True, default='')
+    override_deposit_words  = models.CharField(max_length=255, blank=True, default='')
+    override_deposit_display = models.CharField(max_length=50, blank=True, default='')
+    extra_note              = models.TextField(blank=True, default='',
+    help_text="Optional paragraph appended above the numbered notes.")
+    acceptance_deadline = models.DateField(null=True, blank=True)
+
+    # ── Body overrides (blank = use auto-generated paragraph) ─────────
+    override_intro = models.TextField(
+        blank=True, default='',
+        help_text="Replaces the 'The Management of…' paragraph. "
+                  "Available vars: {student_name} {class_label} {session_name}")
+    override_deposit_para = models.TextField(
+        blank=True, default='',
+        help_text="Replaces the 'Paying a deposit…' paragraph. "
+                  "Available vars: {deposit_words} {deposit_display} {bank_name} "
+                  "{bank_account} {bank_account_name} {payment_deadline} {resume_date}")
+    override_notes_text = models.TextField(
+        blank=True, default='',
+        help_text="Replaces the numbered notes. One note per line — each non-blank "
+                  "line becomes a numbered item. Available vars: {payment_deadline} "
+                  "{acceptance_deadline} {acceptance_email_1} {acceptance_email_2}")
+    
+
+    pdf_file     = models.FileField(upload_to='admission_letters/', blank=True, null=True)
+    generated_at = models.DateTimeField(auto_now_add=True)
+    sent_at      = models.DateTimeField(null=True, blank=True)
+    is_sent      = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('student', 'session')
+        indexes = [
+            models.Index(fields=['school', 'session']),
+            models.Index(fields=['is_sent']),
+        ]
+
+    def __str__(self):
+        return f"{self.student} → {self.class_offered} ({self.session})"
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Letter template — the constant body of an admission letter, per school.
+# Editing this once updates every letter that doesn't override the field.
+# ──────────────────────────────────────────────────────────────────────
+
+DEFAULT_INTRO_TEMPLATE = (
+    "The Management of {letterhead} is pleased to inform you "
+    "that your child/ward <b>{student_name}</b>, having passed our entrance "
+    "examination is hereby offered a conditional admission into "
+    "<b>{class_label}</b> for the {session_name} academic session."
+)
+
+DEFAULT_DEPOSIT_TEMPLATE = (
+    "Paying a deposit of {deposit_words} ({deposit_display}) into the school "
+    "account at {bank_branch_hint} {bank_name}., {bank_account_name} "
+    "(A/C No: {bank_account}) before <b>{payment_deadline}</b>. Returning the "
+    "teller showing evidence of payment to the accounts section for issuance "
+    "of receipt and other required document. The deposit forms part of the "
+    "school fees. You will also be given breakdown of the balance and other "
+    "joining instructions. The balance of the fees is expected to be paid "
+    "before the child resume for the session on <b>{resume_date}</b>."
+)
+
+DEFAULT_NOTES_TEMPLATE = (
+    "School fees should always be paid in advance. You are encouraged to pay "
+    "for the whole year if you are willing and able to do so.\n"
+    "The return of the attached slip plus evidence of payment will reserve a "
+    "place for your child. Complete and submit the enclosed acceptance form "
+    "to the Admin office. (You may also scan the acceptance form, bank teller "
+    "and email them to {acceptance_email_1} or {acceptance_email_2}.) Failure "
+    "to do so on or before <b>{acceptance_deadline}</b> will imply that you "
+    "do not wish to accept this offer and your child's/ward's space will be "
+    "offered to other applicants.\n"
+    "In the event of a change of mind two weeks after acceptance and payment "
+    "of school fees, parent forfeits 50% of the fees paid.\n"
+    "There is no refund of any fees if a student is expelled from the School, "
+    "except for caution fee.\n"
+    "The School Account Unit will need at least two weeks to process the refund."
+)
+
+DEFAULT_CLOSING_LINE  = "ACCEPT OUR CONGRATULATIONS."
+DEFAULT_SIGNATURE_TITLE = "Principal"
+
+
+class LetterTemplate(models.Model):
+    """One row per school. Holds the constant body of the letter.
+
+    Placeholders available in intro_template:
+      {student_name} {class_label} {session_name} {letterhead}
+
+    Placeholders in deposit_paragraph_template:
+      {deposit_words} {deposit_display} {bank_name} {bank_branch_hint}
+      {bank_account} {bank_account_name} {payment_deadline} {resume_date}
+
+    Placeholders in notes_template (one note per line):
+      {payment_deadline} {acceptance_deadline} {acceptance_email_1}
+      {acceptance_email_2} {resume_date}
+    """
+    school = models.OneToOneField(
+        'quiz.School', on_delete=models.CASCADE,
+        related_name='letter_template',
+        help_text="Which school's letterhead this template applies to.")
+
+    intro_template = models.TextField(
+        blank=True, default='',
+        help_text="Intro paragraph. Blank = use the built-in default.")
+    deposit_paragraph_template = models.TextField(
+        blank=True, default='',
+        help_text="Deposit paragraph. Blank = use the built-in default.")
+    notes_template = models.TextField(
+        blank=True, default='',
+        help_text="One note per line — becomes the numbered list. "
+                  "Blank = use the built-in default.")
+    extra_paragraph = models.TextField(
+        blank=True, default='',
+        help_text="Optional paragraph printed above 'Please note:'. "
+                  "Blank = none.")
+    closing_line = models.CharField(
+        max_length=200, blank=True, default='',
+        help_text=f"e.g. '{DEFAULT_CLOSING_LINE}'. Blank = use the default.")
+    signature_title = models.CharField(
+        max_length=100, blank=True, default='',
+        help_text=f"e.g. '{DEFAULT_SIGNATURE_TITLE}'. Blank = use the default.")
+        # ── Letterhead / school name used in the body ─────────────────────
+    letterhead_school_line = models.CharField(
+        max_length=255, blank=True, default='',
+        help_text="e.g. 'Esteem Learning Center, The Boys\\' College'. "
+                  "Blank = use config default.")
+
+    # ── Deposit / bank details ────────────────────────────────────────
+    deposit_amount_words = models.CharField(
+        max_length=200, blank=True, default='',
+        help_text="e.g. 'Seven Hundred Fifty Thousand Naira only'. Blank = config default.")
+    deposit_amount_display = models.CharField(
+        max_length=50, blank=True, default='',
+        help_text="e.g. 'N750,000'. Blank = config default.")
+    bank_name = models.CharField(max_length=100, blank=True, default='')
+    bank_branch_hint = models.CharField(max_length=100, blank=True, default='')
+    bank_account = models.CharField(max_length=50, blank=True, default='')
+    bank_account_name = models.CharField(max_length=200, blank=True, default='')
+
+    # ── Acceptance emails ─────────────────────────────────────────────
+    acceptance_email_1 = models.EmailField(blank=True, default='')
+    acceptance_email_2 = models.EmailField(blank=True, default='')
+
+    # ── Date windows ──────────────────────────────────────────────────
+    payment_window_days = models.PositiveIntegerField(
+        default=15, help_text="Days from letter date to payment deadline.")
+    acceptance_window_days = models.PositiveIntegerField(
+        default=15, help_text="Days from payment deadline to acceptance deadline.")
+    pass_thresholds = models.JSONField(default=dict, blank=True)
+    session_name = models.CharField(max_length=20, default='2025-2026')
+    exam_school = models.ForeignKey(
+        'quiz.School', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='+',
+        help_text="School the entrance exams are attached to. Leave blank to use this school.")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Letter Template"
+        verbose_name_plural = "Letter Templates"
+
+    def __str__(self):
+        return f"Letter template — {self.school.school_name}"
+
+    # Accessors that fall back to the built-in defaults
+    def get_intro(self):       return self.intro_template or DEFAULT_INTRO_TEMPLATE
+    def get_deposit(self):     return self.deposit_paragraph_template or DEFAULT_DEPOSIT_TEMPLATE
+    def get_notes(self):       return self.notes_template or DEFAULT_NOTES_TEMPLATE
+    def get_extra(self):       return self.extra_paragraph or ''
+    def get_closing(self):     return self.closing_line or DEFAULT_CLOSING_LINE
+    def get_signature_title(self): return self.signature_title or DEFAULT_SIGNATURE_TITLE
+     
+    def get_letterhead_school_line(self):
+        from .services.admission_letter_config import LETTERHEAD_SCHOOL_LINE
+        return self.letterhead_school_line or LETTERHEAD_SCHOOL_LINE
+    def get_deposit_words(self):
+        from .services.admission_letter_config import DEPOSIT_AMOUNT_WORDS
+        return self.deposit_amount_words or DEPOSIT_AMOUNT_WORDS
+    def get_deposit_display(self):
+        from .services.admission_letter_config import DEPOSIT_AMOUNT_DISPLAY
+        return self.deposit_amount_display or DEPOSIT_AMOUNT_DISPLAY
+    def get_bank_name(self):
+        from .services.admission_letter_config import BANK_NAME
+        return self.bank_name or BANK_NAME
+    def get_bank_branch_hint(self):
+        from .services.admission_letter_config import BANK_BRANCH_HINT
+        return self.bank_branch_hint or BANK_BRANCH_HINT
+    def get_bank_account(self):
+        from .services.admission_letter_config import BANK_ACCOUNT
+        return self.bank_account or BANK_ACCOUNT
+    def get_bank_account_name(self):
+        from .services.admission_letter_config import BANK_ACCOUNT_NAME
+        return self.bank_account_name or BANK_ACCOUNT_NAME
+    def get_acceptance_email_1(self):
+        from .services.admission_letter_config import ACCEPTANCE_EMAIL_1
+        return self.acceptance_email_1 or ACCEPTANCE_EMAIL_1
+    def get_acceptance_email_2(self):
+        from .services.admission_letter_config import ACCEPTANCE_EMAIL_2
+        return self.acceptance_email_2 or ACCEPTANCE_EMAIL_2
+            

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ title }} — {{ session_name }}</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         background:#f4f6f8; color:#1f2937; }
+  header { background:#1a6a3a; color:#fff; padding:16px 24px; }
+  header .hdr-inner { max-width:1100px; margin:0 auto;
+                      display:flex; justify-content:space-between;
+                      align-items:center; flex-wrap:wrap; gap:10px; }
+  header h1 { margin:0; font-size:20px; }
+  header .sub { opacity:.85; font-size:13px; margin-top:4px; }
+  .wrap { max-width:1100px; margin:24px auto; padding:0 16px; }
+  .card { background:#fff; border-radius:6px; padding:18px 22px; margin-bottom:18px;
+          box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .msg { padding:10px 14px; border-radius:4px; margin-bottom:10px; font-size:14px; }
+  .msg.success { background:#e6f4ea; color:#0f5132; border-left:4px solid #1a6a3a; }
+  .msg.error   { background:#fdecea; color:#842029; border-left:4px solid #c00; }
+  .msg.warning { background:#fff3cd; color:#664d03; border-left:4px solid #b45309; }
+  .msg.info    { background:#e7f1ff; color:#0a4b93; border-left:4px solid #2b6cb0; }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
+  .btn { display:inline-block; padding:9px 16px; border-radius:4px; text-decoration:none;
+         font-weight:600; font-size:14px; cursor:pointer; border:0; font-family:inherit; }
+  .btn.primary { background:#1a6a3a; color:#fff; }
+  .btn.secondary { background:#2b6cb0; color:#fff; }
+  .btn.ghost { background:#fff; color:#1a6a3a; border:1px solid #1a6a3a; }
+  .btn.light { background:rgba(255,255,255,.15); color:#fff;
+               border:1px solid rgba(255,255,255,.5); }
+  .btn:hover { filter:brightness(1.08); }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th { background:#1a6a3a; color:#fff; padding:10px; text-align:left; font-weight:600; }
+  td { padding:10px; border-bottom:1px solid #eef2f5; vertical-align:middle; }
+  tr:hover td { background:#fafdf9; }
+  .num { text-align:right; font-variant-numeric: tabular-nums; }
+  .center { text-align:center; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:12px;
+          font-weight:600; }
+  .pill.ok { background:#e6f4ea; color:#0f5132; }
+  .pill.bad { background:#fdecea; color:#842029; }
+  h2 { font-size:16px; margin:22px 0 8px; }
+  .muted { color:#6b7280; font-size:13px; }
+  .legend { font-size:13px; color:#6b7280; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-inner">
+    <div>
+      <h1>🎓 {{ title }}</h1>
+      <div class="sub">Session {{ session_name }} — {{ issuing_school }}</div>
+    </div>
+    <a href="{% url 'student:admission_letter_template_edit' %}" class="btn light">
+      🧩 Edit Letter Template
+    </a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  {% if messages %}
+    {% for m in messages %}
+      <div class="msg {{ m.tags }}">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% if not has_school %}
+    <div class="msg warning">
+      ⚠ School <b>{{ issuing_school }}</b> not found in the database.
+      Create it or update <code>LETTER_ISSUING_SCHOOL</code> in config.
+    </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="actions">
+      <form method="post" action="{% url 'student:admission_letters_generate_all' %}"
+            onsubmit="return confirm('Generate all missing letters now? This may take a minute.');"
+            style="margin:0;">
+        {% csrf_token %}
+        <button type="submit" class="btn primary">⚡ Generate all missing letters</button>
+      </form>
+      <a href="{% url 'student:admission_letter_template_edit' %}" class="btn secondary">
+        🧩 Edit Letter Template
+      </a>
+      <a href="{% url 'student:admission_letters_list' %}" class="btn ghost">↻ Refresh list</a>
+    </div>
+    <div class="legend">
+      Passing students: <b>{{ rows|length }}</b> &nbsp;·&nbsp;
+      Failed: <b>{{ failed|length }}</b> &nbsp;·&nbsp;
+      Missing results: <b>{{ missing|length }}</b>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;">✅ Passing students</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:60px;">ID</th>
+          <th>Student</th>
+          <th style="width:80px;">Class</th>
+          <th style="width:90px;" class="num">Average</th>
+          <th style="width:80px;" class="num">Pass mark</th>
+          <th style="width:100px;" class="center">Guardian</th>
+          <th style="width:220px;" class="center">Letter</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in rows %}
+        <tr>
+          <td>{{ row.profile.id }}</td>
+          <td>
+            <b>{{ row.profile }}</b>
+            {% if row.profile.admission_no %}
+              <div class="muted">Adm: {{ row.profile.admission_no }}</div>
+            {% endif %}
+          </td>
+          <td>{{ row.class_label }}</td>
+          <td class="num">{{ row.avg }}%</td>
+          <td class="num">{{ row.threshold }}%</td>
+          <td class="center">
+            {% if row.has_guardian %}
+              <span class="pill ok">✓</span>
+            {% else %}
+              <span class="pill bad">missing</span>
+            {% endif %}
+          </td>
+          <td class="center">
+            {% if row.has_letter %}
+              <a href="{{ row.letter.pdf_file.url }}?v={{ row.letter.generated_at|date:'U' }}"
+                 target="_blank" class="btn primary">📄 Open PDF</a>
+              <a href="{% url 'student:admission_letter_edit' row.profile.id %}"
+                 class="btn ghost" style="margin-left:4px;">✏️ Edit</a>
+              <a href="{% url 'student:admission_letter_generate' row.profile.id %}?force=1"
+                 class="btn ghost" style="margin-left:4px;"
+                 onclick="return confirm('Regenerate this letter?');">↻</a>
+            {% elif row.has_guardian and has_school %}
+              <a href="{% url 'student:admission_letter_generate' row.profile.id %}"
+                 class="btn secondary">⚙ Generate & open</a>
+            {% else %}
+              <span class="muted">add guardian info first</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="center muted" style="padding:28px;">
+          No passing students found for {{ session_name }}.
+        </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if failed %}
+  <div class="card">
+    <h2 style="margin-top:0;color:#c00;">❌ Failed ({{ failed|length }})</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:60px;">ID</th>
+          <th>Student</th>
+          <th style="width:80px;">Class</th>
+          <th style="width:100px;" class="num">Average</th>
+          <th style="width:100px;" class="num">Pass mark</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for profile, class_key, avg, thr in failed %}
+        <tr>
+          <td>{{ profile.id }}</td>
+          <td>{{ profile }}</td>
+          <td>{{ class_key }}</td>
+          <td class="num">{{ avg }}%</td>
+          <td class="num">{{ thr }}%</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if missing %}
+  <div class="card">
+    <h2 style="margin-top:0;color:#b45309;">⚠ Missing subject results ({{ missing|length }})</h2>
+    <ul style="font-size:14px; line-height:1.7;">
+    {% for profile, class_key, subs in missing %}
+      <li>
+        id={{ profile.id }} &nbsp; <b>{{ profile }}</b> &nbsp; [{{ class_key }}] &nbsp;
+        missing: <code>{{ subs|join:", " }}</code>
+      </li>
+    {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+</div>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ title }} — {{ session_name }}</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         background:#f4f6f8; color:#1f2937; }
+  header { background:#1a6a3a; color:#fff; padding:16px 24px; }
+  header h1 { margin:0; font-size:20px; }
+  header .sub { opacity:.85; font-size:13px; margin-top:4px; }
+  .wrap { max-width:1200px; margin:24px auto; padding:0 16px; }
+  .card { background:#fff; border-radius:6px; padding:18px 22px; margin-bottom:18px;
+          box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .msg { padding:10px 14px; border-radius:4px; margin-bottom:10px; font-size:14px; }
+  .msg.success { background:#e6f4ea; color:#0f5132; border-left:4px solid #1a6a3a; }
+  .msg.error   { background:#fdecea; color:#842029; border-left:4px solid #c00; }
+  .msg.warning { background:#fff3cd; color:#664d03; border-left:4px solid #b45309; }
+  .msg.info    { background:#e7f1ff; color:#0a4b93; border-left:4px solid #2b6cb0; }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
+  .btn { display:inline-block; padding:9px 16px; border-radius:4px; text-decoration:none;
+         font-weight:600; font-size:14px; cursor:pointer; border:0; }
+  .btn.primary { background:#1a6a3a; color:#fff; }
+  .btn.secondary { background:#2b6cb0; color:#fff; }
+  .btn.ghost { background:#fff; color:#1a6a3a; border:1px solid #1a6a3a; }
+  .btn:hover { filter:brightness(1.08); }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th { background:#1a6a3a; color:#fff; padding:10px; text-align:left; font-weight:600; }
+  td { padding:10px; border-bottom:1px solid #eef2f5; vertical-align:top; }
+  tr:hover td { background:#fafdf9; }
+  .num { text-align:right; font-variant-numeric: tabular-nums; }
+  .center { text-align:center; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:12px;
+          font-weight:600; }
+  .pill.ok { background:#e6f4ea; color:#0f5132; }
+  .pill.bad { background:#fdecea; color:#842029; }
+  h2 { font-size:16px; margin:22px 0 8px; }
+  .muted { color:#6b7280; font-size:12.5px; }
+  .legend { font-size:13px; color:#6b7280; margin-top:8px; }
+
+  .subj-list { display:flex; flex-wrap:wrap; gap:6px; }
+  .subj { display:inline-flex; align-items:center; gap:6px; padding:3px 9px;
+          background:#f1f5f9; border:1px solid #e2e8f0; border-radius:12px;
+          font-size:12.5px; font-variant-numeric: tabular-nums; }
+  .subj b { font-weight:700; }
+  .subj .name { text-transform: capitalize; color:#475569; }
+  .subj .pct { color:#64748b; font-size:11.5px; }
+  .subj.pass { background:#e6f4ea; border-color:#bfe3c8; color:#0f5132; }
+  .subj.pass .name, .subj.pass .pct { color:#0f5132; }
+  .subj.fail { background:#fdecea; border-color:#f5c6c3; color:#842029; }
+  .subj.fail .name, .subj.fail .pct { color:#842029; }
+
+  /* ── search bar ─────────────────────────────────────────── */
+  .search-bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .search-bar input[type=text] {
+    flex:1 1 260px; padding:9px 12px; border:1px solid #cbd5e1; border-radius:4px;
+    font-size:14px; font-family:inherit;
+  }
+  .search-bar input[type=text]:focus {
+    outline:none; border-color:#1a6a3a; box-shadow:0 0 0 3px rgba(26,106,58,.15);
+  }
+  .search-bar select {
+    padding:9px 12px; border:1px solid #cbd5e1; border-radius:4px; font-size:14px;
+    font-family:inherit; background:#fff;
+  }
+  .filter-badge {
+    display:inline-block; padding:3px 10px; background:#e7f1ff; color:#0a4b93;
+    border-radius:12px; font-size:12.5px; font-weight:600;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap" style="padding:0;">
+    <h1>🎓 {{ title }}</h1>
+    <div class="sub">Session {{ session_name }} — {{ issuing_school }}</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  {% if messages %}
+    {% for m in messages %}
+      <div class="msg {{ m.tags }}">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% if not has_school %}
+    <div class="msg warning">
+      ⚠ School <b>{{ issuing_school }}</b> not found in the database.
+    </div>
+  {% endif %}
+
+  <div class="card">
+    <form method="get" class="search-bar" style="margin-bottom:14px;">
+      <input type="text" name="q" value="{{ q }}"
+             placeholder="Search by name, admission no., or ID…" autofocus>
+      <select name="class">
+        <option value="">All classes</option>
+        {% for c in classes %}
+          <option value="{{ c }}" {% if c == class_filter %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn primary">🔍 Search</button>
+      {% if filtered %}
+        <a href="{% url 'student:admission_letters_list' %}" class="btn ghost">Clear</a>
+      {% endif %}
+    </form>
+
+    <div class="actions" style="margin-bottom:10px;">
+      <form method="post" action="{% url 'student:admission_letters_generate_all' %}"
+            onsubmit="return confirm('Generate all missing letters now? This may take a minute.');"
+            style="margin:0;">
+        {% csrf_token %}
+        <button type="submit" class="btn primary">⚡ Generate all missing letters</button>
+      </form>
+      <a href="{% url 'student:admission_letters_list' %}" class="btn ghost">↻ Refresh list</a>
+    </div>
+
+    <div class="legend">
+      {% if filtered %}
+        Showing <b>{{ rows|length }}</b> of <b>{{ total_passed }}</b> passing ·
+        Failed <b>{{ failed|length }}</b> / {{ total_failed }} ·
+        Missing <b>{{ missing|length }}</b> / {{ total_missing }}
+        &nbsp;&nbsp;<span class="filter-badge">
+          {% if q %}“{{ q }}”{% endif %}
+          {% if class_filter %}class: {{ class_filter }}{% endif %}
+        </span>
+      {% else %}
+        Passing students: <b>{{ total_passed }}</b> &nbsp;·&nbsp;
+        Failed: <b>{{ total_failed }}</b> &nbsp;·&nbsp;
+        Missing results: <b>{{ total_missing }}</b>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;">✅ Passing students</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:50px;">ID</th>
+          <th>Student</th>
+          <th style="width:70px;">Class</th>
+          <th style="width:320px;">Subject scores</th>
+          <th style="width:90px;" class="num">Average</th>
+          <th style="width:70px;" class="num">Pass</th>
+          <th style="width:90px;" class="center">Guardian</th>
+          <th style="width:200px;" class="center">Letter</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in rows %}
+        <tr>
+          <td>{{ row.profile.id }}</td>
+          <td>
+            <b>{{ row.profile }}</b>
+            {% if row.profile.admission_no %}
+              <div class="muted">Adm: {{ row.profile.admission_no }}</div>
+            {% endif %}
+          </td>
+          <td>{{ row.class_label }}</td>
+          <td>
+            <div class="subj-list">
+              {% for subj, data in row.scores.items %}
+                <span class="subj {% if data.pct >= row.threshold %}pass{% else %}fail{% endif %}">
+                  <span class="name">{{ subj }}</span>
+                  <b>{{ data.marks }}/{{ data.total }}</b>
+                  <span class="pct">({{ data.pct }}%)</span>
+                </span>
+              {% endfor %}
+            </div>
+          </td>
+          <td class="num"><b>{{ row.avg }}%</b></td>
+          <td class="num">{{ row.threshold }}%</td>
+          <td class="center">
+            {% if row.has_guardian %}
+              <span class="pill ok">✓</span>
+            {% else %}
+              <span class="pill bad">missing</span>
+            {% endif %}
+          </td>
+                    <td class="center">
+            {% if row.has_letter %}
+              <a href="{{ row.letter.pdf_file.url }}" target="_blank"
+                 class="btn primary">📄 Open PDF</a>
+              <a href="{% url 'student:admission_letter_edit' row.profile.id %}"
+                 class="btn ghost" style="margin-left:4px;">✏️ Edit</a>
+            {% elif row.has_guardian and has_school %}
+              <a href="{% url 'student:admission_letter_generate' row.profile.id %}"
+                 class="btn secondary">⚙ Generate & open</a>
+            {% else %}
+              <span class="muted">add guardian info first</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="center muted" style="padding:28px;">
+          {% if filtered %}
+            No matching students for your search.
+          {% else %}
+            No passing students found for {{ session_name }}.
+          {% endif %}
+        </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if failed %}
+  <div class="card">
+    <h2 style="margin-top:0;color:#c00;">❌ Failed ({{ failed|length }})</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:50px;">ID</th>
+          <th>Student</th>
+          <th style="width:70px;">Class</th>
+          <th style="width:320px;">Subject scores</th>
+          <th style="width:90px;" class="num">Average</th>
+          <th style="width:70px;" class="num">Pass</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for profile, class_key, avg, thr, scores in failed %}
+        <tr>
+          <td>{{ profile.id }}</td>
+          <td>{{ profile }}</td>
+          <td>{{ class_key }}</td>
+          <td>
+            <div class="subj-list">
+              {% for subj, data in scores.items %}
+                <span class="subj {% if data.pct >= thr %}pass{% else %}fail{% endif %}">
+                  <span class="name">{{ subj }}</span>
+                  <b>{{ data.marks }}/{{ data.total }}</b>
+                  <span class="pct">({{ data.pct }}%)</span>
+                </span>
+              {% endfor %}
+            </div>
+          </td>
+          <td class="num"><b>{{ avg }}%</b></td>
+          <td class="num">{{ thr }}%</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if missing %}
+  <div class="card">
+    <h2 style="margin-top:0;color:#b45309;">⚠ Missing subject results ({{ missing|length }})</h2>
+    <ul style="font-size:14px; line-height:1.7;">
+    {% for profile, class_key, subs in missing %}
+      <li>
+        id={{ profile.id }} &nbsp; <b>{{ profile }}</b> &nbsp; [{{ class_key }}] &nbsp;
+        missing: <code>{{ subs|join:", " }}</code>
+      </li>
+    {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+</div>
+</body>
+</html>
