@@ -45,11 +45,10 @@ class ExaminerCreateClassForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'e.g. JSS1A, SS2B, Grade 4 Blue …',
+                'placeholder': 'e.g. JSS1A, SS2B, Grade 4 Blue, JSS2 Best Academy…',
                 'autocomplete': 'off',
                 'list': 'existing-classes',
-                'required': 'required',
-                'maxlength': '50',
+                'maxlength': '140',
             }),
             'students': forms.CheckboxSelectMultiple(),
             'subjects': forms.CheckboxSelectMultiple(),
@@ -73,42 +72,28 @@ class ExaminerCreateClassForm(forms.ModelForm):
                 .order_by('course_name__title')
             )
 
-            # Nicer labels: "student2 tanko — JSS1"
             self.fields['students'].label_from_instance = lambda u: (
                 (f"{u.first_name or ''} {u.last_name or ''}".strip() or u.username)
                 + (f"  —  {u.student_class}" if u.student_class else "")
             )
 
-        # Both optional — allow creating an empty class shell first,
-        # assign students and subjects later via the edit screen.
+        # Both optional — create an empty class shell first, assign later.
         self.fields['students'].required = False
         self.fields['subjects'].required = False
 
     def clean_name(self):
+        # Accept any name the teacher wants. Only rules: not empty, not too long.
         name = (self.cleaned_data.get('name') or '').strip()
         if not name:
             raise forms.ValidationError("Class name is required.")
-        if len(name) > 50:
-            raise forms.ValidationError("Class name is too long (max 50 chars).")
-
-        # Uniqueness within this school
-        if self._user_school:
-            qs = CourseGrade.objects.filter(name__iexact=name)
-            if hasattr(CourseGrade, 'school'):
-                qs = qs.filter(school=self._user_school)
-            elif hasattr(CourseGrade, 'schools'):
-                qs = qs.filter(schools=self._user_school)
-            if self.instance and self.instance.pk:
-                qs = qs.exclude(pk=self.instance.pk)
-            if qs.exists():
-                raise forms.ValidationError(f"A class named “{name}” already exists.")
-
+        if len(name) > 140:
+            raise forms.ValidationError("Class name is too long (max 140 chars).")
         return name
 
     def save(self, commit=True):
-        instance = super().save(commit=commit)
-        return instance    
-                        
+        return super().save(commit=commit)
+
+                                
 
 # class ExaminerCreateClassForm(forms.ModelForm):
 #     class Meta:

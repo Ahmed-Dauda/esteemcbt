@@ -23,14 +23,18 @@
     <label>Gender:</label><br>
     <select name="gender">
       <option value="">— Select —</option>
-      <option value="Male" {% if student.gender == "Male" %}selected{% endif %}>Male</option>
+      <option value="Male"   {% if student.gender == "Male" %}selected{% endif %}>Male</option>
       <option value="Female" {% if student.gender == "Female" %}selected{% endif %}>Female</option>
     </select><br><br>
 
-    <label>Class:</label><br>
-    <select name="student_class" required>
+    <label for="studentClass">Class:</label><br>
+    <select name="student_class" id="studentClass">
+      <option value="">— Not assigned —</option>
       {% for c in all_classes %}
-        <option value="{{ c.id }}" {% if c.name == student.student_class %}selected{% endif %}>{{ c.name }}</option>
+        <option value="{{ c.id }}"
+          {% if c in student.course_grades.all %}selected{% endif %}>
+          {{ c.name }}
+        </option>
       {% endfor %}
     </select><br><br>
 

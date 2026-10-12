@@ -2020,42 +2020,85 @@ def bulk_move_students(request):
 #     return redirect('teacher:student_lists')
 
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect
+
+from users.models import NewUser
+from quiz.models import CourseGrade
+
 
 @login_required(login_url='teacher:teacher_login')
 def bulk_action_students(request):
-    if request.method == 'POST':
-        selected_ids = request.POST.getlist('selected_students')
-        if not selected_ids:
-            messages.warning(request, "No students selected.")
+    if request.method != 'POST':
+        return redirect('teacher:student_lists')
+
+    selected_ids = request.POST.getlist('selected_students')
+    if not selected_ids:
+        messages.warning(request, "No students selected.")
+        return redirect('teacher:student_lists')
+
+    school = request.user.school
+
+    # Students are always scoped to the teacher's school
+    students = list(
+        NewUser.objects.filter(id__in=selected_ids, school=school)
+    )
+    if not students:
+        messages.warning(request, "No matching students found.")
+        return redirect('teacher:student_lists')
+
+    # ── Bulk delete ─────────────────────────────────────────
+    if 'bulk_delete' in request.POST:
+        count = len(students)
+        # CASCADE removes their m2m rows in CourseGrade.students
+        NewUser.objects.filter(id__in=[s.id for s in students]).delete()
+        messages.success(request, f"{count} student(s) deleted successfully.")
+        return redirect('teacher:student_lists')
+
+    # ── Bulk move ───────────────────────────────────────────
+    if 'bulk_move' in request.POST:
+        new_class_id = (request.POST.get('bulk_new_class_id') or '').strip()
+        if not new_class_id:
+            messages.warning(request, "Please choose a destination class.")
             return redirect('teacher:student_lists')
 
-        # Handle bulk delete
-        if 'bulk_delete' in request.POST:
-            students_to_delete = NewUser.objects.filter(id__in=selected_ids, school=request.user.school)
-            count = students_to_delete.count()
-            students_to_delete.delete()
-            messages.success(request, f"{count} student(s) deleted successfully.")
-            return redirect('teacher:student_lists')
+        new_class = get_object_or_404(
+            CourseGrade,
+            id=new_class_id,
+            schools=school,             # ← security fix
+        )
 
-        # Handle bulk move
-        if 'bulk_move' in request.POST:
-            selected_ids = request.POST.getlist('selected_students')
-            new_class_id = request.POST.get('bulk_new_class_id')
-            if selected_ids and new_class_id:
-                new_class = get_object_or_404(CourseGrade, id=new_class_id)
-                for student in NewUser.objects.filter(id__in=selected_ids):
-                    old_classes = CourseGrade.objects.filter(students=student)
-                    for c in old_classes:
-                        c.students.remove(student)
-                    new_class.students.add(student)
-                    student.student_class = new_class.name
-                    student.save()
-                messages.success(request, f"{len(selected_ids)} student(s) moved to {new_class.name}.")
+        student_ids = [s.id for s in students]
 
-            return redirect('teacher:student_lists')
+        with transaction.atomic():
+            # Remove from every class in this school, except the destination
+            old_classes = (
+                CourseGrade.objects
+                .filter(schools=school, students__in=students)
+                .exclude(pk=new_class.pk)
+                .distinct()
+            )
+            for old_class in old_classes:
+                old_class.students.remove(*students)
 
+            # Add to the destination (idempotent)
+            new_class.students.add(*students)
+
+            # Sync the denormalized label — one query, no N+1
+            NewUser.objects.filter(id__in=student_ids).update(
+                student_class=new_class.name
+            )
+
+        messages.success(
+            request,
+            f"{len(students)} student(s) moved to {new_class.name}."
+        )
+        return redirect('teacher:student_lists')
+
+    # Unknown action
     return redirect('teacher:student_lists')
-
 
 
 def bulk_delete_students(request):
@@ -2073,38 +2116,58 @@ def bulk_delete_students(request):
     
     return redirect('teacher:student_lists')
 
+
+
 @login_required(login_url='teacher:teacher_login')
 def edit_student(request, student_id):
     student = get_object_or_404(NewUser, id=student_id, school=request.user.school)
-    all_classes = CourseGrade.objects.filter(schools=request.user.school, is_active=True)
+    all_classes = CourseGrade.objects.filter(
+        schools=request.user.school, is_active=True
+    ).order_by('name')
 
     if request.method == 'POST':
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        gender = request.POST.get('gender')
-        student_class_id = request.POST.get('student_class')
+        first_name = (request.POST.get('first_name') or '').strip()
+        last_name  = (request.POST.get('last_name') or '').strip()
+        email      = (request.POST.get('email') or '').strip()
+        gender     = request.POST.get('gender') or None
+        student_class_id = (request.POST.get('student_class') or '').strip()
 
-        # Update basic info
-        student.first_name = first_name
-        student.last_name = last_name
-        student.email = email
-        student.gender = gender
+        with transaction.atomic():
+            # Basic info
+            student.first_name = first_name
+            student.last_name  = last_name
+            student.email      = email
+            student.gender     = gender
 
-        # Update profile image if uploaded
-        if request.FILES.get('pro_img'):
-            student.pro_img = request.FILES['pro_img']
+            if request.FILES.get('pro_img'):
+                student.pro_img = request.FILES['pro_img']
 
-        # Update class if changed
-        if student_class_id:
-            new_class = get_object_or_404(CourseGrade, id=student_class_id)
-            old_classes = CourseGrade.objects.filter(students=student)
-            for c in old_classes:
-                c.students.remove(student)
-            new_class.students.add(student)
-            student.student_class = new_class.name
+            # ---- Class assignment ----
+            if student_class_id:
+                new_class = get_object_or_404(
+                    CourseGrade,
+                    id=student_class_id,
+                    schools=request.user.school,
+                )
 
-        student.save()
+                # Detach from every class the student currently belongs to,
+                # except the new one (in case they're already in it).
+                for old in CourseGrade.objects.filter(students=student).exclude(pk=new_class.pk):
+                    old.students.remove(student)
+
+                # Attach to the new class
+                new_class.students.add(student)
+
+                # Sync the string label so lists/filters show the new class
+                student.student_class = new_class.name
+            else:
+                # No class chosen → detach from all classes and clear the label
+                for old in CourseGrade.objects.filter(students=student):
+                    old.students.remove(student)
+                student.student_class = None  # or ''
+
+            student.save()
+
         messages.success(request, "Student information updated successfully.")
         return redirect('teacher:student_lists')
 
@@ -2113,7 +2176,6 @@ def edit_student(request, student_id):
         'all_classes': all_classes,
     }
     return render(request, 'teacher/dashboard/edit_student.html', context)
-
 
 
 
